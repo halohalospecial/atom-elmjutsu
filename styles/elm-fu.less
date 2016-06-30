@@ -1,0 +1,27 @@
+@import "ui-variables";
+
+.elm-fu-find-usages {
+  .module-name {
+  }
+  .function-name {
+    color: @ui-site-color-5;
+  }
+  .index {
+    margin-left: @component-padding;
+    color: @text-color-subtle;
+  }
+}
+.elm-fu-find-unused {
+  .module-name {
+  }
+  .function-name {
+    color: @ui-site-color-5;
+  }
+}
+atom-text-editor,
+atom-text-editor::shadow {
+  .elm-fu-usage-highlight .region {
+    border: 1px solid @ui-site-color-5;
+    border-radius: @component-border-radius;
+  }
+}

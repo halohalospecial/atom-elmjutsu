@@ -1,0 +1,30 @@
+{
+  "context-menu": {
+    "atom-text-editor": [
+      {
+        "label": "Find Usages",
+        "command": "elm-fu:find-usages"
+      }
+    ]
+  },
+  "menu": [
+    {
+      "label": "Packages",
+      "submenu": [
+        {
+          "label": "Elm Fu",
+          "submenu": [
+            {
+              "label": "Find Usages",
+              "command": "elm-fu:find-usages"
+            },
+            {
+              "label": "Find Unused",
+              "command": "elm-fu:find-unused"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
