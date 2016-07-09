@@ -1,0 +1,518 @@
+var _user$project$EditorControls$isExposed = F2(
+	function (name, exposed) {
+		var _p0 = exposed;
+		switch (_p0.ctor) {
+			case 'None':
+				return false;
+			case 'Some':
+				return A2(_elm_lang$core$Set$member, name, _p0._0);
+			default:
+				return true;
+		}
+	});
+var _user$project$EditorControls$dotToHyphen = function (string) {
+	return A2(
+		_elm_lang$core$String$map,
+		function (c) {
+			return _elm_lang$core$Native_Utils.eq(
+				c,
+				_elm_lang$core$Native_Utils.chr('.')) ? _elm_lang$core$Native_Utils.chr('-') : c;
+		},
+		string);
+};
+var _user$project$EditorControls$urlTo = F2(
+	function (_p1, valueName) {
+		var _p2 = _p1;
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			'http://package.elm-lang.org/packages/',
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				_p2.pkg,
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					'/latest/',
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						_user$project$EditorControls$dotToHyphen(_p2.name),
+						A2(_elm_lang$core$Basics_ops['++'], '#', valueName)))));
+	});
+var _user$project$EditorControls$viewHint = function (hint) {
+	return A2(
+		_elm_lang$html$Html$a,
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html_Attributes$href(hint.href),
+				_elm_lang$html$Html_Attributes$target('_blank')
+			]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html$text(hint.name)
+			]));
+};
+var _user$project$EditorControls$viewHintList = function (hints) {
+	var _p3 = hints;
+	if (_p3.ctor === '[]') {
+		return _elm_lang$core$Native_List.fromArray(
+			[]);
+	} else {
+		return A2(
+			_elm_lang$core$List_ops['::'],
+			_elm_lang$html$Html$text('Hint: '),
+			A2(
+				_elm_lang$core$List$intersperse,
+				_elm_lang$html$Html$text(', '),
+				A2(_elm_lang$core$List$map, _user$project$EditorControls$viewHint, hints)));
+	}
+};
+var _user$project$EditorControls$view = function (_p4) {
+	var _p5 = _p4;
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		_user$project$EditorControls$viewHintList(_p5.hints));
+};
+var _user$project$EditorControls$tokens = _elm_lang$core$Native_Platform.incomingPort(
+	'tokens',
+	_elm_lang$core$Json_Decode$oneOf(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+				A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
+			])));
+var _user$project$EditorControls$rawImports = _elm_lang$core$Native_Platform.incomingPort(
+	'rawImports',
+	_elm_lang$core$Json_Decode$list(
+		A2(
+			_elm_lang$core$Json_Decode$andThen,
+			A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+			function (name) {
+				return A2(
+					_elm_lang$core$Json_Decode$andThen,
+					A2(
+						_elm_lang$core$Json_Decode_ops[':='],
+						'alias',
+						_elm_lang$core$Json_Decode$oneOf(
+							_elm_lang$core$Native_List.fromArray(
+								[
+									_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+									A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
+								]))),
+					function (alias) {
+						return A2(
+							_elm_lang$core$Json_Decode$andThen,
+							A2(
+								_elm_lang$core$Json_Decode_ops[':='],
+								'exposed',
+								_elm_lang$core$Json_Decode$oneOf(
+									_elm_lang$core$Native_List.fromArray(
+										[
+											_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+											A2(
+											_elm_lang$core$Json_Decode$map,
+											_elm_lang$core$Maybe$Just,
+											_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string))
+										]))),
+							function (exposed) {
+								return _elm_lang$core$Json_Decode$succeed(
+									{name: name, alias: alias, exposed: exposed});
+							});
+					});
+			})));
+var _user$project$EditorControls$compile = _elm_lang$core$Native_Platform.outgoingPort(
+	'compile',
+	function (v) {
+		return null;
+	});
+var _user$project$EditorControls$lights = _elm_lang$core$Native_Platform.outgoingPort(
+	'lights',
+	function (v) {
+		return null;
+	});
+var _user$project$EditorControls$Model = F4(
+	function (a, b, c, d) {
+		return {docs: a, imports: b, tokens: c, hints: d};
+	});
+var _user$project$EditorControls$ModuleDocs = F3(
+	function (a, b, c) {
+		return {pkg: a, name: b, values: c};
+	});
+var _user$project$EditorControls$Values = F3(
+	function (a, b, c) {
+		return {aliases: a, types: b, values: c};
+	});
+var _user$project$EditorControls$moduleDecoder = function (pkg) {
+	var name = A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string);
+	var tipe = A3(
+		_elm_lang$core$Json_Decode$object2,
+		F2(
+			function (v0, v1) {
+				return {ctor: '_Tuple2', _0: v0, _1: v1};
+			}),
+		name,
+		A2(
+			_elm_lang$core$Json_Decode_ops[':='],
+			'cases',
+			_elm_lang$core$Json_Decode$list(
+				A3(_elm_lang$core$Json_Decode$tuple2, _elm_lang$core$Basics$always, _elm_lang$core$Json_Decode$string, _elm_lang$core$Json_Decode$value))));
+	var values = A4(
+		_elm_lang$core$Json_Decode$object3,
+		_user$project$EditorControls$Values,
+		A2(
+			_elm_lang$core$Json_Decode_ops[':='],
+			'aliases',
+			_elm_lang$core$Json_Decode$list(name)),
+		A2(
+			_elm_lang$core$Json_Decode_ops[':='],
+			'types',
+			_elm_lang$core$Json_Decode$list(tipe)),
+		A2(
+			_elm_lang$core$Json_Decode_ops[':='],
+			'values',
+			_elm_lang$core$Json_Decode$list(name)));
+	return A3(
+		_elm_lang$core$Json_Decode$object2,
+		_user$project$EditorControls$ModuleDocs(pkg),
+		name,
+		values);
+};
+var _user$project$EditorControls$getDocs = function (pkg) {
+	var url = A2(
+		_elm_lang$core$Basics_ops['++'],
+		'http://package.elm-lang.org/packages/',
+		A2(_elm_lang$core$Basics_ops['++'], pkg, '/latest/documentation.json'));
+	return A2(
+		_evancz$elm_http$Http$get,
+		_elm_lang$core$Json_Decode$list(
+			_user$project$EditorControls$moduleDecoder(pkg)),
+		url);
+};
+var _user$project$EditorControls$getAllDocs = function () {
+	var supportedPackages = _elm_lang$core$Native_List.fromArray(
+		['elm-lang/core', 'elm-lang/html', 'elm-lang/svg', 'evancz/elm-markdown', 'evancz/elm-http']);
+	return A2(
+		_elm_lang$core$Task$map,
+		_elm_lang$core$List$concat,
+		_elm_lang$core$Task$sequence(
+			A2(_elm_lang$core$List$map, _user$project$EditorControls$getDocs, supportedPackages)));
+}();
+var _user$project$EditorControls$Hint = F2(
+	function (a, b) {
+		return {name: a, href: b};
+	});
+var _user$project$EditorControls$nameToHints = F3(
+	function (moduleDocs, _p6, name) {
+		var _p7 = _p6;
+		var localName = A2(
+			_elm_lang$core$Basics_ops['++'],
+			A2(_elm_lang$core$Maybe$withDefault, moduleDocs.name, _p7.alias),
+			A2(_elm_lang$core$Basics_ops['++'], '.', name));
+		var fullName = A2(
+			_elm_lang$core$Basics_ops['++'],
+			moduleDocs.name,
+			A2(_elm_lang$core$Basics_ops['++'], '.', name));
+		var hint = A2(
+			_user$project$EditorControls$Hint,
+			fullName,
+			A2(_user$project$EditorControls$urlTo, moduleDocs, name));
+		return A2(_user$project$EditorControls$isExposed, name, _p7.exposed) ? _elm_lang$core$Native_List.fromArray(
+			[
+				{ctor: '_Tuple2', _0: name, _1: hint},
+				{ctor: '_Tuple2', _0: localName, _1: hint}
+			]) : _elm_lang$core$Native_List.fromArray(
+			[
+				{ctor: '_Tuple2', _0: localName, _1: hint}
+			]);
+	});
+var _user$project$EditorControls$unionTagsToHints = F2(
+	function (moduleDocs, _p8) {
+		var _p9 = _p8;
+		var addHints = F2(
+			function (tag, hints) {
+				var fullName = A2(
+					_elm_lang$core$Basics_ops['++'],
+					moduleDocs.name,
+					A2(_elm_lang$core$Basics_ops['++'], '.', tag));
+				var hint = A2(
+					_user$project$EditorControls$Hint,
+					fullName,
+					A2(_user$project$EditorControls$urlTo, moduleDocs, _p9._0));
+				return A2(
+					_elm_lang$core$List_ops['::'],
+					{ctor: '_Tuple2', _0: tag, _1: hint},
+					A2(
+						_elm_lang$core$List_ops['::'],
+						{ctor: '_Tuple2', _0: fullName, _1: hint},
+						hints));
+			});
+		return A3(
+			_elm_lang$core$List$foldl,
+			addHints,
+			_elm_lang$core$Native_List.fromArray(
+				[]),
+			_p9._1);
+	});
+var _user$project$EditorControls$filteredHints = F2(
+	function (moduleDocs, importData) {
+		var allNames = A2(
+			_elm_lang$core$Basics_ops['++'],
+			moduleDocs.values.aliases,
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				A2(_elm_lang$core$List$map, _elm_lang$core$Basics$fst, moduleDocs.values.types),
+				moduleDocs.values.values));
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			A2(
+				_elm_lang$core$List$concatMap,
+				_user$project$EditorControls$unionTagsToHints(moduleDocs),
+				moduleDocs.values.types),
+			A2(
+				_elm_lang$core$List$concatMap,
+				A2(_user$project$EditorControls$nameToHints, moduleDocs, importData),
+				allNames));
+	});
+var _user$project$EditorControls$toTokenDict = F2(
+	function (imports, moduleList) {
+		var insert = F2(
+			function (_p10, dict) {
+				var _p11 = _p10;
+				return A3(
+					_elm_lang$core$Dict$update,
+					_p11._0,
+					function (value) {
+						return _elm_lang$core$Maybe$Just(
+							A2(
+								_elm_lang$core$List_ops['::'],
+								_p11._1,
+								A2(
+									_elm_lang$core$Maybe$withDefault,
+									_elm_lang$core$Native_List.fromArray(
+										[]),
+									value)));
+					},
+					dict);
+			});
+		var getMaybeHints = function (moduleDocs) {
+			return A2(
+				_elm_lang$core$Maybe$map,
+				_user$project$EditorControls$filteredHints(moduleDocs),
+				A2(_elm_lang$core$Dict$get, moduleDocs.name, imports));
+		};
+		return A3(
+			_elm_lang$core$List$foldl,
+			insert,
+			_elm_lang$core$Dict$empty,
+			_elm_lang$core$List$concat(
+				A2(_elm_lang$core$List$filterMap, getMaybeHints, moduleList)));
+	});
+var _user$project$EditorControls$update = F2(
+	function (msg, model) {
+		var _p12 = msg;
+		switch (_p12.ctor) {
+			case 'DocsFailed':
+				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+			case 'DocsLoaded':
+				var newDocs = A2(_elm_lang$core$Basics_ops['++'], _p12._0, model.docs);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							docs: newDocs,
+							tokens: A2(_user$project$EditorControls$toTokenDict, model.imports, newDocs)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'UpdateImports':
+				var _p13 = _p12._0;
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							imports: _p13,
+							tokens: A2(_user$project$EditorControls$toTokenDict, _p13, model.docs)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'CursorMove':
+				if (_p12._0.ctor === 'Nothing') {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								hints: _elm_lang$core$Native_List.fromArray(
+									[])
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				} else {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								hints: A2(
+									_elm_lang$core$Maybe$withDefault,
+									_elm_lang$core$Native_List.fromArray(
+										[]),
+									A2(_elm_lang$core$Dict$get, _p12._0._0, model.tokens))
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				}
+			case 'Compile':
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: _user$project$EditorControls$compile(
+						{ctor: '_Tuple0'})
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: _user$project$EditorControls$lights(
+						{ctor: '_Tuple0'})
+				};
+		}
+	});
+var _user$project$EditorControls$RawImport = F3(
+	function (a, b, c) {
+		return {name: a, alias: b, exposed: c};
+	});
+var _user$project$EditorControls$Import = F2(
+	function (a, b) {
+		return {alias: a, exposed: b};
+	});
+var _user$project$EditorControls_ops = _user$project$EditorControls_ops || {};
+_user$project$EditorControls_ops['=>'] = F2(
+	function (name, exposed) {
+		return {
+			ctor: '_Tuple2',
+			_0: name,
+			_1: A2(_user$project$EditorControls$Import, _elm_lang$core$Maybe$Nothing, exposed)
+		};
+	});
+var _user$project$EditorControls$Lights = {ctor: 'Lights'};
+var _user$project$EditorControls$Compile = {ctor: 'Compile'};
+var _user$project$EditorControls$CursorMove = function (a) {
+	return {ctor: 'CursorMove', _0: a};
+};
+var _user$project$EditorControls$UpdateImports = function (a) {
+	return {ctor: 'UpdateImports', _0: a};
+};
+var _user$project$EditorControls$DocsLoaded = function (a) {
+	return {ctor: 'DocsLoaded', _0: a};
+};
+var _user$project$EditorControls$DocsFailed = {ctor: 'DocsFailed'};
+var _user$project$EditorControls$All = {ctor: 'All'};
+var _user$project$EditorControls$Some = function (a) {
+	return {ctor: 'Some', _0: a};
+};
+var _user$project$EditorControls$None = {ctor: 'None'};
+var _user$project$EditorControls$toImport = function (_p14) {
+	var _p15 = _p14;
+	var exposedSet = function () {
+		var _p16 = _p15.exposed;
+		if (_p16.ctor === 'Nothing') {
+			return _user$project$EditorControls$None;
+		} else {
+			if (((_p16._0.ctor === '::') && (_p16._0._0 === '..')) && (_p16._0._1.ctor === '[]')) {
+				return _user$project$EditorControls$All;
+			} else {
+				return _user$project$EditorControls$Some(
+					_elm_lang$core$Set$fromList(_p16._0));
+			}
+		}
+	}();
+	return {
+		ctor: '_Tuple2',
+		_0: _p15.name,
+		_1: A2(_user$project$EditorControls$Import, _p15.alias, exposedSet)
+	};
+};
+var _user$project$EditorControls$defaultImports = _elm_lang$core$Dict$fromList(
+	_elm_lang$core$Native_List.fromArray(
+		[
+			A2(_user$project$EditorControls_ops['=>'], 'Basics', _user$project$EditorControls$All),
+			A2(_user$project$EditorControls_ops['=>'], 'Debug', _user$project$EditorControls$None),
+			A2(
+			_user$project$EditorControls_ops['=>'],
+			'List',
+			_user$project$EditorControls$Some(
+				_elm_lang$core$Set$fromList(
+					_elm_lang$core$Native_List.fromArray(
+						['List', '::'])))),
+			A2(
+			_user$project$EditorControls_ops['=>'],
+			'Maybe',
+			_user$project$EditorControls$Some(
+				_elm_lang$core$Set$singleton('Maybe'))),
+			A2(
+			_user$project$EditorControls_ops['=>'],
+			'Result',
+			_user$project$EditorControls$Some(
+				_elm_lang$core$Set$singleton('Result'))),
+			A2(
+			_user$project$EditorControls_ops['=>'],
+			'Platform',
+			_user$project$EditorControls$Some(
+				_elm_lang$core$Set$singleton('Program'))),
+			{
+			ctor: '_Tuple2',
+			_0: 'Platform.Cmd',
+			_1: A2(
+				_user$project$EditorControls$Import,
+				_elm_lang$core$Maybe$Just('Cmd'),
+				_user$project$EditorControls$Some(
+					_elm_lang$core$Set$fromList(
+						_elm_lang$core$Native_List.fromArray(
+							['Cmd', '!']))))
+		},
+			{
+			ctor: '_Tuple2',
+			_0: 'Platform.Sub',
+			_1: A2(
+				_user$project$EditorControls$Import,
+				_elm_lang$core$Maybe$Just('Sub'),
+				_user$project$EditorControls$Some(
+					_elm_lang$core$Set$singleton('Sub')))
+		}
+		]));
+var _user$project$EditorControls$emptyModel = {
+	docs: _elm_lang$core$Native_List.fromArray(
+		[]),
+	imports: _user$project$EditorControls$defaultImports,
+	tokens: _elm_lang$core$Dict$empty,
+	hints: _elm_lang$core$Native_List.fromArray(
+		[])
+};
+var _user$project$EditorControls$init = {
+	ctor: '_Tuple2',
+	_0: _user$project$EditorControls$emptyModel,
+	_1: A3(
+		_elm_lang$core$Task$perform,
+		_elm_lang$core$Basics$always(_user$project$EditorControls$DocsFailed),
+		_user$project$EditorControls$DocsLoaded,
+		_user$project$EditorControls$getAllDocs)
+};
+var _user$project$EditorControls$main = {
+	main: _elm_lang$html$Html_App$program(
+		{
+			init: _user$project$EditorControls$init,
+			view: _user$project$EditorControls$view,
+			update: _user$project$EditorControls$update,
+			subscriptions: _elm_lang$core$Basics$always(_elm_lang$core$Platform_Sub$none)
+		})
+};
+var _user$project$EditorControls$toImportDict = function (rawImportList) {
+	return A2(
+		_elm_lang$core$Dict$union,
+		_elm_lang$core$Dict$fromList(
+			A2(_elm_lang$core$List$map, _user$project$EditorControls$toImport, rawImportList)),
+		_user$project$EditorControls$defaultImports);
+};
