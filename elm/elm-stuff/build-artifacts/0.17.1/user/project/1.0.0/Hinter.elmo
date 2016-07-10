@@ -42,6 +42,11 @@ var _user$project$Hinter$viewHint = function (hint) {
 		_elm_lang$html$Html$a,
 		_elm_lang$core$Native_List.fromArray(
 			[
+				_elm_lang$html$Html_Attributes$style(
+				_elm_lang$core$Native_List.fromArray(
+					[
+						{ctor: '_Tuple2', _0: 'text-decoration', _1: 'underline'}
+					])),
 				_elm_lang$html$Html_Attributes$href(hint.href),
 				_elm_lang$html$Html_Attributes$target('_blank')
 			]),
@@ -54,13 +59,11 @@ var _user$project$Hinter$viewHintList = function (hints) {
 	var _p3 = hints;
 	if (_p3.ctor === '[]') {
 		return _elm_lang$core$Native_List.fromArray(
-			[
-				_elm_lang$html$Html$text('Hint: -')
-			]);
+			[]);
 	} else {
 		return A2(
 			_elm_lang$core$List_ops['::'],
-			_elm_lang$html$Html$text('Hint: '),
+			_elm_lang$html$Html$text(''),
 			A2(
 				_elm_lang$core$List$intersperse,
 				_elm_lang$html$Html$text(', '),
@@ -69,11 +72,37 @@ var _user$project$Hinter$viewHintList = function (hints) {
 };
 var _user$project$Hinter$view = function (_p4) {
 	var _p5 = _p4;
-	return A2(
-		_elm_lang$html$Html$div,
-		_elm_lang$core$Native_List.fromArray(
-			[]),
-		_user$project$Hinter$viewHintList(_p5.hints));
+	if (_p5.enabled) {
+		var icon = A2(
+			_elm_lang$html$Html$img,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html_Attributes$style(
+					_elm_lang$core$Native_List.fromArray(
+						[
+							{ctor: '_Tuple2', _0: 'margin-right', _1: '4px'}
+						])),
+					_elm_lang$html$Html_Attributes$src('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAMAAABhq6zVAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABgFBMVEVznFiM1TiN1zaF0VFkuL9gtc1aZHhymVmM1jiN1zeN1zaC0FljuMFgtc1aY3hxl1qS0zWa0TCZ0DGZ0TGb0C6DxXFhtspgtc1ZY3mSgErppgTspwLspgLqpwO1wx2B0FtkuMBgtc1aY3ifgUHtpALupgC7vx2N1zeN2DaD0VhkuL5aYnihgT++vxuO1zaN1zaF009aZHlci6R1xoSM1zmM1zehzStaZHldjqVgtcxgtcx1xoaN1zmM2DeoyijpqARaZHhdj6VgtcxgtcxzxYqmyyvqqAPwpQBaZHldjqRgtcxftc6br3bupQNaZHldjqRgtcxhtcukrWvtpQNdjqRgtMthtcqkrmyN1zeN1zeN1zdgtcxgtcyN1zeN1zdaY3hgtcxaY3haY3haY3haY3haY3haY3iN1zeN1zdaY3haY3iN1zeN1zdaY3haY3haY3haY3hgtcxgtcxaY3hgtcxgtcxgtcxgtczvpQBgtcxgtcxgtcxgtcxgtcxgtcz///+QJKtIAAAAWHRSTlOL2felu/namtr/8Km9/N2Slqalp5dVs/vehsDn58J5kLz43JbY2pbd8qq13YF/3PGf3YWF3eyd2pre3pnb7aTA3Jbd3ZGQxfvalt/di9nWmd3dmtaI2dmIbY8XDgAAAAFiS0dEf0i/ceUAAAAHdElNRQfgBwoJMAI5lOEGAAAAnElEQVQI12NgYIyIjGJiZmGNjolhYGPniOWM4+Lm4QVy4vn4BQSFhEVExcQTGBKTJCSlpGVk5eQVFBmSk1OUlFVU1dQ1NLWAnNQ0bR1dvfQMfQMgJzPL0MjYJDvH1IwhOTfP3MLSytrG1s6eIb/AwdGpsMjZxdXNnaHYw9OrpLSs3NvHt4LBzz+gMgYIqgKDghlCQqtrQJzaurBwAFG1JYhKDH4rAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE2LTA3LTEwVDA5OjQ4OjAyLTA0OjAwLy8ZugAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxNi0wNy0xMFQwOTo0ODowMi0wNDowMF5yoQYAAAAASUVORK5CYII=')
+				]),
+			_elm_lang$core$Native_List.fromArray(
+				[]));
+		return A2(
+			_elm_lang$html$Html$div,
+			_elm_lang$core$Native_List.fromArray(
+				[]),
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				_elm_lang$core$Native_List.fromArray(
+					[icon]),
+				_user$project$Hinter$viewHintList(_p5.hints)));
+	} else {
+		return A2(
+			_elm_lang$html$Html$div,
+			_elm_lang$core$Native_List.fromArray(
+				[]),
+			_elm_lang$core$Native_List.fromArray(
+				[]));
+	}
 };
 var _user$project$Hinter$tokens = _elm_lang$core$Native_Platform.incomingPort(
 	'tokens',
@@ -122,19 +151,10 @@ var _user$project$Hinter$rawImports = _elm_lang$core$Native_Platform.incomingPor
 							});
 					});
 			})));
-var _user$project$Hinter$compile = _elm_lang$core$Native_Platform.outgoingPort(
-	'compile',
-	function (v) {
-		return null;
-	});
-var _user$project$Hinter$lights = _elm_lang$core$Native_Platform.outgoingPort(
-	'lights',
-	function (v) {
-		return null;
-	});
-var _user$project$Hinter$Model = F4(
-	function (a, b, c, d) {
-		return {docs: a, imports: b, tokens: c, hints: d};
+var _user$project$Hinter$enabled = _elm_lang$core$Native_Platform.incomingPort('enabled', _elm_lang$core$Json_Decode$bool);
+var _user$project$Hinter$Model = F5(
+	function (a, b, c, d, e) {
+		return {docs: a, imports: b, tokens: c, hints: d, enabled: e};
 	});
 var _user$project$Hinter$ModuleDocs = F3(
 	function (a, b, c) {
@@ -366,19 +386,13 @@ var _user$project$Hinter$update = F2(
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
-			case 'Compile':
-				return {
-					ctor: '_Tuple2',
-					_0: model,
-					_1: _user$project$Hinter$compile(
-						{ctor: '_Tuple0'})
-				};
 			default:
 				return {
 					ctor: '_Tuple2',
-					_0: model,
-					_1: _user$project$Hinter$lights(
-						{ctor: '_Tuple0'})
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{enabled: _p12._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
 				};
 		}
 	});
@@ -399,8 +413,9 @@ _user$project$Hinter_ops['=>'] = F2(
 			_1: A2(_user$project$Hinter$Import, _elm_lang$core$Maybe$Nothing, exposed)
 		};
 	});
-var _user$project$Hinter$Lights = {ctor: 'Lights'};
-var _user$project$Hinter$Compile = {ctor: 'Compile'};
+var _user$project$Hinter$SetEnabled = function (a) {
+	return {ctor: 'SetEnabled', _0: a};
+};
 var _user$project$Hinter$CursorMove = function (a) {
 	return {ctor: 'CursorMove', _0: a};
 };
@@ -491,7 +506,8 @@ var _user$project$Hinter$emptyModel = {
 	imports: _user$project$Hinter$defaultImports,
 	tokens: _elm_lang$core$Dict$empty,
 	hints: _elm_lang$core$Native_List.fromArray(
-		[])
+		[]),
+	enabled: false
 };
 var _user$project$Hinter$init = {
 	ctor: '_Tuple2',
@@ -502,19 +518,27 @@ var _user$project$Hinter$init = {
 		_user$project$Hinter$DocsLoaded,
 		_user$project$Hinter$getAllDocs)
 };
-var _user$project$Hinter$main = {
-	main: _elm_lang$html$Html_App$program(
-		{
-			init: _user$project$Hinter$init,
-			view: _user$project$Hinter$view,
-			update: _user$project$Hinter$update,
-			subscriptions: _elm_lang$core$Basics$always(_elm_lang$core$Platform_Sub$none)
-		})
-};
 var _user$project$Hinter$toImportDict = function (rawImportList) {
 	return A2(
 		_elm_lang$core$Dict$union,
 		_elm_lang$core$Dict$fromList(
 			A2(_elm_lang$core$List$map, _user$project$Hinter$toImport, rawImportList)),
 		_user$project$Hinter$defaultImports);
+};
+var _user$project$Hinter$subscriptions = function (model) {
+	return _elm_lang$core$Platform_Sub$batch(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_user$project$Hinter$tokens(_user$project$Hinter$CursorMove),
+				_user$project$Hinter$rawImports(
+				function (raw) {
+					return _user$project$Hinter$UpdateImports(
+						_user$project$Hinter$toImportDict(raw));
+				}),
+				_user$project$Hinter$enabled(_user$project$Hinter$SetEnabled)
+			]));
+};
+var _user$project$Hinter$main = {
+	main: _elm_lang$html$Html_App$program(
+		{init: _user$project$Hinter$init, view: _user$project$Hinter$view, update: _user$project$Hinter$update, subscriptions: _user$project$Hinter$subscriptions})
 };
