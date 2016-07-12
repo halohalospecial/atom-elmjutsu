@@ -42,6 +42,8 @@ port tokens : (Maybe String -> msg) -> Sub msg
 
 port rawImports : (List RawImport -> msg) -> Sub msg
 
+port docsLoaded : () -> Cmd msg
+
 
 
 -- MODEL
@@ -52,6 +54,7 @@ type alias Model =
     , imports : ImportDict
     , tokens : TokenDict
     , hints : List Hint
+    , note : String
     }
 
 
@@ -68,6 +71,7 @@ emptyModel =
     , imports = defaultImports
     , tokens = Dict.empty
     , hints = []
+    , note = "Loading..."
     }
 
 
@@ -96,8 +100,9 @@ update msg model =
                 ( { model
                     | docs = newDocs
                     , tokens = toTokenDict model.imports newDocs
+                    , note = ""
                   }
-                , Cmd.none
+                , docsLoaded ()
                 )
 
         UpdateImports imports ->
@@ -124,12 +129,12 @@ update msg model =
 
 
 view : Model -> Html Msg
-view { hints } =
-    -- let mdOptions =
-    --     let options = Markdown.defaultOptions
-    --     in { options | defaultHighlighting = Just "elm" }
-    -- in Markdown.toHtmlWith mdOptions [] (viewHintString hints)
-    Markdown.toHtml [] (viewHintString hints)
+view { note, hints } =
+    div []
+        [ text note
+        , Markdown.toHtml [] (viewHintString hints)
+        ]
+
 
 
 viewHintString : List Hint -> String
@@ -189,7 +194,7 @@ viewHint hint =
             ++ "<br><br>\n"
             ++ hint.comment
             ++ "<br><br>\n"
-            ++ "[*Click here to view in browser*]("
+            ++ "[View in browser]("
             ++ hint.href
             ++ ")"
 

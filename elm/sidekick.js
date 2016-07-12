@@ -8616,7 +8616,7 @@ var _user$project$Sidekick$viewHint = function (hint) {
 													'<br><br>\n',
 													A2(
 														_elm_lang$core$Basics_ops['++'],
-														'[*Click here to view in browser*](',
+														'[View in browser](',
 														A2(_elm_lang$core$Basics_ops['++'], hint.href, ')'))))))))))))));
 };
 var _user$project$Sidekick$viewHintString = function (hints) {
@@ -8633,10 +8633,18 @@ var _user$project$Sidekick$viewHintString = function (hints) {
 var _user$project$Sidekick$view = function (_p9) {
 	var _p10 = _p9;
 	return A2(
-		_evancz$elm_markdown$Markdown$toHtml,
+		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
 			[]),
-		_user$project$Sidekick$viewHintString(_p10.hints));
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$html$Html$text(_p10.note),
+				A2(
+				_evancz$elm_markdown$Markdown$toHtml,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_user$project$Sidekick$viewHintString(_p10.hints))
+			]));
 };
 var _user$project$Sidekick$tokens = _elm_lang$core$Native_Platform.incomingPort(
 	'tokens',
@@ -8685,9 +8693,14 @@ var _user$project$Sidekick$rawImports = _elm_lang$core$Native_Platform.incomingP
 							});
 					});
 			})));
-var _user$project$Sidekick$Model = F4(
-	function (a, b, c, d) {
-		return {docs: a, imports: b, tokens: c, hints: d};
+var _user$project$Sidekick$docsLoaded = _elm_lang$core$Native_Platform.outgoingPort(
+	'docsLoaded',
+	function (v) {
+		return null;
+	});
+var _user$project$Sidekick$Model = F5(
+	function (a, b, c, d, e) {
+		return {docs: a, imports: b, tokens: c, hints: d, note: e};
 	});
 var _user$project$Sidekick$ModuleDocs = F3(
 	function (a, b, c) {
@@ -8895,9 +8908,11 @@ var _user$project$Sidekick$update = F2(
 						model,
 						{
 							docs: newDocs,
-							tokens: A2(_user$project$Sidekick$toTokenDict, model.imports, newDocs)
+							tokens: A2(_user$project$Sidekick$toTokenDict, model.imports, newDocs),
+							note: ''
 						}),
-					_1: _elm_lang$core$Platform_Cmd$none
+					_1: _user$project$Sidekick$docsLoaded(
+						{ctor: '_Tuple0'})
 				};
 			case 'UpdateImports':
 				var _p21 = _p20._0;
@@ -9047,7 +9062,8 @@ var _user$project$Sidekick$emptyModel = {
 	imports: _user$project$Sidekick$defaultImports,
 	tokens: _elm_lang$core$Dict$empty,
 	hints: _elm_lang$core$Native_List.fromArray(
-		[])
+		[]),
+	note: 'Loading...'
 };
 var _user$project$Sidekick$init = {
 	ctor: '_Tuple2',
