@@ -1,0 +1,12 @@
+var _user$project$Repl$t_s_o_l = {ctor: '_Tuple0'};
+var _user$project$Repl$name = '++';
+var _user$project$Repl$d_e_l_t_r_o_n_3_0_3_0 = _elm_lang$core$Native_Utils.eq(
+	A4(
+		_elm_lang$core$Regex$replace,
+		_elm_lang$core$Regex$All,
+		_elm_lang$core$Regex$regex('\\W'),
+		function (_p0) {
+			return '';
+		},
+		_user$project$Repl$name),
+	'');

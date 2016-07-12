@@ -1,17 +1,18 @@
 -- Based on https://github.com/elm-lang/elm-lang.org/tree/master/src/editor
 
 
-port module Hinter exposing (..)
+port module Sidekick exposing (..)
 
 import Dict
 import Html exposing (..)
 import Html.App as Html
-import Html.Attributes exposing (..)
 import Http
 import Json.Decode as Json exposing ((:=))
 import Set
 import String
 import Task
+import Markdown
+import Regex
 
 
 main : Program Never
@@ -29,7 +30,6 @@ subscriptions model =
     Sub.batch
         [ tokens CursorMove
         , rawImports (\raw -> UpdateImports (toImportDict raw))
-        , enabled SetEnabled
         ]
 
 
@@ -43,9 +43,6 @@ port tokens : (Maybe String -> msg) -> Sub msg
 port rawImports : (List RawImport -> msg) -> Sub msg
 
 
-port enabled : (Bool -> msg) -> Sub msg
-
-
 
 -- MODEL
 
@@ -55,7 +52,6 @@ type alias Model =
     , imports : ImportDict
     , tokens : TokenDict
     , hints : List Hint
-    , enabled : Bool
     }
 
 
@@ -72,7 +68,6 @@ emptyModel =
     , imports = defaultImports
     , tokens = Dict.empty
     , hints = []
-    , enabled = False
     }
 
 
@@ -85,7 +80,6 @@ type Msg
     | DocsLoaded (List ModuleDocs)
     | UpdateImports ImportDict
     | CursorMove (Maybe String)
-    | SetEnabled Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -124,51 +118,80 @@ update msg model =
             , Cmd.none
             )
 
-        SetEnabled enabled ->
-            ( { model | enabled = enabled }, Cmd.none )
-
 
 
 -- VIEW
 
 
 view : Model -> Html Msg
-view { enabled, hints } =
-    if enabled then
-        let
-            icon =
-                img
-                    [ style [ ( "margin-right", "4px" ) ]
-                    , src "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAMAAABhq6zVAAAABGdBTUEAALGPC/xhBQAAACBjSFJNAAB6JgAAgIQAAPoAAACA6AAAdTAAAOpgAAA6mAAAF3CculE8AAABgFBMVEVznFiM1TiN1zaF0VFkuL9gtc1aZHhymVmM1jiN1zeN1zaC0FljuMFgtc1aY3hxl1qS0zWa0TCZ0DGZ0TGb0C6DxXFhtspgtc1ZY3mSgErppgTspwLspgLqpwO1wx2B0FtkuMBgtc1aY3ifgUHtpALupgC7vx2N1zeN2DaD0VhkuL5aYnihgT++vxuO1zaN1zaF009aZHlci6R1xoSM1zmM1zehzStaZHldjqVgtcxgtcx1xoaN1zmM2DeoyijpqARaZHhdj6VgtcxgtcxzxYqmyyvqqAPwpQBaZHldjqRgtcxftc6br3bupQNaZHldjqRgtcxhtcukrWvtpQNdjqRgtMthtcqkrmyN1zeN1zeN1zdgtcxgtcyN1zeN1zdaY3hgtcxaY3haY3haY3haY3haY3haY3iN1zeN1zdaY3haY3iN1zeN1zdaY3haY3haY3haY3hgtcxgtcxaY3hgtcxgtcxgtcxgtczvpQBgtcxgtcxgtcxgtcxgtcxgtcz///+QJKtIAAAAWHRSTlOL2felu/namtr/8Km9/N2Slqalp5dVs/vehsDn58J5kLz43JbY2pbd8qq13YF/3PGf3YWF3eyd2pre3pnb7aTA3Jbd3ZGQxfvalt/di9nWmd3dmtaI2dmIbY8XDgAAAAFiS0dEf0i/ceUAAAAHdElNRQfgBwoJMAI5lOEGAAAAnElEQVQI12NgYIyIjGJiZmGNjolhYGPniOWM4+Lm4QVy4vn4BQSFhEVExcQTGBKTJCSlpGVk5eQVFBmSk1OUlFVU1dQ1NLWAnNQ0bR1dvfQMfQMgJzPL0MjYJDvH1IwhOTfP3MLSytrG1s6eIb/AwdGpsMjZxdXNnaHYw9OrpLSs3NvHt4LBzz+gMgYIqgKDghlCQqtrQJzaurBwAFG1JYhKDH4rAAAAJXRFWHRkYXRlOmNyZWF0ZQAyMDE2LTA3LTEwVDA5OjQ4OjAyLTA0OjAwLy8ZugAAACV0RVh0ZGF0ZTptb2RpZnkAMjAxNi0wNy0xMFQwOTo0ODowMi0wNDowMF5yoQYAAAAASUVORK5CYII="
-                    ]
-                    []
-        in
-            div [] ([ icon ] ++ (viewHintList hints))
-    else
-        div [] []
+view { hints } =
+    -- let mdOptions =
+    --     let options = Markdown.defaultOptions
+    --     in { options | defaultHighlighting = Just "elm" }
+    -- in Markdown.toHtmlWith mdOptions [] (viewHintString hints)
+    Markdown.toHtml [] (viewHintString hints)
 
 
-viewHintList : List Hint -> List (Html msg)
-viewHintList hints =
+viewHintString : List Hint -> String
+viewHintString hints =
     case hints of
         [] ->
-            []
+            ""
 
         _ ->
-            text "" :: List.intersperse (text ", ") (List.map viewHint hints)
+            String.join "\n\n" (List.map viewHint hints)
 
 
-viewHint : Hint -> Html msg
+viewHint : Hint -> String
 viewHint hint =
-    a
-        [ style []--style [ ( "text-decoration", "underline" ) ]
-          -- -- This is needed because Atom does not underline links by default.
-        , href hint.href
-        , target "_blank"
-        , title hint.comment
-        ]
-        [ text (hint.name ++ " : " ++ hint.tipe )
-        ]
+    let
+        ( pkg, name ) =
+            case String.split "." hint.name of
+                [] ->
+                    ( "", hint.name )
+
+                list ->
+                    let
+                        reversed =
+                            List.reverse list
+
+                        name =
+                            case List.head reversed of
+                                Just last ->
+                                    last
+
+                                Nothing ->
+                                    ""
+
+                        pkg =
+                            reversed
+                                |> List.drop 1
+                                |> List.reverse
+                                |> String.join "."
+                    in
+                        ( pkg, name )
+
+        formatName name =
+            if Regex.contains (Regex.regex "\\w") name then
+                name
+            else
+                "(" ++ name ++ ")"
+    in
+        "# "
+            ++ pkg
+            ++ ".**"
+            ++ name
+            ++ "**\n"
+            ++ "## **"
+            ++ formatName name
+            ++ "** : "
+            ++ hint.tipe
+            ++ "<br><br>\n"
+            ++ hint.comment
+            ++ "<br><br>\n"
+            ++ "[*Click here to view in browser*]("
+            ++ hint.href
+            ++ ")"
 
 
 
@@ -184,10 +207,10 @@ type alias ModuleDocs =
 
 type alias Values =
     { aliases : List Value
-    -- , types : List ( String, Tipe )
     , types : List Tipe
     , values : List Value
     }
+
 
 type alias Tipe =
     { name : String
@@ -195,6 +218,7 @@ type alias Tipe =
     , tipe : String
     , cases : List String
     }
+
 
 type alias Value =
     { name : String
@@ -261,19 +285,12 @@ moduleDecoder pkg =
         name =
             "name" := Json.string
 
-        -- tipe =
-        --     Json.object2 (,)
-        --         name
-        --         (Json.object4 Tipe
-        --             ("name" := Json.string)
-        --             ("comment" := Json.string)
-        --             ("name" := Json.string) -- type
-        --             ("cases" := Json.list (Json.tuple2 always Json.string Json.value)))
         tipe =
             Json.object4 Tipe
                 ("name" := Json.string)
                 ("comment" := Json.string)
-                ("name" := Json.string) -- type
+                ("name" := Json.string)
+                -- type
                 ("cases" := Json.list (Json.tuple2 always Json.string Json.value))
 
         value =
@@ -321,16 +338,17 @@ toTokenDict imports moduleList =
             |> List.concat
             |> List.foldl insert Dict.empty
 
+
 tipeToValue : Tipe -> Value
-tipeToValue {name, comment, tipe} =
-    {name = name, comment = comment, tipe = tipe}
+tipeToValue { name, comment, tipe } =
+    { name = name, comment = comment, tipe = tipe }
+
 
 filteredHints : ModuleDocs -> Import -> List ( String, Hint )
 filteredHints moduleDocs importData =
     let
         allNames =
             moduleDocs.values.aliases
-                -- ++ List.map fst moduleDocs.values.types
                 ++ List.map tipeToValue moduleDocs.values.types
                 ++ moduleDocs.values.values
     in
@@ -339,7 +357,7 @@ filteredHints moduleDocs importData =
 
 
 nameToHints : ModuleDocs -> Import -> Value -> List ( String, Hint )
-nameToHints moduleDocs { alias, exposed } {name, comment, tipe} =
+nameToHints moduleDocs { alias, exposed } { name, comment, tipe } =
     let
         fullName =
             moduleDocs.name ++ "." ++ name
@@ -356,22 +374,8 @@ nameToHints moduleDocs { alias, exposed } {name, comment, tipe} =
             [ ( localName, hint ) ]
 
 
--- unionTagsToHints : ModuleDocs -> ( String, List String ) -> List ( String, Hint )
--- unionTagsToHints moduleDocs ( tipeName, tags ) =
---     let
---         addHints tag hints =
---             let
---                 fullName =
---                     moduleDocs.name ++ "." ++ tag
---
---                 hint =
---                     Hint fullName (urlTo moduleDocs tipeName)
---             in
---                 ( tag, hint ) :: ( fullName, hint ) :: hints
---     in
---         List.foldl addHints [] tags
 unionTagsToHints : ModuleDocs -> Tipe -> List ( String, Hint )
-unionTagsToHints moduleDocs {name, cases, comment, tipe} =
+unionTagsToHints moduleDocs { name, cases, comment, tipe } =
     let
         addHints tag hints =
             let
