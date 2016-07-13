@@ -14,7 +14,6 @@ import Task
 import Markdown
 import Regex
 
-
 main : Program Never
 main =
     Html.program
@@ -30,17 +29,26 @@ subscriptions model =
     Sub.batch
         [ tokens CursorMove
         , rawImports (\raw -> UpdateImports (toImportDict raw))
+        , newPkgs UpdateDocs
         ]
 
 
 
--- FOREIGN VALUES
+-- INCOMING PORTS
 
 
 port tokens : (Maybe String -> msg) -> Sub msg
 
 
 port rawImports : (List RawImport -> msg) -> Sub msg
+
+
+port newPkgs : (List String -> msg) -> Sub msg
+
+
+
+-- OUTGOING PORTS
+
 
 port docsLoaded : () -> Cmd msg
 
@@ -61,7 +69,7 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( emptyModel
-    , Task.perform (always DocsFailed) DocsLoaded getAllDocs
+    , Task.perform (always DocsFailed) DocsLoaded (getPkgsDocs defaultPkgs)
     )
 
 
@@ -84,18 +92,21 @@ type Msg
     | DocsLoaded (List ModuleDocs)
     | UpdateImports ImportDict
     | CursorMove (Maybe String)
+    | UpdateDocs (List String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         DocsFailed ->
-            ( model, Cmd.none )
+            ( { model | note = "Failed to load -_-" }
+            , Cmd.none
+            )
 
-        DocsLoaded pkg ->
+        DocsLoaded docs ->
             let
                 newDocs =
-                    pkg ++ model.docs
+                    docs ++ model.docs
             in
                 ( { model
                     | docs = newDocs
@@ -123,6 +134,14 @@ update msg model =
             , Cmd.none
             )
 
+        UpdateDocs pkgs ->
+            let existingPkgs = List.map .pkg model.docs
+                missingPkgs = List.filter (\pkg -> not <| List.member pkg existingPkgs) pkgs
+            in
+            ( model
+            , Task.perform (always DocsFailed) DocsLoaded (getPkgsDocs missingPkgs)
+            )
+
 
 
 -- VIEW
@@ -134,7 +153,6 @@ view { note, hints } =
         [ text note
         , Markdown.toHtml [] (viewHintString hints)
         ]
-
 
 
 viewHintString : List Hint -> String
@@ -150,7 +168,7 @@ viewHintString hints =
 viewHint : Hint -> String
 viewHint hint =
     let
-        ( pkg, name ) =
+        ( modul, name ) =
             case String.split "." hint.name of
                 [] ->
                     ( "", hint.name )
@@ -168,13 +186,13 @@ viewHint hint =
                                 Nothing ->
                                     ""
 
-                        pkg =
+                        modul =
                             reversed
                                 |> List.drop 1
                                 |> List.reverse
                                 |> String.join "."
                     in
-                        ( pkg, name )
+                        ( modul, name )
 
         formatName name =
             if Regex.contains (Regex.regex "\\w") name then
@@ -183,7 +201,7 @@ viewHint hint =
                 "(" ++ name ++ ")"
     in
         "# "
-            ++ pkg
+            ++ modul
             ++ ".**"
             ++ name
             ++ "**\n"
@@ -258,25 +276,26 @@ dotToHyphen string =
 -- FETCH DOCS
 
 
-getAllDocs : Task.Task Http.Error (List ModuleDocs)
-getAllDocs =
-    let
-        supportedPackages =
-            [ "elm-lang/core"
-            , "elm-lang/html"
-            , "elm-lang/svg"
-            , "evancz/elm-markdown"
-            , "evancz/elm-http"
-            ]
-    in
-        supportedPackages
-            |> List.map getDocs
-            |> Task.sequence
-            |> Task.map List.concat
+defaultPkgs : List String
+defaultPkgs =
+    [ "elm-lang/core"
+    , "elm-lang/html"
+    , "elm-lang/svg"
+    , "evancz/elm-markdown"
+    , "evancz/elm-http"
+    ]
 
 
-getDocs : String -> Task.Task Http.Error (List ModuleDocs)
-getDocs pkg =
+getPkgsDocs : List String -> Task.Task Http.Error (List ModuleDocs)
+getPkgsDocs pkgs =
+    pkgs
+        |> List.map getPkgDocs
+        |> Task.sequence
+        |> Task.map List.concat
+
+
+getPkgDocs : String -> Task.Task Http.Error (List ModuleDocs)
+getPkgDocs pkg =
     let
         url =
             "http://package.elm-lang.org/packages/" ++ pkg ++ "/latest/documentation.json"

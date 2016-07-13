@@ -1358,7 +1358,7 @@ function eqHelp(x, y, depth, stack)
 		return true;
 	}
 
-	if (x.ctor !== y.ctor)
+	if (!eqHelp(x.ctor, y.ctor, depth + 1, stack))
 	{
 		return false;
 	}
@@ -1640,20 +1640,14 @@ function toString(v)
 			return '[]';
 		}
 
-		if (v.ctor === 'RBNode_elm_builtin' || v.ctor === 'RBEmpty_elm_builtin' || v.ctor === 'Set_elm_builtin')
+		if (v.ctor === 'Set_elm_builtin')
 		{
-			var name, list;
-			if (v.ctor === 'Set_elm_builtin')
-			{
-				name = 'Set';
-				list = _elm_lang$core$Set$toList(v._0);
-			}
-			else
-			{
-				name = 'Dict';
-				list = _elm_lang$core$Dict$toList(v);
-			}
-			return name + '.fromList ' + toString(list);
+			return 'Set.fromList ' + toString(_elm_lang$core$Set$toList(v));
+		}
+
+		if (v.ctor === 'RBNode_elm_builtin' || v.ctor === 'RBEmpty_elm_builtin')
+		{
+			return 'Dict.fromList ' + toString(_elm_lang$core$Dict$toList(v));
 		}
 
 		var output = '';
@@ -8517,6 +8511,8 @@ var _user$project$Sidekick$tipeToValue = function (_p1) {
 	var _p2 = _p1;
 	return {name: _p2.name, comment: _p2.comment, tipe: _p2.tipe};
 };
+var _user$project$Sidekick$defaultPkgs = _elm_lang$core$Native_List.fromArray(
+	['elm-lang/core', 'elm-lang/html', 'elm-lang/svg', 'evancz/elm-markdown', 'evancz/elm-http']);
 var _user$project$Sidekick$dotToHyphen = function (string) {
 	return A2(
 		_elm_lang$core$String$map,
@@ -8568,22 +8564,22 @@ var _user$project$Sidekick$viewHint = function (hint) {
 					return '';
 				}
 			}();
-			var pkg = A2(
+			var modul = A2(
 				_elm_lang$core$String$join,
 				'.',
 				_elm_lang$core$List$reverse(
 					A2(_elm_lang$core$List$drop, 1, reversed)));
-			return {ctor: '_Tuple2', _0: pkg, _1: name};
+			return {ctor: '_Tuple2', _0: modul, _1: name};
 		}
 	}();
-	var pkg = _p5._0;
+	var modul = _p5._0;
 	var name = _p5._1;
 	return A2(
 		_elm_lang$core$Basics_ops['++'],
 		'# ',
 		A2(
 			_elm_lang$core$Basics_ops['++'],
-			pkg,
+			modul,
 			A2(
 				_elm_lang$core$Basics_ops['++'],
 				'.**',
@@ -8693,6 +8689,9 @@ var _user$project$Sidekick$rawImports = _elm_lang$core$Native_Platform.incomingP
 							});
 					});
 			})));
+var _user$project$Sidekick$newPkgs = _elm_lang$core$Native_Platform.incomingPort(
+	'newPkgs',
+	_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string));
 var _user$project$Sidekick$docsLoaded = _elm_lang$core$Native_Platform.outgoingPort(
 	'docsLoaded',
 	function (v) {
@@ -8758,7 +8757,7 @@ var _user$project$Sidekick$moduleDecoder = function (pkg) {
 		name,
 		values);
 };
-var _user$project$Sidekick$getDocs = function (pkg) {
+var _user$project$Sidekick$getPkgDocs = function (pkg) {
 	var url = A2(
 		_elm_lang$core$Basics_ops['++'],
 		'http://package.elm-lang.org/packages/',
@@ -8769,15 +8768,13 @@ var _user$project$Sidekick$getDocs = function (pkg) {
 			_user$project$Sidekick$moduleDecoder(pkg)),
 		url);
 };
-var _user$project$Sidekick$getAllDocs = function () {
-	var supportedPackages = _elm_lang$core$Native_List.fromArray(
-		['elm-lang/core', 'elm-lang/html', 'elm-lang/svg', 'evancz/elm-markdown', 'evancz/elm-http']);
+var _user$project$Sidekick$getPkgsDocs = function (pkgs) {
 	return A2(
 		_elm_lang$core$Task$map,
 		_elm_lang$core$List$concat,
 		_elm_lang$core$Task$sequence(
-			A2(_elm_lang$core$List$map, _user$project$Sidekick$getDocs, supportedPackages)));
-}();
+			A2(_elm_lang$core$List$map, _user$project$Sidekick$getPkgDocs, pkgs)));
+};
 var _user$project$Sidekick$Hint = F4(
 	function (a, b, c, d) {
 		return {name: a, href: b, comment: c, tipe: d};
@@ -8894,12 +8891,48 @@ var _user$project$Sidekick$toTokenDict = F2(
 			_elm_lang$core$List$concat(
 				A2(_elm_lang$core$List$filterMap, getMaybeHints, moduleList)));
 	});
+var _user$project$Sidekick$RawImport = F3(
+	function (a, b, c) {
+		return {name: a, alias: b, exposed: c};
+	});
+var _user$project$Sidekick$Import = F2(
+	function (a, b) {
+		return {alias: a, exposed: b};
+	});
+var _user$project$Sidekick_ops = _user$project$Sidekick_ops || {};
+_user$project$Sidekick_ops['=>'] = F2(
+	function (name, exposed) {
+		return {
+			ctor: '_Tuple2',
+			_0: name,
+			_1: A2(_user$project$Sidekick$Import, _elm_lang$core$Maybe$Nothing, exposed)
+		};
+	});
+var _user$project$Sidekick$UpdateDocs = function (a) {
+	return {ctor: 'UpdateDocs', _0: a};
+};
+var _user$project$Sidekick$CursorMove = function (a) {
+	return {ctor: 'CursorMove', _0: a};
+};
+var _user$project$Sidekick$UpdateImports = function (a) {
+	return {ctor: 'UpdateImports', _0: a};
+};
+var _user$project$Sidekick$DocsLoaded = function (a) {
+	return {ctor: 'DocsLoaded', _0: a};
+};
+var _user$project$Sidekick$DocsFailed = {ctor: 'DocsFailed'};
 var _user$project$Sidekick$update = F2(
 	function (msg, model) {
 		var _p20 = msg;
 		switch (_p20.ctor) {
 			case 'DocsFailed':
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{note: 'Failed to load -_-'}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 			case 'DocsLoaded':
 				var newDocs = A2(_elm_lang$core$Basics_ops['++'], _p20._0, model.docs);
 				return {
@@ -8926,7 +8959,7 @@ var _user$project$Sidekick$update = F2(
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			default:
+			case 'CursorMove':
 				if (_p20._0.ctor === 'Nothing') {
 					return {
 						ctor: '_Tuple2',
@@ -8953,35 +8986,31 @@ var _user$project$Sidekick$update = F2(
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
+			default:
+				var existingPkgs = A2(
+					_elm_lang$core$List$map,
+					function (_) {
+						return _.pkg;
+					},
+					model.docs);
+				var missingPkgs = A2(
+					_elm_lang$core$List$filter,
+					function (pkg) {
+						return _elm_lang$core$Basics$not(
+							A2(_elm_lang$core$List$member, pkg, existingPkgs));
+					},
+					_p20._0);
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: A3(
+						_elm_lang$core$Task$perform,
+						_elm_lang$core$Basics$always(_user$project$Sidekick$DocsFailed),
+						_user$project$Sidekick$DocsLoaded,
+						_user$project$Sidekick$getPkgsDocs(missingPkgs))
+				};
 		}
 	});
-var _user$project$Sidekick$RawImport = F3(
-	function (a, b, c) {
-		return {name: a, alias: b, exposed: c};
-	});
-var _user$project$Sidekick$Import = F2(
-	function (a, b) {
-		return {alias: a, exposed: b};
-	});
-var _user$project$Sidekick_ops = _user$project$Sidekick_ops || {};
-_user$project$Sidekick_ops['=>'] = F2(
-	function (name, exposed) {
-		return {
-			ctor: '_Tuple2',
-			_0: name,
-			_1: A2(_user$project$Sidekick$Import, _elm_lang$core$Maybe$Nothing, exposed)
-		};
-	});
-var _user$project$Sidekick$CursorMove = function (a) {
-	return {ctor: 'CursorMove', _0: a};
-};
-var _user$project$Sidekick$UpdateImports = function (a) {
-	return {ctor: 'UpdateImports', _0: a};
-};
-var _user$project$Sidekick$DocsLoaded = function (a) {
-	return {ctor: 'DocsLoaded', _0: a};
-};
-var _user$project$Sidekick$DocsFailed = {ctor: 'DocsFailed'};
 var _user$project$Sidekick$All = {ctor: 'All'};
 var _user$project$Sidekick$Some = function (a) {
 	return {ctor: 'Some', _0: a};
@@ -9072,7 +9101,7 @@ var _user$project$Sidekick$init = {
 		_elm_lang$core$Task$perform,
 		_elm_lang$core$Basics$always(_user$project$Sidekick$DocsFailed),
 		_user$project$Sidekick$DocsLoaded,
-		_user$project$Sidekick$getAllDocs)
+		_user$project$Sidekick$getPkgsDocs(_user$project$Sidekick$defaultPkgs))
 };
 var _user$project$Sidekick$toImportDict = function (rawImportList) {
 	return A2(
@@ -9090,7 +9119,8 @@ var _user$project$Sidekick$subscriptions = function (model) {
 				function (raw) {
 					return _user$project$Sidekick$UpdateImports(
 						_user$project$Sidekick$toImportDict(raw));
-				})
+				}),
+				_user$project$Sidekick$newPkgs(_user$project$Sidekick$UpdateDocs)
 			]));
 };
 var _user$project$Sidekick$main = {

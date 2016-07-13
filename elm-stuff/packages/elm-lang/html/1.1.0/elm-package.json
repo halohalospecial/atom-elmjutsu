@@ -1,0 +1,22 @@
+{
+    "version": "1.1.0",
+    "summary": "Fast HTML, rendered with virtual DOM diffing",
+    "repository": "https://github.com/elm-lang/html.git",
+    "license": "BSD3",
+    "source-directories": [
+        "src"
+    ],
+    "exposed-modules": [
+        "Html",
+        "Html.App",
+        "Html.Attributes",
+        "Html.Events",
+        "Html.Keyed",
+        "Html.Lazy"
+    ],
+    "dependencies": {
+        "elm-lang/core": "4.0.0 <= v < 5.0.0",
+        "elm-lang/virtual-dom": "1.1.0 <= v < 2.0.0"
+    },
+    "elm-version": "0.17.0 <= v < 0.18.0"
+}

@@ -7,6 +7,8 @@ Warning:  Most of these are hacky experiments that may not always work properly.
 ## Requirements
 
 * [elm](http://elm-lang.org/install)
+* [language-elm](https://atom.io/packages/language-elm) for the following:
+  - `Elm Fu: Toggle Sidekick`
 * [linter-elm-make](https://atom.io/packages/linter-elm-make) for the following:
   - `Elm Fu: Find Usages`
   - `Elm Fu: Find Unused`
