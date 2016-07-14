@@ -8512,7 +8512,7 @@ var _user$project$Sidekick$tipeToValue = function (_p1) {
 	return {name: _p2.name, comment: _p2.comment, tipe: _p2.tipe};
 };
 var _user$project$Sidekick$defaultPkgs = _elm_lang$core$Native_List.fromArray(
-	['elm-lang/core', 'elm-lang/html', 'elm-lang/svg', 'evancz/elm-markdown', 'evancz/elm-http']);
+	['elm-lang/core']);
 var _user$project$Sidekick$dotToHyphen = function (string) {
 	return A2(
 		_elm_lang$core$String$map,
@@ -8541,6 +8541,10 @@ var _user$project$Sidekick$urlTo = F2(
 						A2(_elm_lang$core$Basics_ops['++'], '#', valueName)))));
 	});
 var _user$project$Sidekick$viewHint = function (hint) {
+	var maybeBrowserLink = _elm_lang$core$Native_Utils.eq(hint.href, '') ? '' : A2(
+		_elm_lang$core$Basics_ops['++'],
+		'[View in browser](',
+		A2(_elm_lang$core$Basics_ops['++'], hint.href, ')'));
 	var formatName = function (name) {
 		return A2(
 			_elm_lang$core$Regex$contains,
@@ -8607,13 +8611,7 @@ var _user$project$Sidekick$viewHint = function (hint) {
 											A2(
 												_elm_lang$core$Basics_ops['++'],
 												hint.comment,
-												A2(
-													_elm_lang$core$Basics_ops['++'],
-													'<br><br>\n',
-													A2(
-														_elm_lang$core$Basics_ops['++'],
-														'[View in browser](',
-														A2(_elm_lang$core$Basics_ops['++'], hint.href, ')'))))))))))))));
+												A2(_elm_lang$core$Basics_ops['++'], '<br><br>\n', maybeBrowserLink))))))))))));
 };
 var _user$project$Sidekick$viewHintString = function (hints) {
 	var _p8 = hints;
@@ -8642,16 +8640,28 @@ var _user$project$Sidekick$view = function (_p9) {
 				_user$project$Sidekick$viewHintString(_p10.hints))
 			]));
 };
-var _user$project$Sidekick$tokens = _elm_lang$core$Native_Platform.incomingPort(
-	'tokens',
+var _user$project$Sidekick$emptyModuleDocs = {
+	pkg: '',
+	name: '',
+	values: {
+		aliases: _elm_lang$core$Native_List.fromArray(
+			[]),
+		types: _elm_lang$core$Native_List.fromArray(
+			[]),
+		values: _elm_lang$core$Native_List.fromArray(
+			[])
+	}
+};
+var _user$project$Sidekick$activeTokenChanged = _elm_lang$core$Native_Platform.incomingPort(
+	'activeTokenChanged',
 	_elm_lang$core$Json_Decode$oneOf(
 		_elm_lang$core$Native_List.fromArray(
 			[
 				_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
 				A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
 			])));
-var _user$project$Sidekick$rawImports = _elm_lang$core$Native_Platform.incomingPort(
-	'rawImports',
+var _user$project$Sidekick$rawImportsChanged = _elm_lang$core$Native_Platform.incomingPort(
+	'rawImportsChanged',
 	_elm_lang$core$Json_Decode$list(
 		A2(
 			_elm_lang$core$Json_Decode$andThen,
@@ -8689,17 +8699,123 @@ var _user$project$Sidekick$rawImports = _elm_lang$core$Native_Platform.incomingP
 							});
 					});
 			})));
-var _user$project$Sidekick$newPkgs = _elm_lang$core$Native_Platform.incomingPort(
-	'newPkgs',
+var _user$project$Sidekick$activeModuleChanged = _elm_lang$core$Native_Platform.incomingPort(
+	'activeModuleChanged',
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'pkg', _elm_lang$core$Json_Decode$string),
+		function (pkg) {
+			return A2(
+				_elm_lang$core$Json_Decode$andThen,
+				A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+				function (name) {
+					return A2(
+						_elm_lang$core$Json_Decode$andThen,
+						A2(
+							_elm_lang$core$Json_Decode_ops[':='],
+							'values',
+							A2(
+								_elm_lang$core$Json_Decode$andThen,
+								A2(
+									_elm_lang$core$Json_Decode_ops[':='],
+									'aliases',
+									_elm_lang$core$Json_Decode$list(
+										A2(
+											_elm_lang$core$Json_Decode$andThen,
+											A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+											function (name) {
+												return A2(
+													_elm_lang$core$Json_Decode$andThen,
+													A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
+													function (comment) {
+														return A2(
+															_elm_lang$core$Json_Decode$andThen,
+															A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
+															function (tipe) {
+																return _elm_lang$core$Json_Decode$succeed(
+																	{name: name, comment: comment, tipe: tipe});
+															});
+													});
+											}))),
+								function (aliases) {
+									return A2(
+										_elm_lang$core$Json_Decode$andThen,
+										A2(
+											_elm_lang$core$Json_Decode_ops[':='],
+											'types',
+											_elm_lang$core$Json_Decode$list(
+												A2(
+													_elm_lang$core$Json_Decode$andThen,
+													A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+													function (name) {
+														return A2(
+															_elm_lang$core$Json_Decode$andThen,
+															A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
+															function (comment) {
+																return A2(
+																	_elm_lang$core$Json_Decode$andThen,
+																	A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
+																	function (tipe) {
+																		return A2(
+																			_elm_lang$core$Json_Decode$andThen,
+																			A2(
+																				_elm_lang$core$Json_Decode_ops[':='],
+																				'cases',
+																				_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string)),
+																			function (cases) {
+																				return _elm_lang$core$Json_Decode$succeed(
+																					{name: name, comment: comment, tipe: tipe, cases: cases});
+																			});
+																	});
+															});
+													}))),
+										function (types) {
+											return A2(
+												_elm_lang$core$Json_Decode$andThen,
+												A2(
+													_elm_lang$core$Json_Decode_ops[':='],
+													'values',
+													_elm_lang$core$Json_Decode$list(
+														A2(
+															_elm_lang$core$Json_Decode$andThen,
+															A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+															function (name) {
+																return A2(
+																	_elm_lang$core$Json_Decode$andThen,
+																	A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
+																	function (comment) {
+																		return A2(
+																			_elm_lang$core$Json_Decode$andThen,
+																			A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
+																			function (tipe) {
+																				return _elm_lang$core$Json_Decode$succeed(
+																					{name: name, comment: comment, tipe: tipe});
+																			});
+																	});
+															}))),
+												function (values) {
+													return _elm_lang$core$Json_Decode$succeed(
+														{aliases: aliases, types: types, values: values});
+												});
+										});
+								})),
+						function (values) {
+							return _elm_lang$core$Json_Decode$succeed(
+								{pkg: pkg, name: name, values: values});
+						});
+				});
+		}));
+var _user$project$Sidekick$newPkgsNeeded = _elm_lang$core$Native_Platform.incomingPort(
+	'newPkgsNeeded',
 	_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string));
 var _user$project$Sidekick$docsLoaded = _elm_lang$core$Native_Platform.outgoingPort(
 	'docsLoaded',
 	function (v) {
 		return null;
 	});
-var _user$project$Sidekick$Model = F5(
-	function (a, b, c, d, e) {
-		return {docs: a, imports: b, tokens: c, hints: d, note: e};
+var _user$project$Sidekick$Model = F6(
+	function (a, b, c, d, e, f) {
+		return {docs: a, imports: b, activeModuleDocs: c, tokens: d, hints: e, note: f};
 	});
 var _user$project$Sidekick$ModuleDocs = F3(
 	function (a, b, c) {
@@ -8839,7 +8955,7 @@ var _user$project$Sidekick$unionTagsToHints = F2(
 	});
 var _user$project$Sidekick$filteredHints = F2(
 	function (moduleDocs, importData) {
-		var allNames = A2(
+		var allValues = A2(
 			_elm_lang$core$Basics_ops['++'],
 			moduleDocs.values.aliases,
 			A2(
@@ -8855,10 +8971,44 @@ var _user$project$Sidekick$filteredHints = F2(
 			A2(
 				_elm_lang$core$List$concatMap,
 				A2(_user$project$Sidekick$nameToHints, moduleDocs, importData),
-				allNames));
+				allValues));
 	});
-var _user$project$Sidekick$toTokenDict = F2(
-	function (imports, moduleList) {
+var _user$project$Sidekick$RawImport = F3(
+	function (a, b, c) {
+		return {name: a, alias: b, exposed: c};
+	});
+var _user$project$Sidekick$Import = F2(
+	function (a, b) {
+		return {alias: a, exposed: b};
+	});
+var _user$project$Sidekick_ops = _user$project$Sidekick_ops || {};
+_user$project$Sidekick_ops['=>'] = F2(
+	function (name, exposed) {
+		return {
+			ctor: '_Tuple2',
+			_0: name,
+			_1: A2(_user$project$Sidekick$Import, _elm_lang$core$Maybe$Nothing, exposed)
+		};
+	});
+var _user$project$Sidekick$UpdateActiveModuleDocs = function (a) {
+	return {ctor: 'UpdateActiveModuleDocs', _0: a};
+};
+var _user$project$Sidekick$UpdateDocs = function (a) {
+	return {ctor: 'UpdateDocs', _0: a};
+};
+var _user$project$Sidekick$CursorMove = function (a) {
+	return {ctor: 'CursorMove', _0: a};
+};
+var _user$project$Sidekick$UpdateImports = function (a) {
+	return {ctor: 'UpdateImports', _0: a};
+};
+var _user$project$Sidekick$DocsLoaded = function (a) {
+	return {ctor: 'DocsLoaded', _0: a};
+};
+var _user$project$Sidekick$DocsFailed = {ctor: 'DocsFailed'};
+var _user$project$Sidekick$All = {ctor: 'All'};
+var _user$project$Sidekick$toTokenDict = F3(
+	function (imports, activeModuleDocs, moduleList) {
 		var insert = F2(
 			function (_p18, dict) {
 				var _p19 = _p18;
@@ -8879,48 +9029,32 @@ var _user$project$Sidekick$toTokenDict = F2(
 					dict);
 			});
 		var getMaybeHints = function (moduleDocs) {
+			var importsAndActiveModule = A3(
+				_elm_lang$core$Dict$update,
+				activeModuleDocs.name,
+				_elm_lang$core$Basics$always(
+					_elm_lang$core$Maybe$Just(
+						{alias: _elm_lang$core$Maybe$Nothing, exposed: _user$project$Sidekick$All})),
+				imports);
 			return A2(
 				_elm_lang$core$Maybe$map,
 				_user$project$Sidekick$filteredHints(moduleDocs),
-				A2(_elm_lang$core$Dict$get, moduleDocs.name, imports));
+				A2(_elm_lang$core$Dict$get, moduleDocs.name, importsAndActiveModule));
 		};
 		return A3(
 			_elm_lang$core$List$foldl,
 			insert,
 			_elm_lang$core$Dict$empty,
 			_elm_lang$core$List$concat(
-				A2(_elm_lang$core$List$filterMap, getMaybeHints, moduleList)));
+				A2(
+					_elm_lang$core$List$filterMap,
+					getMaybeHints,
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						moduleList,
+						_elm_lang$core$Native_List.fromArray(
+							[activeModuleDocs])))));
 	});
-var _user$project$Sidekick$RawImport = F3(
-	function (a, b, c) {
-		return {name: a, alias: b, exposed: c};
-	});
-var _user$project$Sidekick$Import = F2(
-	function (a, b) {
-		return {alias: a, exposed: b};
-	});
-var _user$project$Sidekick_ops = _user$project$Sidekick_ops || {};
-_user$project$Sidekick_ops['=>'] = F2(
-	function (name, exposed) {
-		return {
-			ctor: '_Tuple2',
-			_0: name,
-			_1: A2(_user$project$Sidekick$Import, _elm_lang$core$Maybe$Nothing, exposed)
-		};
-	});
-var _user$project$Sidekick$UpdateDocs = function (a) {
-	return {ctor: 'UpdateDocs', _0: a};
-};
-var _user$project$Sidekick$CursorMove = function (a) {
-	return {ctor: 'CursorMove', _0: a};
-};
-var _user$project$Sidekick$UpdateImports = function (a) {
-	return {ctor: 'UpdateImports', _0: a};
-};
-var _user$project$Sidekick$DocsLoaded = function (a) {
-	return {ctor: 'DocsLoaded', _0: a};
-};
-var _user$project$Sidekick$DocsFailed = {ctor: 'DocsFailed'};
 var _user$project$Sidekick$update = F2(
 	function (msg, model) {
 		var _p20 = msg;
@@ -8934,14 +9068,14 @@ var _user$project$Sidekick$update = F2(
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DocsLoaded':
-				var newDocs = A2(_elm_lang$core$Basics_ops['++'], _p20._0, model.docs);
+				var updatedDocs = A2(_elm_lang$core$Basics_ops['++'], _p20._0, model.docs);
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{
-							docs: newDocs,
-							tokens: A2(_user$project$Sidekick$toTokenDict, model.imports, newDocs),
+							docs: updatedDocs,
+							tokens: A3(_user$project$Sidekick$toTokenDict, model.imports, model.activeModuleDocs, updatedDocs),
 							note: ''
 						}),
 					_1: _user$project$Sidekick$docsLoaded(
@@ -8955,7 +9089,19 @@ var _user$project$Sidekick$update = F2(
 						model,
 						{
 							imports: _p21,
-							tokens: A2(_user$project$Sidekick$toTokenDict, _p21, model.docs)
+							tokens: A3(_user$project$Sidekick$toTokenDict, _p21, model.activeModuleDocs, model.docs)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'UpdateActiveModuleDocs':
+				var _p22 = _p20._0;
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							activeModuleDocs: _p22,
+							tokens: A3(_user$project$Sidekick$toTokenDict, model.imports, _p22, model.docs)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
@@ -9002,7 +9148,9 @@ var _user$project$Sidekick$update = F2(
 					_p20._0);
 				return {
 					ctor: '_Tuple2',
-					_0: model,
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{note: 'Loading...'}),
 					_1: A3(
 						_elm_lang$core$Task$perform,
 						_elm_lang$core$Basics$always(_user$project$Sidekick$DocsFailed),
@@ -9011,30 +9159,29 @@ var _user$project$Sidekick$update = F2(
 				};
 		}
 	});
-var _user$project$Sidekick$All = {ctor: 'All'};
 var _user$project$Sidekick$Some = function (a) {
 	return {ctor: 'Some', _0: a};
 };
 var _user$project$Sidekick$None = {ctor: 'None'};
-var _user$project$Sidekick$toImport = function (_p22) {
-	var _p23 = _p22;
+var _user$project$Sidekick$toImport = function (_p23) {
+	var _p24 = _p23;
 	var exposedSet = function () {
-		var _p24 = _p23.exposed;
-		if (_p24.ctor === 'Nothing') {
+		var _p25 = _p24.exposed;
+		if (_p25.ctor === 'Nothing') {
 			return _user$project$Sidekick$None;
 		} else {
-			if (((_p24._0.ctor === '::') && (_p24._0._0 === '..')) && (_p24._0._1.ctor === '[]')) {
+			if (((_p25._0.ctor === '::') && (_p25._0._0 === '..')) && (_p25._0._1.ctor === '[]')) {
 				return _user$project$Sidekick$All;
 			} else {
 				return _user$project$Sidekick$Some(
-					_elm_lang$core$Set$fromList(_p24._0));
+					_elm_lang$core$Set$fromList(_p25._0));
 			}
 		}
 	}();
 	return {
 		ctor: '_Tuple2',
-		_0: _p23.name,
-		_1: A2(_user$project$Sidekick$Import, _p23.alias, exposedSet)
+		_0: _p24.name,
+		_1: A2(_user$project$Sidekick$Import, _p24.alias, exposedSet)
 	};
 };
 var _user$project$Sidekick$defaultImports = _elm_lang$core$Dict$fromList(
@@ -9089,6 +9236,7 @@ var _user$project$Sidekick$emptyModel = {
 	docs: _elm_lang$core$Native_List.fromArray(
 		[]),
 	imports: _user$project$Sidekick$defaultImports,
+	activeModuleDocs: _user$project$Sidekick$emptyModuleDocs,
 	tokens: _elm_lang$core$Dict$empty,
 	hints: _elm_lang$core$Native_List.fromArray(
 		[]),
@@ -9103,24 +9251,25 @@ var _user$project$Sidekick$init = {
 		_user$project$Sidekick$DocsLoaded,
 		_user$project$Sidekick$getPkgsDocs(_user$project$Sidekick$defaultPkgs))
 };
-var _user$project$Sidekick$toImportDict = function (rawImportList) {
+var _user$project$Sidekick$toImportDict = function (rawImports) {
 	return A2(
 		_elm_lang$core$Dict$union,
 		_elm_lang$core$Dict$fromList(
-			A2(_elm_lang$core$List$map, _user$project$Sidekick$toImport, rawImportList)),
+			A2(_elm_lang$core$List$map, _user$project$Sidekick$toImport, rawImports)),
 		_user$project$Sidekick$defaultImports);
 };
 var _user$project$Sidekick$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$batch(
 		_elm_lang$core$Native_List.fromArray(
 			[
-				_user$project$Sidekick$tokens(_user$project$Sidekick$CursorMove),
-				_user$project$Sidekick$rawImports(
-				function (raw) {
+				_user$project$Sidekick$activeTokenChanged(_user$project$Sidekick$CursorMove),
+				_user$project$Sidekick$rawImportsChanged(
+				function (rawImports) {
 					return _user$project$Sidekick$UpdateImports(
-						_user$project$Sidekick$toImportDict(raw));
+						_user$project$Sidekick$toImportDict(rawImports));
 				}),
-				_user$project$Sidekick$newPkgs(_user$project$Sidekick$UpdateDocs)
+				_user$project$Sidekick$activeModuleChanged(_user$project$Sidekick$UpdateActiveModuleDocs),
+				_user$project$Sidekick$newPkgsNeeded(_user$project$Sidekick$UpdateDocs)
 			]));
 };
 var _user$project$Sidekick$main = {

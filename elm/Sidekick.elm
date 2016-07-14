@@ -14,6 +14,7 @@ import Task
 import Markdown
 import Regex
 
+
 main : Program Never
 main =
     Html.program
@@ -27,9 +28,10 @@ main =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ tokens CursorMove
-        , rawImports (\raw -> UpdateImports (toImportDict raw))
-        , newPkgs UpdateDocs
+        [ activeTokenChanged CursorMove
+        , rawImportsChanged (\rawImports -> UpdateImports (toImportDict rawImports))
+        , activeModuleChanged UpdateActiveModuleDocs
+        , newPkgsNeeded UpdateDocs
         ]
 
 
@@ -37,13 +39,16 @@ subscriptions model =
 -- INCOMING PORTS
 
 
-port tokens : (Maybe String -> msg) -> Sub msg
+port activeTokenChanged : (Maybe String -> msg) -> Sub msg
 
 
-port rawImports : (List RawImport -> msg) -> Sub msg
+port rawImportsChanged : (List RawImport -> msg) -> Sub msg
 
 
-port newPkgs : (List String -> msg) -> Sub msg
+port activeModuleChanged : (ModuleDocs -> msg) -> Sub msg
+
+
+port newPkgsNeeded : (List String -> msg) -> Sub msg
 
 
 
@@ -60,6 +65,7 @@ port docsLoaded : () -> Cmd msg
 type alias Model =
     { docs : List ModuleDocs
     , imports : ImportDict
+    , activeModuleDocs : ModuleDocs
     , tokens : TokenDict
     , hints : List Hint
     , note : String
@@ -77,9 +83,22 @@ emptyModel : Model
 emptyModel =
     { docs = []
     , imports = defaultImports
+    , activeModuleDocs = emptyModuleDocs
     , tokens = Dict.empty
     , hints = []
     , note = "Loading..."
+    }
+
+
+emptyModuleDocs : ModuleDocs
+emptyModuleDocs =
+    { pkg = ""
+    , name = ""
+    , values =
+        { aliases = []
+        , types = []
+        , values = []
+        }
     }
 
 
@@ -93,6 +112,7 @@ type Msg
     | UpdateImports ImportDict
     | CursorMove (Maybe String)
     | UpdateDocs (List String)
+    | UpdateActiveModuleDocs ModuleDocs
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -105,12 +125,12 @@ update msg model =
 
         DocsLoaded docs ->
             let
-                newDocs =
+                updatedDocs =
                     docs ++ model.docs
             in
                 ( { model
-                    | docs = newDocs
-                    , tokens = toTokenDict model.imports newDocs
+                    | docs = updatedDocs
+                    , tokens = toTokenDict model.imports model.activeModuleDocs updatedDocs
                     , note = ""
                   }
                 , docsLoaded ()
@@ -119,7 +139,15 @@ update msg model =
         UpdateImports imports ->
             ( { model
                 | imports = imports
-                , tokens = toTokenDict imports model.docs
+                , tokens = toTokenDict imports model.activeModuleDocs model.docs
+              }
+            , Cmd.none
+            )
+
+        UpdateActiveModuleDocs activeModuleDocs ->
+            ( { model
+                | activeModuleDocs = activeModuleDocs
+                , tokens = toTokenDict model.imports activeModuleDocs model.docs
               }
             , Cmd.none
             )
@@ -135,12 +163,16 @@ update msg model =
             )
 
         UpdateDocs pkgs ->
-            let existingPkgs = List.map .pkg model.docs
-                missingPkgs = List.filter (\pkg -> not <| List.member pkg existingPkgs) pkgs
+            let
+                existingPkgs =
+                    List.map .pkg model.docs
+
+                missingPkgs =
+                    List.filter (\pkg -> not <| List.member pkg existingPkgs) pkgs
             in
-            ( model
-            , Task.perform (always DocsFailed) DocsLoaded (getPkgsDocs missingPkgs)
-            )
+                ( { model | note = "Loading..." }
+                , Task.perform (always DocsFailed) DocsLoaded (getPkgsDocs missingPkgs)
+                )
 
 
 
@@ -199,6 +231,14 @@ viewHint hint =
                 name
             else
                 "(" ++ name ++ ")"
+
+        maybeBrowserLink =
+            if hint.href == "" then
+                ""
+            else
+                "[View in browser]("
+                    ++ hint.href
+                    ++ ")"
     in
         "# "
             ++ modul
@@ -212,9 +252,7 @@ viewHint hint =
             ++ "<br><br>\n"
             ++ hint.comment
             ++ "<br><br>\n"
-            ++ "[View in browser]("
-            ++ hint.href
-            ++ ")"
+            ++ maybeBrowserLink
 
 
 
@@ -279,10 +317,10 @@ dotToHyphen string =
 defaultPkgs : List String
 defaultPkgs =
     [ "elm-lang/core"
-    , "elm-lang/html"
-    , "elm-lang/svg"
-    , "evancz/elm-markdown"
-    , "evancz/elm-http"
+      -- , "elm-lang/html"
+      -- , "elm-lang/svg"
+      -- , "evancz/elm-markdown"
+      -- , "evancz/elm-http"
     ]
 
 
@@ -348,16 +386,20 @@ type alias Hint =
     }
 
 
-toTokenDict : ImportDict -> List ModuleDocs -> TokenDict
-toTokenDict imports moduleList =
+toTokenDict : ImportDict -> ModuleDocs -> List ModuleDocs -> TokenDict
+toTokenDict imports activeModuleDocs moduleList =
     let
         getMaybeHints moduleDocs =
-            Maybe.map (filteredHints moduleDocs) (Dict.get moduleDocs.name imports)
+            let
+                importsAndActiveModule =
+                    Dict.update activeModuleDocs.name (always <| Just { alias = Nothing, exposed = All }) imports
+            in
+                Maybe.map (filteredHints moduleDocs) (Dict.get moduleDocs.name importsAndActiveModule)
 
         insert ( token, hint ) dict =
             Dict.update token (\value -> Just (hint :: Maybe.withDefault [] value)) dict
     in
-        moduleList
+        (moduleList ++ [ activeModuleDocs ])
             |> List.filterMap getMaybeHints
             |> List.concat
             |> List.foldl insert Dict.empty
@@ -371,13 +413,13 @@ tipeToValue { name, comment, tipe } =
 filteredHints : ModuleDocs -> Import -> List ( String, Hint )
 filteredHints moduleDocs importData =
     let
-        allNames =
+        allValues =
             moduleDocs.values.aliases
                 ++ List.map tipeToValue moduleDocs.values.types
                 ++ moduleDocs.values.values
     in
         List.concatMap (unionTagsToHints moduleDocs) moduleDocs.values.types
-            ++ List.concatMap (nameToHints moduleDocs importData) allNames
+            ++ List.concatMap (nameToHints moduleDocs importData) allValues
 
 
 nameToHints : ModuleDocs -> Import -> Value -> List ( String, Hint )
@@ -459,8 +501,8 @@ isExposed name exposed =
 
 
 toImportDict : List RawImport -> ImportDict
-toImportDict rawImportList =
-    Dict.union (Dict.fromList (List.map toImport rawImportList)) defaultImports
+toImportDict rawImports =
+    Dict.union (List.map toImport rawImports |> Dict.fromList) defaultImports
 
 
 toImport : RawImport -> ( String, Import )

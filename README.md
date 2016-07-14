@@ -4,6 +4,7 @@ A set of editor commands for developing with [elm](http://elm-lang.org).
 
 Warning:  Most of these are hacky experiments that may not always work properly.  Use at your own risk! :p
 
+<!---
 ## Requirements
 
 * [elm](http://elm-lang.org/install)
@@ -28,3 +29,4 @@ For best results, enable `Lint On The Fly` in the [linter-elm-make](https://atom
 Finds all unused functions in the project.
 
 Uses the same technique as `Elm Fu: Find Usages`.
+-->
