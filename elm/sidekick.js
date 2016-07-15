@@ -8511,7 +8511,7 @@ var _user$project$Sidekick$tipeToValue = function (_p1) {
 	var _p2 = _p1;
 	return {name: _p2.name, comment: _p2.comment, tipe: _p2.tipe};
 };
-var _user$project$Sidekick$defaultPkgs = _elm_lang$core$Native_List.fromArray(
+var _user$project$Sidekick$defaultPackages = _elm_lang$core$Native_List.fromArray(
 	['elm-lang/core']);
 var _user$project$Sidekick$dotToHyphen = function (string) {
 	return A2(
@@ -8531,7 +8531,7 @@ var _user$project$Sidekick$urlTo = F2(
 			'http://package.elm-lang.org/packages/',
 			A2(
 				_elm_lang$core$Basics_ops['++'],
-				_p4.pkg,
+				_p4.$package,
 				A2(
 					_elm_lang$core$Basics_ops['++'],
 					'/latest/',
@@ -8641,7 +8641,7 @@ var _user$project$Sidekick$view = function (_p9) {
 			]));
 };
 var _user$project$Sidekick$emptyModuleDocs = {
-	pkg: '',
+	$package: '',
 	name: '',
 	values: {
 		aliases: _elm_lang$core$Native_List.fromArray(
@@ -8703,8 +8703,8 @@ var _user$project$Sidekick$activeModuleChanged = _elm_lang$core$Native_Platform.
 	'activeModuleChanged',
 	A2(
 		_elm_lang$core$Json_Decode$andThen,
-		A2(_elm_lang$core$Json_Decode_ops[':='], 'pkg', _elm_lang$core$Json_Decode$string),
-		function (pkg) {
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'package', _elm_lang$core$Json_Decode$string),
+		function ($package) {
 			return A2(
 				_elm_lang$core$Json_Decode$andThen,
 				A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
@@ -8801,12 +8801,12 @@ var _user$project$Sidekick$activeModuleChanged = _elm_lang$core$Native_Platform.
 								})),
 						function (values) {
 							return _elm_lang$core$Json_Decode$succeed(
-								{pkg: pkg, name: name, values: values});
+								{$package: $package, name: name, values: values});
 						});
 				});
 		}));
-var _user$project$Sidekick$newPkgsNeeded = _elm_lang$core$Native_Platform.incomingPort(
-	'newPkgsNeeded',
+var _user$project$Sidekick$newPackagesNeeded = _elm_lang$core$Native_Platform.incomingPort(
+	'newPackagesNeeded',
 	_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string));
 var _user$project$Sidekick$docsLoaded = _elm_lang$core$Native_Platform.outgoingPort(
 	'docsLoaded',
@@ -8819,7 +8819,7 @@ var _user$project$Sidekick$Model = F6(
 	});
 var _user$project$Sidekick$ModuleDocs = F3(
 	function (a, b, c) {
-		return {pkg: a, name: b, values: c};
+		return {$package: a, name: b, values: c};
 	});
 var _user$project$Sidekick$Values = F3(
 	function (a, b, c) {
@@ -8833,7 +8833,7 @@ var _user$project$Sidekick$Value = F3(
 	function (a, b, c) {
 		return {name: a, comment: b, tipe: c};
 	});
-var _user$project$Sidekick$moduleDecoder = function (pkg) {
+var _user$project$Sidekick$moduleDecoder = function ($package) {
 	var value = A4(
 		_elm_lang$core$Json_Decode$object3,
 		_user$project$Sidekick$Value,
@@ -8869,27 +8869,27 @@ var _user$project$Sidekick$moduleDecoder = function (pkg) {
 	var name = A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string);
 	return A3(
 		_elm_lang$core$Json_Decode$object2,
-		_user$project$Sidekick$ModuleDocs(pkg),
+		_user$project$Sidekick$ModuleDocs($package),
 		name,
 		values);
 };
-var _user$project$Sidekick$getPkgDocs = function (pkg) {
+var _user$project$Sidekick$getPackageDocs = function ($package) {
 	var url = A2(
 		_elm_lang$core$Basics_ops['++'],
 		'http://package.elm-lang.org/packages/',
-		A2(_elm_lang$core$Basics_ops['++'], pkg, '/latest/documentation.json'));
+		A2(_elm_lang$core$Basics_ops['++'], $package, '/latest/documentation.json'));
 	return A2(
 		_evancz$elm_http$Http$get,
 		_elm_lang$core$Json_Decode$list(
-			_user$project$Sidekick$moduleDecoder(pkg)),
+			_user$project$Sidekick$moduleDecoder($package)),
 		url);
 };
-var _user$project$Sidekick$getPkgsDocs = function (pkgs) {
+var _user$project$Sidekick$getPackagesDocs = function (packages) {
 	return A2(
 		_elm_lang$core$Task$map,
 		_elm_lang$core$List$concat,
 		_elm_lang$core$Task$sequence(
-			A2(_elm_lang$core$List$map, _user$project$Sidekick$getPkgDocs, pkgs)));
+			A2(_elm_lang$core$List$map, _user$project$Sidekick$getPackageDocs, packages)));
 };
 var _user$project$Sidekick$Hint = F4(
 	function (a, b, c, d) {
@@ -9133,17 +9133,17 @@ var _user$project$Sidekick$update = F2(
 					};
 				}
 			default:
-				var existingPkgs = A2(
+				var existingPackages = A2(
 					_elm_lang$core$List$map,
 					function (_) {
-						return _.pkg;
+						return _.$package;
 					},
 					model.docs);
-				var missingPkgs = A2(
+				var missingPackages = A2(
 					_elm_lang$core$List$filter,
-					function (pkg) {
+					function ($package) {
 						return _elm_lang$core$Basics$not(
-							A2(_elm_lang$core$List$member, pkg, existingPkgs));
+							A2(_elm_lang$core$List$member, $package, existingPackages));
 					},
 					_p20._0);
 				return {
@@ -9155,7 +9155,7 @@ var _user$project$Sidekick$update = F2(
 						_elm_lang$core$Task$perform,
 						_elm_lang$core$Basics$always(_user$project$Sidekick$DocsFailed),
 						_user$project$Sidekick$DocsLoaded,
-						_user$project$Sidekick$getPkgsDocs(missingPkgs))
+						_user$project$Sidekick$getPackagesDocs(missingPackages))
 				};
 		}
 	});
@@ -9249,7 +9249,7 @@ var _user$project$Sidekick$init = {
 		_elm_lang$core$Task$perform,
 		_elm_lang$core$Basics$always(_user$project$Sidekick$DocsFailed),
 		_user$project$Sidekick$DocsLoaded,
-		_user$project$Sidekick$getPkgsDocs(_user$project$Sidekick$defaultPkgs))
+		_user$project$Sidekick$getPackagesDocs(_user$project$Sidekick$defaultPackages))
 };
 var _user$project$Sidekick$toImportDict = function (rawImports) {
 	return A2(
@@ -9269,7 +9269,7 @@ var _user$project$Sidekick$subscriptions = function (model) {
 						_user$project$Sidekick$toImportDict(rawImports));
 				}),
 				_user$project$Sidekick$activeModuleChanged(_user$project$Sidekick$UpdateActiveModuleDocs),
-				_user$project$Sidekick$newPkgsNeeded(_user$project$Sidekick$UpdateDocs)
+				_user$project$Sidekick$newPackagesNeeded(_user$project$Sidekick$UpdateDocs)
 			]));
 };
 var _user$project$Sidekick$main = {

@@ -31,7 +31,7 @@ subscriptions model =
         [ activeTokenChanged CursorMove
         , rawImportsChanged (\rawImports -> UpdateImports (toImportDict rawImports))
         , activeModuleChanged UpdateActiveModuleDocs
-        , newPkgsNeeded UpdateDocs
+        , newPackagesNeeded UpdateDocs
         ]
 
 
@@ -48,7 +48,7 @@ port rawImportsChanged : (List RawImport -> msg) -> Sub msg
 port activeModuleChanged : (ModuleDocs -> msg) -> Sub msg
 
 
-port newPkgsNeeded : (List String -> msg) -> Sub msg
+port newPackagesNeeded : (List String -> msg) -> Sub msg
 
 
 
@@ -75,7 +75,7 @@ type alias Model =
 init : ( Model, Cmd Msg )
 init =
     ( emptyModel
-    , Task.perform (always DocsFailed) DocsLoaded (getPkgsDocs defaultPkgs)
+    , Task.perform (always DocsFailed) DocsLoaded (getPackagesDocs defaultPackages)
     )
 
 
@@ -92,7 +92,7 @@ emptyModel =
 
 emptyModuleDocs : ModuleDocs
 emptyModuleDocs =
-    { pkg = ""
+    { package = ""
     , name = ""
     , values =
         { aliases = []
@@ -162,16 +162,16 @@ update msg model =
             , Cmd.none
             )
 
-        UpdateDocs pkgs ->
+        UpdateDocs packages ->
             let
-                existingPkgs =
-                    List.map .pkg model.docs
+                existingPackages =
+                    List.map .package model.docs
 
-                missingPkgs =
-                    List.filter (\pkg -> not <| List.member pkg existingPkgs) pkgs
+                missingPackages =
+                    List.filter (\package -> not <| List.member package existingPackages) packages
             in
                 ( { model | note = "Loading..." }
-                , Task.perform (always DocsFailed) DocsLoaded (getPkgsDocs missingPkgs)
+                , Task.perform (always DocsFailed) DocsLoaded (getPackagesDocs missingPackages)
                 )
 
 
@@ -260,7 +260,7 @@ viewHint hint =
 
 
 type alias ModuleDocs =
-    { pkg : String
+    { package : String
     , name : String
     , values : Values
     }
@@ -289,9 +289,9 @@ type alias Value =
 
 
 urlTo : ModuleDocs -> String -> String
-urlTo { pkg, name } valueName =
+urlTo { package, name } valueName =
     "http://package.elm-lang.org/packages/"
-        ++ pkg
+        ++ package
         ++ "/latest/"
         ++ dotToHyphen name
         ++ "#"
@@ -314,8 +314,8 @@ dotToHyphen string =
 -- FETCH DOCS
 
 
-defaultPkgs : List String
-defaultPkgs =
+defaultPackages : List String
+defaultPackages =
     [ "elm-lang/core"
       -- , "elm-lang/html"
       -- , "elm-lang/svg"
@@ -324,25 +324,25 @@ defaultPkgs =
     ]
 
 
-getPkgsDocs : List String -> Task.Task Http.Error (List ModuleDocs)
-getPkgsDocs pkgs =
-    pkgs
-        |> List.map getPkgDocs
+getPackagesDocs : List String -> Task.Task Http.Error (List ModuleDocs)
+getPackagesDocs packages =
+    packages
+        |> List.map getPackageDocs
         |> Task.sequence
         |> Task.map List.concat
 
 
-getPkgDocs : String -> Task.Task Http.Error (List ModuleDocs)
-getPkgDocs pkg =
+getPackageDocs : String -> Task.Task Http.Error (List ModuleDocs)
+getPackageDocs package =
     let
         url =
-            "http://package.elm-lang.org/packages/" ++ pkg ++ "/latest/documentation.json"
+            "http://package.elm-lang.org/packages/" ++ package ++ "/latest/documentation.json"
     in
-        Http.get (Json.list (moduleDecoder pkg)) url
+        Http.get (Json.list (moduleDecoder package)) url
 
 
 moduleDecoder : String -> Json.Decoder ModuleDocs
-moduleDecoder pkg =
+moduleDecoder package =
     let
         name =
             "name" := Json.string
@@ -367,7 +367,7 @@ moduleDecoder pkg =
                 ("types" := Json.list tipe)
                 ("values" := Json.list value)
     in
-        Json.object2 (ModuleDocs pkg) name values
+        Json.object2 (ModuleDocs package) name values
 
 
 
