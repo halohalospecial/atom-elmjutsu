@@ -63,16 +63,16 @@ port docsLoaded : () -> Cmd msg
 
 
 type alias Model =
-    { docs : List ModuleDocs
+    { packageDocs : List ModuleDocs
     , tokens : TokenDict
     , hints : List Hint
     , note : String
     , activeFilePath : Maybe String
-    , sourceFiles : SourceFiles
+    , sourceFileDict : SourceFileDict
     }
 
 
-type alias SourceFiles =
+type alias SourceFileDict =
     Dict.Dict String SourceFile
 
 
@@ -85,18 +85,19 @@ type alias SourceFile =
 init : ( Model, Cmd Msg )
 init =
     ( emptyModel
-    , Task.perform (always DocsFailed) DocsLoaded (getPackagesDocs defaultPackages)
+    , Task.perform (always DocsFailed) DocsLoaded (getPackageDocsList defaultPackages)
+      -- , Cmd.none
     )
 
 
 emptyModel : Model
 emptyModel =
-    { docs = []
+    { packageDocs = []
     , tokens = Dict.empty
     , hints = []
     , note = "Loading..."
     , activeFilePath = Nothing
-    , sourceFiles = Dict.empty
+    , sourceFileDict = Dict.empty
     }
 
 
@@ -142,13 +143,18 @@ update msg model =
 
         DocsLoaded docs ->
             let
-                updatedDocs =
-                    docs ++ model.docs
+                existingPackages =
+                    List.map .package model.packageDocs
+
+                missingPackageDocs =
+                    List.filter (\{ package } -> not <| List.member package existingPackages) docs
+
+                updatedPackageDocs =
+                    missingPackageDocs ++ model.packageDocs
             in
                 ( { model
-                    | docs =
-                        updatedDocs
-                    , tokens = toTokenDict (getActiveSourceFile model.activeFilePath model.sourceFiles) updatedDocs
+                    | packageDocs = updatedPackageDocs
+                    , tokens = toTokenDict (getActiveSourceFile model.activeFilePath model.sourceFileDict) model.sourceFileDict updatedPackageDocs
                     , note = ""
                   }
                 , docsLoaded ()
@@ -167,19 +173,19 @@ update msg model =
         UpdateActiveFilePath activeFilePath ->
             ( { model
                 | activeFilePath = activeFilePath
-                , tokens = toTokenDict (getActiveSourceFile activeFilePath model.sourceFiles) model.docs
+                , tokens = toTokenDict (getActiveSourceFile activeFilePath model.sourceFileDict) model.sourceFileDict model.packageDocs
               }
             , Cmd.none
             )
 
         UpdateSourceFile filePath sourceFile ->
             let
-                updatedSourceFiles =
-                    Dict.update filePath (always <| Just sourceFile) model.sourceFiles
+                updatedSourceFileDict =
+                    Dict.update filePath (always <| Just sourceFile) model.sourceFileDict
             in
                 ( { model
-                    | sourceFiles = updatedSourceFiles
-                    , tokens = toTokenDict (getActiveSourceFile model.activeFilePath updatedSourceFiles) model.docs
+                    | sourceFileDict = updatedSourceFileDict
+                    , tokens = toTokenDict (getActiveSourceFile model.activeFilePath updatedSourceFileDict) updatedSourceFileDict model.packageDocs
                   }
                 , Cmd.none
                 )
@@ -187,24 +193,24 @@ update msg model =
         UpdatePackageDocs packages ->
             let
                 existingPackages =
-                    List.map .package model.docs
+                    List.map .package model.packageDocs
 
                 missingPackages =
                     List.filter (\package -> not <| List.member package existingPackages) packages
             in
                 ( { model | note = "Loading..." }
-                , Task.perform (always DocsFailed) DocsLoaded (getPackagesDocs missingPackages)
+                , Task.perform (always DocsFailed) DocsLoaded (getPackageDocsList missingPackages)
                 )
 
 
-getActiveSourceFile : Maybe String -> SourceFiles -> SourceFile
-getActiveSourceFile activeFilePath sourceFiles =
+getActiveSourceFile : Maybe String -> SourceFileDict -> SourceFile
+getActiveSourceFile activeFilePath sourceFileDict =
     case activeFilePath of
         Nothing ->
             emptySourceFile
 
         Just filePath ->
-            case Dict.get filePath sourceFiles of
+            case Dict.get filePath sourceFileDict of
                 Just sourceFile ->
                     sourceFile
 
@@ -217,27 +223,27 @@ getActiveSourceFile activeFilePath sourceFiles =
 
 
 view : Model -> Html Msg
-view { note, hints } =
+view { note, hints, activeFilePath, sourceFileDict } =
     div []
         [ text note
-        , Markdown.toHtml [] (viewHintString hints)
+        , Markdown.toHtml [] (viewHintString (activeFileModuleName activeFilePath sourceFileDict) hints)
         ]
 
 
-viewHintString : List Hint -> String
-viewHintString hints =
+viewHintString : String -> List Hint -> String
+viewHintString activeModuleName hints =
     case hints of
         [] ->
             ""
 
         _ ->
-            String.join "\n\n" (List.map viewHint hints)
+            String.join "\n\n" (List.map (viewHint activeModuleName) hints)
 
 
-viewHint : Hint -> String
-viewHint hint =
+viewHint : String -> Hint -> String
+viewHint activeModuleName hint =
     let
-        ( modul, name ) =
+        ( moduleName, name ) =
             case String.split "." hint.name of
                 [] ->
                     ( "", hint.name )
@@ -255,13 +261,19 @@ viewHint hint =
                                 Nothing ->
                                     ""
 
-                        modul =
+                        moduleName =
                             reversed
                                 |> List.drop 1
                                 |> List.reverse
                                 |> String.join "."
                     in
-                        ( modul, name )
+                        ( moduleName, name )
+
+        formatModule moduleName =
+            if activeModuleName == moduleName then
+                moduleName ++ "."
+            else
+                moduleName ++ "."
 
         formatName name =
             if Regex.contains (Regex.regex "\\w") name then
@@ -278,8 +290,8 @@ viewHint hint =
                     ++ ")"
     in
         "# "
-            ++ modul
-            ++ ".**"
+            ++ formatModule moduleName
+            ++ "**"
             ++ name
             ++ "**\n"
             ++ "## **"
@@ -290,6 +302,15 @@ viewHint hint =
             ++ hint.comment
             ++ "<br><br>\n"
             ++ maybeBrowserLink
+
+
+activeFileModuleName : Maybe String -> SourceFileDict -> String
+activeFileModuleName activeFilePath sourceFileDict =
+    let
+        sourceFile =
+            getActiveSourceFile activeFilePath sourceFileDict
+    in
+        sourceFile.moduleDocs.name
 
 
 
@@ -361,8 +382,8 @@ defaultPackages =
     ]
 
 
-getPackagesDocs : List String -> Task.Task Http.Error (List ModuleDocs)
-getPackagesDocs packages =
+getPackageDocsList : List String -> Task.Task Http.Error (List ModuleDocs)
+getPackageDocsList packages =
     packages
         |> List.map getPackageDocs
         |> Task.sequence
@@ -423,20 +444,23 @@ type alias Hint =
     }
 
 
-toTokenDict : SourceFile -> List ModuleDocs -> TokenDict
-toTokenDict sourceFile moduleList =
+toTokenDict : SourceFile -> SourceFileDict -> List ModuleDocs -> TokenDict
+toTokenDict activeSourceFile sourceFileDict packageDocsList =
     let
+        sourceFileDictModuleDocs =
+            Dict.values sourceFileDict |> List.map .moduleDocs
+
         getMaybeHints moduleDocs =
             let
-                importsAndActiveModule =
-                    Dict.update sourceFile.moduleDocs.name (always <| Just { alias = Nothing, exposed = All }) sourceFile.imports
+                activeSourceFileAndImports =
+                    Dict.update activeSourceFile.moduleDocs.name (always <| Just { alias = Nothing, exposed = All }) activeSourceFile.imports
             in
-                Maybe.map (filteredHints moduleDocs) (Dict.get moduleDocs.name importsAndActiveModule)
+                Maybe.map (filteredHints moduleDocs) (Dict.get moduleDocs.name activeSourceFileAndImports)
 
         insert ( token, hint ) dict =
             Dict.update token (\value -> Just (hint :: Maybe.withDefault [] value)) dict
     in
-        (moduleList ++ [ sourceFile.moduleDocs ])
+        (packageDocsList ++ sourceFileDictModuleDocs)
             |> List.filterMap getMaybeHints
             |> List.concat
             |> List.foldl insert Dict.empty
@@ -491,7 +515,7 @@ unionTagsToHints moduleDocs { alias, exposed } { name, cases, comment, tipe } =
                 localName =
                     Maybe.withDefault moduleDocs.name alias ++ "." ++ tag
             in
-                if isExposed tag exposed then
+                if List.member name defaultTypes || isExposed tag exposed then
                     ( tag, hint ) :: ( localName, hint ) :: ( fullName, hint ) :: hints
                 else
                     ( localName, hint ) :: ( fullName, hint ) :: hints
@@ -577,8 +601,15 @@ defaultImports =
         , "Debug" => None
         , "List" => Some (Set.fromList [ "List", "::" ])
         , "Maybe" => Some (Set.singleton "Maybe")
+          -- Just, Nothing
         , "Result" => Some (Set.singleton "Result")
+          -- Ok, Err
         , "Platform" => Some (Set.singleton "Program")
         , ( "Platform.Cmd", Import (Just "Cmd") (Some (Set.fromList [ "Cmd", "!" ])) )
         , ( "Platform.Sub", Import (Just "Sub") (Some (Set.singleton "Sub")) )
         ]
+
+
+defaultTypes : List String
+defaultTypes =
+    [ "Maybe", "Result" ]
