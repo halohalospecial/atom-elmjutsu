@@ -5615,6 +5615,11 @@ function badOneOf(problems)
 	return { tag: 'oneOf', problems: problems };
 }
 
+function badCustom(msg)
+{
+	return { tag: 'custom', msg: msg };
+}
+
 function bad(msg)
 {
 	return { tag: 'fail', msg: msg };
@@ -5651,6 +5656,11 @@ function badToString(problem)
 				return 'I ran into the following problems'
 					+ (context === '_' ? '' : ' at ' + context)
 					+ ':\n\n' + problems.join('\n');
+
+			case 'custom':
+				return 'A `customDecode` failed'
+					+ (context === '_' ? '' : ' at ' + context)
+					+ ' with the message: ' + problem.msg;
 
 			case 'fail':
 				return 'I ran into a `fail` decoder'
@@ -5854,7 +5864,7 @@ function runHelp(decoder, value)
 			var realResult = decoder.callback(result.value);
 			if (realResult.ctor === 'Err')
 			{
-				return badPrimitive('something custom', value);
+				return badCustom(realResult._0);
 			}
 			return ok(realResult._0);
 
@@ -8652,6 +8662,16 @@ var _user$project$Sidekick$emptyModuleDocs = {
 			[])
 	}
 };
+var _user$project$Sidekick$emptyModel = {
+	docs: _elm_lang$core$Native_List.fromArray(
+		[]),
+	tokens: _elm_lang$core$Dict$empty,
+	hints: _elm_lang$core$Native_List.fromArray(
+		[]),
+	note: 'Loading...',
+	activeFilePath: _elm_lang$core$Maybe$Nothing,
+	sourceFiles: _elm_lang$core$Dict$empty
+};
 var _user$project$Sidekick$activeTokenChanged = _elm_lang$core$Native_Platform.incomingPort(
 	'activeTokenChanged',
 	_elm_lang$core$Json_Decode$oneOf(
@@ -8660,52 +8680,129 @@ var _user$project$Sidekick$activeTokenChanged = _elm_lang$core$Native_Platform.i
 				_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
 				A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
 			])));
-var _user$project$Sidekick$rawImportsChanged = _elm_lang$core$Native_Platform.incomingPort(
-	'rawImportsChanged',
-	_elm_lang$core$Json_Decode$list(
+var _user$project$Sidekick$activeFilePathChanged = _elm_lang$core$Native_Platform.incomingPort(
+	'activeFilePathChanged',
+	_elm_lang$core$Json_Decode$oneOf(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+				A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
+			])));
+var _user$project$Sidekick$sourceFileChanged = _elm_lang$core$Native_Platform.incomingPort(
+	'sourceFileChanged',
+	A4(
+		_elm_lang$core$Json_Decode$tuple3,
+		F3(
+			function (x1, x2, x3) {
+				return {ctor: '_Tuple3', _0: x1, _1: x2, _2: x3};
+			}),
+		_elm_lang$core$Json_Decode$string,
 		A2(
 			_elm_lang$core$Json_Decode$andThen,
-			A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
-			function (name) {
+			A2(_elm_lang$core$Json_Decode_ops[':='], 'package', _elm_lang$core$Json_Decode$string),
+			function ($package) {
 				return A2(
 					_elm_lang$core$Json_Decode$andThen,
-					A2(
-						_elm_lang$core$Json_Decode_ops[':='],
-						'alias',
-						_elm_lang$core$Json_Decode$oneOf(
-							_elm_lang$core$Native_List.fromArray(
-								[
-									_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
-									A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
-								]))),
-					function (alias) {
+					A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+					function (name) {
 						return A2(
 							_elm_lang$core$Json_Decode$andThen,
 							A2(
 								_elm_lang$core$Json_Decode_ops[':='],
-								'exposed',
-								_elm_lang$core$Json_Decode$oneOf(
-									_elm_lang$core$Native_List.fromArray(
-										[
-											_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+								'values',
+								A2(
+									_elm_lang$core$Json_Decode$andThen,
+									A2(
+										_elm_lang$core$Json_Decode_ops[':='],
+										'aliases',
+										_elm_lang$core$Json_Decode$list(
 											A2(
-											_elm_lang$core$Json_Decode$map,
-											_elm_lang$core$Maybe$Just,
-											_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string))
-										]))),
-							function (exposed) {
+												_elm_lang$core$Json_Decode$andThen,
+												A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+												function (name) {
+													return A2(
+														_elm_lang$core$Json_Decode$andThen,
+														A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
+														function (comment) {
+															return A2(
+																_elm_lang$core$Json_Decode$andThen,
+																A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
+																function (tipe) {
+																	return _elm_lang$core$Json_Decode$succeed(
+																		{name: name, comment: comment, tipe: tipe});
+																});
+														});
+												}))),
+									function (aliases) {
+										return A2(
+											_elm_lang$core$Json_Decode$andThen,
+											A2(
+												_elm_lang$core$Json_Decode_ops[':='],
+												'types',
+												_elm_lang$core$Json_Decode$list(
+													A2(
+														_elm_lang$core$Json_Decode$andThen,
+														A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+														function (name) {
+															return A2(
+																_elm_lang$core$Json_Decode$andThen,
+																A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
+																function (comment) {
+																	return A2(
+																		_elm_lang$core$Json_Decode$andThen,
+																		A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
+																		function (tipe) {
+																			return A2(
+																				_elm_lang$core$Json_Decode$andThen,
+																				A2(
+																					_elm_lang$core$Json_Decode_ops[':='],
+																					'cases',
+																					_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string)),
+																				function (cases) {
+																					return _elm_lang$core$Json_Decode$succeed(
+																						{name: name, comment: comment, tipe: tipe, cases: cases});
+																				});
+																		});
+																});
+														}))),
+											function (types) {
+												return A2(
+													_elm_lang$core$Json_Decode$andThen,
+													A2(
+														_elm_lang$core$Json_Decode_ops[':='],
+														'values',
+														_elm_lang$core$Json_Decode$list(
+															A2(
+																_elm_lang$core$Json_Decode$andThen,
+																A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+																function (name) {
+																	return A2(
+																		_elm_lang$core$Json_Decode$andThen,
+																		A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
+																		function (comment) {
+																			return A2(
+																				_elm_lang$core$Json_Decode$andThen,
+																				A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
+																				function (tipe) {
+																					return _elm_lang$core$Json_Decode$succeed(
+																						{name: name, comment: comment, tipe: tipe});
+																				});
+																		});
+																}))),
+													function (values) {
+														return _elm_lang$core$Json_Decode$succeed(
+															{aliases: aliases, types: types, values: values});
+													});
+											});
+									})),
+							function (values) {
 								return _elm_lang$core$Json_Decode$succeed(
-									{name: name, alias: alias, exposed: exposed});
+									{$package: $package, name: name, values: values});
 							});
 					});
-			})));
-var _user$project$Sidekick$activeModuleChanged = _elm_lang$core$Native_Platform.incomingPort(
-	'activeModuleChanged',
-	A2(
-		_elm_lang$core$Json_Decode$andThen,
-		A2(_elm_lang$core$Json_Decode_ops[':='], 'package', _elm_lang$core$Json_Decode$string),
-		function ($package) {
-			return A2(
+			}),
+		_elm_lang$core$Json_Decode$list(
+			A2(
 				_elm_lang$core$Json_Decode$andThen,
 				A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
 				function (name) {
@@ -8713,98 +8810,34 @@ var _user$project$Sidekick$activeModuleChanged = _elm_lang$core$Native_Platform.
 						_elm_lang$core$Json_Decode$andThen,
 						A2(
 							_elm_lang$core$Json_Decode_ops[':='],
-							'values',
-							A2(
+							'alias',
+							_elm_lang$core$Json_Decode$oneOf(
+								_elm_lang$core$Native_List.fromArray(
+									[
+										_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+										A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
+									]))),
+						function (alias) {
+							return A2(
 								_elm_lang$core$Json_Decode$andThen,
 								A2(
 									_elm_lang$core$Json_Decode_ops[':='],
-									'aliases',
-									_elm_lang$core$Json_Decode$list(
-										A2(
-											_elm_lang$core$Json_Decode$andThen,
-											A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
-											function (name) {
-												return A2(
-													_elm_lang$core$Json_Decode$andThen,
-													A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
-													function (comment) {
-														return A2(
-															_elm_lang$core$Json_Decode$andThen,
-															A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
-															function (tipe) {
-																return _elm_lang$core$Json_Decode$succeed(
-																	{name: name, comment: comment, tipe: tipe});
-															});
-													});
-											}))),
-								function (aliases) {
-									return A2(
-										_elm_lang$core$Json_Decode$andThen,
-										A2(
-											_elm_lang$core$Json_Decode_ops[':='],
-											'types',
-											_elm_lang$core$Json_Decode$list(
+									'exposed',
+									_elm_lang$core$Json_Decode$oneOf(
+										_elm_lang$core$Native_List.fromArray(
+											[
+												_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
 												A2(
-													_elm_lang$core$Json_Decode$andThen,
-													A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
-													function (name) {
-														return A2(
-															_elm_lang$core$Json_Decode$andThen,
-															A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
-															function (comment) {
-																return A2(
-																	_elm_lang$core$Json_Decode$andThen,
-																	A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
-																	function (tipe) {
-																		return A2(
-																			_elm_lang$core$Json_Decode$andThen,
-																			A2(
-																				_elm_lang$core$Json_Decode_ops[':='],
-																				'cases',
-																				_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string)),
-																			function (cases) {
-																				return _elm_lang$core$Json_Decode$succeed(
-																					{name: name, comment: comment, tipe: tipe, cases: cases});
-																			});
-																	});
-															});
-													}))),
-										function (types) {
-											return A2(
-												_elm_lang$core$Json_Decode$andThen,
-												A2(
-													_elm_lang$core$Json_Decode_ops[':='],
-													'values',
-													_elm_lang$core$Json_Decode$list(
-														A2(
-															_elm_lang$core$Json_Decode$andThen,
-															A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
-															function (name) {
-																return A2(
-																	_elm_lang$core$Json_Decode$andThen,
-																	A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
-																	function (comment) {
-																		return A2(
-																			_elm_lang$core$Json_Decode$andThen,
-																			A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
-																			function (tipe) {
-																				return _elm_lang$core$Json_Decode$succeed(
-																					{name: name, comment: comment, tipe: tipe});
-																			});
-																	});
-															}))),
-												function (values) {
-													return _elm_lang$core$Json_Decode$succeed(
-														{aliases: aliases, types: types, values: values});
-												});
-										});
-								})),
-						function (values) {
-							return _elm_lang$core$Json_Decode$succeed(
-								{$package: $package, name: name, values: values});
+												_elm_lang$core$Json_Decode$map,
+												_elm_lang$core$Maybe$Just,
+												_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string))
+											]))),
+								function (exposed) {
+									return _elm_lang$core$Json_Decode$succeed(
+										{name: name, alias: alias, exposed: exposed});
+								});
 						});
-				});
-		}));
+				}))));
 var _user$project$Sidekick$newPackagesNeeded = _elm_lang$core$Native_Platform.incomingPort(
 	'newPackagesNeeded',
 	_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string));
@@ -8815,7 +8848,11 @@ var _user$project$Sidekick$docsLoaded = _elm_lang$core$Native_Platform.outgoingP
 	});
 var _user$project$Sidekick$Model = F6(
 	function (a, b, c, d, e, f) {
-		return {docs: a, imports: b, activeModuleDocs: c, tokens: d, hints: e, note: f};
+		return {docs: a, tokens: b, hints: c, note: d, activeFilePath: e, sourceFiles: f};
+	});
+var _user$project$Sidekick$SourceFile = F2(
+	function (a, b) {
+		return {moduleDocs: a, imports: b};
 	});
 var _user$project$Sidekick$ModuleDocs = F3(
 	function (a, b, c) {
@@ -8923,11 +8960,16 @@ var _user$project$Sidekick$nameToHints = F3(
 				{ctor: '_Tuple2', _0: localName, _1: hint}
 			]);
 	});
-var _user$project$Sidekick$unionTagsToHints = F2(
-	function (moduleDocs, _p16) {
-		var _p17 = _p16;
+var _user$project$Sidekick$unionTagsToHints = F3(
+	function (moduleDocs, _p17, _p16) {
+		var _p18 = _p17;
+		var _p19 = _p16;
 		var addHints = F2(
 			function (tag, hints) {
+				var localName = A2(
+					_elm_lang$core$Basics_ops['++'],
+					A2(_elm_lang$core$Maybe$withDefault, moduleDocs.name, _p18.alias),
+					A2(_elm_lang$core$Basics_ops['++'], '.', tag));
 				var fullName = A2(
 					_elm_lang$core$Basics_ops['++'],
 					moduleDocs.name,
@@ -8935,12 +8977,21 @@ var _user$project$Sidekick$unionTagsToHints = F2(
 				var hint = A4(
 					_user$project$Sidekick$Hint,
 					fullName,
-					A2(_user$project$Sidekick$urlTo, moduleDocs, _p17.name),
-					_p17.comment,
-					_p17.tipe);
-				return A2(
+					A2(_user$project$Sidekick$urlTo, moduleDocs, _p19.name),
+					_p19.comment,
+					_p19.tipe);
+				return A2(_user$project$Sidekick$isExposed, tag, _p18.exposed) ? A2(
 					_elm_lang$core$List_ops['::'],
 					{ctor: '_Tuple2', _0: tag, _1: hint},
+					A2(
+						_elm_lang$core$List_ops['::'],
+						{ctor: '_Tuple2', _0: localName, _1: hint},
+						A2(
+							_elm_lang$core$List_ops['::'],
+							{ctor: '_Tuple2', _0: fullName, _1: hint},
+							hints))) : A2(
+					_elm_lang$core$List_ops['::'],
+					{ctor: '_Tuple2', _0: localName, _1: hint},
 					A2(
 						_elm_lang$core$List_ops['::'],
 						{ctor: '_Tuple2', _0: fullName, _1: hint},
@@ -8951,7 +9002,7 @@ var _user$project$Sidekick$unionTagsToHints = F2(
 			addHints,
 			_elm_lang$core$Native_List.fromArray(
 				[]),
-			_p17.cases);
+			_p19.cases);
 	});
 var _user$project$Sidekick$filteredHints = F2(
 	function (moduleDocs, importData) {
@@ -8966,7 +9017,7 @@ var _user$project$Sidekick$filteredHints = F2(
 			_elm_lang$core$Basics_ops['++'],
 			A2(
 				_elm_lang$core$List$concatMap,
-				_user$project$Sidekick$unionTagsToHints(moduleDocs),
+				A2(_user$project$Sidekick$unionTagsToHints, moduleDocs, importData),
 				moduleDocs.values.types),
 			A2(
 				_elm_lang$core$List$concatMap,
@@ -8990,36 +9041,46 @@ _user$project$Sidekick_ops['=>'] = F2(
 			_1: A2(_user$project$Sidekick$Import, _elm_lang$core$Maybe$Nothing, exposed)
 		};
 	});
-var _user$project$Sidekick$UpdateActiveModuleDocs = function (a) {
-	return {ctor: 'UpdateActiveModuleDocs', _0: a};
+var _user$project$Sidekick$UpdatePackageDocs = function (a) {
+	return {ctor: 'UpdatePackageDocs', _0: a};
 };
-var _user$project$Sidekick$UpdateDocs = function (a) {
-	return {ctor: 'UpdateDocs', _0: a};
+var _user$project$Sidekick$UpdateSourceFile = F2(
+	function (a, b) {
+		return {ctor: 'UpdateSourceFile', _0: a, _1: b};
+	});
+var _user$project$Sidekick$UpdateActiveFilePath = function (a) {
+	return {ctor: 'UpdateActiveFilePath', _0: a};
 };
 var _user$project$Sidekick$CursorMove = function (a) {
 	return {ctor: 'CursorMove', _0: a};
-};
-var _user$project$Sidekick$UpdateImports = function (a) {
-	return {ctor: 'UpdateImports', _0: a};
 };
 var _user$project$Sidekick$DocsLoaded = function (a) {
 	return {ctor: 'DocsLoaded', _0: a};
 };
 var _user$project$Sidekick$DocsFailed = {ctor: 'DocsFailed'};
+var _user$project$Sidekick$init = {
+	ctor: '_Tuple2',
+	_0: _user$project$Sidekick$emptyModel,
+	_1: A3(
+		_elm_lang$core$Task$perform,
+		_elm_lang$core$Basics$always(_user$project$Sidekick$DocsFailed),
+		_user$project$Sidekick$DocsLoaded,
+		_user$project$Sidekick$getPackagesDocs(_user$project$Sidekick$defaultPackages))
+};
 var _user$project$Sidekick$All = {ctor: 'All'};
-var _user$project$Sidekick$toTokenDict = F3(
-	function (imports, activeModuleDocs, moduleList) {
+var _user$project$Sidekick$toTokenDict = F2(
+	function (sourceFile, moduleList) {
 		var insert = F2(
-			function (_p18, dict) {
-				var _p19 = _p18;
+			function (_p20, dict) {
+				var _p21 = _p20;
 				return A3(
 					_elm_lang$core$Dict$update,
-					_p19._0,
+					_p21._0,
 					function (value) {
 						return _elm_lang$core$Maybe$Just(
 							A2(
 								_elm_lang$core$List_ops['::'],
-								_p19._1,
+								_p21._1,
 								A2(
 									_elm_lang$core$Maybe$withDefault,
 									_elm_lang$core$Native_List.fromArray(
@@ -9031,11 +9092,11 @@ var _user$project$Sidekick$toTokenDict = F3(
 		var getMaybeHints = function (moduleDocs) {
 			var importsAndActiveModule = A3(
 				_elm_lang$core$Dict$update,
-				activeModuleDocs.name,
+				sourceFile.moduleDocs.name,
 				_elm_lang$core$Basics$always(
 					_elm_lang$core$Maybe$Just(
 						{alias: _elm_lang$core$Maybe$Nothing, exposed: _user$project$Sidekick$All})),
-				imports);
+				sourceFile.imports);
 			return A2(
 				_elm_lang$core$Maybe$map,
 				_user$project$Sidekick$filteredHints(moduleDocs),
@@ -9053,135 +9114,31 @@ var _user$project$Sidekick$toTokenDict = F3(
 						_elm_lang$core$Basics_ops['++'],
 						moduleList,
 						_elm_lang$core$Native_List.fromArray(
-							[activeModuleDocs])))));
-	});
-var _user$project$Sidekick$update = F2(
-	function (msg, model) {
-		var _p20 = msg;
-		switch (_p20.ctor) {
-			case 'DocsFailed':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{note: 'Failed to load -_-'}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'DocsLoaded':
-				var updatedDocs = A2(_elm_lang$core$Basics_ops['++'], _p20._0, model.docs);
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							docs: updatedDocs,
-							tokens: A3(_user$project$Sidekick$toTokenDict, model.imports, model.activeModuleDocs, updatedDocs),
-							note: ''
-						}),
-					_1: _user$project$Sidekick$docsLoaded(
-						{ctor: '_Tuple0'})
-				};
-			case 'UpdateImports':
-				var _p21 = _p20._0;
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							imports: _p21,
-							tokens: A3(_user$project$Sidekick$toTokenDict, _p21, model.activeModuleDocs, model.docs)
-						}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'UpdateActiveModuleDocs':
-				var _p22 = _p20._0;
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							activeModuleDocs: _p22,
-							tokens: A3(_user$project$Sidekick$toTokenDict, model.imports, _p22, model.docs)
-						}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'CursorMove':
-				if (_p20._0.ctor === 'Nothing') {
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								hints: _elm_lang$core$Native_List.fromArray(
-									[])
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				} else {
-					return {
-						ctor: '_Tuple2',
-						_0: _elm_lang$core$Native_Utils.update(
-							model,
-							{
-								hints: A2(
-									_elm_lang$core$Maybe$withDefault,
-									_elm_lang$core$Native_List.fromArray(
-										[]),
-									A2(_elm_lang$core$Dict$get, _p20._0._0, model.tokens))
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
-					};
-				}
-			default:
-				var existingPackages = A2(
-					_elm_lang$core$List$map,
-					function (_) {
-						return _.$package;
-					},
-					model.docs);
-				var missingPackages = A2(
-					_elm_lang$core$List$filter,
-					function ($package) {
-						return _elm_lang$core$Basics$not(
-							A2(_elm_lang$core$List$member, $package, existingPackages));
-					},
-					_p20._0);
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{note: 'Loading...'}),
-					_1: A3(
-						_elm_lang$core$Task$perform,
-						_elm_lang$core$Basics$always(_user$project$Sidekick$DocsFailed),
-						_user$project$Sidekick$DocsLoaded,
-						_user$project$Sidekick$getPackagesDocs(missingPackages))
-				};
-		}
+							[sourceFile.moduleDocs])))));
 	});
 var _user$project$Sidekick$Some = function (a) {
 	return {ctor: 'Some', _0: a};
 };
 var _user$project$Sidekick$None = {ctor: 'None'};
-var _user$project$Sidekick$toImport = function (_p23) {
-	var _p24 = _p23;
+var _user$project$Sidekick$toImport = function (_p22) {
+	var _p23 = _p22;
 	var exposedSet = function () {
-		var _p25 = _p24.exposed;
-		if (_p25.ctor === 'Nothing') {
+		var _p24 = _p23.exposed;
+		if (_p24.ctor === 'Nothing') {
 			return _user$project$Sidekick$None;
 		} else {
-			if (((_p25._0.ctor === '::') && (_p25._0._0 === '..')) && (_p25._0._1.ctor === '[]')) {
+			if (((_p24._0.ctor === '::') && (_p24._0._0 === '..')) && (_p24._0._1.ctor === '[]')) {
 				return _user$project$Sidekick$All;
 			} else {
 				return _user$project$Sidekick$Some(
-					_elm_lang$core$Set$fromList(_p25._0));
+					_elm_lang$core$Set$fromList(_p24._0));
 			}
 		}
 	}();
 	return {
 		ctor: '_Tuple2',
-		_0: _p24.name,
-		_1: A2(_user$project$Sidekick$Import, _p24.alias, exposedSet)
+		_0: _p23.name,
+		_1: A2(_user$project$Sidekick$Import, _p23.alias, exposedSet)
 	};
 };
 var _user$project$Sidekick$defaultImports = _elm_lang$core$Dict$fromList(
@@ -9232,25 +9189,139 @@ var _user$project$Sidekick$defaultImports = _elm_lang$core$Dict$fromList(
 					_elm_lang$core$Set$singleton('Sub')))
 		}
 		]));
-var _user$project$Sidekick$emptyModel = {
-	docs: _elm_lang$core$Native_List.fromArray(
-		[]),
-	imports: _user$project$Sidekick$defaultImports,
-	activeModuleDocs: _user$project$Sidekick$emptyModuleDocs,
-	tokens: _elm_lang$core$Dict$empty,
-	hints: _elm_lang$core$Native_List.fromArray(
-		[]),
-	note: 'Loading...'
-};
-var _user$project$Sidekick$init = {
-	ctor: '_Tuple2',
-	_0: _user$project$Sidekick$emptyModel,
-	_1: A3(
-		_elm_lang$core$Task$perform,
-		_elm_lang$core$Basics$always(_user$project$Sidekick$DocsFailed),
-		_user$project$Sidekick$DocsLoaded,
-		_user$project$Sidekick$getPackagesDocs(_user$project$Sidekick$defaultPackages))
-};
+var _user$project$Sidekick$emptySourceFile = {moduleDocs: _user$project$Sidekick$emptyModuleDocs, imports: _user$project$Sidekick$defaultImports};
+var _user$project$Sidekick$getActiveSourceFile = F2(
+	function (activeFilePath, sourceFiles) {
+		var _p25 = activeFilePath;
+		if (_p25.ctor === 'Nothing') {
+			return _user$project$Sidekick$emptySourceFile;
+		} else {
+			var _p26 = A2(_elm_lang$core$Dict$get, _p25._0, sourceFiles);
+			if (_p26.ctor === 'Just') {
+				return _p26._0;
+			} else {
+				return _user$project$Sidekick$emptySourceFile;
+			}
+		}
+	});
+var _user$project$Sidekick$update = F2(
+	function (msg, model) {
+		var _p27 = msg;
+		switch (_p27.ctor) {
+			case 'DocsFailed':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{note: 'Failed to load -_-'}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'DocsLoaded':
+				var updatedDocs = A2(_elm_lang$core$Basics_ops['++'], _p27._0, model.docs);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							docs: updatedDocs,
+							tokens: A2(
+								_user$project$Sidekick$toTokenDict,
+								A2(_user$project$Sidekick$getActiveSourceFile, model.activeFilePath, model.sourceFiles),
+								updatedDocs),
+							note: ''
+						}),
+					_1: _user$project$Sidekick$docsLoaded(
+						{ctor: '_Tuple0'})
+				};
+			case 'CursorMove':
+				if (_p27._0.ctor === 'Nothing') {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								hints: _elm_lang$core$Native_List.fromArray(
+									[])
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				} else {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								hints: A2(
+									_elm_lang$core$Maybe$withDefault,
+									_elm_lang$core$Native_List.fromArray(
+										[]),
+									A2(_elm_lang$core$Dict$get, _p27._0._0, model.tokens))
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				}
+			case 'UpdateActiveFilePath':
+				var _p28 = _p27._0;
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							activeFilePath: _p28,
+							tokens: A2(
+								_user$project$Sidekick$toTokenDict,
+								A2(_user$project$Sidekick$getActiveSourceFile, _p28, model.sourceFiles),
+								model.docs)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'UpdateSourceFile':
+				var updatedSourceFiles = A3(
+					_elm_lang$core$Dict$update,
+					_p27._0,
+					_elm_lang$core$Basics$always(
+						_elm_lang$core$Maybe$Just(_p27._1)),
+					model.sourceFiles);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							sourceFiles: updatedSourceFiles,
+							tokens: A2(
+								_user$project$Sidekick$toTokenDict,
+								A2(_user$project$Sidekick$getActiveSourceFile, model.activeFilePath, updatedSourceFiles),
+								model.docs)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			default:
+				var existingPackages = A2(
+					_elm_lang$core$List$map,
+					function (_) {
+						return _.$package;
+					},
+					model.docs);
+				var missingPackages = A2(
+					_elm_lang$core$List$filter,
+					function ($package) {
+						return _elm_lang$core$Basics$not(
+							A2(_elm_lang$core$List$member, $package, existingPackages));
+					},
+					_p27._0);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{note: 'Loading...'}),
+					_1: A3(
+						_elm_lang$core$Task$perform,
+						_elm_lang$core$Basics$always(_user$project$Sidekick$DocsFailed),
+						_user$project$Sidekick$DocsLoaded,
+						_user$project$Sidekick$getPackagesDocs(missingPackages))
+				};
+		}
+	});
 var _user$project$Sidekick$toImportDict = function (rawImports) {
 	return A2(
 		_elm_lang$core$Dict$union,
@@ -9263,13 +9334,19 @@ var _user$project$Sidekick$subscriptions = function (model) {
 		_elm_lang$core$Native_List.fromArray(
 			[
 				_user$project$Sidekick$activeTokenChanged(_user$project$Sidekick$CursorMove),
-				_user$project$Sidekick$rawImportsChanged(
-				function (rawImports) {
-					return _user$project$Sidekick$UpdateImports(
-						_user$project$Sidekick$toImportDict(rawImports));
+				_user$project$Sidekick$activeFilePathChanged(_user$project$Sidekick$UpdateActiveFilePath),
+				_user$project$Sidekick$sourceFileChanged(
+				function (_p29) {
+					var _p30 = _p29;
+					return A2(
+						_user$project$Sidekick$UpdateSourceFile,
+						_p30._0,
+						{
+							moduleDocs: _p30._1,
+							imports: _user$project$Sidekick$toImportDict(_p30._2)
+						});
 				}),
-				_user$project$Sidekick$activeModuleChanged(_user$project$Sidekick$UpdateActiveModuleDocs),
-				_user$project$Sidekick$newPackagesNeeded(_user$project$Sidekick$UpdateDocs)
+				_user$project$Sidekick$newPackagesNeeded(_user$project$Sidekick$UpdatePackageDocs)
 			]));
 };
 var _user$project$Sidekick$main = {
