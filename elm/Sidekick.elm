@@ -288,6 +288,17 @@ viewHint activeModuleName hint =
                 "[View in browser]("
                     ++ hint.href
                     ++ ")"
+
+        formatTipe tipe =
+            if String.startsWith ":" tipe then
+                tipe
+            else
+                case tipe of
+                    "" ->
+                        ""
+
+                    _ ->
+                        "*" ++ tipe ++ "*"
     in
         "# "
             ++ formatModule moduleName
@@ -296,8 +307,8 @@ viewHint activeModuleName hint =
             ++ "**\n"
             ++ "## **"
             ++ formatName name
-            ++ "** : "
-            ++ hint.tipe
+            ++ "** "
+            ++ formatTipe hint.tipe
             ++ "<br><br>\n"
             ++ hint.comment
             ++ "<br><br>\n"
