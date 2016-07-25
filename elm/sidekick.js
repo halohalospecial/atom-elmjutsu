@@ -8555,19 +8555,7 @@ var _user$project$Sidekick$urlTo = F2(
 var _user$project$Sidekick$viewHint = F2(
 	function (activeModuleName, hint) {
 		var formatTipe = function (tipe) {
-			if (A2(_elm_lang$core$String$startsWith, ':', tipe)) {
-				return tipe;
-			} else {
-				var _p5 = tipe;
-				if (_p5 === '') {
-					return '';
-				} else {
-					return A2(
-						_elm_lang$core$Basics_ops['++'],
-						'*',
-						A2(_elm_lang$core$Basics_ops['++'], tipe, '*'));
-				}
-			}
+			return A2(_elm_lang$core$String$startsWith, '*', tipe) ? tipe : A2(_elm_lang$core$Basics_ops['++'], ': ', tipe);
 		};
 		var maybeBrowserLink = _elm_lang$core$Native_Utils.eq(hint.href, '') ? '' : A2(
 			_elm_lang$core$Basics_ops['++'],
@@ -8585,16 +8573,16 @@ var _user$project$Sidekick$viewHint = F2(
 		var formatModule = function (moduleName) {
 			return _elm_lang$core$Native_Utils.eq(activeModuleName, moduleName) ? A2(_elm_lang$core$Basics_ops['++'], moduleName, '.') : A2(_elm_lang$core$Basics_ops['++'], moduleName, '.');
 		};
-		var _p6 = function () {
-			var _p7 = A2(_elm_lang$core$String$split, '.', hint.name);
-			if (_p7.ctor === '[]') {
+		var _p5 = function () {
+			var _p6 = A2(_elm_lang$core$String$split, '.', hint.name);
+			if (_p6.ctor === '[]') {
 				return {ctor: '_Tuple2', _0: '', _1: hint.name};
 			} else {
-				var reversed = _elm_lang$core$List$reverse(_p7);
+				var reversed = _elm_lang$core$List$reverse(_p6);
 				var name = function () {
-					var _p8 = _elm_lang$core$List$head(reversed);
-					if (_p8.ctor === 'Just') {
-						return _p8._0;
+					var _p7 = _elm_lang$core$List$head(reversed);
+					if (_p7.ctor === 'Just') {
+						return _p7._0;
 					} else {
 						return '';
 					}
@@ -8607,8 +8595,8 @@ var _user$project$Sidekick$viewHint = F2(
 				return {ctor: '_Tuple2', _0: moduleName, _1: name};
 			}
 		}();
-		var moduleName = _p6._0;
-		var name = _p6._1;
+		var moduleName = _p5._0;
+		var name = _p5._1;
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
 			'# ',
@@ -8646,8 +8634,8 @@ var _user$project$Sidekick$viewHint = F2(
 	});
 var _user$project$Sidekick$viewHintString = F2(
 	function (activeModuleName, hints) {
-		var _p9 = hints;
-		if (_p9.ctor === '[]') {
+		var _p8 = hints;
+		if (_p8.ctor === '[]') {
 			return '';
 		} else {
 			return A2(
@@ -8942,27 +8930,27 @@ var _user$project$Sidekick$Hint = F4(
 		return {name: a, href: b, comment: c, tipe: d};
 	});
 var _user$project$Sidekick$nameToHints = F3(
-	function (moduleDocs, _p11, _p10) {
-		var _p12 = _p11;
-		var _p13 = _p10;
-		var _p14 = _p13.name;
+	function (moduleDocs, _p10, _p9) {
+		var _p11 = _p10;
+		var _p12 = _p9;
+		var _p13 = _p12.name;
 		var localName = A2(
 			_elm_lang$core$Basics_ops['++'],
-			A2(_elm_lang$core$Maybe$withDefault, moduleDocs.name, _p12.alias),
-			A2(_elm_lang$core$Basics_ops['++'], '.', _p14));
+			A2(_elm_lang$core$Maybe$withDefault, moduleDocs.name, _p11.alias),
+			A2(_elm_lang$core$Basics_ops['++'], '.', _p13));
 		var fullName = A2(
 			_elm_lang$core$Basics_ops['++'],
 			moduleDocs.name,
-			A2(_elm_lang$core$Basics_ops['++'], '.', _p14));
+			A2(_elm_lang$core$Basics_ops['++'], '.', _p13));
 		var hint = A4(
 			_user$project$Sidekick$Hint,
 			fullName,
-			A2(_user$project$Sidekick$urlTo, moduleDocs, _p14),
-			_p13.comment,
-			_p13.tipe);
-		return A2(_user$project$Sidekick$isExposed, _p14, _p12.exposed) ? _elm_lang$core$Native_List.fromArray(
+			A2(_user$project$Sidekick$urlTo, moduleDocs, _p13),
+			_p12.comment,
+			_p12.tipe);
+		return A2(_user$project$Sidekick$isExposed, _p13, _p11.exposed) ? _elm_lang$core$Native_List.fromArray(
 			[
-				{ctor: '_Tuple2', _0: _p14, _1: hint},
+				{ctor: '_Tuple2', _0: _p13, _1: hint},
 				{ctor: '_Tuple2', _0: localName, _1: hint}
 			]) : _elm_lang$core$Native_List.fromArray(
 			[
@@ -8970,15 +8958,15 @@ var _user$project$Sidekick$nameToHints = F3(
 			]);
 	});
 var _user$project$Sidekick$unionTagsToHints = F3(
-	function (moduleDocs, _p16, _p15) {
-		var _p17 = _p16;
-		var _p18 = _p15;
-		var _p19 = _p18.name;
+	function (moduleDocs, _p15, _p14) {
+		var _p16 = _p15;
+		var _p17 = _p14;
+		var _p18 = _p17.name;
 		var addHints = F2(
 			function (tag, hints) {
 				var localName = A2(
 					_elm_lang$core$Basics_ops['++'],
-					A2(_elm_lang$core$Maybe$withDefault, moduleDocs.name, _p17.alias),
+					A2(_elm_lang$core$Maybe$withDefault, moduleDocs.name, _p16.alias),
 					A2(_elm_lang$core$Basics_ops['++'], '.', tag));
 				var fullName = A2(
 					_elm_lang$core$Basics_ops['++'],
@@ -8987,10 +8975,10 @@ var _user$project$Sidekick$unionTagsToHints = F3(
 				var hint = A4(
 					_user$project$Sidekick$Hint,
 					fullName,
-					A2(_user$project$Sidekick$urlTo, moduleDocs, _p19),
-					_p18.comment,
-					_p18.tipe);
-				return (A2(_elm_lang$core$List$member, _p19, _user$project$Sidekick$defaultTypes) || A2(_user$project$Sidekick$isExposed, tag, _p17.exposed)) ? A2(
+					A2(_user$project$Sidekick$urlTo, moduleDocs, _p18),
+					_p17.comment,
+					_p17.tipe);
+				return (A2(_elm_lang$core$List$member, _p18, _user$project$Sidekick$defaultTypes) || A2(_user$project$Sidekick$isExposed, tag, _p16.exposed)) ? A2(
 					_elm_lang$core$List_ops['::'],
 					{ctor: '_Tuple2', _0: tag, _1: hint},
 					A2(
@@ -9012,7 +9000,7 @@ var _user$project$Sidekick$unionTagsToHints = F3(
 			addHints,
 			_elm_lang$core$Native_List.fromArray(
 				[]),
-			_p18.cases);
+			_p17.cases);
 	});
 var _user$project$Sidekick$filteredHints = F2(
 	function (moduleDocs, importData) {
@@ -9081,16 +9069,16 @@ var _user$project$Sidekick$All = {ctor: 'All'};
 var _user$project$Sidekick$toTokenDict = F3(
 	function (activeSourceFile, sourceFileDict, packageDocsList) {
 		var insert = F2(
-			function (_p20, dict) {
-				var _p21 = _p20;
+			function (_p19, dict) {
+				var _p20 = _p19;
 				return A3(
 					_elm_lang$core$Dict$update,
-					_p21._0,
+					_p20._0,
 					function (value) {
 						return _elm_lang$core$Maybe$Just(
 							A2(
 								_elm_lang$core$List_ops['::'],
-								_p21._1,
+								_p20._1,
 								A2(
 									_elm_lang$core$Maybe$withDefault,
 									_elm_lang$core$Native_List.fromArray(
@@ -9132,25 +9120,25 @@ var _user$project$Sidekick$Some = function (a) {
 	return {ctor: 'Some', _0: a};
 };
 var _user$project$Sidekick$None = {ctor: 'None'};
-var _user$project$Sidekick$toImport = function (_p22) {
-	var _p23 = _p22;
+var _user$project$Sidekick$toImport = function (_p21) {
+	var _p22 = _p21;
 	var exposedSet = function () {
-		var _p24 = _p23.exposed;
-		if (_p24.ctor === 'Nothing') {
+		var _p23 = _p22.exposed;
+		if (_p23.ctor === 'Nothing') {
 			return _user$project$Sidekick$None;
 		} else {
-			if (((_p24._0.ctor === '::') && (_p24._0._0 === '..')) && (_p24._0._1.ctor === '[]')) {
+			if (((_p23._0.ctor === '::') && (_p23._0._0 === '..')) && (_p23._0._1.ctor === '[]')) {
 				return _user$project$Sidekick$All;
 			} else {
 				return _user$project$Sidekick$Some(
-					_elm_lang$core$Set$fromList(_p24._0));
+					_elm_lang$core$Set$fromList(_p23._0));
 			}
 		}
 	}();
 	return {
 		ctor: '_Tuple2',
-		_0: _p23.name,
-		_1: A2(_user$project$Sidekick$Import, _p23.alias, exposedSet)
+		_0: _p22.name,
+		_1: A2(_user$project$Sidekick$Import, _p22.alias, exposedSet)
 	};
 };
 var _user$project$Sidekick$defaultImports = _elm_lang$core$Dict$fromList(
@@ -9204,13 +9192,13 @@ var _user$project$Sidekick$defaultImports = _elm_lang$core$Dict$fromList(
 var _user$project$Sidekick$emptySourceFile = {moduleDocs: _user$project$Sidekick$emptyModuleDocs, imports: _user$project$Sidekick$defaultImports};
 var _user$project$Sidekick$getActiveSourceFile = F2(
 	function (activeFilePath, sourceFileDict) {
-		var _p25 = activeFilePath;
-		if (_p25.ctor === 'Nothing') {
+		var _p24 = activeFilePath;
+		if (_p24.ctor === 'Nothing') {
 			return _user$project$Sidekick$emptySourceFile;
 		} else {
-			var _p26 = A2(_elm_lang$core$Dict$get, _p25._0, sourceFileDict);
-			if (_p26.ctor === 'Just') {
-				return _p26._0;
+			var _p25 = A2(_elm_lang$core$Dict$get, _p24._0, sourceFileDict);
+			if (_p25.ctor === 'Just') {
+				return _p25._0;
 			} else {
 				return _user$project$Sidekick$emptySourceFile;
 			}
@@ -9218,8 +9206,8 @@ var _user$project$Sidekick$getActiveSourceFile = F2(
 	});
 var _user$project$Sidekick$update = F2(
 	function (msg, model) {
-		var _p27 = msg;
-		switch (_p27.ctor) {
+		var _p26 = msg;
+		switch (_p26.ctor) {
 			case 'DocsFailed':
 				return {
 					ctor: '_Tuple2',
@@ -9237,12 +9225,12 @@ var _user$project$Sidekick$update = F2(
 					model.packageDocs);
 				var missingPackageDocs = A2(
 					_elm_lang$core$List$filter,
-					function (_p28) {
-						var _p29 = _p28;
+					function (_p27) {
+						var _p28 = _p27;
 						return _elm_lang$core$Basics$not(
-							A2(_elm_lang$core$List$member, _p29.$package, existingPackages));
+							A2(_elm_lang$core$List$member, _p28.$package, existingPackages));
 					},
-					_p27._0);
+					_p26._0);
 				var updatedPackageDocs = A2(_elm_lang$core$Basics_ops['++'], missingPackageDocs, model.packageDocs);
 				return {
 					ctor: '_Tuple2',
@@ -9261,7 +9249,7 @@ var _user$project$Sidekick$update = F2(
 						{ctor: '_Tuple0'})
 				};
 			case 'CursorMove':
-				if (_p27._0.ctor === 'Nothing') {
+				if (_p26._0.ctor === 'Nothing') {
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
@@ -9282,22 +9270,22 @@ var _user$project$Sidekick$update = F2(
 									_elm_lang$core$Maybe$withDefault,
 									_elm_lang$core$Native_List.fromArray(
 										[]),
-									A2(_elm_lang$core$Dict$get, _p27._0._0, model.tokens))
+									A2(_elm_lang$core$Dict$get, _p26._0._0, model.tokens))
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
 					};
 				}
 			case 'UpdateActiveFilePath':
-				var _p30 = _p27._0;
+				var _p29 = _p26._0;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{
-							activeFilePath: _p30,
+							activeFilePath: _p29,
 							tokens: A3(
 								_user$project$Sidekick$toTokenDict,
-								A2(_user$project$Sidekick$getActiveSourceFile, _p30, model.sourceFileDict),
+								A2(_user$project$Sidekick$getActiveSourceFile, _p29, model.sourceFileDict),
 								model.sourceFileDict,
 								model.packageDocs)
 						}),
@@ -9306,9 +9294,9 @@ var _user$project$Sidekick$update = F2(
 			case 'UpdateSourceFile':
 				var updatedSourceFileDict = A3(
 					_elm_lang$core$Dict$update,
-					_p27._0,
+					_p26._0,
 					_elm_lang$core$Basics$always(
-						_elm_lang$core$Maybe$Just(_p27._1)),
+						_elm_lang$core$Maybe$Just(_p26._1)),
 					model.sourceFileDict);
 				return {
 					ctor: '_Tuple2',
@@ -9337,7 +9325,7 @@ var _user$project$Sidekick$update = F2(
 						return _elm_lang$core$Basics$not(
 							A2(_elm_lang$core$List$member, $package, existingPackages));
 					},
-					_p27._0);
+					_p26._0);
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -9356,23 +9344,23 @@ var _user$project$Sidekick$activeFileModuleName = F2(
 		var sourceFile = A2(_user$project$Sidekick$getActiveSourceFile, activeFilePath, sourceFileDict);
 		return sourceFile.moduleDocs.name;
 	});
-var _user$project$Sidekick$view = function (_p31) {
-	var _p32 = _p31;
+var _user$project$Sidekick$view = function (_p30) {
+	var _p31 = _p30;
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
 			[]),
 		_elm_lang$core$Native_List.fromArray(
 			[
-				_elm_lang$html$Html$text(_p32.note),
+				_elm_lang$html$Html$text(_p31.note),
 				A2(
 				_evancz$elm_markdown$Markdown$toHtml,
 				_elm_lang$core$Native_List.fromArray(
 					[]),
 				A2(
 					_user$project$Sidekick$viewHintString,
-					A2(_user$project$Sidekick$activeFileModuleName, _p32.activeFilePath, _p32.sourceFileDict),
-					_p32.hints))
+					A2(_user$project$Sidekick$activeFileModuleName, _p31.activeFilePath, _p31.sourceFileDict),
+					_p31.hints))
 			]));
 };
 var _user$project$Sidekick$toImportDict = function (rawImports) {
@@ -9389,14 +9377,14 @@ var _user$project$Sidekick$subscriptions = function (model) {
 				_user$project$Sidekick$activeTokenChanged(_user$project$Sidekick$CursorMove),
 				_user$project$Sidekick$activeFilePathChanged(_user$project$Sidekick$UpdateActiveFilePath),
 				_user$project$Sidekick$sourceFileChanged(
-				function (_p33) {
-					var _p34 = _p33;
+				function (_p32) {
+					var _p33 = _p32;
 					return A2(
 						_user$project$Sidekick$UpdateSourceFile,
-						_p34._0,
+						_p33._0,
 						{
-							moduleDocs: _p34._1,
-							imports: _user$project$Sidekick$toImportDict(_p34._2)
+							moduleDocs: _p33._1,
+							imports: _user$project$Sidekick$toImportDict(_p33._2)
 						});
 				}),
 				_user$project$Sidekick$newPackagesNeeded(_user$project$Sidekick$UpdatePackageDocs)

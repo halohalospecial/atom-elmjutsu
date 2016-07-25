@@ -290,15 +290,10 @@ viewHint activeModuleName hint =
                     ++ ")"
 
         formatTipe tipe =
-            if String.startsWith ":" tipe then
+            if String.startsWith "*" tipe then
                 tipe
             else
-                case tipe of
-                    "" ->
-                        ""
-
-                    _ ->
-                        "*" ++ tipe ++ "*"
+                ": " ++ tipe
     in
         "# "
             ++ formatModule moduleName
