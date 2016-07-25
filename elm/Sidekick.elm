@@ -292,6 +292,8 @@ viewHint activeModuleName hint =
         formatTipe tipe =
             if String.startsWith "*" tipe then
                 tipe
+            else if tipe == "" then
+                ""
             else
                 ": " ++ tipe
     in

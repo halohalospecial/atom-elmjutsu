@@ -8555,7 +8555,7 @@ var _user$project$Sidekick$urlTo = F2(
 var _user$project$Sidekick$viewHint = F2(
 	function (activeModuleName, hint) {
 		var formatTipe = function (tipe) {
-			return A2(_elm_lang$core$String$startsWith, '*', tipe) ? tipe : A2(_elm_lang$core$Basics_ops['++'], ': ', tipe);
+			return A2(_elm_lang$core$String$startsWith, '*', tipe) ? tipe : (_elm_lang$core$Native_Utils.eq(tipe, '') ? '' : A2(_elm_lang$core$Basics_ops['++'], ': ', tipe));
 		};
 		var maybeBrowserLink = _elm_lang$core$Native_Utils.eq(hint.href, '') ? '' : A2(
 			_elm_lang$core$Basics_ops['++'],
