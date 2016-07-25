@@ -8008,6 +8008,459 @@ var _elm_lang$html$Html_App$beginnerProgram = function (_p1) {
 };
 var _elm_lang$html$Html_App$map = _elm_lang$virtual_dom$VirtualDom$map;
 
+var _elm_lang$html$Html_Attributes$attribute = _elm_lang$virtual_dom$VirtualDom$attribute;
+var _elm_lang$html$Html_Attributes$contextmenu = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$attribute, 'contextmenu', value);
+};
+var _elm_lang$html$Html_Attributes$draggable = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$attribute, 'draggable', value);
+};
+var _elm_lang$html$Html_Attributes$list = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$attribute, 'list', value);
+};
+var _elm_lang$html$Html_Attributes$maxlength = function (n) {
+	return A2(
+		_elm_lang$html$Html_Attributes$attribute,
+		'maxlength',
+		_elm_lang$core$Basics$toString(n));
+};
+var _elm_lang$html$Html_Attributes$datetime = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$attribute, 'datetime', value);
+};
+var _elm_lang$html$Html_Attributes$pubdate = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$attribute, 'pubdate', value);
+};
+var _elm_lang$html$Html_Attributes$colspan = function (n) {
+	return A2(
+		_elm_lang$html$Html_Attributes$attribute,
+		'colspan',
+		_elm_lang$core$Basics$toString(n));
+};
+var _elm_lang$html$Html_Attributes$rowspan = function (n) {
+	return A2(
+		_elm_lang$html$Html_Attributes$attribute,
+		'rowspan',
+		_elm_lang$core$Basics$toString(n));
+};
+var _elm_lang$html$Html_Attributes$property = _elm_lang$virtual_dom$VirtualDom$property;
+var _elm_lang$html$Html_Attributes$stringProperty = F2(
+	function (name, string) {
+		return A2(
+			_elm_lang$html$Html_Attributes$property,
+			name,
+			_elm_lang$core$Json_Encode$string(string));
+	});
+var _elm_lang$html$Html_Attributes$class = function (name) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'className', name);
+};
+var _elm_lang$html$Html_Attributes$id = function (name) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'id', name);
+};
+var _elm_lang$html$Html_Attributes$title = function (name) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'title', name);
+};
+var _elm_lang$html$Html_Attributes$accesskey = function ($char) {
+	return A2(
+		_elm_lang$html$Html_Attributes$stringProperty,
+		'accessKey',
+		_elm_lang$core$String$fromChar($char));
+};
+var _elm_lang$html$Html_Attributes$dir = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'dir', value);
+};
+var _elm_lang$html$Html_Attributes$dropzone = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'dropzone', value);
+};
+var _elm_lang$html$Html_Attributes$itemprop = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'itemprop', value);
+};
+var _elm_lang$html$Html_Attributes$lang = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'lang', value);
+};
+var _elm_lang$html$Html_Attributes$tabindex = function (n) {
+	return A2(
+		_elm_lang$html$Html_Attributes$stringProperty,
+		'tabIndex',
+		_elm_lang$core$Basics$toString(n));
+};
+var _elm_lang$html$Html_Attributes$charset = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'charset', value);
+};
+var _elm_lang$html$Html_Attributes$content = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'content', value);
+};
+var _elm_lang$html$Html_Attributes$httpEquiv = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'httpEquiv', value);
+};
+var _elm_lang$html$Html_Attributes$language = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'language', value);
+};
+var _elm_lang$html$Html_Attributes$src = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'src', value);
+};
+var _elm_lang$html$Html_Attributes$height = function (value) {
+	return A2(
+		_elm_lang$html$Html_Attributes$stringProperty,
+		'height',
+		_elm_lang$core$Basics$toString(value));
+};
+var _elm_lang$html$Html_Attributes$width = function (value) {
+	return A2(
+		_elm_lang$html$Html_Attributes$stringProperty,
+		'width',
+		_elm_lang$core$Basics$toString(value));
+};
+var _elm_lang$html$Html_Attributes$alt = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'alt', value);
+};
+var _elm_lang$html$Html_Attributes$preload = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'preload', value);
+};
+var _elm_lang$html$Html_Attributes$poster = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'poster', value);
+};
+var _elm_lang$html$Html_Attributes$kind = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'kind', value);
+};
+var _elm_lang$html$Html_Attributes$srclang = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'srclang', value);
+};
+var _elm_lang$html$Html_Attributes$sandbox = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'sandbox', value);
+};
+var _elm_lang$html$Html_Attributes$srcdoc = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'srcdoc', value);
+};
+var _elm_lang$html$Html_Attributes$type$ = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'type', value);
+};
+var _elm_lang$html$Html_Attributes$value = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'value', value);
+};
+var _elm_lang$html$Html_Attributes$defaultValue = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'defaultValue', value);
+};
+var _elm_lang$html$Html_Attributes$placeholder = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'placeholder', value);
+};
+var _elm_lang$html$Html_Attributes$accept = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'accept', value);
+};
+var _elm_lang$html$Html_Attributes$acceptCharset = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'acceptCharset', value);
+};
+var _elm_lang$html$Html_Attributes$action = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'action', value);
+};
+var _elm_lang$html$Html_Attributes$autocomplete = function (bool) {
+	return A2(
+		_elm_lang$html$Html_Attributes$stringProperty,
+		'autocomplete',
+		bool ? 'on' : 'off');
+};
+var _elm_lang$html$Html_Attributes$autosave = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'autosave', value);
+};
+var _elm_lang$html$Html_Attributes$enctype = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'enctype', value);
+};
+var _elm_lang$html$Html_Attributes$formaction = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'formAction', value);
+};
+var _elm_lang$html$Html_Attributes$minlength = function (n) {
+	return A2(
+		_elm_lang$html$Html_Attributes$stringProperty,
+		'minLength',
+		_elm_lang$core$Basics$toString(n));
+};
+var _elm_lang$html$Html_Attributes$method = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'method', value);
+};
+var _elm_lang$html$Html_Attributes$name = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'name', value);
+};
+var _elm_lang$html$Html_Attributes$pattern = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'pattern', value);
+};
+var _elm_lang$html$Html_Attributes$size = function (n) {
+	return A2(
+		_elm_lang$html$Html_Attributes$stringProperty,
+		'size',
+		_elm_lang$core$Basics$toString(n));
+};
+var _elm_lang$html$Html_Attributes$for = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'htmlFor', value);
+};
+var _elm_lang$html$Html_Attributes$form = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'form', value);
+};
+var _elm_lang$html$Html_Attributes$max = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'max', value);
+};
+var _elm_lang$html$Html_Attributes$min = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'min', value);
+};
+var _elm_lang$html$Html_Attributes$step = function (n) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'step', n);
+};
+var _elm_lang$html$Html_Attributes$cols = function (n) {
+	return A2(
+		_elm_lang$html$Html_Attributes$stringProperty,
+		'cols',
+		_elm_lang$core$Basics$toString(n));
+};
+var _elm_lang$html$Html_Attributes$rows = function (n) {
+	return A2(
+		_elm_lang$html$Html_Attributes$stringProperty,
+		'rows',
+		_elm_lang$core$Basics$toString(n));
+};
+var _elm_lang$html$Html_Attributes$wrap = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'wrap', value);
+};
+var _elm_lang$html$Html_Attributes$usemap = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'useMap', value);
+};
+var _elm_lang$html$Html_Attributes$shape = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'shape', value);
+};
+var _elm_lang$html$Html_Attributes$coords = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'coords', value);
+};
+var _elm_lang$html$Html_Attributes$challenge = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'challenge', value);
+};
+var _elm_lang$html$Html_Attributes$keytype = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'keytype', value);
+};
+var _elm_lang$html$Html_Attributes$align = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'align', value);
+};
+var _elm_lang$html$Html_Attributes$cite = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'cite', value);
+};
+var _elm_lang$html$Html_Attributes$href = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'href', value);
+};
+var _elm_lang$html$Html_Attributes$target = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'target', value);
+};
+var _elm_lang$html$Html_Attributes$downloadAs = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'download', value);
+};
+var _elm_lang$html$Html_Attributes$hreflang = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'hreflang', value);
+};
+var _elm_lang$html$Html_Attributes$media = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'media', value);
+};
+var _elm_lang$html$Html_Attributes$ping = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'ping', value);
+};
+var _elm_lang$html$Html_Attributes$rel = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'rel', value);
+};
+var _elm_lang$html$Html_Attributes$start = function (n) {
+	return A2(
+		_elm_lang$html$Html_Attributes$stringProperty,
+		'start',
+		_elm_lang$core$Basics$toString(n));
+};
+var _elm_lang$html$Html_Attributes$headers = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'headers', value);
+};
+var _elm_lang$html$Html_Attributes$scope = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'scope', value);
+};
+var _elm_lang$html$Html_Attributes$manifest = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$stringProperty, 'manifest', value);
+};
+var _elm_lang$html$Html_Attributes$boolProperty = F2(
+	function (name, bool) {
+		return A2(
+			_elm_lang$html$Html_Attributes$property,
+			name,
+			_elm_lang$core$Json_Encode$bool(bool));
+	});
+var _elm_lang$html$Html_Attributes$hidden = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'hidden', bool);
+};
+var _elm_lang$html$Html_Attributes$contenteditable = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'contentEditable', bool);
+};
+var _elm_lang$html$Html_Attributes$spellcheck = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'spellcheck', bool);
+};
+var _elm_lang$html$Html_Attributes$async = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'async', bool);
+};
+var _elm_lang$html$Html_Attributes$defer = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'defer', bool);
+};
+var _elm_lang$html$Html_Attributes$scoped = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'scoped', bool);
+};
+var _elm_lang$html$Html_Attributes$autoplay = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'autoplay', bool);
+};
+var _elm_lang$html$Html_Attributes$controls = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'controls', bool);
+};
+var _elm_lang$html$Html_Attributes$loop = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'loop', bool);
+};
+var _elm_lang$html$Html_Attributes$default = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'default', bool);
+};
+var _elm_lang$html$Html_Attributes$seamless = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'seamless', bool);
+};
+var _elm_lang$html$Html_Attributes$checked = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'checked', bool);
+};
+var _elm_lang$html$Html_Attributes$selected = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'selected', bool);
+};
+var _elm_lang$html$Html_Attributes$autofocus = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'autofocus', bool);
+};
+var _elm_lang$html$Html_Attributes$disabled = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'disabled', bool);
+};
+var _elm_lang$html$Html_Attributes$multiple = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'multiple', bool);
+};
+var _elm_lang$html$Html_Attributes$novalidate = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'noValidate', bool);
+};
+var _elm_lang$html$Html_Attributes$readonly = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'readOnly', bool);
+};
+var _elm_lang$html$Html_Attributes$required = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'required', bool);
+};
+var _elm_lang$html$Html_Attributes$ismap = function (value) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'isMap', value);
+};
+var _elm_lang$html$Html_Attributes$download = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'download', bool);
+};
+var _elm_lang$html$Html_Attributes$reversed = function (bool) {
+	return A2(_elm_lang$html$Html_Attributes$boolProperty, 'reversed', bool);
+};
+var _elm_lang$html$Html_Attributes$classList = function (list) {
+	return _elm_lang$html$Html_Attributes$class(
+		A2(
+			_elm_lang$core$String$join,
+			' ',
+			A2(
+				_elm_lang$core$List$map,
+				_elm_lang$core$Basics$fst,
+				A2(_elm_lang$core$List$filter, _elm_lang$core$Basics$snd, list))));
+};
+var _elm_lang$html$Html_Attributes$style = _elm_lang$virtual_dom$VirtualDom$style;
+
+var _elm_lang$html$Html_Events$keyCode = A2(_elm_lang$core$Json_Decode_ops[':='], 'keyCode', _elm_lang$core$Json_Decode$int);
+var _elm_lang$html$Html_Events$targetChecked = A2(
+	_elm_lang$core$Json_Decode$at,
+	_elm_lang$core$Native_List.fromArray(
+		['target', 'checked']),
+	_elm_lang$core$Json_Decode$bool);
+var _elm_lang$html$Html_Events$targetValue = A2(
+	_elm_lang$core$Json_Decode$at,
+	_elm_lang$core$Native_List.fromArray(
+		['target', 'value']),
+	_elm_lang$core$Json_Decode$string);
+var _elm_lang$html$Html_Events$defaultOptions = _elm_lang$virtual_dom$VirtualDom$defaultOptions;
+var _elm_lang$html$Html_Events$onWithOptions = _elm_lang$virtual_dom$VirtualDom$onWithOptions;
+var _elm_lang$html$Html_Events$on = _elm_lang$virtual_dom$VirtualDom$on;
+var _elm_lang$html$Html_Events$onFocus = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'focus',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onBlur = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'blur',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onSubmitOptions = _elm_lang$core$Native_Utils.update(
+	_elm_lang$html$Html_Events$defaultOptions,
+	{preventDefault: true});
+var _elm_lang$html$Html_Events$onSubmit = function (msg) {
+	return A3(
+		_elm_lang$html$Html_Events$onWithOptions,
+		'submit',
+		_elm_lang$html$Html_Events$onSubmitOptions,
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onCheck = function (tagger) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'change',
+		A2(_elm_lang$core$Json_Decode$map, tagger, _elm_lang$html$Html_Events$targetChecked));
+};
+var _elm_lang$html$Html_Events$onInput = function (tagger) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'input',
+		A2(_elm_lang$core$Json_Decode$map, tagger, _elm_lang$html$Html_Events$targetValue));
+};
+var _elm_lang$html$Html_Events$onMouseOut = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'mouseout',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onMouseOver = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'mouseover',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onMouseLeave = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'mouseleave',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onMouseEnter = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'mouseenter',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onMouseUp = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'mouseup',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onMouseDown = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'mousedown',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onDoubleClick = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'dblclick',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$onClick = function (msg) {
+	return A2(
+		_elm_lang$html$Html_Events$on,
+		'click',
+		_elm_lang$core$Json_Decode$succeed(msg));
+};
+var _elm_lang$html$Html_Events$Options = F2(
+	function (a, b) {
+		return {stopPropagation: a, preventDefault: b};
+	});
+
 //import Dict, List, Maybe, Native.Scheduler //
 
 var _evancz$elm_http$Native_Http = function() {
@@ -8523,8 +8976,18 @@ var _user$project$Sidekick$tipeToValue = function (_p1) {
 	var _p2 = _p1;
 	return {name: _p2.name, comment: _p2.comment, tipe: _p2.tipe};
 };
-var _user$project$Sidekick$defaultPackages = _elm_lang$core$Native_List.fromArray(
-	['elm-lang/core']);
+var _user$project$Sidekick$packageDocsPrefix = 'http://package.elm-lang.org/packages/';
+var _user$project$Sidekick$toPackageUri = function ($package) {
+	return A2(
+		_elm_lang$core$Basics_ops['++'],
+		_user$project$Sidekick$packageDocsPrefix,
+		A2(_elm_lang$core$Basics_ops['++'], $package, '/latest/'));
+};
+var _user$project$Sidekick$defaultPackages = A2(
+	_elm_lang$core$List$map,
+	_user$project$Sidekick$toPackageUri,
+	_elm_lang$core$Native_List.fromArray(
+		['elm-lang/core']));
 var _user$project$Sidekick$dotToHyphen = function (string) {
 	return A2(
 		_elm_lang$core$String$map,
@@ -8538,29 +9001,21 @@ var _user$project$Sidekick$dotToHyphen = function (string) {
 var _user$project$Sidekick$urlTo = F2(
 	function (_p3, valueName) {
 		var _p4 = _p3;
+		var _p5 = _p4.packageUri;
+		var uri = A2(_elm_lang$core$String$startsWith, _user$project$Sidekick$packageDocsPrefix, _p5) ? A2(
+			_elm_lang$core$Basics_ops['++'],
+			_p5,
+			_user$project$Sidekick$dotToHyphen(_p4.name)) : _p5;
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
-			'http://package.elm-lang.org/packages/',
-			A2(
-				_elm_lang$core$Basics_ops['++'],
-				_p4.$package,
-				A2(
-					_elm_lang$core$Basics_ops['++'],
-					'/latest/',
-					A2(
-						_elm_lang$core$Basics_ops['++'],
-						_user$project$Sidekick$dotToHyphen(_p4.name),
-						A2(_elm_lang$core$Basics_ops['++'], '#', valueName)))));
+			uri,
+			A2(_elm_lang$core$Basics_ops['++'], '#', valueName));
 	});
 var _user$project$Sidekick$viewHint = F2(
 	function (activeModuleName, hint) {
 		var formatTipe = function (tipe) {
 			return A2(_elm_lang$core$String$startsWith, '*', tipe) ? tipe : (_elm_lang$core$Native_Utils.eq(tipe, '') ? '' : A2(_elm_lang$core$Basics_ops['++'], ': ', tipe));
 		};
-		var maybeBrowserLink = _elm_lang$core$Native_Utils.eq(hint.href, '') ? '' : A2(
-			_elm_lang$core$Basics_ops['++'],
-			'[View in browser](',
-			A2(_elm_lang$core$Basics_ops['++'], hint.href, ')'));
 		var formatName = function (name) {
 			return A2(
 				_elm_lang$core$Regex$contains,
@@ -8573,16 +9028,16 @@ var _user$project$Sidekick$viewHint = F2(
 		var formatModule = function (moduleName) {
 			return _elm_lang$core$Native_Utils.eq(activeModuleName, moduleName) ? A2(_elm_lang$core$Basics_ops['++'], moduleName, '.') : A2(_elm_lang$core$Basics_ops['++'], moduleName, '.');
 		};
-		var _p5 = function () {
-			var _p6 = A2(_elm_lang$core$String$split, '.', hint.name);
-			if (_p6.ctor === '[]') {
+		var _p6 = function () {
+			var _p7 = A2(_elm_lang$core$String$split, '.', hint.name);
+			if (_p7.ctor === '[]') {
 				return {ctor: '_Tuple2', _0: '', _1: hint.name};
 			} else {
-				var reversed = _elm_lang$core$List$reverse(_p6);
+				var reversed = _elm_lang$core$List$reverse(_p7);
 				var name = function () {
-					var _p7 = _elm_lang$core$List$head(reversed);
-					if (_p7.ctor === 'Just') {
-						return _p7._0;
+					var _p8 = _elm_lang$core$List$head(reversed);
+					if (_p8.ctor === 'Just') {
+						return _p8._0;
 					} else {
 						return '';
 					}
@@ -8595,8 +9050,8 @@ var _user$project$Sidekick$viewHint = F2(
 				return {ctor: '_Tuple2', _0: moduleName, _1: name};
 			}
 		}();
-		var moduleName = _p5._0;
-		var name = _p5._1;
+		var moduleName = _p6._0;
+		var name = _p6._1;
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
 			'# ',
@@ -8627,28 +9082,10 @@ var _user$project$Sidekick$viewHint = F2(
 											A2(
 												_elm_lang$core$Basics_ops['++'],
 												'<br><br>\n',
-												A2(
-													_elm_lang$core$Basics_ops['++'],
-													hint.comment,
-													A2(_elm_lang$core$Basics_ops['++'], '<br><br>\n', maybeBrowserLink))))))))))));
-	});
-var _user$project$Sidekick$viewHintString = F2(
-	function (activeModuleName, hints) {
-		var _p8 = hints;
-		if (_p8.ctor === '[]') {
-			return '';
-		} else {
-			return A2(
-				_elm_lang$core$String$join,
-				'\n\n',
-				A2(
-					_elm_lang$core$List$map,
-					_user$project$Sidekick$viewHint(activeModuleName),
-					hints));
-		}
+												A2(_elm_lang$core$Basics_ops['++'], hint.comment, '<br><br>\n')))))))))));
 	});
 var _user$project$Sidekick$emptyModuleDocs = {
-	$package: '',
+	packageUri: '',
 	name: '',
 	values: {
 		aliases: _elm_lang$core$Native_List.fromArray(
@@ -8696,8 +9133,8 @@ var _user$project$Sidekick$sourceFileChanged = _elm_lang$core$Native_Platform.in
 		_elm_lang$core$Json_Decode$string,
 		A2(
 			_elm_lang$core$Json_Decode$andThen,
-			A2(_elm_lang$core$Json_Decode_ops[':='], 'package', _elm_lang$core$Json_Decode$string),
-			function ($package) {
+			A2(_elm_lang$core$Json_Decode_ops[':='], 'packageUri', _elm_lang$core$Json_Decode$string),
+			function (packageUri) {
 				return A2(
 					_elm_lang$core$Json_Decode$andThen,
 					A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
@@ -8794,7 +9231,7 @@ var _user$project$Sidekick$sourceFileChanged = _elm_lang$core$Native_Platform.in
 									})),
 							function (values) {
 								return _elm_lang$core$Json_Decode$succeed(
-									{$package: $package, name: name, values: values});
+									{packageUri: packageUri, name: name, values: values});
 							});
 					});
 			}),
@@ -8843,6 +9280,11 @@ var _user$project$Sidekick$docsLoaded = _elm_lang$core$Native_Platform.outgoingP
 	function (v) {
 		return null;
 	});
+var _user$project$Sidekick$goToDefinition = _elm_lang$core$Native_Platform.outgoingPort(
+	'goToDefinition',
+	function (v) {
+		return v;
+	});
 var _user$project$Sidekick$Model = F6(
 	function (a, b, c, d, e, f) {
 		return {packageDocs: a, tokens: b, hints: c, note: d, activeFilePath: e, sourceFileDict: f};
@@ -8853,7 +9295,7 @@ var _user$project$Sidekick$SourceFile = F2(
 	});
 var _user$project$Sidekick$ModuleDocs = F3(
 	function (a, b, c) {
-		return {$package: a, name: b, values: c};
+		return {packageUri: a, name: b, values: c};
 	});
 var _user$project$Sidekick$Values = F3(
 	function (a, b, c) {
@@ -8867,7 +9309,7 @@ var _user$project$Sidekick$Value = F3(
 	function (a, b, c) {
 		return {name: a, comment: b, tipe: c};
 	});
-var _user$project$Sidekick$moduleDecoder = function ($package) {
+var _user$project$Sidekick$moduleDecoder = function (packageUri) {
 	var value = A4(
 		_elm_lang$core$Json_Decode$object3,
 		_user$project$Sidekick$Value,
@@ -8903,31 +9345,28 @@ var _user$project$Sidekick$moduleDecoder = function ($package) {
 	var name = A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string);
 	return A3(
 		_elm_lang$core$Json_Decode$object2,
-		_user$project$Sidekick$ModuleDocs($package),
+		_user$project$Sidekick$ModuleDocs(packageUri),
 		name,
 		values);
 };
-var _user$project$Sidekick$getPackageDocs = function ($package) {
-	var url = A2(
-		_elm_lang$core$Basics_ops['++'],
-		'http://package.elm-lang.org/packages/',
-		A2(_elm_lang$core$Basics_ops['++'], $package, '/latest/documentation.json'));
+var _user$project$Sidekick$getPackageDocs = function (packageUri) {
+	var url = A2(_elm_lang$core$Basics_ops['++'], packageUri, 'documentation.json');
 	return A2(
 		_evancz$elm_http$Http$get,
 		_elm_lang$core$Json_Decode$list(
-			_user$project$Sidekick$moduleDecoder($package)),
+			_user$project$Sidekick$moduleDecoder(packageUri)),
 		url);
 };
-var _user$project$Sidekick$getPackageDocsList = function (packages) {
+var _user$project$Sidekick$getPackageDocsList = function (packageuris) {
 	return A2(
 		_elm_lang$core$Task$map,
 		_elm_lang$core$List$concat,
 		_elm_lang$core$Task$sequence(
-			A2(_elm_lang$core$List$map, _user$project$Sidekick$getPackageDocs, packages)));
+			A2(_elm_lang$core$List$map, _user$project$Sidekick$getPackageDocs, packageuris)));
 };
 var _user$project$Sidekick$Hint = F4(
 	function (a, b, c, d) {
-		return {name: a, href: b, comment: c, tipe: d};
+		return {name: a, uri: b, comment: c, tipe: d};
 	});
 var _user$project$Sidekick$nameToHints = F3(
 	function (moduleDocs, _p10, _p9) {
@@ -9039,6 +9478,9 @@ _user$project$Sidekick_ops['=>'] = F2(
 			_1: A2(_user$project$Sidekick$Import, _elm_lang$core$Maybe$Nothing, exposed)
 		};
 	});
+var _user$project$Sidekick$GoToDefinition = function (a) {
+	return {ctor: 'GoToDefinition', _0: a};
+};
 var _user$project$Sidekick$UpdatePackageDocs = function (a) {
 	return {ctor: 'UpdatePackageDocs', _0: a};
 };
@@ -9220,7 +9662,7 @@ var _user$project$Sidekick$update = F2(
 				var existingPackages = A2(
 					_elm_lang$core$List$map,
 					function (_) {
-						return _.$package;
+						return _.packageUri;
 					},
 					model.packageDocs);
 				var missingPackageDocs = A2(
@@ -9228,7 +9670,7 @@ var _user$project$Sidekick$update = F2(
 					function (_p27) {
 						var _p28 = _p27;
 						return _elm_lang$core$Basics$not(
-							A2(_elm_lang$core$List$member, _p28.$package, existingPackages));
+							A2(_elm_lang$core$List$member, _p28.packageUri, existingPackages));
 					},
 					_p26._0);
 				var updatedPackageDocs = A2(_elm_lang$core$Basics_ops['++'], missingPackageDocs, model.packageDocs);
@@ -9312,20 +9754,20 @@ var _user$project$Sidekick$update = F2(
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			default:
+			case 'UpdatePackageDocs':
 				var existingPackages = A2(
 					_elm_lang$core$List$map,
 					function (_) {
-						return _.$package;
+						return _.packageUri;
 					},
 					model.packageDocs);
 				var missingPackages = A2(
 					_elm_lang$core$List$filter,
-					function ($package) {
+					function (packageUri) {
 						return _elm_lang$core$Basics$not(
-							A2(_elm_lang$core$List$member, $package, existingPackages));
+							A2(_elm_lang$core$List$member, packageUri, existingPackages));
 					},
-					_p26._0);
+					A2(_elm_lang$core$List$map, _user$project$Sidekick$toPackageUri, _p26._0));
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -9337,6 +9779,12 @@ var _user$project$Sidekick$update = F2(
 						_user$project$Sidekick$DocsLoaded,
 						_user$project$Sidekick$getPackageDocsList(missingPackages))
 				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: _user$project$Sidekick$goToDefinition(_p26._0)
+				};
 		}
 	});
 var _user$project$Sidekick$activeFileModuleName = F2(
@@ -9346,22 +9794,63 @@ var _user$project$Sidekick$activeFileModuleName = F2(
 	});
 var _user$project$Sidekick$view = function (_p30) {
 	var _p31 = _p30;
+	var sourceView = function (hint) {
+		return A2(_elm_lang$core$String$startsWith, _user$project$Sidekick$packageDocsPrefix, hint.uri) ? A2(
+			_elm_lang$html$Html$a,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html_Attributes$title(hint.uri),
+					_elm_lang$html$Html_Attributes$href(hint.uri)
+				]),
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html$text('View in browser')
+				])) : A2(
+			_elm_lang$html$Html$a,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html_Attributes$title(hint.uri),
+					_elm_lang$html$Html_Events$onClick(
+					_user$project$Sidekick$GoToDefinition(hint.uri))
+				]),
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html$text('Go to Definition')
+				]));
+	};
+	var activeModuleName = A2(_user$project$Sidekick$activeFileModuleName, _p31.activeFilePath, _p31.sourceFileDict);
+	var hintMarkdown = function (hint) {
+		return A2(
+			_evancz$elm_markdown$Markdown$toHtml,
+			_elm_lang$core$Native_List.fromArray(
+				[]),
+			A2(_user$project$Sidekick$viewHint, activeModuleName, hint));
+	};
+	var hintsView = A2(
+		_elm_lang$core$List$map,
+		function (hint) {
+			return A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						hintMarkdown(hint),
+						sourceView(hint)
+					]));
+		},
+		_p31.hints);
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
 			[]),
-		_elm_lang$core$Native_List.fromArray(
-			[
-				_elm_lang$html$Html$text(_p31.note),
-				A2(
-				_evancz$elm_markdown$Markdown$toHtml,
-				_elm_lang$core$Native_List.fromArray(
-					[]),
-				A2(
-					_user$project$Sidekick$viewHintString,
-					A2(_user$project$Sidekick$activeFileModuleName, _p31.activeFilePath, _p31.sourceFileDict),
-					_p31.hints))
-			]));
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html$text(_p31.note)
+				]),
+			hintsView));
 };
 var _user$project$Sidekick$toImportDict = function (rawImports) {
 	return A2(
@@ -9382,10 +9871,10 @@ var _user$project$Sidekick$subscriptions = function (model) {
 					return A2(
 						_user$project$Sidekick$UpdateSourceFile,
 						_p33._0,
-						{
-							moduleDocs: _p33._1,
-							imports: _user$project$Sidekick$toImportDict(_p33._2)
-						});
+						A2(
+							_user$project$Sidekick$SourceFile,
+							_p33._1,
+							_user$project$Sidekick$toImportDict(_p33._2)));
 				}),
 				_user$project$Sidekick$newPackagesNeeded(_user$project$Sidekick$UpdatePackageDocs)
 			]));

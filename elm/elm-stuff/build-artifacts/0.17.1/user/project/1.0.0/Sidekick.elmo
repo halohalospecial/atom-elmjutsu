@@ -16,8 +16,18 @@ var _user$project$Sidekick$tipeToValue = function (_p1) {
 	var _p2 = _p1;
 	return {name: _p2.name, comment: _p2.comment, tipe: _p2.tipe};
 };
-var _user$project$Sidekick$defaultPackages = _elm_lang$core$Native_List.fromArray(
-	['elm-lang/core']);
+var _user$project$Sidekick$packageDocsPrefix = 'http://package.elm-lang.org/packages/';
+var _user$project$Sidekick$toPackageUri = function ($package) {
+	return A2(
+		_elm_lang$core$Basics_ops['++'],
+		_user$project$Sidekick$packageDocsPrefix,
+		A2(_elm_lang$core$Basics_ops['++'], $package, '/latest/'));
+};
+var _user$project$Sidekick$defaultPackages = A2(
+	_elm_lang$core$List$map,
+	_user$project$Sidekick$toPackageUri,
+	_elm_lang$core$Native_List.fromArray(
+		['elm-lang/core']));
 var _user$project$Sidekick$dotToHyphen = function (string) {
 	return A2(
 		_elm_lang$core$String$map,
@@ -31,29 +41,21 @@ var _user$project$Sidekick$dotToHyphen = function (string) {
 var _user$project$Sidekick$urlTo = F2(
 	function (_p3, valueName) {
 		var _p4 = _p3;
+		var _p5 = _p4.packageUri;
+		var uri = A2(_elm_lang$core$String$startsWith, _user$project$Sidekick$packageDocsPrefix, _p5) ? A2(
+			_elm_lang$core$Basics_ops['++'],
+			_p5,
+			_user$project$Sidekick$dotToHyphen(_p4.name)) : _p5;
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
-			'http://package.elm-lang.org/packages/',
-			A2(
-				_elm_lang$core$Basics_ops['++'],
-				_p4.$package,
-				A2(
-					_elm_lang$core$Basics_ops['++'],
-					'/latest/',
-					A2(
-						_elm_lang$core$Basics_ops['++'],
-						_user$project$Sidekick$dotToHyphen(_p4.name),
-						A2(_elm_lang$core$Basics_ops['++'], '#', valueName)))));
+			uri,
+			A2(_elm_lang$core$Basics_ops['++'], '#', valueName));
 	});
 var _user$project$Sidekick$viewHint = F2(
 	function (activeModuleName, hint) {
 		var formatTipe = function (tipe) {
 			return A2(_elm_lang$core$String$startsWith, '*', tipe) ? tipe : (_elm_lang$core$Native_Utils.eq(tipe, '') ? '' : A2(_elm_lang$core$Basics_ops['++'], ': ', tipe));
 		};
-		var maybeBrowserLink = _elm_lang$core$Native_Utils.eq(hint.href, '') ? '' : A2(
-			_elm_lang$core$Basics_ops['++'],
-			'[View in browser](',
-			A2(_elm_lang$core$Basics_ops['++'], hint.href, ')'));
 		var formatName = function (name) {
 			return A2(
 				_elm_lang$core$Regex$contains,
@@ -66,16 +68,16 @@ var _user$project$Sidekick$viewHint = F2(
 		var formatModule = function (moduleName) {
 			return _elm_lang$core$Native_Utils.eq(activeModuleName, moduleName) ? A2(_elm_lang$core$Basics_ops['++'], moduleName, '.') : A2(_elm_lang$core$Basics_ops['++'], moduleName, '.');
 		};
-		var _p5 = function () {
-			var _p6 = A2(_elm_lang$core$String$split, '.', hint.name);
-			if (_p6.ctor === '[]') {
+		var _p6 = function () {
+			var _p7 = A2(_elm_lang$core$String$split, '.', hint.name);
+			if (_p7.ctor === '[]') {
 				return {ctor: '_Tuple2', _0: '', _1: hint.name};
 			} else {
-				var reversed = _elm_lang$core$List$reverse(_p6);
+				var reversed = _elm_lang$core$List$reverse(_p7);
 				var name = function () {
-					var _p7 = _elm_lang$core$List$head(reversed);
-					if (_p7.ctor === 'Just') {
-						return _p7._0;
+					var _p8 = _elm_lang$core$List$head(reversed);
+					if (_p8.ctor === 'Just') {
+						return _p8._0;
 					} else {
 						return '';
 					}
@@ -88,8 +90,8 @@ var _user$project$Sidekick$viewHint = F2(
 				return {ctor: '_Tuple2', _0: moduleName, _1: name};
 			}
 		}();
-		var moduleName = _p5._0;
-		var name = _p5._1;
+		var moduleName = _p6._0;
+		var name = _p6._1;
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
 			'# ',
@@ -120,28 +122,10 @@ var _user$project$Sidekick$viewHint = F2(
 											A2(
 												_elm_lang$core$Basics_ops['++'],
 												'<br><br>\n',
-												A2(
-													_elm_lang$core$Basics_ops['++'],
-													hint.comment,
-													A2(_elm_lang$core$Basics_ops['++'], '<br><br>\n', maybeBrowserLink))))))))))));
-	});
-var _user$project$Sidekick$viewHintString = F2(
-	function (activeModuleName, hints) {
-		var _p8 = hints;
-		if (_p8.ctor === '[]') {
-			return '';
-		} else {
-			return A2(
-				_elm_lang$core$String$join,
-				'\n\n',
-				A2(
-					_elm_lang$core$List$map,
-					_user$project$Sidekick$viewHint(activeModuleName),
-					hints));
-		}
+												A2(_elm_lang$core$Basics_ops['++'], hint.comment, '<br><br>\n')))))))))));
 	});
 var _user$project$Sidekick$emptyModuleDocs = {
-	$package: '',
+	packageUri: '',
 	name: '',
 	values: {
 		aliases: _elm_lang$core$Native_List.fromArray(
@@ -189,8 +173,8 @@ var _user$project$Sidekick$sourceFileChanged = _elm_lang$core$Native_Platform.in
 		_elm_lang$core$Json_Decode$string,
 		A2(
 			_elm_lang$core$Json_Decode$andThen,
-			A2(_elm_lang$core$Json_Decode_ops[':='], 'package', _elm_lang$core$Json_Decode$string),
-			function ($package) {
+			A2(_elm_lang$core$Json_Decode_ops[':='], 'packageUri', _elm_lang$core$Json_Decode$string),
+			function (packageUri) {
 				return A2(
 					_elm_lang$core$Json_Decode$andThen,
 					A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
@@ -287,7 +271,7 @@ var _user$project$Sidekick$sourceFileChanged = _elm_lang$core$Native_Platform.in
 									})),
 							function (values) {
 								return _elm_lang$core$Json_Decode$succeed(
-									{$package: $package, name: name, values: values});
+									{packageUri: packageUri, name: name, values: values});
 							});
 					});
 			}),
@@ -336,6 +320,11 @@ var _user$project$Sidekick$docsLoaded = _elm_lang$core$Native_Platform.outgoingP
 	function (v) {
 		return null;
 	});
+var _user$project$Sidekick$goToDefinition = _elm_lang$core$Native_Platform.outgoingPort(
+	'goToDefinition',
+	function (v) {
+		return v;
+	});
 var _user$project$Sidekick$Model = F6(
 	function (a, b, c, d, e, f) {
 		return {packageDocs: a, tokens: b, hints: c, note: d, activeFilePath: e, sourceFileDict: f};
@@ -346,7 +335,7 @@ var _user$project$Sidekick$SourceFile = F2(
 	});
 var _user$project$Sidekick$ModuleDocs = F3(
 	function (a, b, c) {
-		return {$package: a, name: b, values: c};
+		return {packageUri: a, name: b, values: c};
 	});
 var _user$project$Sidekick$Values = F3(
 	function (a, b, c) {
@@ -360,7 +349,7 @@ var _user$project$Sidekick$Value = F3(
 	function (a, b, c) {
 		return {name: a, comment: b, tipe: c};
 	});
-var _user$project$Sidekick$moduleDecoder = function ($package) {
+var _user$project$Sidekick$moduleDecoder = function (packageUri) {
 	var value = A4(
 		_elm_lang$core$Json_Decode$object3,
 		_user$project$Sidekick$Value,
@@ -396,31 +385,28 @@ var _user$project$Sidekick$moduleDecoder = function ($package) {
 	var name = A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string);
 	return A3(
 		_elm_lang$core$Json_Decode$object2,
-		_user$project$Sidekick$ModuleDocs($package),
+		_user$project$Sidekick$ModuleDocs(packageUri),
 		name,
 		values);
 };
-var _user$project$Sidekick$getPackageDocs = function ($package) {
-	var url = A2(
-		_elm_lang$core$Basics_ops['++'],
-		'http://package.elm-lang.org/packages/',
-		A2(_elm_lang$core$Basics_ops['++'], $package, '/latest/documentation.json'));
+var _user$project$Sidekick$getPackageDocs = function (packageUri) {
+	var url = A2(_elm_lang$core$Basics_ops['++'], packageUri, 'documentation.json');
 	return A2(
 		_evancz$elm_http$Http$get,
 		_elm_lang$core$Json_Decode$list(
-			_user$project$Sidekick$moduleDecoder($package)),
+			_user$project$Sidekick$moduleDecoder(packageUri)),
 		url);
 };
-var _user$project$Sidekick$getPackageDocsList = function (packages) {
+var _user$project$Sidekick$getPackageDocsList = function (packageuris) {
 	return A2(
 		_elm_lang$core$Task$map,
 		_elm_lang$core$List$concat,
 		_elm_lang$core$Task$sequence(
-			A2(_elm_lang$core$List$map, _user$project$Sidekick$getPackageDocs, packages)));
+			A2(_elm_lang$core$List$map, _user$project$Sidekick$getPackageDocs, packageuris)));
 };
 var _user$project$Sidekick$Hint = F4(
 	function (a, b, c, d) {
-		return {name: a, href: b, comment: c, tipe: d};
+		return {name: a, uri: b, comment: c, tipe: d};
 	});
 var _user$project$Sidekick$nameToHints = F3(
 	function (moduleDocs, _p10, _p9) {
@@ -532,6 +518,9 @@ _user$project$Sidekick_ops['=>'] = F2(
 			_1: A2(_user$project$Sidekick$Import, _elm_lang$core$Maybe$Nothing, exposed)
 		};
 	});
+var _user$project$Sidekick$GoToDefinition = function (a) {
+	return {ctor: 'GoToDefinition', _0: a};
+};
 var _user$project$Sidekick$UpdatePackageDocs = function (a) {
 	return {ctor: 'UpdatePackageDocs', _0: a};
 };
@@ -713,7 +702,7 @@ var _user$project$Sidekick$update = F2(
 				var existingPackages = A2(
 					_elm_lang$core$List$map,
 					function (_) {
-						return _.$package;
+						return _.packageUri;
 					},
 					model.packageDocs);
 				var missingPackageDocs = A2(
@@ -721,7 +710,7 @@ var _user$project$Sidekick$update = F2(
 					function (_p27) {
 						var _p28 = _p27;
 						return _elm_lang$core$Basics$not(
-							A2(_elm_lang$core$List$member, _p28.$package, existingPackages));
+							A2(_elm_lang$core$List$member, _p28.packageUri, existingPackages));
 					},
 					_p26._0);
 				var updatedPackageDocs = A2(_elm_lang$core$Basics_ops['++'], missingPackageDocs, model.packageDocs);
@@ -805,20 +794,20 @@ var _user$project$Sidekick$update = F2(
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			default:
+			case 'UpdatePackageDocs':
 				var existingPackages = A2(
 					_elm_lang$core$List$map,
 					function (_) {
-						return _.$package;
+						return _.packageUri;
 					},
 					model.packageDocs);
 				var missingPackages = A2(
 					_elm_lang$core$List$filter,
-					function ($package) {
+					function (packageUri) {
 						return _elm_lang$core$Basics$not(
-							A2(_elm_lang$core$List$member, $package, existingPackages));
+							A2(_elm_lang$core$List$member, packageUri, existingPackages));
 					},
-					_p26._0);
+					A2(_elm_lang$core$List$map, _user$project$Sidekick$toPackageUri, _p26._0));
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -830,6 +819,12 @@ var _user$project$Sidekick$update = F2(
 						_user$project$Sidekick$DocsLoaded,
 						_user$project$Sidekick$getPackageDocsList(missingPackages))
 				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: _user$project$Sidekick$goToDefinition(_p26._0)
+				};
 		}
 	});
 var _user$project$Sidekick$activeFileModuleName = F2(
@@ -839,22 +834,63 @@ var _user$project$Sidekick$activeFileModuleName = F2(
 	});
 var _user$project$Sidekick$view = function (_p30) {
 	var _p31 = _p30;
+	var sourceView = function (hint) {
+		return A2(_elm_lang$core$String$startsWith, _user$project$Sidekick$packageDocsPrefix, hint.uri) ? A2(
+			_elm_lang$html$Html$a,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html_Attributes$title(hint.uri),
+					_elm_lang$html$Html_Attributes$href(hint.uri)
+				]),
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html$text('View in browser')
+				])) : A2(
+			_elm_lang$html$Html$a,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html_Attributes$title(hint.uri),
+					_elm_lang$html$Html_Events$onClick(
+					_user$project$Sidekick$GoToDefinition(hint.uri))
+				]),
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html$text('Go to Definition')
+				]));
+	};
+	var activeModuleName = A2(_user$project$Sidekick$activeFileModuleName, _p31.activeFilePath, _p31.sourceFileDict);
+	var hintMarkdown = function (hint) {
+		return A2(
+			_evancz$elm_markdown$Markdown$toHtml,
+			_elm_lang$core$Native_List.fromArray(
+				[]),
+			A2(_user$project$Sidekick$viewHint, activeModuleName, hint));
+	};
+	var hintsView = A2(
+		_elm_lang$core$List$map,
+		function (hint) {
+			return A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						hintMarkdown(hint),
+						sourceView(hint)
+					]));
+		},
+		_p31.hints);
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
 			[]),
-		_elm_lang$core$Native_List.fromArray(
-			[
-				_elm_lang$html$Html$text(_p31.note),
-				A2(
-				_evancz$elm_markdown$Markdown$toHtml,
-				_elm_lang$core$Native_List.fromArray(
-					[]),
-				A2(
-					_user$project$Sidekick$viewHintString,
-					A2(_user$project$Sidekick$activeFileModuleName, _p31.activeFilePath, _p31.sourceFileDict),
-					_p31.hints))
-			]));
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html$text(_p31.note)
+				]),
+			hintsView));
 };
 var _user$project$Sidekick$toImportDict = function (rawImports) {
 	return A2(
@@ -875,10 +911,10 @@ var _user$project$Sidekick$subscriptions = function (model) {
 					return A2(
 						_user$project$Sidekick$UpdateSourceFile,
 						_p33._0,
-						{
-							moduleDocs: _p33._1,
-							imports: _user$project$Sidekick$toImportDict(_p33._2)
-						});
+						A2(
+							_user$project$Sidekick$SourceFile,
+							_p33._1,
+							_user$project$Sidekick$toImportDict(_p33._2)));
 				}),
 				_user$project$Sidekick$newPackagesNeeded(_user$project$Sidekick$UpdatePackageDocs)
 			]));

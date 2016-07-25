@@ -6,6 +6,8 @@ port module Sidekick exposing (..)
 import Dict
 import Html exposing (..)
 import Html.App as Html
+import Html.Attributes exposing (href, title)
+import Html.Events exposing (onClick)
 import Http
 import Json.Decode as Json exposing ((:=))
 import Set
@@ -30,7 +32,7 @@ subscriptions model =
     Sub.batch
         [ activeTokenChanged CursorMove
         , activeFilePathChanged UpdateActiveFilePath
-        , sourceFileChanged (\( filePath, moduleDocs, rawImports ) -> UpdateSourceFile filePath { moduleDocs = moduleDocs, imports = toImportDict rawImports })
+        , sourceFileChanged (\( filePath, moduleDocs, rawImports ) -> UpdateSourceFile filePath <| SourceFile moduleDocs (toImportDict rawImports))
         , newPackagesNeeded UpdatePackageDocs
         ]
 
@@ -56,6 +58,9 @@ port newPackagesNeeded : (List String -> msg) -> Sub msg
 
 
 port docsLoaded : () -> Cmd msg
+
+
+port goToDefinition : String -> Cmd msg
 
 
 
@@ -103,7 +108,7 @@ emptyModel =
 
 emptyModuleDocs : ModuleDocs
 emptyModuleDocs =
-    { package = ""
+    { packageUri = ""
     , name = ""
     , values =
         { aliases = []
@@ -113,7 +118,7 @@ emptyModuleDocs =
     }
 
 
-emptySourceFile : { imports : ImportDict, moduleDocs : ModuleDocs }
+emptySourceFile : SourceFile
 emptySourceFile =
     { moduleDocs = emptyModuleDocs
     , imports = defaultImports
@@ -131,6 +136,7 @@ type Msg
     | UpdateActiveFilePath (Maybe String)
     | UpdateSourceFile String SourceFile
     | UpdatePackageDocs (List String)
+    | GoToDefinition String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -144,10 +150,10 @@ update msg model =
         DocsLoaded docs ->
             let
                 existingPackages =
-                    List.map .package model.packageDocs
+                    List.map .packageUri model.packageDocs
 
                 missingPackageDocs =
-                    List.filter (\{ package } -> not <| List.member package existingPackages) docs
+                    List.filter (\{ packageUri } -> not <| List.member packageUri existingPackages) docs
 
                 updatedPackageDocs =
                     missingPackageDocs ++ model.packageDocs
@@ -193,14 +199,17 @@ update msg model =
         UpdatePackageDocs packages ->
             let
                 existingPackages =
-                    List.map .package model.packageDocs
+                    List.map .packageUri model.packageDocs
 
                 missingPackages =
-                    List.filter (\package -> not <| List.member package existingPackages) packages
+                    List.filter (\packageUri -> not <| List.member packageUri existingPackages) (List.map toPackageUri packages)
             in
                 ( { model | note = "Loading..." }
                 , Task.perform (always DocsFailed) DocsLoaded (getPackageDocsList missingPackages)
                 )
+
+        GoToDefinition uri ->
+            ( model, goToDefinition uri )
 
 
 getActiveSourceFile : Maybe String -> SourceFileDict -> SourceFile
@@ -224,20 +233,30 @@ getActiveSourceFile activeFilePath sourceFileDict =
 
 view : Model -> Html Msg
 view { note, hints, activeFilePath, sourceFileDict } =
-    div []
-        [ text note
-        , Markdown.toHtml [] (viewHintString (activeFileModuleName activeFilePath sourceFileDict) hints)
-        ]
+    let
+        activeModuleName =
+            activeFileModuleName activeFilePath sourceFileDict
 
+        hintMarkdown hint =
+            Markdown.toHtml [] (viewHint activeModuleName hint)
 
-viewHintString : String -> List Hint -> String
-viewHintString activeModuleName hints =
-    case hints of
-        [] ->
-            ""
+        sourceView hint =
+            if String.startsWith packageDocsPrefix hint.uri then
+                a [ title hint.uri, href hint.uri ] [ text "View in browser" ]
+            else
+                a [ title hint.uri, onClick (GoToDefinition hint.uri) ] [ text "Go to Definition" ]
 
-        _ ->
-            String.join "\n\n" (List.map (viewHint activeModuleName) hints)
+        hintsView =
+            List.map
+                (\hint ->
+                    div []
+                        [ hintMarkdown hint
+                        , sourceView hint
+                        ]
+                )
+                hints
+    in
+        div [] <| [ text note ] ++ hintsView
 
 
 viewHint : String -> Hint -> String
@@ -281,14 +300,13 @@ viewHint activeModuleName hint =
             else
                 "(" ++ name ++ ")"
 
-        maybeBrowserLink =
-            if hint.href == "" then
-                ""
-            else
-                "[View in browser]("
-                    ++ hint.href
-                    ++ ")"
-
+        -- maybeBrowserLink =
+        --     if hint.uri == "" then
+        --         ""
+        --     else
+        --         "[View in browser]("
+        --             ++ hint.uri
+        --             ++ ")"
         formatTipe tipe =
             if String.startsWith "*" tipe then
                 tipe
@@ -309,7 +327,10 @@ viewHint activeModuleName hint =
             ++ "<br><br>\n"
             ++ hint.comment
             ++ "<br><br>\n"
-            ++ maybeBrowserLink
+
+
+
+-- ++ maybeBrowserLink
 
 
 activeFileModuleName : Maybe String -> SourceFileDict -> String
@@ -326,7 +347,7 @@ activeFileModuleName activeFilePath sourceFileDict =
 
 
 type alias ModuleDocs =
-    { package : String
+    { packageUri : String
     , name : String
     , values : Values
     }
@@ -355,13 +376,15 @@ type alias Value =
 
 
 urlTo : ModuleDocs -> String -> String
-urlTo { package, name } valueName =
-    "http://package.elm-lang.org/packages/"
-        ++ package
-        ++ "/latest/"
-        ++ dotToHyphen name
-        ++ "#"
-        ++ valueName
+urlTo { packageUri, name } valueName =
+    let
+        uri =
+            if String.startsWith packageDocsPrefix packageUri then
+                packageUri ++ dotToHyphen name
+            else
+                packageUri
+    in
+        uri ++ "#" ++ valueName
 
 
 dotToHyphen : String -> String
@@ -382,33 +405,46 @@ dotToHyphen string =
 
 defaultPackages : List String
 defaultPackages =
-    [ "elm-lang/core"
-      -- , "elm-lang/html"
-      -- , "elm-lang/svg"
-      -- , "evancz/elm-markdown"
-      -- , "evancz/elm-http"
-    ]
+    List.map toPackageUri
+        [ "elm-lang/core"
+          -- , "elm-lang/html"
+          -- , "elm-lang/svg"
+          -- , "evancz/elm-markdown"
+          -- , "evancz/elm-http"
+        ]
+
+
+toPackageUri : String -> String
+toPackageUri package =
+    packageDocsPrefix
+        ++ package
+        ++ "/latest/"
+
+
+packageDocsPrefix : String
+packageDocsPrefix =
+    "http://package.elm-lang.org/packages/"
 
 
 getPackageDocsList : List String -> Task.Task Http.Error (List ModuleDocs)
-getPackageDocsList packages =
-    packages
+getPackageDocsList packageuris =
+    packageuris
         |> List.map getPackageDocs
         |> Task.sequence
         |> Task.map List.concat
 
 
 getPackageDocs : String -> Task.Task Http.Error (List ModuleDocs)
-getPackageDocs package =
+getPackageDocs packageUri =
     let
         url =
-            "http://package.elm-lang.org/packages/" ++ package ++ "/latest/documentation.json"
+            packageUri ++ "documentation.json"
     in
-        Http.get (Json.list (moduleDecoder package)) url
+        Http.get (Json.list (moduleDecoder packageUri)) url
 
 
 moduleDecoder : String -> Json.Decoder ModuleDocs
-moduleDecoder package =
+moduleDecoder packageUri =
     let
         name =
             "name" := Json.string
@@ -433,7 +469,7 @@ moduleDecoder package =
                 ("types" := Json.list tipe)
                 ("values" := Json.list value)
     in
-        Json.object2 (ModuleDocs package) name values
+        Json.object2 (ModuleDocs packageUri) name values
 
 
 
@@ -446,7 +482,7 @@ type alias TokenDict =
 
 type alias Hint =
     { name : String
-    , href : String
+    , uri : String
     , comment : String
     , tipe : String
     }
