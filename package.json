@@ -2,7 +2,7 @@
   "name": "elm-fu",
   "main": "./lib/elm-fu",
   "version": "0.0.0",
-  "description": "A set of editor commands for developing with elm.",
+  "description": "Helper commands for developing with elm.",
   "keywords": [
     "elm"
   ],
