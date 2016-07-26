@@ -6,6 +6,14 @@
         "command": "elm-fu:go-to-definition"
       },
       {
+        "label": "Return from Definition",
+        "command": "elm-fu:return-from-definition"
+      },
+      {
+        "label": "Find Symbol",
+        "command": "elm-fu:find-symbol"
+      },
+      {
         "label": "Find Usages",
         "command": "elm-fu:find-usages"
       }

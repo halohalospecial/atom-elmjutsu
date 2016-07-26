@@ -291,7 +291,13 @@ var _user$project$Indexer$goToDefinitionCmd = _elm_lang$core$Native_Platform.out
 var _user$project$Indexer$findSymbolCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'findSymbolCmd',
 	function (v) {
-		return v;
+		return [
+			(v._0.ctor === 'Nothing') ? null : v._0._0,
+			_elm_lang$core$Native_List.toArray(v._1).map(
+			function (v) {
+				return {fullName: v.fullName, uri: v.uri};
+			})
+		];
 	});
 var _user$project$Indexer$activeModuleNameChangedCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'activeModuleNameChangedCmd',
@@ -318,6 +324,10 @@ var _user$project$Indexer$Model = F6(
 var _user$project$Indexer$SourceFile = F2(
 	function (a, b) {
 		return {moduleDocs: a, imports: b};
+	});
+var _user$project$Indexer$Symbol = F2(
+	function (a, b) {
+		return {fullName: a, uri: b};
 	});
 var _user$project$Indexer$ModuleDocs = F3(
 	function (a, b, c) {
@@ -836,18 +846,48 @@ var _user$project$Indexer$update = F2(
 							hints))
 				};
 			default:
-				var hints = A2(_user$project$Indexer$hintsForToken, _p24._0, model.tokens);
+				var _p33 = _p24._0;
+				var hints = A2(_user$project$Indexer$hintsForToken, _p33, model.tokens);
+				var defaultSymbolFullName = function () {
+					var _p28 = _elm_lang$core$List$head(hints);
+					if (_p28.ctor === 'Nothing') {
+						return _p33;
+					} else {
+						return _elm_lang$core$Maybe$Just(_p28._0.name);
+					}
+				}();
 				var symbols = A2(
-					_elm_lang$core$List$map,
-					function (_) {
-						return _.name;
+					_elm_lang$core$List$concatMap,
+					function (_p29) {
+						var _p30 = _p29;
+						var _p32 = _p30.moduleDocs;
+						var _p31 = _p32;
+						var packageUri = _p31.packageUri;
+						var values = _p31.values;
+						return A2(
+							_elm_lang$core$List$map,
+							function (valueName) {
+								return A2(
+									_user$project$Indexer$Symbol,
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										_p32.name,
+										A2(_elm_lang$core$Basics_ops['++'], '.', valueName)),
+									A2(_user$project$Indexer$urlTo, _p32, valueName));
+							},
+							A2(
+								_elm_lang$core$List$map,
+								function (_) {
+									return _.name;
+								},
+								values.values));
 					},
-					A2(_elm_lang$core$List$take, 1, hints));
+					_elm_lang$core$Dict$values(model.sourceFileDict));
 				return {
 					ctor: '_Tuple2',
 					_0: model,
-					_1: _elm_lang$core$Platform_Cmd$batch(
-						A2(_elm_lang$core$List$map, _user$project$Indexer$findSymbolCmd, symbols))
+					_1: _user$project$Indexer$findSymbolCmd(
+						{ctor: '_Tuple2', _0: defaultSymbolFullName, _1: symbols})
 				};
 		}
 	});
@@ -865,15 +905,15 @@ var _user$project$Indexer$subscriptions = function (model) {
 				_user$project$Indexer$activeTokenChangedSub(_user$project$Indexer$CursorMove),
 				_user$project$Indexer$activeFilePathChangedSub(_user$project$Indexer$UpdateActiveFilePath),
 				_user$project$Indexer$sourceFileChangedSub(
-				function (_p28) {
-					var _p29 = _p28;
+				function (_p34) {
+					var _p35 = _p34;
 					return A2(
 						_user$project$Indexer$UpdateSourceFile,
-						_p29._0,
+						_p35._0,
 						A2(
 							_user$project$Indexer$SourceFile,
-							_p29._1,
-							_user$project$Indexer$toImportDict(_p29._2)));
+							_p35._1,
+							_user$project$Indexer$toImportDict(_p35._2)));
 				}),
 				_user$project$Indexer$sourceFileRemovedSub(_user$project$Indexer$RemoveSourceFile),
 				_user$project$Indexer$newPackagesNeededSub(_user$project$Indexer$UpdatePackageDocs),
@@ -885,7 +925,7 @@ var _user$project$Indexer$main = {
 	main: _elm_lang$html$Html_App$program(
 		{
 			init: _user$project$Indexer$init,
-			view: function (_p30) {
+			view: function (_p36) {
 				return A2(
 					_elm_lang$html$Html$div,
 					_elm_lang$core$Native_List.fromArray(

@@ -74,7 +74,7 @@ port docsFailedCmd : () -> Cmd msg
 port goToDefinitionCmd : String -> Cmd msg
 
 
-port findSymbolCmd : String -> Cmd msg
+port findSymbolCmd : ( Maybe String, List Symbol ) -> Cmd msg
 
 
 port activeModuleNameChangedCmd : String -> Cmd msg
@@ -107,6 +107,12 @@ type alias SourceFileDict =
 type alias SourceFile =
     { moduleDocs : ModuleDocs
     , imports : ImportDict
+    }
+
+
+type alias Symbol =
+    { fullName : String
+    , uri : String
     }
 
 
@@ -257,15 +263,35 @@ update msg model =
 
         FindSymbol maybeToken ->
             let
+                symbols =
+                    Dict.values model.sourceFileDict
+                        |> List.concatMap
+                            (\{ moduleDocs } ->
+                                let
+                                    { packageUri, values } =
+                                        moduleDocs
+                                in
+                                    values.values
+                                        |> List.map .name
+                                        |> List.map
+                                            (\valueName ->
+                                                Symbol (moduleDocs.name ++ "." ++ valueName) (urlTo moduleDocs valueName)
+                                            )
+                            )
+
                 hints =
                     hintsForToken maybeToken model.tokens
 
-                symbols =
-                    List.take 1 hints
-                        |> List.map .name
+                defaultSymbolFullName =
+                    case List.head hints of
+                        Nothing ->
+                            maybeToken
+
+                        Just hint ->
+                            Just hint.name
             in
                 ( model
-                , Cmd.batch <| List.map findSymbolCmd symbols
+                , findSymbolCmd ( defaultSymbolFullName, symbols )
                 )
 
 

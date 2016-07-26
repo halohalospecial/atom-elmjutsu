@@ -1,5 +1,12 @@
 @import "ui-variables";
 
+.elm-fu-find-symbol {
+  .module-name {
+  }
+  .symbol-name {
+    color: @ui-site-color-5;
+  }
+}
 .elm-fu-find-usages {
   .module-name {
   }
@@ -20,6 +27,10 @@
 }
 atom-text-editor,
 atom-text-editor::shadow {
+  .elm-fu-symbol-highlight .region {
+    border: 1px solid @ui-site-color-5;
+    border-radius: @component-border-radius;
+  }
   .elm-fu-usage-highlight .region {
     border: 1px solid @ui-site-color-5;
     border-radius: @component-border-radius;

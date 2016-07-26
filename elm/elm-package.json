@@ -16,7 +16,6 @@
   "elm-version": "0.17.1 <= v < 0.18.0",
   "linter-elm-make": {
     "mainPaths": [
-      "Sidekick.elm",
       "Indexer.elm"
     ]
   }
