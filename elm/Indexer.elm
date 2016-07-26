@@ -58,7 +58,7 @@ port newPackagesNeededSub : (List String -> msg) -> Sub msg
 port goToDefinitionSub : (Maybe String -> msg) -> Sub msg
 
 
-port findSymbolSub : (Maybe String -> msg) -> Sub msg
+port findSymbolSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
 
 
 
@@ -166,7 +166,7 @@ type Msg
     | RemoveSourceFile String
     | UpdatePackageDocs (List String)
     | GoToDefinition (Maybe String)
-    | FindSymbol (Maybe String)
+    | FindSymbol ( Maybe String, Maybe String )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -261,38 +261,53 @@ update msg model =
                 , Cmd.batch <| List.map (\hint -> goToDefinitionCmd hint.uri) hints
                 )
 
-        FindSymbol maybeToken ->
-            let
-                symbols =
-                    Dict.values model.sourceFileDict
-                        |> List.concatMap
-                            (\{ moduleDocs } ->
-                                let
-                                    { packageUri, values } =
-                                        moduleDocs
-                                in
-                                    values.values
-                                        |> List.map .name
-                                        |> List.map
-                                            (\valueName ->
-                                                Symbol (moduleDocs.name ++ "." ++ valueName) (urlTo moduleDocs valueName)
-                                            )
-                            )
+        FindSymbol ( maybeProjectDirectory, maybeToken ) ->
+            case maybeProjectDirectory of
+                Nothing ->
+                    ( model
+                    , Cmd.none
+                    )
 
-                hints =
-                    hintsForToken maybeToken model.tokens
+                Just projectDirectory ->
+                    let
+                        symbols =
+                            Dict.values model.sourceFileDict
+                                |> List.concatMap
+                                    (\{ moduleDocs } ->
+                                        let
+                                            { packageUri, values } =
+                                                moduleDocs
+                                        in
+                                            values.values
+                                                |> List.map .name
+                                                |> List.map
+                                                    (\valueName ->
+                                                        Symbol (moduleDocs.name ++ "." ++ valueName) (urlTo moduleDocs valueName)
+                                                    )
+                                    )
 
-                defaultSymbolFullName =
-                    case List.head hints of
-                        Nothing ->
-                            maybeToken
+                        projectSymbols =
+                            symbols
+                                |> List.filter
+                                    (\{ uri } ->
+                                        String.startsWith ("file://" ++ projectDirectory ++ "/") uri
+                                            || String.startsWith ("file://" ++ projectDirectory ++ "\\") uri
+                                    )
 
-                        Just hint ->
-                            Just hint.name
-            in
-                ( model
-                , findSymbolCmd ( defaultSymbolFullName, symbols )
-                )
+                        hints =
+                            hintsForToken maybeToken model.tokens
+
+                        defaultSymbolFullName =
+                            case List.head hints of
+                                Nothing ->
+                                    maybeToken
+
+                                Just hint ->
+                                    Just hint.name
+                    in
+                        ( model
+                        , findSymbolCmd ( defaultSymbolFullName, projectSymbols )
+                        )
 
 
 hintsForToken : Maybe String -> TokenDict -> List Hint
