@@ -26,6 +26,10 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ activeHintsChangedSub ActiveHintsChanged
+        , activeModuleNameChangedSub ActiveModuleNameChanged
+        , docsLoadedSub (\_ -> DocsLoaded)
+        , docsFailedSub (\_ -> DocsFailed)
+        , updatingPackageDocsSub (\_ -> UpdatingPackageDocs)
         ]
 
 
@@ -34,6 +38,18 @@ subscriptions model =
 
 
 port activeHintsChangedSub : (List ActiveHint -> msg) -> Sub msg
+
+
+port activeModuleNameChangedSub : (String -> msg) -> Sub msg
+
+
+port docsLoadedSub : (() -> msg) -> Sub msg
+
+
+port docsFailedSub : (() -> msg) -> Sub msg
+
+
+port updatingPackageDocsSub : (() -> msg) -> Sub msg
 
 
 
@@ -71,7 +87,7 @@ init =
 
 emptyModel : Model
 emptyModel =
-    { note = "Loading..."
+    { note = ""
     , activeHints = []
     , activeModuleName = ""
     }
@@ -83,6 +99,10 @@ emptyModel =
 
 type Msg
     = ActiveHintsChanged (List ActiveHint)
+    | ActiveModuleNameChanged String
+    | DocsLoaded
+    | DocsFailed
+    | UpdatingPackageDocs
     | GoToDefinition String
 
 
@@ -94,9 +114,29 @@ update msg model =
             , Cmd.none
             )
 
-        GoToDefinition uri ->
+        ActiveModuleNameChanged moduleName ->
+            ( { model | activeModuleName = moduleName }
+            , Cmd.none
+            )
+
+        DocsLoaded ->
+            ( { model | note = "" }
+            , Cmd.none
+            )
+
+        DocsFailed ->
+            ( { model | note = "Failed to load -_-" }
+            , Cmd.none
+            )
+
+        UpdatingPackageDocs ->
+            ( { model | note = "Loading..." }
+            , Cmd.none
+            )
+
+        GoToDefinition name ->
             ( model
-            , goToDefinitionCmd uri
+            , goToDefinitionCmd name
             )
 
 
@@ -114,7 +154,7 @@ view { note, activeHints, activeModuleName } =
             if String.startsWith packageDocsPrefix hint.uri then
                 a [ title hint.uri, href hint.uri ] [ text "View in browser" ]
             else
-                a [ title hint.uri, onClick (GoToDefinition hint.uri) ] [ text "Go to Definition" ]
+                a [ title hint.uri, onClick (GoToDefinition hint.name) ] [ text "Go to Definition" ]
 
         hintsView =
             List.map
@@ -160,7 +200,7 @@ viewHint activeModuleName hint =
 
         formatModule moduleName =
             if activeModuleName == moduleName then
-                moduleName ++ "."
+                ""
             else
                 moduleName ++ "."
 

@@ -60,6 +60,9 @@ port goToDefinitionSub : (Maybe String -> msg) -> Sub msg
 port docsLoadedCmd : () -> Cmd msg
 
 
+port docsFailedCmd : () -> Cmd msg
+
+
 port goToDefinitionCmd : String -> Cmd msg
 
 
@@ -67,6 +70,9 @@ port activeModuleNameChangedCmd : String -> Cmd msg
 
 
 port activeHintsChangedCmd : List Hint -> Cmd msg
+
+
+port updatingPackageDocsCmd : () -> Cmd msg
 
 
 
@@ -97,7 +103,6 @@ init : ( Model, Cmd Msg )
 init =
     ( emptyModel
     , Task.perform (always DocsFailed) DocsLoaded (getPackageDocsList defaultPackages)
-      -- , Cmd.none
     )
 
 
@@ -150,7 +155,7 @@ update msg model =
     case msg of
         DocsFailed ->
             ( { model | note = "Failed to load -_-" }
-            , Cmd.none
+            , docsFailedCmd ()
             )
 
         DocsLoaded docs ->
@@ -214,8 +219,11 @@ update msg model =
                 missingPackages =
                     List.filter (\packageUri -> not <| List.member packageUri existingPackages) (List.map toPackageUri packages)
             in
-                ( { model | note = "Loading..." }
-                , Task.perform (always DocsFailed) DocsLoaded (getPackageDocsList missingPackages)
+                ( model
+                , Cmd.batch
+                    [ updatingPackageDocsCmd ()
+                    , Task.perform (always DocsFailed) DocsLoaded (getPackageDocsList missingPackages)
+                    ]
                 )
 
         GoToDefinition Nothing ->

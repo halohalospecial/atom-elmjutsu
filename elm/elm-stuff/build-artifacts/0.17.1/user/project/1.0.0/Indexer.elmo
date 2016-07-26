@@ -255,10 +255,33 @@ var _user$project$Indexer$docsLoadedCmd = _elm_lang$core$Native_Platform.outgoin
 	function (v) {
 		return null;
 	});
+var _user$project$Indexer$docsFailedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'docsFailedCmd',
+	function (v) {
+		return null;
+	});
 var _user$project$Indexer$goToDefinitionCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'goToDefinitionCmd',
 	function (v) {
 		return v;
+	});
+var _user$project$Indexer$activeModuleNameChangedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'activeModuleNameChangedCmd',
+	function (v) {
+		return v;
+	});
+var _user$project$Indexer$activeHintsChangedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'activeHintsChangedCmd',
+	function (v) {
+		return _elm_lang$core$Native_List.toArray(v).map(
+			function (v) {
+				return {name: v.name, uri: v.uri, comment: v.comment, tipe: v.tipe};
+			});
+	});
+var _user$project$Indexer$updatingPackageDocsCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'updatingPackageDocsCmd',
+	function (v) {
+		return null;
 	});
 var _user$project$Indexer$Model = F6(
 	function (a, b, c, d, e, f) {
@@ -621,6 +644,11 @@ var _user$project$Indexer$getActiveSourceFile = F2(
 			}
 		}
 	});
+var _user$project$Indexer$activeFileModuleName = F2(
+	function (activeFilePath, sourceFileDict) {
+		var sourceFile = A2(_user$project$Indexer$getActiveSourceFile, activeFilePath, sourceFileDict);
+		return sourceFile.moduleDocs.name;
+	});
 var _user$project$Indexer$update = F2(
 	function (msg, model) {
 		var _p23 = msg;
@@ -631,7 +659,8 @@ var _user$project$Indexer$update = F2(
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{note: 'Failed to load -_-'}),
-					_1: _elm_lang$core$Platform_Cmd$none
+					_1: _user$project$Indexer$docsFailedCmd(
+						{ctor: '_Tuple0'})
 				};
 			case 'DocsLoaded':
 				var existingPackages = A2(
@@ -675,21 +704,22 @@ var _user$project$Indexer$update = F2(
 								hints: _elm_lang$core$Native_List.fromArray(
 									[])
 							}),
-						_1: _elm_lang$core$Platform_Cmd$none
+						_1: _user$project$Indexer$activeHintsChangedCmd(
+							_elm_lang$core$Native_List.fromArray(
+								[]))
 					};
 				} else {
+					var updatedHints = A2(
+						_elm_lang$core$Maybe$withDefault,
+						_elm_lang$core$Native_List.fromArray(
+							[]),
+						A2(_elm_lang$core$Dict$get, _p23._0._0, model.tokens));
 					return {
 						ctor: '_Tuple2',
 						_0: _elm_lang$core$Native_Utils.update(
 							model,
-							{
-								hints: A2(
-									_elm_lang$core$Maybe$withDefault,
-									_elm_lang$core$Native_List.fromArray(
-										[]),
-									A2(_elm_lang$core$Dict$get, _p23._0._0, model.tokens))
-							}),
-						_1: _elm_lang$core$Platform_Cmd$none
+							{hints: updatedHints}),
+						_1: _user$project$Indexer$activeHintsChangedCmd(updatedHints)
 					};
 				}
 			case 'UpdateActiveFilePath':
@@ -706,7 +736,8 @@ var _user$project$Indexer$update = F2(
 								model.sourceFileDict,
 								model.packageDocs)
 						}),
-					_1: _elm_lang$core$Platform_Cmd$none
+					_1: _user$project$Indexer$activeModuleNameChangedCmd(
+						A2(_user$project$Indexer$activeFileModuleName, _p26, model.sourceFileDict))
 				};
 			case 'UpdateSourceFile':
 				var updatedSourceFileDict = A3(
@@ -727,7 +758,8 @@ var _user$project$Indexer$update = F2(
 								updatedSourceFileDict,
 								model.packageDocs)
 						}),
-					_1: _elm_lang$core$Platform_Cmd$none
+					_1: _user$project$Indexer$activeModuleNameChangedCmd(
+						A2(_user$project$Indexer$activeFileModuleName, model.activeFilePath, updatedSourceFileDict))
 				};
 			case 'UpdatePackageDocs':
 				var existingPackages = A2(
@@ -745,14 +777,18 @@ var _user$project$Indexer$update = F2(
 					A2(_elm_lang$core$List$map, _user$project$Indexer$toPackageUri, _p23._0));
 				return {
 					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{note: 'Loading...'}),
-					_1: A3(
-						_elm_lang$core$Task$perform,
-						_elm_lang$core$Basics$always(_user$project$Indexer$DocsFailed),
-						_user$project$Indexer$DocsLoaded,
-						_user$project$Indexer$getPackageDocsList(missingPackages))
+					_0: model,
+					_1: _elm_lang$core$Platform_Cmd$batch(
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_user$project$Indexer$updatingPackageDocsCmd(
+								{ctor: '_Tuple0'}),
+								A3(
+								_elm_lang$core$Task$perform,
+								_elm_lang$core$Basics$always(_user$project$Indexer$DocsFailed),
+								_user$project$Indexer$DocsLoaded,
+								_user$project$Indexer$getPackageDocsList(missingPackages))
+							]))
 				};
 			default:
 				if (_p23._0.ctor === 'Nothing') {
@@ -781,11 +817,6 @@ var _user$project$Indexer$update = F2(
 					}
 				}
 		}
-	});
-var _user$project$Indexer$activeFileModuleName = F2(
-	function (activeFilePath, sourceFileDict) {
-		var sourceFile = A2(_user$project$Indexer$getActiveSourceFile, activeFilePath, sourceFileDict);
-		return sourceFile.moduleDocs.name;
 	});
 var _user$project$Indexer$toImportDict = function (rawImports) {
 	return A2(
