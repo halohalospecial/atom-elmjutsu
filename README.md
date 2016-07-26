@@ -6,9 +6,6 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
 * [elm](http://elm-lang.org/install)
 * [language-elm](https://atom.io/packages/language-elm)
-<!---
-* [linter-elm-make](https://atom.io/packages/linter-elm-make)
--->
 
 ## Commands
 
