@@ -29,8 +29,10 @@ subscriptions model =
         [ activeTokenChangedSub CursorMove
         , activeFilePathChangedSub UpdateActiveFilePath
         , sourceFileChangedSub (\( filePath, moduleDocs, rawImports ) -> UpdateSourceFile filePath <| SourceFile moduleDocs (toImportDict rawImports))
+        , sourceFileRemovedSub RemoveSourceFile
         , newPackagesNeededSub UpdatePackageDocs
         , goToDefinitionSub GoToDefinition
+        , findSymbolSub FindSymbol
         ]
 
 
@@ -47,10 +49,16 @@ port activeFilePathChangedSub : (Maybe String -> msg) -> Sub msg
 port sourceFileChangedSub : (( String, ModuleDocs, List RawImport ) -> msg) -> Sub msg
 
 
+port sourceFileRemovedSub : (String -> msg) -> Sub msg
+
+
 port newPackagesNeededSub : (List String -> msg) -> Sub msg
 
 
 port goToDefinitionSub : (Maybe String -> msg) -> Sub msg
+
+
+port findSymbolSub : (Maybe String -> msg) -> Sub msg
 
 
 
@@ -64,6 +72,9 @@ port docsFailedCmd : () -> Cmd msg
 
 
 port goToDefinitionCmd : String -> Cmd msg
+
+
+port findSymbolCmd : String -> Cmd msg
 
 
 port activeModuleNameChangedCmd : String -> Cmd msg
@@ -146,8 +157,10 @@ type Msg
     | CursorMove (Maybe String)
     | UpdateActiveFilePath (Maybe String)
     | UpdateSourceFile String SourceFile
+    | RemoveSourceFile String
     | UpdatePackageDocs (List String)
     | GoToDefinition (Maybe String)
+    | FindSymbol (Maybe String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -177,15 +190,10 @@ update msg model =
                 , docsLoadedCmd ()
                 )
 
-        CursorMove Nothing ->
-            ( { model | hints = [] }
-            , activeHintsChangedCmd []
-            )
-
-        CursorMove (Just token) ->
+        CursorMove maybeToken ->
             let
                 updatedHints =
-                    Maybe.withDefault [] (Dict.get token model.tokens)
+                    hintsForToken maybeToken model.tokens
             in
                 ( { model | hints = updatedHints }
                 , activeHintsChangedCmd updatedHints
@@ -211,6 +219,18 @@ update msg model =
                 , activeModuleNameChangedCmd <| activeFileModuleName model.activeFilePath updatedSourceFileDict
                 )
 
+        RemoveSourceFile filePath ->
+            let
+                updatedSourceFileDict =
+                    Dict.remove filePath model.sourceFileDict
+            in
+                ( { model
+                    | sourceFileDict = updatedSourceFileDict
+                    , tokens = toTokenDict (getActiveSourceFile model.activeFilePath updatedSourceFileDict) updatedSourceFileDict model.packageDocs
+                  }
+                , activeModuleNameChangedCmd <| activeFileModuleName model.activeFilePath updatedSourceFileDict
+                )
+
         UpdatePackageDocs packages ->
             let
                 existingPackages =
@@ -226,26 +246,37 @@ update msg model =
                     ]
                 )
 
-        GoToDefinition Nothing ->
-            ( model
-            , Cmd.none
-            )
-
-        GoToDefinition (Just token) ->
+        GoToDefinition maybeToken ->
             let
                 hints =
-                    Maybe.withDefault [] (Dict.get token model.tokens)
+                    hintsForToken maybeToken model.tokens
             in
-                case hints of
-                    [] ->
-                        ( model
-                        , Cmd.none
-                        )
+                ( model
+                , Cmd.batch <| List.map (\hint -> goToDefinitionCmd hint.uri) hints
+                )
 
-                    _ ->
-                        ( model
-                        , Cmd.batch <| List.map (\hint -> goToDefinitionCmd hint.uri) hints
-                        )
+        FindSymbol maybeToken ->
+            let
+                hints =
+                    hintsForToken maybeToken model.tokens
+
+                symbols =
+                    List.take 1 hints
+                        |> List.map .name
+            in
+                ( model
+                , Cmd.batch <| List.map findSymbolCmd symbols
+                )
+
+
+hintsForToken : Maybe String -> TokenDict -> List Hint
+hintsForToken maybeToken tokens =
+    case maybeToken of
+        Nothing ->
+            []
+
+        Just token ->
+            Maybe.withDefault [] (Dict.get token tokens)
 
 
 getActiveSourceFile : Maybe String -> SourceFileDict -> SourceFile
@@ -270,10 +301,6 @@ activeFileModuleName activeFilePath sourceFileDict =
             getActiveSourceFile activeFilePath sourceFileDict
     in
         sourceFile.moduleDocs.name
-
-
-
--- DOCUMENTATION
 
 
 type alias ModuleDocs =
@@ -327,10 +354,6 @@ dotToHyphen string =
                 c
         )
         string
-
-
-
--- FETCH DOCS
 
 
 defaultPackages : List String
@@ -400,10 +423,6 @@ moduleDecoder packageUri =
                 ("values" := Json.list value)
     in
         Json.object2 (ModuleDocs packageUri) name values
-
-
-
--- FORMAT DOCS
 
 
 type alias TokenDict =
@@ -497,10 +516,6 @@ unionTagsToHints moduleDocs { alias, exposed } { name, cases, comment, tipe } =
         List.foldl addHints [] cases
 
 
-
--- IMPORTS
-
-
 type alias RawImport =
     { name : String
     , alias : Maybe String
@@ -535,10 +550,6 @@ isExposed name exposed =
 
         All ->
             True
-
-
-
--- CREATE IMPORT DICTS
 
 
 toImportDict : List RawImport -> ImportDict

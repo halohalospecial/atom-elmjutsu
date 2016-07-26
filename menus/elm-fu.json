@@ -2,6 +2,10 @@
   "context-menu": {
     "atom-text-editor": [
       {
+        "label": "Go to Definition",
+        "command": "elm-fu:go-to-definition"
+      },
+      {
         "label": "Find Usages",
         "command": "elm-fu:find-usages"
       }
@@ -14,6 +18,18 @@
         {
           "label": "Elm Fu",
           "submenu": [
+            {
+              "label": "Go to Definition",
+              "command": "elm-fu:go-to-definition"
+            },
+            {
+              "label": "Return from Definition",
+              "command": "elm-fu:return-from-definition"
+            },
+            {
+              "label": "Find Symbol",
+              "command": "elm-fu:find-symbol"
+            },
             {
               "label": "Find Usages",
               "command": "elm-fu:find-usages"
