@@ -1,6 +1,3 @@
--- Based on https://github.com/elm-lang/elm-lang.org/tree/master/src/editor
-
-
 port module Sidekick exposing (..)
 
 import Html exposing (..)
@@ -229,7 +226,7 @@ viewHint activeModuleName hint =
             ++ formatTipe hint.tipe
             ++ "<br><br>\n"
             ++ hint.comment
-            ++ "<br><br>\n"
+            ++ "<br>\n"
 
 
 type alias Hint =

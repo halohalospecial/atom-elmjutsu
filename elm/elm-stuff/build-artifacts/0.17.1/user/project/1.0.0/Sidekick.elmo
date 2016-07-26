@@ -70,7 +70,7 @@ var _user$project$Sidekick$viewHint = F2(
 											A2(
 												_elm_lang$core$Basics_ops['++'],
 												'<br><br>\n',
-												A2(_elm_lang$core$Basics_ops['++'], hint.comment, '<br><br>\n')))))))))));
+												A2(_elm_lang$core$Basics_ops['++'], hint.comment, '<br>\n')))))))))));
 	});
 var _user$project$Sidekick$emptyModel = {
 	note: '',

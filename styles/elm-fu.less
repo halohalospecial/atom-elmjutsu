@@ -2,39 +2,41 @@
 
 .elm-fu-find-symbol {
   .module-name {
-  }
-  .symbol-name {
-    color: @ui-site-color-5;
-  }
-}
-.elm-fu-find-usages {
-  .module-name {
-  }
-  .function-name {
-    color: @ui-site-color-5;
-  }
-  .index {
-    margin-left: @component-padding;
     color: @text-color-subtle;
   }
-}
-.elm-fu-find-unused {
-  .module-name {
-  }
-  .function-name {
-    color: @ui-site-color-5;
+  .symbol-name {
+    // color: @ui-site-color-5;
+    color: @text-color-highlight;
   }
 }
+// .elm-fu-find-usages {
+//   .module-name {
+//   }
+//   .function-name {
+//     color: @ui-site-color-5;
+//   }
+//   .index {
+//     margin-left: @component-padding;
+//     color: @text-color-subtle;
+//   }
+// }
+// .elm-fu-find-unused {
+//   .module-name {
+//   }
+//   .function-name {
+//     color: @ui-site-color-5;
+//   }
+// }
 atom-text-editor,
 atom-text-editor::shadow {
   .elm-fu-symbol-highlight .region {
     border: 1px solid @ui-site-color-5;
     border-radius: @component-border-radius;
   }
-  .elm-fu-usage-highlight .region {
-    border: 1px solid @ui-site-color-5;
-    border-radius: @component-border-radius;
-  }
+  // .elm-fu-usage-highlight .region {
+  //   border: 1px solid @ui-site-color-5;
+  //   border-radius: @component-border-radius;
+  // }
 }
 .elm-fu.sidekick {
   height: 100%;
