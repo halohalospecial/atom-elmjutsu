@@ -63,6 +63,12 @@ port docsLoadedCmd : () -> Cmd msg
 port goToDefinitionCmd : String -> Cmd msg
 
 
+port activeModuleNameChangedCmd : String -> Cmd msg
+
+
+port activeHintsChangedCmd : List Hint -> Cmd msg
+
+
 
 -- MODEL
 
@@ -168,20 +174,24 @@ update msg model =
 
         CursorMove Nothing ->
             ( { model | hints = [] }
-            , Cmd.none
+            , activeHintsChangedCmd []
             )
 
         CursorMove (Just token) ->
-            ( { model | hints = Maybe.withDefault [] (Dict.get token model.tokens) }
-            , Cmd.none
-            )
+            let
+                updatedHints =
+                    Maybe.withDefault [] (Dict.get token model.tokens)
+            in
+                ( { model | hints = updatedHints }
+                , activeHintsChangedCmd updatedHints
+                )
 
         UpdateActiveFilePath activeFilePath ->
             ( { model
                 | activeFilePath = activeFilePath
                 , tokens = toTokenDict (getActiveSourceFile activeFilePath model.sourceFileDict) model.sourceFileDict model.packageDocs
               }
-            , Cmd.none
+            , activeModuleNameChangedCmd <| activeFileModuleName activeFilePath model.sourceFileDict
             )
 
         UpdateSourceFile filePath sourceFile ->
@@ -193,7 +203,7 @@ update msg model =
                     | sourceFileDict = updatedSourceFileDict
                     , tokens = toTokenDict (getActiveSourceFile model.activeFilePath updatedSourceFileDict) updatedSourceFileDict model.packageDocs
                   }
-                , Cmd.none
+                , activeModuleNameChangedCmd <| activeFileModuleName model.activeFilePath updatedSourceFileDict
                 )
 
         UpdatePackageDocs packages ->
