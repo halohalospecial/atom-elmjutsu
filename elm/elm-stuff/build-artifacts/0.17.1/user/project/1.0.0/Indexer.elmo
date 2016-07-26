@@ -1,0 +1,833 @@
+var _user$project$Indexer$defaultTypes = _elm_lang$core$Native_List.fromArray(
+	['Maybe', 'Result']);
+var _user$project$Indexer$isExposed = F2(
+	function (name, exposed) {
+		var _p0 = exposed;
+		switch (_p0.ctor) {
+			case 'None':
+				return false;
+			case 'Some':
+				return A2(_elm_lang$core$Set$member, name, _p0._0);
+			default:
+				return true;
+		}
+	});
+var _user$project$Indexer$tipeToValue = function (_p1) {
+	var _p2 = _p1;
+	return {name: _p2.name, comment: _p2.comment, tipe: _p2.tipe};
+};
+var _user$project$Indexer$packageDocsPrefix = 'http://package.elm-lang.org/packages/';
+var _user$project$Indexer$toPackageUri = function ($package) {
+	return A2(
+		_elm_lang$core$Basics_ops['++'],
+		_user$project$Indexer$packageDocsPrefix,
+		A2(_elm_lang$core$Basics_ops['++'], $package, '/latest/'));
+};
+var _user$project$Indexer$defaultPackages = A2(
+	_elm_lang$core$List$map,
+	_user$project$Indexer$toPackageUri,
+	_elm_lang$core$Native_List.fromArray(
+		['elm-lang/core']));
+var _user$project$Indexer$dotToHyphen = function (string) {
+	return A2(
+		_elm_lang$core$String$map,
+		function (c) {
+			return _elm_lang$core$Native_Utils.eq(
+				c,
+				_elm_lang$core$Native_Utils.chr('.')) ? _elm_lang$core$Native_Utils.chr('-') : c;
+		},
+		string);
+};
+var _user$project$Indexer$urlTo = F2(
+	function (_p3, valueName) {
+		var _p4 = _p3;
+		var _p5 = _p4.packageUri;
+		var uri = A2(_elm_lang$core$String$startsWith, _user$project$Indexer$packageDocsPrefix, _p5) ? A2(
+			_elm_lang$core$Basics_ops['++'],
+			_p5,
+			_user$project$Indexer$dotToHyphen(_p4.name)) : _p5;
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			uri,
+			A2(_elm_lang$core$Basics_ops['++'], '#', valueName));
+	});
+var _user$project$Indexer$emptyModuleDocs = {
+	packageUri: '',
+	name: '',
+	values: {
+		aliases: _elm_lang$core$Native_List.fromArray(
+			[]),
+		types: _elm_lang$core$Native_List.fromArray(
+			[]),
+		values: _elm_lang$core$Native_List.fromArray(
+			[])
+	}
+};
+var _user$project$Indexer$emptyModel = {
+	packageDocs: _elm_lang$core$Native_List.fromArray(
+		[]),
+	tokens: _elm_lang$core$Dict$empty,
+	hints: _elm_lang$core$Native_List.fromArray(
+		[]),
+	note: 'Loading...',
+	activeFilePath: _elm_lang$core$Maybe$Nothing,
+	sourceFileDict: _elm_lang$core$Dict$empty
+};
+var _user$project$Indexer$activeTokenChangedSub = _elm_lang$core$Native_Platform.incomingPort(
+	'activeTokenChangedSub',
+	_elm_lang$core$Json_Decode$oneOf(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+				A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
+			])));
+var _user$project$Indexer$activeFilePathChangedSub = _elm_lang$core$Native_Platform.incomingPort(
+	'activeFilePathChangedSub',
+	_elm_lang$core$Json_Decode$oneOf(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+				A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
+			])));
+var _user$project$Indexer$sourceFileChangedSub = _elm_lang$core$Native_Platform.incomingPort(
+	'sourceFileChangedSub',
+	A4(
+		_elm_lang$core$Json_Decode$tuple3,
+		F3(
+			function (x1, x2, x3) {
+				return {ctor: '_Tuple3', _0: x1, _1: x2, _2: x3};
+			}),
+		_elm_lang$core$Json_Decode$string,
+		A2(
+			_elm_lang$core$Json_Decode$andThen,
+			A2(_elm_lang$core$Json_Decode_ops[':='], 'packageUri', _elm_lang$core$Json_Decode$string),
+			function (packageUri) {
+				return A2(
+					_elm_lang$core$Json_Decode$andThen,
+					A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+					function (name) {
+						return A2(
+							_elm_lang$core$Json_Decode$andThen,
+							A2(
+								_elm_lang$core$Json_Decode_ops[':='],
+								'values',
+								A2(
+									_elm_lang$core$Json_Decode$andThen,
+									A2(
+										_elm_lang$core$Json_Decode_ops[':='],
+										'aliases',
+										_elm_lang$core$Json_Decode$list(
+											A2(
+												_elm_lang$core$Json_Decode$andThen,
+												A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+												function (name) {
+													return A2(
+														_elm_lang$core$Json_Decode$andThen,
+														A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
+														function (comment) {
+															return A2(
+																_elm_lang$core$Json_Decode$andThen,
+																A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
+																function (tipe) {
+																	return _elm_lang$core$Json_Decode$succeed(
+																		{name: name, comment: comment, tipe: tipe});
+																});
+														});
+												}))),
+									function (aliases) {
+										return A2(
+											_elm_lang$core$Json_Decode$andThen,
+											A2(
+												_elm_lang$core$Json_Decode_ops[':='],
+												'types',
+												_elm_lang$core$Json_Decode$list(
+													A2(
+														_elm_lang$core$Json_Decode$andThen,
+														A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+														function (name) {
+															return A2(
+																_elm_lang$core$Json_Decode$andThen,
+																A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
+																function (comment) {
+																	return A2(
+																		_elm_lang$core$Json_Decode$andThen,
+																		A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
+																		function (tipe) {
+																			return A2(
+																				_elm_lang$core$Json_Decode$andThen,
+																				A2(
+																					_elm_lang$core$Json_Decode_ops[':='],
+																					'cases',
+																					_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string)),
+																				function (cases) {
+																					return _elm_lang$core$Json_Decode$succeed(
+																						{name: name, comment: comment, tipe: tipe, cases: cases});
+																				});
+																		});
+																});
+														}))),
+											function (types) {
+												return A2(
+													_elm_lang$core$Json_Decode$andThen,
+													A2(
+														_elm_lang$core$Json_Decode_ops[':='],
+														'values',
+														_elm_lang$core$Json_Decode$list(
+															A2(
+																_elm_lang$core$Json_Decode$andThen,
+																A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+																function (name) {
+																	return A2(
+																		_elm_lang$core$Json_Decode$andThen,
+																		A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
+																		function (comment) {
+																			return A2(
+																				_elm_lang$core$Json_Decode$andThen,
+																				A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
+																				function (tipe) {
+																					return _elm_lang$core$Json_Decode$succeed(
+																						{name: name, comment: comment, tipe: tipe});
+																				});
+																		});
+																}))),
+													function (values) {
+														return _elm_lang$core$Json_Decode$succeed(
+															{aliases: aliases, types: types, values: values});
+													});
+											});
+									})),
+							function (values) {
+								return _elm_lang$core$Json_Decode$succeed(
+									{packageUri: packageUri, name: name, values: values});
+							});
+					});
+			}),
+		_elm_lang$core$Json_Decode$list(
+			A2(
+				_elm_lang$core$Json_Decode$andThen,
+				A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+				function (name) {
+					return A2(
+						_elm_lang$core$Json_Decode$andThen,
+						A2(
+							_elm_lang$core$Json_Decode_ops[':='],
+							'alias',
+							_elm_lang$core$Json_Decode$oneOf(
+								_elm_lang$core$Native_List.fromArray(
+									[
+										_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+										A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
+									]))),
+						function (alias) {
+							return A2(
+								_elm_lang$core$Json_Decode$andThen,
+								A2(
+									_elm_lang$core$Json_Decode_ops[':='],
+									'exposed',
+									_elm_lang$core$Json_Decode$oneOf(
+										_elm_lang$core$Native_List.fromArray(
+											[
+												_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+												A2(
+												_elm_lang$core$Json_Decode$map,
+												_elm_lang$core$Maybe$Just,
+												_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string))
+											]))),
+								function (exposed) {
+									return _elm_lang$core$Json_Decode$succeed(
+										{name: name, alias: alias, exposed: exposed});
+								});
+						});
+				}))));
+var _user$project$Indexer$newPackagesNeededSub = _elm_lang$core$Native_Platform.incomingPort(
+	'newPackagesNeededSub',
+	_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string));
+var _user$project$Indexer$goToDefinitionSub = _elm_lang$core$Native_Platform.incomingPort(
+	'goToDefinitionSub',
+	_elm_lang$core$Json_Decode$oneOf(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+				A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
+			])));
+var _user$project$Indexer$docsLoadedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'docsLoadedCmd',
+	function (v) {
+		return null;
+	});
+var _user$project$Indexer$goToDefinitionCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'goToDefinitionCmd',
+	function (v) {
+		return v;
+	});
+var _user$project$Indexer$Model = F6(
+	function (a, b, c, d, e, f) {
+		return {packageDocs: a, tokens: b, hints: c, note: d, activeFilePath: e, sourceFileDict: f};
+	});
+var _user$project$Indexer$SourceFile = F2(
+	function (a, b) {
+		return {moduleDocs: a, imports: b};
+	});
+var _user$project$Indexer$ModuleDocs = F3(
+	function (a, b, c) {
+		return {packageUri: a, name: b, values: c};
+	});
+var _user$project$Indexer$Values = F3(
+	function (a, b, c) {
+		return {aliases: a, types: b, values: c};
+	});
+var _user$project$Indexer$Tipe = F4(
+	function (a, b, c, d) {
+		return {name: a, comment: b, tipe: c, cases: d};
+	});
+var _user$project$Indexer$Value = F3(
+	function (a, b, c) {
+		return {name: a, comment: b, tipe: c};
+	});
+var _user$project$Indexer$moduleDecoder = function (packageUri) {
+	var value = A4(
+		_elm_lang$core$Json_Decode$object3,
+		_user$project$Indexer$Value,
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'type', _elm_lang$core$Json_Decode$string));
+	var tipe = A5(
+		_elm_lang$core$Json_Decode$object4,
+		_user$project$Indexer$Tipe,
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
+		A2(
+			_elm_lang$core$Json_Decode_ops[':='],
+			'cases',
+			_elm_lang$core$Json_Decode$list(
+				A3(_elm_lang$core$Json_Decode$tuple2, _elm_lang$core$Basics$always, _elm_lang$core$Json_Decode$string, _elm_lang$core$Json_Decode$value))));
+	var values = A4(
+		_elm_lang$core$Json_Decode$object3,
+		_user$project$Indexer$Values,
+		A2(
+			_elm_lang$core$Json_Decode_ops[':='],
+			'aliases',
+			_elm_lang$core$Json_Decode$list(value)),
+		A2(
+			_elm_lang$core$Json_Decode_ops[':='],
+			'types',
+			_elm_lang$core$Json_Decode$list(tipe)),
+		A2(
+			_elm_lang$core$Json_Decode_ops[':='],
+			'values',
+			_elm_lang$core$Json_Decode$list(value)));
+	var name = A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string);
+	return A3(
+		_elm_lang$core$Json_Decode$object2,
+		_user$project$Indexer$ModuleDocs(packageUri),
+		name,
+		values);
+};
+var _user$project$Indexer$getPackageDocs = function (packageUri) {
+	var url = A2(_elm_lang$core$Basics_ops['++'], packageUri, 'documentation.json');
+	return A2(
+		_evancz$elm_http$Http$get,
+		_elm_lang$core$Json_Decode$list(
+			_user$project$Indexer$moduleDecoder(packageUri)),
+		url);
+};
+var _user$project$Indexer$getPackageDocsList = function (packageuris) {
+	return A2(
+		_elm_lang$core$Task$map,
+		_elm_lang$core$List$concat,
+		_elm_lang$core$Task$sequence(
+			A2(_elm_lang$core$List$map, _user$project$Indexer$getPackageDocs, packageuris)));
+};
+var _user$project$Indexer$Hint = F4(
+	function (a, b, c, d) {
+		return {name: a, uri: b, comment: c, tipe: d};
+	});
+var _user$project$Indexer$nameToHints = F3(
+	function (moduleDocs, _p7, _p6) {
+		var _p8 = _p7;
+		var _p9 = _p6;
+		var _p10 = _p9.name;
+		var localName = A2(
+			_elm_lang$core$Basics_ops['++'],
+			A2(_elm_lang$core$Maybe$withDefault, moduleDocs.name, _p8.alias),
+			A2(_elm_lang$core$Basics_ops['++'], '.', _p10));
+		var fullName = A2(
+			_elm_lang$core$Basics_ops['++'],
+			moduleDocs.name,
+			A2(_elm_lang$core$Basics_ops['++'], '.', _p10));
+		var hint = A4(
+			_user$project$Indexer$Hint,
+			fullName,
+			A2(_user$project$Indexer$urlTo, moduleDocs, _p10),
+			_p9.comment,
+			_p9.tipe);
+		return A2(_user$project$Indexer$isExposed, _p10, _p8.exposed) ? _elm_lang$core$Native_List.fromArray(
+			[
+				{ctor: '_Tuple2', _0: _p10, _1: hint},
+				{ctor: '_Tuple2', _0: localName, _1: hint}
+			]) : _elm_lang$core$Native_List.fromArray(
+			[
+				{ctor: '_Tuple2', _0: localName, _1: hint}
+			]);
+	});
+var _user$project$Indexer$unionTagsToHints = F3(
+	function (moduleDocs, _p12, _p11) {
+		var _p13 = _p12;
+		var _p14 = _p11;
+		var _p15 = _p14.name;
+		var addHints = F2(
+			function (tag, hints) {
+				var localName = A2(
+					_elm_lang$core$Basics_ops['++'],
+					A2(_elm_lang$core$Maybe$withDefault, moduleDocs.name, _p13.alias),
+					A2(_elm_lang$core$Basics_ops['++'], '.', tag));
+				var fullName = A2(
+					_elm_lang$core$Basics_ops['++'],
+					moduleDocs.name,
+					A2(_elm_lang$core$Basics_ops['++'], '.', tag));
+				var hint = A4(
+					_user$project$Indexer$Hint,
+					fullName,
+					A2(_user$project$Indexer$urlTo, moduleDocs, _p15),
+					_p14.comment,
+					_p14.tipe);
+				return (A2(_elm_lang$core$List$member, _p15, _user$project$Indexer$defaultTypes) || A2(_user$project$Indexer$isExposed, tag, _p13.exposed)) ? A2(
+					_elm_lang$core$List_ops['::'],
+					{ctor: '_Tuple2', _0: tag, _1: hint},
+					A2(
+						_elm_lang$core$List_ops['::'],
+						{ctor: '_Tuple2', _0: localName, _1: hint},
+						A2(
+							_elm_lang$core$List_ops['::'],
+							{ctor: '_Tuple2', _0: fullName, _1: hint},
+							hints))) : A2(
+					_elm_lang$core$List_ops['::'],
+					{ctor: '_Tuple2', _0: localName, _1: hint},
+					A2(
+						_elm_lang$core$List_ops['::'],
+						{ctor: '_Tuple2', _0: fullName, _1: hint},
+						hints));
+			});
+		return A3(
+			_elm_lang$core$List$foldl,
+			addHints,
+			_elm_lang$core$Native_List.fromArray(
+				[]),
+			_p14.cases);
+	});
+var _user$project$Indexer$filteredHints = F2(
+	function (moduleDocs, importData) {
+		var allValues = A2(
+			_elm_lang$core$Basics_ops['++'],
+			moduleDocs.values.aliases,
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				A2(_elm_lang$core$List$map, _user$project$Indexer$tipeToValue, moduleDocs.values.types),
+				moduleDocs.values.values));
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			A2(
+				_elm_lang$core$List$concatMap,
+				A2(_user$project$Indexer$unionTagsToHints, moduleDocs, importData),
+				moduleDocs.values.types),
+			A2(
+				_elm_lang$core$List$concatMap,
+				A2(_user$project$Indexer$nameToHints, moduleDocs, importData),
+				allValues));
+	});
+var _user$project$Indexer$RawImport = F3(
+	function (a, b, c) {
+		return {name: a, alias: b, exposed: c};
+	});
+var _user$project$Indexer$Import = F2(
+	function (a, b) {
+		return {alias: a, exposed: b};
+	});
+var _user$project$Indexer_ops = _user$project$Indexer_ops || {};
+_user$project$Indexer_ops['=>'] = F2(
+	function (name, exposed) {
+		return {
+			ctor: '_Tuple2',
+			_0: name,
+			_1: A2(_user$project$Indexer$Import, _elm_lang$core$Maybe$Nothing, exposed)
+		};
+	});
+var _user$project$Indexer$GoToDefinition = function (a) {
+	return {ctor: 'GoToDefinition', _0: a};
+};
+var _user$project$Indexer$UpdatePackageDocs = function (a) {
+	return {ctor: 'UpdatePackageDocs', _0: a};
+};
+var _user$project$Indexer$UpdateSourceFile = F2(
+	function (a, b) {
+		return {ctor: 'UpdateSourceFile', _0: a, _1: b};
+	});
+var _user$project$Indexer$UpdateActiveFilePath = function (a) {
+	return {ctor: 'UpdateActiveFilePath', _0: a};
+};
+var _user$project$Indexer$CursorMove = function (a) {
+	return {ctor: 'CursorMove', _0: a};
+};
+var _user$project$Indexer$DocsLoaded = function (a) {
+	return {ctor: 'DocsLoaded', _0: a};
+};
+var _user$project$Indexer$DocsFailed = {ctor: 'DocsFailed'};
+var _user$project$Indexer$init = {
+	ctor: '_Tuple2',
+	_0: _user$project$Indexer$emptyModel,
+	_1: A3(
+		_elm_lang$core$Task$perform,
+		_elm_lang$core$Basics$always(_user$project$Indexer$DocsFailed),
+		_user$project$Indexer$DocsLoaded,
+		_user$project$Indexer$getPackageDocsList(_user$project$Indexer$defaultPackages))
+};
+var _user$project$Indexer$All = {ctor: 'All'};
+var _user$project$Indexer$toTokenDict = F3(
+	function (activeSourceFile, sourceFileDict, packageDocsList) {
+		var insert = F2(
+			function (_p16, dict) {
+				var _p17 = _p16;
+				return A3(
+					_elm_lang$core$Dict$update,
+					_p17._0,
+					function (value) {
+						return _elm_lang$core$Maybe$Just(
+							A2(
+								_elm_lang$core$List_ops['::'],
+								_p17._1,
+								A2(
+									_elm_lang$core$Maybe$withDefault,
+									_elm_lang$core$Native_List.fromArray(
+										[]),
+									value)));
+					},
+					dict);
+			});
+		var getMaybeHints = function (moduleDocs) {
+			var activeSourceFileAndImports = A3(
+				_elm_lang$core$Dict$update,
+				activeSourceFile.moduleDocs.name,
+				_elm_lang$core$Basics$always(
+					_elm_lang$core$Maybe$Just(
+						{alias: _elm_lang$core$Maybe$Nothing, exposed: _user$project$Indexer$All})),
+				activeSourceFile.imports);
+			return A2(
+				_elm_lang$core$Maybe$map,
+				_user$project$Indexer$filteredHints(moduleDocs),
+				A2(_elm_lang$core$Dict$get, moduleDocs.name, activeSourceFileAndImports));
+		};
+		var sourceFileDictModuleDocs = A2(
+			_elm_lang$core$List$map,
+			function (_) {
+				return _.moduleDocs;
+			},
+			_elm_lang$core$Dict$values(sourceFileDict));
+		return A3(
+			_elm_lang$core$List$foldl,
+			insert,
+			_elm_lang$core$Dict$empty,
+			_elm_lang$core$List$concat(
+				A2(
+					_elm_lang$core$List$filterMap,
+					getMaybeHints,
+					A2(_elm_lang$core$Basics_ops['++'], packageDocsList, sourceFileDictModuleDocs))));
+	});
+var _user$project$Indexer$Some = function (a) {
+	return {ctor: 'Some', _0: a};
+};
+var _user$project$Indexer$None = {ctor: 'None'};
+var _user$project$Indexer$toImport = function (_p18) {
+	var _p19 = _p18;
+	var exposedSet = function () {
+		var _p20 = _p19.exposed;
+		if (_p20.ctor === 'Nothing') {
+			return _user$project$Indexer$None;
+		} else {
+			if (((_p20._0.ctor === '::') && (_p20._0._0 === '..')) && (_p20._0._1.ctor === '[]')) {
+				return _user$project$Indexer$All;
+			} else {
+				return _user$project$Indexer$Some(
+					_elm_lang$core$Set$fromList(_p20._0));
+			}
+		}
+	}();
+	return {
+		ctor: '_Tuple2',
+		_0: _p19.name,
+		_1: A2(_user$project$Indexer$Import, _p19.alias, exposedSet)
+	};
+};
+var _user$project$Indexer$defaultImports = _elm_lang$core$Dict$fromList(
+	_elm_lang$core$Native_List.fromArray(
+		[
+			A2(_user$project$Indexer_ops['=>'], 'Basics', _user$project$Indexer$All),
+			A2(_user$project$Indexer_ops['=>'], 'Debug', _user$project$Indexer$None),
+			A2(
+			_user$project$Indexer_ops['=>'],
+			'List',
+			_user$project$Indexer$Some(
+				_elm_lang$core$Set$fromList(
+					_elm_lang$core$Native_List.fromArray(
+						['List', '::'])))),
+			A2(
+			_user$project$Indexer_ops['=>'],
+			'Maybe',
+			_user$project$Indexer$Some(
+				_elm_lang$core$Set$singleton('Maybe'))),
+			A2(
+			_user$project$Indexer_ops['=>'],
+			'Result',
+			_user$project$Indexer$Some(
+				_elm_lang$core$Set$singleton('Result'))),
+			A2(
+			_user$project$Indexer_ops['=>'],
+			'Platform',
+			_user$project$Indexer$Some(
+				_elm_lang$core$Set$singleton('Program'))),
+			{
+			ctor: '_Tuple2',
+			_0: 'Platform.Cmd',
+			_1: A2(
+				_user$project$Indexer$Import,
+				_elm_lang$core$Maybe$Just('Cmd'),
+				_user$project$Indexer$Some(
+					_elm_lang$core$Set$fromList(
+						_elm_lang$core$Native_List.fromArray(
+							['Cmd', '!']))))
+		},
+			{
+			ctor: '_Tuple2',
+			_0: 'Platform.Sub',
+			_1: A2(
+				_user$project$Indexer$Import,
+				_elm_lang$core$Maybe$Just('Sub'),
+				_user$project$Indexer$Some(
+					_elm_lang$core$Set$singleton('Sub')))
+		}
+		]));
+var _user$project$Indexer$emptySourceFile = {moduleDocs: _user$project$Indexer$emptyModuleDocs, imports: _user$project$Indexer$defaultImports};
+var _user$project$Indexer$getActiveSourceFile = F2(
+	function (activeFilePath, sourceFileDict) {
+		var _p21 = activeFilePath;
+		if (_p21.ctor === 'Nothing') {
+			return _user$project$Indexer$emptySourceFile;
+		} else {
+			var _p22 = A2(_elm_lang$core$Dict$get, _p21._0, sourceFileDict);
+			if (_p22.ctor === 'Just') {
+				return _p22._0;
+			} else {
+				return _user$project$Indexer$emptySourceFile;
+			}
+		}
+	});
+var _user$project$Indexer$update = F2(
+	function (msg, model) {
+		var _p23 = msg;
+		switch (_p23.ctor) {
+			case 'DocsFailed':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{note: 'Failed to load -_-'}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'DocsLoaded':
+				var existingPackages = A2(
+					_elm_lang$core$List$map,
+					function (_) {
+						return _.packageUri;
+					},
+					model.packageDocs);
+				var missingPackageDocs = A2(
+					_elm_lang$core$List$filter,
+					function (_p24) {
+						var _p25 = _p24;
+						return _elm_lang$core$Basics$not(
+							A2(_elm_lang$core$List$member, _p25.packageUri, existingPackages));
+					},
+					_p23._0);
+				var updatedPackageDocs = A2(_elm_lang$core$Basics_ops['++'], missingPackageDocs, model.packageDocs);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							packageDocs: updatedPackageDocs,
+							tokens: A3(
+								_user$project$Indexer$toTokenDict,
+								A2(_user$project$Indexer$getActiveSourceFile, model.activeFilePath, model.sourceFileDict),
+								model.sourceFileDict,
+								updatedPackageDocs),
+							note: ''
+						}),
+					_1: _user$project$Indexer$docsLoadedCmd(
+						{ctor: '_Tuple0'})
+				};
+			case 'CursorMove':
+				if (_p23._0.ctor === 'Nothing') {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								hints: _elm_lang$core$Native_List.fromArray(
+									[])
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				} else {
+					return {
+						ctor: '_Tuple2',
+						_0: _elm_lang$core$Native_Utils.update(
+							model,
+							{
+								hints: A2(
+									_elm_lang$core$Maybe$withDefault,
+									_elm_lang$core$Native_List.fromArray(
+										[]),
+									A2(_elm_lang$core$Dict$get, _p23._0._0, model.tokens))
+							}),
+						_1: _elm_lang$core$Platform_Cmd$none
+					};
+				}
+			case 'UpdateActiveFilePath':
+				var _p26 = _p23._0;
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							activeFilePath: _p26,
+							tokens: A3(
+								_user$project$Indexer$toTokenDict,
+								A2(_user$project$Indexer$getActiveSourceFile, _p26, model.sourceFileDict),
+								model.sourceFileDict,
+								model.packageDocs)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'UpdateSourceFile':
+				var updatedSourceFileDict = A3(
+					_elm_lang$core$Dict$update,
+					_p23._0,
+					_elm_lang$core$Basics$always(
+						_elm_lang$core$Maybe$Just(_p23._1)),
+					model.sourceFileDict);
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							sourceFileDict: updatedSourceFileDict,
+							tokens: A3(
+								_user$project$Indexer$toTokenDict,
+								A2(_user$project$Indexer$getActiveSourceFile, model.activeFilePath, updatedSourceFileDict),
+								updatedSourceFileDict,
+								model.packageDocs)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'UpdatePackageDocs':
+				var existingPackages = A2(
+					_elm_lang$core$List$map,
+					function (_) {
+						return _.packageUri;
+					},
+					model.packageDocs);
+				var missingPackages = A2(
+					_elm_lang$core$List$filter,
+					function (packageUri) {
+						return _elm_lang$core$Basics$not(
+							A2(_elm_lang$core$List$member, packageUri, existingPackages));
+					},
+					A2(_elm_lang$core$List$map, _user$project$Indexer$toPackageUri, _p23._0));
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{note: 'Loading...'}),
+					_1: A3(
+						_elm_lang$core$Task$perform,
+						_elm_lang$core$Basics$always(_user$project$Indexer$DocsFailed),
+						_user$project$Indexer$DocsLoaded,
+						_user$project$Indexer$getPackageDocsList(missingPackages))
+				};
+			default:
+				if (_p23._0.ctor === 'Nothing') {
+					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				} else {
+					var hints = A2(
+						_elm_lang$core$Maybe$withDefault,
+						_elm_lang$core$Native_List.fromArray(
+							[]),
+						A2(_elm_lang$core$Dict$get, _p23._0._0, model.tokens));
+					var _p27 = hints;
+					if (_p27.ctor === '[]') {
+						return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+					} else {
+						return {
+							ctor: '_Tuple2',
+							_0: model,
+							_1: _elm_lang$core$Platform_Cmd$batch(
+								A2(
+									_elm_lang$core$List$map,
+									function (hint) {
+										return _user$project$Indexer$goToDefinitionCmd(hint.uri);
+									},
+									hints))
+						};
+					}
+				}
+		}
+	});
+var _user$project$Indexer$activeFileModuleName = F2(
+	function (activeFilePath, sourceFileDict) {
+		var sourceFile = A2(_user$project$Indexer$getActiveSourceFile, activeFilePath, sourceFileDict);
+		return sourceFile.moduleDocs.name;
+	});
+var _user$project$Indexer$toImportDict = function (rawImports) {
+	return A2(
+		_elm_lang$core$Dict$union,
+		_elm_lang$core$Dict$fromList(
+			A2(_elm_lang$core$List$map, _user$project$Indexer$toImport, rawImports)),
+		_user$project$Indexer$defaultImports);
+};
+var _user$project$Indexer$subscriptions = function (model) {
+	return _elm_lang$core$Platform_Sub$batch(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_user$project$Indexer$activeTokenChangedSub(_user$project$Indexer$CursorMove),
+				_user$project$Indexer$activeFilePathChangedSub(_user$project$Indexer$UpdateActiveFilePath),
+				_user$project$Indexer$sourceFileChangedSub(
+				function (_p28) {
+					var _p29 = _p28;
+					return A2(
+						_user$project$Indexer$UpdateSourceFile,
+						_p29._0,
+						A2(
+							_user$project$Indexer$SourceFile,
+							_p29._1,
+							_user$project$Indexer$toImportDict(_p29._2)));
+				}),
+				_user$project$Indexer$newPackagesNeededSub(_user$project$Indexer$UpdatePackageDocs),
+				_user$project$Indexer$goToDefinitionSub(_user$project$Indexer$GoToDefinition)
+			]));
+};
+var _user$project$Indexer$main = {
+	main: _elm_lang$html$Html_App$program(
+		{
+			init: _user$project$Indexer$init,
+			view: function (_p30) {
+				return A2(
+					_elm_lang$html$Html$div,
+					_elm_lang$core$Native_List.fromArray(
+						[]),
+					_elm_lang$core$Native_List.fromArray(
+						[]));
+			},
+			update: _user$project$Indexer$update,
+			subscriptions: _user$project$Indexer$subscriptions
+		})
+};
