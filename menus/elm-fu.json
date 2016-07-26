@@ -12,10 +12,6 @@
       {
         "label": "Find Symbol",
         "command": "elm-fu:find-symbol"
-      },
-      {
-        "label": "Find Usages",
-        "command": "elm-fu:find-usages"
       }
     ]
   },
@@ -37,14 +33,6 @@
             {
               "label": "Find Symbol",
               "command": "elm-fu:find-symbol"
-            },
-            {
-              "label": "Find Usages",
-              "command": "elm-fu:find-usages"
-            },
-            {
-              "label": "Find Unused",
-              "command": "elm-fu:find-unused"
             }
           ]
         }

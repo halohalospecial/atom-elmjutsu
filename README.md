@@ -1,20 +1,42 @@
-# elm-fu
+# Elm-fu
 
-A set of editor commands for developing with [elm](http://elm-lang.org).
+Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
-Warning:  Most of these are hacky experiments that may not always work properly.  Use at your own risk! :p
-
-<!---
 ## Requirements
 
 * [elm](http://elm-lang.org/install)
-* [language-elm](https://atom.io/packages/language-elm) for the following:
-  - `Elm Fu: Toggle Sidekick`
-* [linter-elm-make](https://atom.io/packages/linter-elm-make) for the following:
-  - `Elm Fu: Find Usages`
-  - `Elm Fu: Find Unused`
+* [language-elm](https://atom.io/packages/language-elm)
+<!--- * [linter-elm-make](https://atom.io/packages/linter-elm-make) -->
 
-## Features
+## Commands
+
+#### `Elm Fu: Go To Definition`
+
+#### `Elm Fu: Return From Definition`
+
+![go-to-definition](https://github.com/halohalospecial/atom-elm-fu/blob/master/images/go-to-definition.gif?raw=true)
+
+#### `Elm Fu: Find Symbol`
+
+![find-symbol](https://github.com/halohalospecial/atom-elm-fu/blob/master/images/find-symbol.gif?raw=true)
+
+#### `Elm Fu: Toggle Sidekick`
+
+![sidekick](https://github.com/halohalospecial/atom-elm-fu/blob/master/images/sidekick.gif?raw=true)
+
+## Keybindings
+
+Here is an example:
+```
+'atom-text-editor:not([mini])[data-grammar^="source elm"]':
+  'f4': 'elm-fu:go-to-definition'
+  'shift-f4': 'elm-fu:return-from-definition'
+  'ctrl-f4': 'elm-fu:find-symbol'
+  'shift-ctrl-f4': 'elm-fu:toggle-sidekick'
+```
+
+<!---
+Warning:  Most of these are hacky experiments that may not always work properly.  Use at your own risk! :p
 
 #### `Elm Fu: Find Usages`
 Finds all usages of the function under the cursor.
