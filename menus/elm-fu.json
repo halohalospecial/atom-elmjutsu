@@ -2,15 +2,15 @@
   "context-menu": {
     "atom-text-editor": [
       {
-        "label": "Go to Definition",
+        "label": "Elm Fu: Go to Definition",
         "command": "elm-fu:go-to-definition"
       },
       {
-        "label": "Return from Definition",
+        "label": "Elm Fu: Return from Definition",
         "command": "elm-fu:return-from-definition"
       },
       {
-        "label": "Find Symbol",
+        "label": "Elm Fu: Find Symbol",
         "command": "elm-fu:find-symbol"
       }
     ]
@@ -33,6 +33,10 @@
             {
               "label": "Find Symbol",
               "command": "elm-fu:find-symbol"
+            },
+            {
+              "label": "Toggle Sidekick",
+              "command": "elm-fu:toggle-sidekick"
             }
           ]
         }
