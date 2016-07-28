@@ -8498,8 +8498,8 @@ var _user$project$Indexer$goToDefinitionSub = _elm_lang$core$Native_Platform.inc
 				_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
 				A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
 			])));
-var _user$project$Indexer$findSymbolSub = _elm_lang$core$Native_Platform.incomingPort(
-	'findSymbolSub',
+var _user$project$Indexer$goToSymbolSub = _elm_lang$core$Native_Platform.incomingPort(
+	'goToSymbolSub',
 	A3(
 		_elm_lang$core$Json_Decode$tuple2,
 		F2(
@@ -8533,8 +8533,8 @@ var _user$project$Indexer$goToDefinitionCmd = _elm_lang$core$Native_Platform.out
 	function (v) {
 		return v;
 	});
-var _user$project$Indexer$findSymbolCmd = _elm_lang$core$Native_Platform.outgoingPort(
-	'findSymbolCmd',
+var _user$project$Indexer$goToSymbolCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'goToSymbolCmd',
 	function (v) {
 		return [
 			(v._0.ctor === 'Nothing') ? null : v._0._0,
@@ -8759,8 +8759,8 @@ _user$project$Indexer_ops['=>'] = F2(
 			_1: A2(_user$project$Indexer$Import, _elm_lang$core$Maybe$Nothing, exposed)
 		};
 	});
-var _user$project$Indexer$FindSymbol = function (a) {
-	return {ctor: 'FindSymbol', _0: a};
+var _user$project$Indexer$GoToSymbol = function (a) {
+	return {ctor: 'GoToSymbol', _0: a};
 };
 var _user$project$Indexer$GoToDefinition = function (a) {
 	return {ctor: 'GoToDefinition', _0: a};
@@ -9113,6 +9113,7 @@ var _user$project$Indexer$update = F2(
 							var _p33 = _p31.moduleDocs;
 							var _p32 = _p33;
 							var packageUri = _p32.packageUri;
+							var name = _p32.name;
 							var values = _p32.values;
 							return A2(
 								_elm_lang$core$List$map,
@@ -9156,7 +9157,7 @@ var _user$project$Indexer$update = F2(
 					return {
 						ctor: '_Tuple2',
 						_0: model,
-						_1: _user$project$Indexer$findSymbolCmd(
+						_1: _user$project$Indexer$goToSymbolCmd(
 							{ctor: '_Tuple2', _0: defaultSymbolFullName, _1: projectSymbols})
 					};
 				}
@@ -9189,7 +9190,7 @@ var _user$project$Indexer$subscriptions = function (model) {
 				_user$project$Indexer$sourceFileRemovedSub(_user$project$Indexer$RemoveSourceFile),
 				_user$project$Indexer$newPackagesNeededSub(_user$project$Indexer$UpdatePackageDocs),
 				_user$project$Indexer$goToDefinitionSub(_user$project$Indexer$GoToDefinition),
-				_user$project$Indexer$findSymbolSub(_user$project$Indexer$FindSymbol)
+				_user$project$Indexer$goToSymbolSub(_user$project$Indexer$GoToSymbol)
 			]));
 };
 var _user$project$Indexer$main = {

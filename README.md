@@ -15,9 +15,9 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
 ![go-to-definition](https://github.com/halohalospecial/atom-elm-fu/blob/master/images/go-to-definition.gif?raw=true)
 
-#### `Elm Fu: Find Symbol`
+#### `Elm Fu: Go To Symbol`
 
-![find-symbol](https://github.com/halohalospecial/atom-elm-fu/blob/master/images/find-symbol.gif?raw=true)
+![go-to-symbol](https://github.com/halohalospecial/atom-elm-fu/blob/master/images/go-to-symbol.gif?raw=true)
 
 #### `Elm Fu: Toggle Sidekick`
 
@@ -30,7 +30,7 @@ Here is an example:
 'atom-text-editor:not([mini])[data-grammar^="source elm"]':
   'f4': 'elm-fu:go-to-definition'
   'shift-f4': 'elm-fu:return-from-definition'
-  'ctrl-f4': 'elm-fu:find-symbol'
+  'ctrl-f4': 'elm-fu:go-to-symbol'
   'shift-ctrl-f4': 'elm-fu:toggle-sidekick'
 ```
 

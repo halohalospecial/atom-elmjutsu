@@ -32,7 +32,7 @@ subscriptions model =
         , sourceFileRemovedSub RemoveSourceFile
         , newPackagesNeededSub UpdatePackageDocs
         , goToDefinitionSub GoToDefinition
-        , findSymbolSub FindSymbol
+        , goToSymbolSub GoToSymbol
         ]
 
 
@@ -58,7 +58,7 @@ port newPackagesNeededSub : (List String -> msg) -> Sub msg
 port goToDefinitionSub : (Maybe String -> msg) -> Sub msg
 
 
-port findSymbolSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
+port goToSymbolSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
 
 
 
@@ -74,7 +74,7 @@ port docsFailedCmd : () -> Cmd msg
 port goToDefinitionCmd : String -> Cmd msg
 
 
-port findSymbolCmd : ( Maybe String, List Symbol ) -> Cmd msg
+port goToSymbolCmd : ( Maybe String, List Symbol ) -> Cmd msg
 
 
 port activeModuleNameChangedCmd : String -> Cmd msg
@@ -166,7 +166,7 @@ type Msg
     | RemoveSourceFile String
     | UpdatePackageDocs (List String)
     | GoToDefinition (Maybe String)
-    | FindSymbol ( Maybe String, Maybe String )
+    | GoToSymbol ( Maybe String, Maybe String )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -261,7 +261,7 @@ update msg model =
                 , Cmd.batch <| List.map (\hint -> goToDefinitionCmd hint.uri) hints
                 )
 
-        FindSymbol ( maybeProjectDirectory, maybeToken ) ->
+        GoToSymbol ( maybeProjectDirectory, maybeToken ) ->
             case maybeProjectDirectory of
                 Nothing ->
                     ( model
@@ -275,7 +275,7 @@ update msg model =
                                 |> List.concatMap
                                     (\{ moduleDocs } ->
                                         let
-                                            { packageUri, values } =
+                                            { packageUri, name, values } =
                                                 moduleDocs
                                         in
                                             values.values
@@ -306,7 +306,7 @@ update msg model =
                                     Just hint.name
                     in
                         ( model
-                        , findSymbolCmd ( defaultSymbolFullName, projectSymbols )
+                        , goToSymbolCmd ( defaultSymbolFullName, projectSymbols )
                         )
 
 
