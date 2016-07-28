@@ -100,7 +100,10 @@ type Msg
     | DocsLoaded
     | DocsFailed
     | UpdatingPackageDocs
-    | GoToDefinition String
+
+
+
+-- | GoToDefinition String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -131,13 +134,12 @@ update msg model =
             , Cmd.none
             )
 
-        GoToDefinition name ->
-            ( model
-            , goToDefinitionCmd name
-            )
 
 
-
+-- GoToDefinition name ->
+--     ( model
+--     , goToDefinitionCmd name
+--     )
 -- VIEW
 
 
@@ -149,17 +151,18 @@ view { note, activeHints, activeModuleName } =
 
         sourceView hint =
             if String.startsWith packageDocsPrefix hint.uri then
-                a [ title hint.uri, href hint.uri ] [ text "View in browser" ]
+                [ a [ title hint.uri, href hint.uri ] [ text "View in browser" ] ]
             else
-                a [ title hint.uri, onClick (GoToDefinition hint.name) ] [ text "Go to Definition" ]
+                -- a [ title hint.uri, onClick (GoToDefinition hint.name) ] [ text "Go to Definition" ]
+                []
 
         hintsView =
             List.map
                 (\hint ->
                     div []
-                        [ hintMarkdown hint
-                        , sourceView hint
-                        ]
+                        ([ hintMarkdown hint ]
+                            ++ sourceView hint
+                        )
                 )
                 activeHints
     in

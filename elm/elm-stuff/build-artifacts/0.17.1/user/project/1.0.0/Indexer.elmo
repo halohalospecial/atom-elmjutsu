@@ -307,7 +307,11 @@ var _user$project$Indexer$goToSymbolCmd = _elm_lang$core$Native_Platform.outgoin
 			(v._0.ctor === 'Nothing') ? null : v._0._0,
 			_elm_lang$core$Native_List.toArray(v._1).map(
 			function (v) {
-				return {fullName: v.fullName, uri: v.uri};
+				return {
+					fullName: v.fullName,
+					uri: v.uri,
+					caseOf: (v.caseOf.ctor === 'Nothing') ? null : v.caseOf._0
+				};
 			})
 		];
 	});
@@ -337,9 +341,9 @@ var _user$project$Indexer$SourceFile = F2(
 	function (a, b) {
 		return {moduleDocs: a, imports: b};
 	});
-var _user$project$Indexer$Symbol = F2(
-	function (a, b) {
-		return {fullName: a, uri: b};
+var _user$project$Indexer$Symbol = F3(
+	function (a, b, c) {
+		return {fullName: a, uri: b, caseOf: c};
 	});
 var _user$project$Indexer$ModuleDocs = F3(
 	function (a, b, c) {
@@ -880,25 +884,55 @@ var _user$project$Indexer$update = F2(
 							var _p33 = _p31.moduleDocs;
 							var _p32 = _p33;
 							var packageUri = _p32.packageUri;
-							var name = _p32.name;
 							var values = _p32.values;
-							return A2(
+							var valueSymbols = A2(
 								_elm_lang$core$List$map,
-								function (valueName) {
-									return A2(
+								function (value) {
+									return A3(
 										_user$project$Indexer$Symbol,
 										A2(
 											_elm_lang$core$Basics_ops['++'],
 											_p33.name,
-											A2(_elm_lang$core$Basics_ops['++'], '.', valueName)),
-										A2(_user$project$Indexer$urlTo, _p33, valueName));
+											A2(_elm_lang$core$Basics_ops['++'], '.', value.name)),
+										A2(_user$project$Indexer$urlTo, _p33, value.name),
+										_elm_lang$core$Maybe$Nothing);
 								},
-								A2(
-									_elm_lang$core$List$map,
-									function (_) {
-										return _.name;
-									},
-									values.values));
+								values.values);
+							var tipeSymbols = A2(
+								_elm_lang$core$List$map,
+								function (tipe) {
+									return A3(
+										_user$project$Indexer$Symbol,
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											_p33.name,
+											A2(_elm_lang$core$Basics_ops['++'], '.', tipe.name)),
+										A2(_user$project$Indexer$urlTo, _p33, tipe.name),
+										_elm_lang$core$Maybe$Nothing);
+								},
+								values.types);
+							var tipeCaseSymbols = A2(
+								_elm_lang$core$List$concatMap,
+								function (tipe) {
+									return A2(
+										_elm_lang$core$List$map,
+										function (caseName) {
+											return A3(
+												_user$project$Indexer$Symbol,
+												A2(
+													_elm_lang$core$Basics_ops['++'],
+													_p33.name,
+													A2(_elm_lang$core$Basics_ops['++'], '.', caseName)),
+												A2(_user$project$Indexer$urlTo, _p33, caseName),
+												_elm_lang$core$Maybe$Just(tipe.name));
+										},
+										tipe.cases);
+								},
+								values.types);
+							return A2(
+								_elm_lang$core$Basics_ops['++'],
+								valueSymbols,
+								A2(_elm_lang$core$Basics_ops['++'], tipeSymbols, tipeCaseSymbols));
 						},
 						_elm_lang$core$Dict$values(model.sourceFileDict));
 					var projectSymbols = A2(

@@ -8094,6 +8094,106 @@ var _user$project$Sidekick$viewHint = F2(
 												'<br><br>\n',
 												A2(_elm_lang$core$Basics_ops['++'], hint.comment, '<br>\n')))))))))));
 	});
+var _user$project$Sidekick$view = function (_p3) {
+	var _p4 = _p3;
+	var sourceView = function (hint) {
+		return A2(_elm_lang$core$String$startsWith, _user$project$Sidekick$packageDocsPrefix, hint.uri) ? _elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$a,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$title(hint.uri),
+						_elm_lang$html$Html_Attributes$href(hint.uri)
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text('View in browser')
+					]))
+			]) : _elm_lang$core$Native_List.fromArray(
+			[]);
+	};
+	var hintMarkdown = function (hint) {
+		return A2(
+			_evancz$elm_markdown$Markdown$toHtml,
+			_elm_lang$core$Native_List.fromArray(
+				[]),
+			A2(_user$project$Sidekick$viewHint, _p4.activeModuleName, hint));
+	};
+	var hintsView = A2(
+		_elm_lang$core$List$map,
+		function (hint) {
+			return A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					_elm_lang$core$Native_List.fromArray(
+						[
+							hintMarkdown(hint)
+						]),
+					sourceView(hint)));
+		},
+		_p4.activeHints);
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html$text(_p4.note)
+				]),
+			hintsView));
+};
+var _user$project$Sidekick$update = F2(
+	function (msg, model) {
+		var _p5 = msg;
+		switch (_p5.ctor) {
+			case 'ActiveHintsChanged':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{activeHints: _p5._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'ActiveModuleNameChanged':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{activeModuleName: _p5._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'DocsLoaded':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{note: ''}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'DocsFailed':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{note: 'Failed to load -_-'}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{note: 'Loading...'}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+		}
+	});
 var _user$project$Sidekick$emptyModel = {
 	note: '',
 	activeHints: _elm_lang$core$Native_List.fromArray(
@@ -8144,58 +8244,6 @@ var _user$project$Sidekick$goToDefinitionCmd = _elm_lang$core$Native_Platform.ou
 	function (v) {
 		return v;
 	});
-var _user$project$Sidekick$update = F2(
-	function (msg, model) {
-		var _p3 = msg;
-		switch (_p3.ctor) {
-			case 'ActiveHintsChanged':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{activeHints: _p3._0}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'ActiveModuleNameChanged':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{activeModuleName: _p3._0}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'DocsLoaded':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{note: ''}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'DocsFailed':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{note: 'Failed to load -_-'}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'UpdatingPackageDocs':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{note: 'Loading...'}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			default:
-				return {
-					ctor: '_Tuple2',
-					_0: model,
-					_1: _user$project$Sidekick$goToDefinitionCmd(_p3._0)
-				};
-		}
-	});
 var _user$project$Sidekick$Model = F3(
 	function (a, b, c) {
 		return {note: a, activeHints: b, activeModuleName: c};
@@ -8208,68 +8256,6 @@ var _user$project$Sidekick$Hint = F4(
 	function (a, b, c, d) {
 		return {name: a, uri: b, comment: c, tipe: d};
 	});
-var _user$project$Sidekick$GoToDefinition = function (a) {
-	return {ctor: 'GoToDefinition', _0: a};
-};
-var _user$project$Sidekick$view = function (_p4) {
-	var _p5 = _p4;
-	var sourceView = function (hint) {
-		return A2(_elm_lang$core$String$startsWith, _user$project$Sidekick$packageDocsPrefix, hint.uri) ? A2(
-			_elm_lang$html$Html$a,
-			_elm_lang$core$Native_List.fromArray(
-				[
-					_elm_lang$html$Html_Attributes$title(hint.uri),
-					_elm_lang$html$Html_Attributes$href(hint.uri)
-				]),
-			_elm_lang$core$Native_List.fromArray(
-				[
-					_elm_lang$html$Html$text('View in browser')
-				])) : A2(
-			_elm_lang$html$Html$a,
-			_elm_lang$core$Native_List.fromArray(
-				[
-					_elm_lang$html$Html_Attributes$title(hint.uri),
-					_elm_lang$html$Html_Events$onClick(
-					_user$project$Sidekick$GoToDefinition(hint.name))
-				]),
-			_elm_lang$core$Native_List.fromArray(
-				[
-					_elm_lang$html$Html$text('Go to Definition')
-				]));
-	};
-	var hintMarkdown = function (hint) {
-		return A2(
-			_evancz$elm_markdown$Markdown$toHtml,
-			_elm_lang$core$Native_List.fromArray(
-				[]),
-			A2(_user$project$Sidekick$viewHint, _p5.activeModuleName, hint));
-	};
-	var hintsView = A2(
-		_elm_lang$core$List$map,
-		function (hint) {
-			return A2(
-				_elm_lang$html$Html$div,
-				_elm_lang$core$Native_List.fromArray(
-					[]),
-				_elm_lang$core$Native_List.fromArray(
-					[
-						hintMarkdown(hint),
-						sourceView(hint)
-					]));
-		},
-		_p5.activeHints);
-	return A2(
-		_elm_lang$html$Html$div,
-		_elm_lang$core$Native_List.fromArray(
-			[]),
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			_elm_lang$core$Native_List.fromArray(
-				[
-					_elm_lang$html$Html$text(_p5.note)
-				]),
-			hintsView));
-};
 var _user$project$Sidekick$UpdatingPackageDocs = {ctor: 'UpdatingPackageDocs'};
 var _user$project$Sidekick$DocsFailed = {ctor: 'DocsFailed'};
 var _user$project$Sidekick$DocsLoaded = {ctor: 'DocsLoaded'};
