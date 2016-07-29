@@ -7921,21 +7921,14 @@ var _evancz$elm_markdown$Markdown$Options = F4(
 
 var _user$project$Sidekick$packageDocsPrefix = 'http://package.elm-lang.org/packages/';
 var _user$project$Sidekick$viewHint = F2(
-	function (activeModuleName, hint) {
+	function (activeFilePath, hint) {
 		var formatTipe = function (tipe) {
 			return A2(_elm_lang$core$String$startsWith, '*', tipe) ? tipe : (_elm_lang$core$Native_Utils.eq(tipe, '') ? '' : A2(_elm_lang$core$Basics_ops['++'], ': ', tipe));
 		};
-		var formatName = function (name) {
-			return A2(
-				_elm_lang$core$Regex$contains,
-				_elm_lang$core$Regex$regex('\\w'),
-				name) ? name : A2(
-				_elm_lang$core$Basics_ops['++'],
-				'(',
-				A2(_elm_lang$core$Basics_ops['++'], name, ')'));
-		};
 		var formatModule = function (moduleName) {
-			return _elm_lang$core$Native_Utils.eq(activeModuleName, moduleName) ? '' : A2(_elm_lang$core$Basics_ops['++'], moduleName, '.');
+			return _elm_lang$core$Native_Utils.eq(
+				activeFilePath,
+				_elm_lang$core$Maybe$Just(hint.sourcePath)) ? '' : A2(_elm_lang$core$Basics_ops['++'], moduleName, '.');
 		};
 		var _p0 = function () {
 			var _p1 = A2(_elm_lang$core$String$split, '.', hint.name);
@@ -7963,7 +7956,7 @@ var _user$project$Sidekick$viewHint = F2(
 		var name = _p0._1;
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
-			'# ',
+			'## ',
 			A2(
 				_elm_lang$core$Basics_ops['++'],
 				formatModule(moduleName),
@@ -7975,23 +7968,14 @@ var _user$project$Sidekick$viewHint = F2(
 						name,
 						A2(
 							_elm_lang$core$Basics_ops['++'],
-							'**\n',
+							'** ',
 							A2(
 								_elm_lang$core$Basics_ops['++'],
-								'## **',
+								formatTipe(hint.tipe),
 								A2(
 									_elm_lang$core$Basics_ops['++'],
-									formatName(name),
-									A2(
-										_elm_lang$core$Basics_ops['++'],
-										'** ',
-										A2(
-											_elm_lang$core$Basics_ops['++'],
-											formatTipe(hint.tipe),
-											A2(
-												_elm_lang$core$Basics_ops['++'],
-												'<br><br>\n',
-												A2(_elm_lang$core$Basics_ops['++'], hint.comment, '<br>\n')))))))))));
+									'<br><br>\n',
+									A2(_elm_lang$core$Basics_ops['++'], hint.comment, '<br>\n'))))))));
 	});
 var _user$project$Sidekick$view = function (_p3) {
 	var _p4 = _p3;
@@ -8017,7 +8001,7 @@ var _user$project$Sidekick$view = function (_p3) {
 			_evancz$elm_markdown$Markdown$toHtml,
 			_elm_lang$core$Native_List.fromArray(
 				[]),
-			A2(_user$project$Sidekick$viewHint, _p4.activeModuleName, hint));
+			A2(_user$project$Sidekick$viewHint, _p4.activeFilePath, hint));
 	};
 	var hintsView = A2(
 		_elm_lang$core$List$map,
@@ -8059,12 +8043,12 @@ var _user$project$Sidekick$update = F2(
 						{activeHints: _p5._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			case 'ActiveModuleNameChanged':
+			case 'ActiveFilePathChanged':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{activeModuleName: _p5._0}),
+						{activeFilePath: _p5._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DocsLoaded':
@@ -8097,7 +8081,7 @@ var _user$project$Sidekick$emptyModel = {
 	note: '',
 	activeHints: _elm_lang$core$Native_List.fromArray(
 		[]),
-	activeModuleName: ''
+	activeFilePath: _elm_lang$core$Maybe$Nothing
 };
 var _user$project$Sidekick$init = {ctor: '_Tuple2', _0: _user$project$Sidekick$emptyModel, _1: _elm_lang$core$Platform_Cmd$none};
 var _user$project$Sidekick$activeHintsChangedSub = _elm_lang$core$Native_Platform.incomingPort(
@@ -8138,7 +8122,14 @@ var _user$project$Sidekick$activeHintsChangedSub = _elm_lang$core$Native_Platfor
 							});
 					});
 			})));
-var _user$project$Sidekick$activeModuleNameChangedSub = _elm_lang$core$Native_Platform.incomingPort('activeModuleNameChangedSub', _elm_lang$core$Json_Decode$string);
+var _user$project$Sidekick$activeFilePathChangedSub = _elm_lang$core$Native_Platform.incomingPort(
+	'activeFilePathChangedSub',
+	_elm_lang$core$Json_Decode$oneOf(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+				A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
+			])));
 var _user$project$Sidekick$docsLoadedSub = _elm_lang$core$Native_Platform.incomingPort(
 	'docsLoadedSub',
 	_elm_lang$core$Json_Decode$null(
@@ -8158,7 +8149,7 @@ var _user$project$Sidekick$goToDefinitionCmd = _elm_lang$core$Native_Platform.ou
 	});
 var _user$project$Sidekick$Model = F3(
 	function (a, b, c) {
-		return {note: a, activeHints: b, activeModuleName: c};
+		return {note: a, activeHints: b, activeFilePath: c};
 	});
 var _user$project$Sidekick$ActiveHint = F5(
 	function (a, b, c, d, e) {
@@ -8171,8 +8162,8 @@ var _user$project$Sidekick$Hint = F5(
 var _user$project$Sidekick$UpdatingPackageDocs = {ctor: 'UpdatingPackageDocs'};
 var _user$project$Sidekick$DocsFailed = {ctor: 'DocsFailed'};
 var _user$project$Sidekick$DocsLoaded = {ctor: 'DocsLoaded'};
-var _user$project$Sidekick$ActiveModuleNameChanged = function (a) {
-	return {ctor: 'ActiveModuleNameChanged', _0: a};
+var _user$project$Sidekick$ActiveFilePathChanged = function (a) {
+	return {ctor: 'ActiveFilePathChanged', _0: a};
 };
 var _user$project$Sidekick$ActiveHintsChanged = function (a) {
 	return {ctor: 'ActiveHintsChanged', _0: a};
@@ -8182,7 +8173,7 @@ var _user$project$Sidekick$subscriptions = function (model) {
 		_elm_lang$core$Native_List.fromArray(
 			[
 				_user$project$Sidekick$activeHintsChangedSub(_user$project$Sidekick$ActiveHintsChanged),
-				_user$project$Sidekick$activeModuleNameChangedSub(_user$project$Sidekick$ActiveModuleNameChanged),
+				_user$project$Sidekick$activeFilePathChangedSub(_user$project$Sidekick$ActiveFilePathChanged),
 				_user$project$Sidekick$docsLoadedSub(
 				function (_p6) {
 					return _user$project$Sidekick$DocsLoaded;

@@ -5,7 +5,6 @@ import Html.App as Html
 import Html.Attributes exposing (href, title)
 import String
 import Markdown
-import Regex
 
 
 main : Program Never
@@ -22,7 +21,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ activeHintsChangedSub ActiveHintsChanged
-        , activeModuleNameChangedSub ActiveModuleNameChanged
+        , activeFilePathChangedSub ActiveFilePathChanged
         , docsLoadedSub (\_ -> DocsLoaded)
         , docsFailedSub (\_ -> DocsFailed)
         , updatingPackageDocsSub (\_ -> UpdatingPackageDocs)
@@ -36,7 +35,7 @@ subscriptions model =
 port activeHintsChangedSub : (List ActiveHint -> msg) -> Sub msg
 
 
-port activeModuleNameChangedSub : (String -> msg) -> Sub msg
+port activeFilePathChangedSub : (Maybe String -> msg) -> Sub msg
 
 
 port docsLoadedSub : (() -> msg) -> Sub msg
@@ -62,7 +61,7 @@ port goToDefinitionCmd : String -> Cmd msg
 type alias Model =
     { note : String
     , activeHints : List ActiveHint
-    , activeModuleName : String
+    , activeFilePath : Maybe String
     }
 
 
@@ -86,7 +85,7 @@ emptyModel : Model
 emptyModel =
     { note = ""
     , activeHints = []
-    , activeModuleName = ""
+    , activeFilePath = Nothing
     }
 
 
@@ -96,7 +95,7 @@ emptyModel =
 
 type Msg
     = ActiveHintsChanged (List ActiveHint)
-    | ActiveModuleNameChanged String
+    | ActiveFilePathChanged (Maybe String)
     | DocsLoaded
     | DocsFailed
     | UpdatingPackageDocs
@@ -114,8 +113,8 @@ update msg model =
             , Cmd.none
             )
 
-        ActiveModuleNameChanged moduleName ->
-            ( { model | activeModuleName = moduleName }
+        ActiveFilePathChanged filePath ->
+            ( { model | activeFilePath = filePath }
             , Cmd.none
             )
 
@@ -144,10 +143,10 @@ update msg model =
 
 
 view : Model -> Html Msg
-view { note, activeHints, activeModuleName } =
+view { note, activeHints, activeFilePath } =
     let
         hintMarkdown hint =
-            Markdown.toHtml [] (viewHint activeModuleName hint)
+            Markdown.toHtml [] (viewHint activeFilePath hint)
 
         sourceView hint =
             if String.startsWith packageDocsPrefix hint.sourcePath then
@@ -169,8 +168,8 @@ view { note, activeHints, activeModuleName } =
         div [] <| [ text note ] ++ hintsView
 
 
-viewHint : String -> Hint -> String
-viewHint activeModuleName hint =
+viewHint : Maybe String -> Hint -> String
+viewHint activeFilePath hint =
     let
         ( moduleName, name ) =
             case String.split "." hint.name of
@@ -199,17 +198,16 @@ viewHint activeModuleName hint =
                         ( moduleName, name )
 
         formatModule moduleName =
-            if activeModuleName == moduleName then
+            if activeFilePath == (Just hint.sourcePath) then
                 ""
             else
                 moduleName ++ "."
 
-        formatName name =
-            if Regex.contains (Regex.regex "\\w") name then
-                name
-            else
-                "(" ++ name ++ ")"
-
+        -- formatName name =
+        --     if Regex.contains (Regex.regex "\\w") name then
+        --         name
+        --     else
+        --         "(" ++ name ++ ")"
         formatTipe tipe =
             if String.startsWith "*" tipe then
                 tipe
@@ -218,13 +216,17 @@ viewHint activeModuleName hint =
             else
                 ": " ++ tipe
     in
-        "# "
+        -- "# "
+        --     ++ formatModule moduleName
+        --     ++ "**"
+        --     ++ name
+        --     ++ "**\n"
+        --     ++ "## **"
+        --     ++ formatName name
+        "## "
             ++ formatModule moduleName
             ++ "**"
             ++ name
-            ++ "**\n"
-            ++ "## **"
-            ++ formatName name
             ++ "** "
             ++ formatTipe hint.tipe
             ++ "<br><br>\n"

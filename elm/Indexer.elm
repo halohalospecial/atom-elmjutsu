@@ -106,10 +106,10 @@ port docsFailedCmd : () -> Cmd msg
 port goToDefinitionCmd : GoToDefinitionRequest -> Cmd msg
 
 
-port goToSymbolCmd : ( Maybe String, List Symbol ) -> Cmd msg
+port goToSymbolCmd : ( Maybe String, Maybe String, List Symbol ) -> Cmd msg
 
 
-port activeModuleNameChangedCmd : String -> Cmd msg
+port activeFilePathChangedCmd : Maybe String -> Cmd msg
 
 
 port activeHintsChangedCmd : List Hint -> Cmd msg
@@ -248,7 +248,7 @@ update msg model =
                 | activeFilePath = activeFilePath
                 , tokens = toTokenDict (getActiveSourceFile activeFilePath model.sourceFileDict) model.sourceFileDict model.packageDocs
               }
-            , activeModuleNameChangedCmd <| activeFileModuleName activeFilePath model.sourceFileDict
+            , activeFilePathChangedCmd activeFilePath
             )
 
         UpdateSourceFile filePath sourceFile ->
@@ -260,7 +260,7 @@ update msg model =
                     | sourceFileDict = updatedSourceFileDict
                     , tokens = toTokenDict (getActiveSourceFile model.activeFilePath updatedSourceFileDict) updatedSourceFileDict model.packageDocs
                   }
-                , activeModuleNameChangedCmd <| activeFileModuleName model.activeFilePath updatedSourceFileDict
+                , activeFilePathChangedCmd model.activeFilePath
                 )
 
         RemoveSourceFile filePath ->
@@ -272,7 +272,7 @@ update msg model =
                     | sourceFileDict = updatedSourceFileDict
                     , tokens = toTokenDict (getActiveSourceFile model.activeFilePath updatedSourceFileDict) updatedSourceFileDict model.packageDocs
                   }
-                , activeModuleNameChangedCmd <| activeFileModuleName model.activeFilePath updatedSourceFileDict
+                , activeFilePathChangedCmd model.activeFilePath
                 )
 
         UpdatePackageDocs packages ->
@@ -299,11 +299,7 @@ update msg model =
                 , Cmd.batch
                     <| List.map
                         (\hint ->
-                            let
-                                lastName =
-                                    List.foldl always "" (String.split "." hint.name)
-                            in
-                                goToDefinitionCmd (GoToDefinitionRequest hint.sourcePath lastName hint.caseTipe)
+                            goToDefinitionCmd (GoToDefinitionRequest hint.sourcePath (lastName hint.name) hint.caseTipe)
                         )
                         hints
                 )
@@ -376,16 +372,19 @@ update msg model =
                         hints =
                             hintsForToken maybeToken model.tokens
 
-                        defaultSymbolFullName =
+                        defaultSymbolName =
                             case List.head hints of
                                 Nothing ->
                                     maybeToken
 
                                 Just hint ->
-                                    Just hint.name
+                                    if model.activeFilePath == Just hint.sourcePath then
+                                        Just (lastName hint.name)
+                                    else
+                                        Just hint.name
                     in
                         ( model
-                        , goToSymbolCmd ( defaultSymbolFullName, projectSymbols )
+                        , goToSymbolCmd ( defaultSymbolName, model.activeFilePath, projectSymbols )
                         )
 
 
@@ -412,15 +411,6 @@ getActiveSourceFile activeFilePath sourceFileDict =
 
                 Nothing ->
                     emptySourceFile
-
-
-activeFileModuleName : Maybe String -> SourceFileDict -> String
-activeFileModuleName activeFilePath sourceFileDict =
-    let
-        sourceFile =
-            getActiveSourceFile activeFilePath sourceFileDict
-    in
-        sourceFile.moduleDocs.name
 
 
 type alias ModuleDocs =
@@ -712,3 +702,8 @@ defaultImports =
 defaultTypes : List String
 defaultTypes =
     [ "Maybe", "Result" ]
+
+
+lastName : String -> String
+lastName fullName =
+    List.foldl always "" (String.split "." fullName)
