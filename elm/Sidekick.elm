@@ -3,7 +3,6 @@ port module Sidekick exposing (..)
 import Html exposing (..)
 import Html.App as Html
 import Html.Attributes exposing (href, title)
-import Html.Events exposing (onClick)
 import String
 import Markdown
 import Regex
@@ -69,9 +68,10 @@ type alias Model =
 
 type alias ActiveHint =
     { name : String
-    , uri : String
+    , sourcePath : String
     , comment : String
     , tipe : String
+    , caseTipe : Maybe String
     }
 
 
@@ -150,10 +150,10 @@ view { note, activeHints, activeModuleName } =
             Markdown.toHtml [] (viewHint activeModuleName hint)
 
         sourceView hint =
-            if String.startsWith packageDocsPrefix hint.uri then
-                [ a [ title hint.uri, href hint.uri ] [ text "View in browser" ] ]
+            if String.startsWith packageDocsPrefix hint.sourcePath then
+                [ a [ title hint.sourcePath, href hint.sourcePath ] [ text "View in browser" ] ]
             else
-                -- a [ title hint.uri, onClick (GoToDefinition hint.name) ] [ text "Go to Definition" ]
+                -- a [ title hint.sourcePath, onClick (GoToDefinition hint.name) ] [ text "Go to Definition" ]
                 []
 
         hintsView =
@@ -234,9 +234,10 @@ viewHint activeModuleName hint =
 
 type alias Hint =
     { name : String
-    , uri : String
+    , sourcePath : String
     , comment : String
     , tipe : String
+    , caseTipe : Maybe String
     }
 
 

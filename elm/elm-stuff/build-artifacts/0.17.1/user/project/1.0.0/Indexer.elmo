@@ -31,25 +31,24 @@ var _user$project$Indexer$defaultPackages = A2(
 var _user$project$Indexer$dotToHyphen = function (string) {
 	return A2(
 		_elm_lang$core$String$map,
-		function (c) {
+		function (ch) {
 			return _elm_lang$core$Native_Utils.eq(
-				c,
-				_elm_lang$core$Native_Utils.chr('.')) ? _elm_lang$core$Native_Utils.chr('-') : c;
+				ch,
+				_elm_lang$core$Native_Utils.chr('.')) ? _elm_lang$core$Native_Utils.chr('-') : ch;
 		},
 		string);
 };
-var _user$project$Indexer$urlTo = F2(
+var _user$project$Indexer$formatSourcePath = F2(
 	function (_p3, valueName) {
 		var _p4 = _p3;
-		var _p5 = _p4.packageUri;
-		var uri = A2(_elm_lang$core$String$startsWith, _user$project$Indexer$packageDocsPrefix, _p5) ? A2(
+		var _p5 = _p4.sourcePath;
+		return A2(_elm_lang$core$String$startsWith, _user$project$Indexer$packageDocsPrefix, _p5) ? A2(
 			_elm_lang$core$Basics_ops['++'],
 			_p5,
-			_user$project$Indexer$dotToHyphen(_p4.name)) : _p5;
-		return A2(
-			_elm_lang$core$Basics_ops['++'],
-			uri,
-			A2(_elm_lang$core$Basics_ops['++'], '#', valueName));
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				_user$project$Indexer$dotToHyphen(_p4.name),
+				A2(_elm_lang$core$Basics_ops['++'], '#', valueName))) : _p5;
 	});
 var _user$project$Indexer$hintsForToken = F2(
 	function (maybeToken, tokens) {
@@ -66,12 +65,12 @@ var _user$project$Indexer$hintsForToken = F2(
 		}
 	});
 var _user$project$Indexer$emptyModuleDocs = {
-	packageUri: '',
+	sourcePath: '',
 	name: '',
 	values: {
 		aliases: _elm_lang$core$Native_List.fromArray(
 			[]),
-		types: _elm_lang$core$Native_List.fromArray(
+		tipes: _elm_lang$core$Native_List.fromArray(
 			[]),
 		values: _elm_lang$core$Native_List.fromArray(
 			[])
@@ -83,7 +82,6 @@ var _user$project$Indexer$emptyModel = {
 	tokens: _elm_lang$core$Dict$empty,
 	hints: _elm_lang$core$Native_List.fromArray(
 		[]),
-	note: 'Loading...',
 	activeFilePath: _elm_lang$core$Maybe$Nothing,
 	sourceFileDict: _elm_lang$core$Dict$empty
 };
@@ -114,8 +112,8 @@ var _user$project$Indexer$sourceFileChangedSub = _elm_lang$core$Native_Platform.
 		_elm_lang$core$Json_Decode$string,
 		A2(
 			_elm_lang$core$Json_Decode$andThen,
-			A2(_elm_lang$core$Json_Decode_ops[':='], 'packageUri', _elm_lang$core$Json_Decode$string),
-			function (packageUri) {
+			A2(_elm_lang$core$Json_Decode_ops[':='], 'sourcePath', _elm_lang$core$Json_Decode$string),
+			function (sourcePath) {
 				return A2(
 					_elm_lang$core$Json_Decode$andThen,
 					A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string),
@@ -153,7 +151,7 @@ var _user$project$Indexer$sourceFileChangedSub = _elm_lang$core$Native_Platform.
 											_elm_lang$core$Json_Decode$andThen,
 											A2(
 												_elm_lang$core$Json_Decode_ops[':='],
-												'types',
+												'tipes',
 												_elm_lang$core$Json_Decode$list(
 													A2(
 														_elm_lang$core$Json_Decode$andThen,
@@ -180,7 +178,7 @@ var _user$project$Indexer$sourceFileChangedSub = _elm_lang$core$Native_Platform.
 																		});
 																});
 														}))),
-											function (types) {
+											function (tipes) {
 												return A2(
 													_elm_lang$core$Json_Decode$andThen,
 													A2(
@@ -206,13 +204,13 @@ var _user$project$Indexer$sourceFileChangedSub = _elm_lang$core$Native_Platform.
 																}))),
 													function (values) {
 														return _elm_lang$core$Json_Decode$succeed(
-															{aliases: aliases, types: types, values: values});
+															{aliases: aliases, tipes: tipes, values: values});
 													});
 											});
 									})),
 							function (values) {
 								return _elm_lang$core$Json_Decode$succeed(
-									{packageUri: packageUri, name: name, values: values});
+									{sourcePath: sourcePath, name: name, values: values});
 							});
 					});
 			}),
@@ -298,7 +296,11 @@ var _user$project$Indexer$docsFailedCmd = _elm_lang$core$Native_Platform.outgoin
 var _user$project$Indexer$goToDefinitionCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'goToDefinitionCmd',
 	function (v) {
-		return v;
+		return {
+			sourcePath: v.sourcePath,
+			name: v.name,
+			caseTipe: (v.caseTipe.ctor === 'Nothing') ? null : v.caseTipe._0
+		};
 	});
 var _user$project$Indexer$goToSymbolCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'goToSymbolCmd',
@@ -309,8 +311,8 @@ var _user$project$Indexer$goToSymbolCmd = _elm_lang$core$Native_Platform.outgoin
 			function (v) {
 				return {
 					fullName: v.fullName,
-					uri: v.uri,
-					caseOf: (v.caseOf.ctor === 'Nothing') ? null : v.caseOf._0
+					sourcePath: v.sourcePath,
+					caseTipe: (v.caseTipe.ctor === 'Nothing') ? null : v.caseTipe._0
 				};
 			})
 		];
@@ -325,7 +327,13 @@ var _user$project$Indexer$activeHintsChangedCmd = _elm_lang$core$Native_Platform
 	function (v) {
 		return _elm_lang$core$Native_List.toArray(v).map(
 			function (v) {
-				return {name: v.name, uri: v.uri, comment: v.comment, tipe: v.tipe};
+				return {
+					name: v.name,
+					sourcePath: v.sourcePath,
+					comment: v.comment,
+					tipe: v.tipe,
+					caseTipe: (v.caseTipe.ctor === 'Nothing') ? null : v.caseTipe._0
+				};
 			});
 	});
 var _user$project$Indexer$updatingPackageDocsCmd = _elm_lang$core$Native_Platform.outgoingPort(
@@ -333,9 +341,9 @@ var _user$project$Indexer$updatingPackageDocsCmd = _elm_lang$core$Native_Platfor
 	function (v) {
 		return null;
 	});
-var _user$project$Indexer$Model = F6(
-	function (a, b, c, d, e, f) {
-		return {packageDocs: a, tokens: b, hints: c, note: d, activeFilePath: e, sourceFileDict: f};
+var _user$project$Indexer$Model = F5(
+	function (a, b, c, d, e) {
+		return {packageDocs: a, tokens: b, hints: c, activeFilePath: d, sourceFileDict: e};
 	});
 var _user$project$Indexer$SourceFile = F2(
 	function (a, b) {
@@ -343,15 +351,19 @@ var _user$project$Indexer$SourceFile = F2(
 	});
 var _user$project$Indexer$Symbol = F3(
 	function (a, b, c) {
-		return {fullName: a, uri: b, caseOf: c};
+		return {fullName: a, sourcePath: b, caseTipe: c};
+	});
+var _user$project$Indexer$GoToDefinitionRequest = F3(
+	function (a, b, c) {
+		return {sourcePath: a, name: b, caseTipe: c};
 	});
 var _user$project$Indexer$ModuleDocs = F3(
 	function (a, b, c) {
-		return {packageUri: a, name: b, values: c};
+		return {sourcePath: a, name: b, values: c};
 	});
 var _user$project$Indexer$Values = F3(
 	function (a, b, c) {
-		return {aliases: a, types: b, values: c};
+		return {aliases: a, tipes: b, values: c};
 	});
 var _user$project$Indexer$Tipe = F4(
 	function (a, b, c, d) {
@@ -416,9 +428,9 @@ var _user$project$Indexer$getPackageDocsList = function (packageuris) {
 		_elm_lang$core$Task$sequence(
 			A2(_elm_lang$core$List$map, _user$project$Indexer$getPackageDocs, packageuris)));
 };
-var _user$project$Indexer$Hint = F4(
-	function (a, b, c, d) {
-		return {name: a, uri: b, comment: c, tipe: d};
+var _user$project$Indexer$Hint = F5(
+	function (a, b, c, d, e) {
+		return {name: a, sourcePath: b, comment: c, tipe: d, caseTipe: e};
 	});
 var _user$project$Indexer$nameToHints = F3(
 	function (moduleDocs, _p8, _p7) {
@@ -433,12 +445,13 @@ var _user$project$Indexer$nameToHints = F3(
 			_elm_lang$core$Basics_ops['++'],
 			moduleDocs.name,
 			A2(_elm_lang$core$Basics_ops['++'], '.', _p11));
-		var hint = A4(
+		var hint = A5(
 			_user$project$Indexer$Hint,
 			fullName,
-			A2(_user$project$Indexer$urlTo, moduleDocs, _p11),
+			A2(_user$project$Indexer$formatSourcePath, moduleDocs, _p11),
 			_p10.comment,
-			_p10.tipe);
+			_p10.tipe,
+			_elm_lang$core$Maybe$Nothing);
 		return A2(_user$project$Indexer$isExposed, _p11, _p9.exposed) ? _elm_lang$core$Native_List.fromArray(
 			[
 				{ctor: '_Tuple2', _0: _p11, _1: hint},
@@ -463,12 +476,13 @@ var _user$project$Indexer$unionTagsToHints = F3(
 					_elm_lang$core$Basics_ops['++'],
 					moduleDocs.name,
 					A2(_elm_lang$core$Basics_ops['++'], '.', tag));
-				var hint = A4(
+				var hint = A5(
 					_user$project$Indexer$Hint,
 					fullName,
-					A2(_user$project$Indexer$urlTo, moduleDocs, _p16),
+					A2(_user$project$Indexer$formatSourcePath, moduleDocs, _p16),
 					_p15.comment,
-					_p15.tipe);
+					_p15.tipe,
+					_elm_lang$core$Maybe$Just(_p16));
 				return (A2(_elm_lang$core$List$member, _p16, _user$project$Indexer$defaultTypes) || A2(_user$project$Indexer$isExposed, tag, _p14.exposed)) ? A2(
 					_elm_lang$core$List_ops['::'],
 					{ctor: '_Tuple2', _0: tag, _1: hint},
@@ -500,14 +514,14 @@ var _user$project$Indexer$filteredHints = F2(
 			moduleDocs.values.aliases,
 			A2(
 				_elm_lang$core$Basics_ops['++'],
-				A2(_elm_lang$core$List$map, _user$project$Indexer$tipeToValue, moduleDocs.values.types),
+				A2(_elm_lang$core$List$map, _user$project$Indexer$tipeToValue, moduleDocs.values.tipes),
 				moduleDocs.values.values));
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
 			A2(
 				_elm_lang$core$List$concatMap,
 				A2(_user$project$Indexer$unionTagsToHints, moduleDocs, importData),
-				moduleDocs.values.types),
+				moduleDocs.values.tipes),
 			A2(
 				_elm_lang$core$List$concatMap,
 				A2(_user$project$Indexer$nameToHints, moduleDocs, importData),
@@ -716,9 +730,7 @@ var _user$project$Indexer$update = F2(
 			case 'DocsFailed':
 				return {
 					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{note: 'Failed to load -_-'}),
+					_0: model,
 					_1: _user$project$Indexer$docsFailedCmd(
 						{ctor: '_Tuple0'})
 				};
@@ -726,7 +738,7 @@ var _user$project$Indexer$update = F2(
 				var existingPackages = A2(
 					_elm_lang$core$List$map,
 					function (_) {
-						return _.packageUri;
+						return _.sourcePath;
 					},
 					model.packageDocs);
 				var missingPackageDocs = A2(
@@ -734,7 +746,7 @@ var _user$project$Indexer$update = F2(
 					function (_p25) {
 						var _p26 = _p25;
 						return _elm_lang$core$Basics$not(
-							A2(_elm_lang$core$List$member, _p26.packageUri, existingPackages));
+							A2(_elm_lang$core$List$member, _p26.sourcePath, existingPackages));
 					},
 					_p24._0);
 				var updatedPackageDocs = A2(_elm_lang$core$Basics_ops['++'], missingPackageDocs, model.packageDocs);
@@ -748,8 +760,7 @@ var _user$project$Indexer$update = F2(
 								_user$project$Indexer$toTokenDict,
 								A2(_user$project$Indexer$getActiveSourceFile, model.activeFilePath, model.sourceFileDict),
 								model.sourceFileDict,
-								updatedPackageDocs),
-							note: ''
+								updatedPackageDocs)
 						}),
 					_1: _user$project$Indexer$docsLoadedCmd(
 						{ctor: '_Tuple0'})
@@ -823,14 +834,14 @@ var _user$project$Indexer$update = F2(
 				var existingPackages = A2(
 					_elm_lang$core$List$map,
 					function (_) {
-						return _.packageUri;
+						return _.sourcePath;
 					},
 					model.packageDocs);
 				var missingPackages = A2(
 					_elm_lang$core$List$filter,
-					function (packageUri) {
+					function (sourcePath) {
 						return _elm_lang$core$Basics$not(
-							A2(_elm_lang$core$List$member, packageUri, existingPackages));
+							A2(_elm_lang$core$List$member, sourcePath, existingPackages));
 					},
 					A2(_elm_lang$core$List$map, _user$project$Indexer$toPackageUri, _p24._0));
 				return {
@@ -857,7 +868,13 @@ var _user$project$Indexer$update = F2(
 						A2(
 							_elm_lang$core$List$map,
 							function (hint) {
-								return _user$project$Indexer$goToDefinitionCmd(hint.uri);
+								var lastName = A3(
+									_elm_lang$core$List$foldl,
+									_elm_lang$core$Basics$always,
+									'',
+									A2(_elm_lang$core$String$split, '.', hint.name));
+								return _user$project$Indexer$goToDefinitionCmd(
+									A3(_user$project$Indexer$GoToDefinitionRequest, hint.sourcePath, lastName, hint.caseTipe));
 							},
 							hints))
 				};
@@ -883,7 +900,7 @@ var _user$project$Indexer$update = F2(
 							var _p31 = _p30;
 							var _p33 = _p31.moduleDocs;
 							var _p32 = _p33;
-							var packageUri = _p32.packageUri;
+							var sourcePath = _p32.sourcePath;
 							var values = _p32.values;
 							var valueSymbols = A2(
 								_elm_lang$core$List$map,
@@ -894,7 +911,7 @@ var _user$project$Indexer$update = F2(
 											_elm_lang$core$Basics_ops['++'],
 											_p33.name,
 											A2(_elm_lang$core$Basics_ops['++'], '.', value.name)),
-										A2(_user$project$Indexer$urlTo, _p33, value.name),
+										A2(_user$project$Indexer$formatSourcePath, _p33, value.name),
 										_elm_lang$core$Maybe$Nothing);
 								},
 								values.values);
@@ -907,10 +924,10 @@ var _user$project$Indexer$update = F2(
 											_elm_lang$core$Basics_ops['++'],
 											_p33.name,
 											A2(_elm_lang$core$Basics_ops['++'], '.', tipe.name)),
-										A2(_user$project$Indexer$urlTo, _p33, tipe.name),
+										A2(_user$project$Indexer$formatSourcePath, _p33, tipe.name),
 										_elm_lang$core$Maybe$Nothing);
 								},
-								values.types);
+								values.tipes);
 							var tipeCaseSymbols = A2(
 								_elm_lang$core$List$concatMap,
 								function (tipe) {
@@ -923,12 +940,12 @@ var _user$project$Indexer$update = F2(
 													_elm_lang$core$Basics_ops['++'],
 													_p33.name,
 													A2(_elm_lang$core$Basics_ops['++'], '.', caseName)),
-												A2(_user$project$Indexer$urlTo, _p33, caseName),
+												A2(_user$project$Indexer$formatSourcePath, _p33, caseName),
 												_elm_lang$core$Maybe$Just(tipe.name));
 										},
 										tipe.cases);
 								},
-								values.types);
+								values.tipes);
 							return A2(
 								_elm_lang$core$Basics_ops['++'],
 								valueSymbols,
@@ -939,20 +956,15 @@ var _user$project$Indexer$update = F2(
 						_elm_lang$core$List$filter,
 						function (_p34) {
 							var _p35 = _p34;
-							var _p36 = _p35.uri;
-							return A2(
+							var _p36 = _p35.sourcePath;
+							return _elm_lang$core$Basics$not(
+								A2(_elm_lang$core$String$startsWith, _user$project$Indexer$packageDocsPrefix, _p36)) && (A2(
 								_elm_lang$core$String$startsWith,
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									'file://',
-									A2(_elm_lang$core$Basics_ops['++'], _p37, '/')),
+								A2(_elm_lang$core$Basics_ops['++'], _p37, '/'),
 								_p36) || A2(
 								_elm_lang$core$String$startsWith,
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									'file://',
-									A2(_elm_lang$core$Basics_ops['++'], _p37, '\\')),
-								_p36);
+								A2(_elm_lang$core$Basics_ops['++'], _p37, '\\'),
+								_p36));
 						},
 						symbols);
 					return {

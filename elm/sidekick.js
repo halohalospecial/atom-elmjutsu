@@ -7780,107 +7780,6 @@ var _elm_lang$html$Html_Attributes$classList = function (list) {
 };
 var _elm_lang$html$Html_Attributes$style = _elm_lang$virtual_dom$VirtualDom$style;
 
-var _elm_lang$html$Html_Events$keyCode = A2(_elm_lang$core$Json_Decode_ops[':='], 'keyCode', _elm_lang$core$Json_Decode$int);
-var _elm_lang$html$Html_Events$targetChecked = A2(
-	_elm_lang$core$Json_Decode$at,
-	_elm_lang$core$Native_List.fromArray(
-		['target', 'checked']),
-	_elm_lang$core$Json_Decode$bool);
-var _elm_lang$html$Html_Events$targetValue = A2(
-	_elm_lang$core$Json_Decode$at,
-	_elm_lang$core$Native_List.fromArray(
-		['target', 'value']),
-	_elm_lang$core$Json_Decode$string);
-var _elm_lang$html$Html_Events$defaultOptions = _elm_lang$virtual_dom$VirtualDom$defaultOptions;
-var _elm_lang$html$Html_Events$onWithOptions = _elm_lang$virtual_dom$VirtualDom$onWithOptions;
-var _elm_lang$html$Html_Events$on = _elm_lang$virtual_dom$VirtualDom$on;
-var _elm_lang$html$Html_Events$onFocus = function (msg) {
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'focus',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _elm_lang$html$Html_Events$onBlur = function (msg) {
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'blur',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _elm_lang$html$Html_Events$onSubmitOptions = _elm_lang$core$Native_Utils.update(
-	_elm_lang$html$Html_Events$defaultOptions,
-	{preventDefault: true});
-var _elm_lang$html$Html_Events$onSubmit = function (msg) {
-	return A3(
-		_elm_lang$html$Html_Events$onWithOptions,
-		'submit',
-		_elm_lang$html$Html_Events$onSubmitOptions,
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _elm_lang$html$Html_Events$onCheck = function (tagger) {
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'change',
-		A2(_elm_lang$core$Json_Decode$map, tagger, _elm_lang$html$Html_Events$targetChecked));
-};
-var _elm_lang$html$Html_Events$onInput = function (tagger) {
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'input',
-		A2(_elm_lang$core$Json_Decode$map, tagger, _elm_lang$html$Html_Events$targetValue));
-};
-var _elm_lang$html$Html_Events$onMouseOut = function (msg) {
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'mouseout',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _elm_lang$html$Html_Events$onMouseOver = function (msg) {
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'mouseover',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _elm_lang$html$Html_Events$onMouseLeave = function (msg) {
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'mouseleave',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _elm_lang$html$Html_Events$onMouseEnter = function (msg) {
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'mouseenter',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _elm_lang$html$Html_Events$onMouseUp = function (msg) {
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'mouseup',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _elm_lang$html$Html_Events$onMouseDown = function (msg) {
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'mousedown',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _elm_lang$html$Html_Events$onDoubleClick = function (msg) {
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'dblclick',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _elm_lang$html$Html_Events$onClick = function (msg) {
-	return A2(
-		_elm_lang$html$Html_Events$on,
-		'click',
-		_elm_lang$core$Json_Decode$succeed(msg));
-};
-var _elm_lang$html$Html_Events$Options = F2(
-	function (a, b) {
-		return {stopPropagation: a, preventDefault: b};
-	});
-
 var _evancz$elm_markdown$Native_Markdown = function() {
 
 
@@ -8097,14 +7996,14 @@ var _user$project$Sidekick$viewHint = F2(
 var _user$project$Sidekick$view = function (_p3) {
 	var _p4 = _p3;
 	var sourceView = function (hint) {
-		return A2(_elm_lang$core$String$startsWith, _user$project$Sidekick$packageDocsPrefix, hint.uri) ? _elm_lang$core$Native_List.fromArray(
+		return A2(_elm_lang$core$String$startsWith, _user$project$Sidekick$packageDocsPrefix, hint.sourcePath) ? _elm_lang$core$Native_List.fromArray(
 			[
 				A2(
 				_elm_lang$html$Html$a,
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_elm_lang$html$Html_Attributes$title(hint.uri),
-						_elm_lang$html$Html_Attributes$href(hint.uri)
+						_elm_lang$html$Html_Attributes$title(hint.sourcePath),
+						_elm_lang$html$Html_Attributes$href(hint.sourcePath)
 					]),
 				_elm_lang$core$Native_List.fromArray(
 					[
@@ -8210,8 +8109,8 @@ var _user$project$Sidekick$activeHintsChangedSub = _elm_lang$core$Native_Platfor
 			function (name) {
 				return A2(
 					_elm_lang$core$Json_Decode$andThen,
-					A2(_elm_lang$core$Json_Decode_ops[':='], 'uri', _elm_lang$core$Json_Decode$string),
-					function (uri) {
+					A2(_elm_lang$core$Json_Decode_ops[':='], 'sourcePath', _elm_lang$core$Json_Decode$string),
+					function (sourcePath) {
 						return A2(
 							_elm_lang$core$Json_Decode$andThen,
 							A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
@@ -8220,8 +8119,21 @@ var _user$project$Sidekick$activeHintsChangedSub = _elm_lang$core$Native_Platfor
 									_elm_lang$core$Json_Decode$andThen,
 									A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
 									function (tipe) {
-										return _elm_lang$core$Json_Decode$succeed(
-											{name: name, uri: uri, comment: comment, tipe: tipe});
+										return A2(
+											_elm_lang$core$Json_Decode$andThen,
+											A2(
+												_elm_lang$core$Json_Decode_ops[':='],
+												'caseTipe',
+												_elm_lang$core$Json_Decode$oneOf(
+													_elm_lang$core$Native_List.fromArray(
+														[
+															_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+															A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
+														]))),
+											function (caseTipe) {
+												return _elm_lang$core$Json_Decode$succeed(
+													{name: name, sourcePath: sourcePath, comment: comment, tipe: tipe, caseTipe: caseTipe});
+											});
 									});
 							});
 					});
@@ -8248,13 +8160,13 @@ var _user$project$Sidekick$Model = F3(
 	function (a, b, c) {
 		return {note: a, activeHints: b, activeModuleName: c};
 	});
-var _user$project$Sidekick$ActiveHint = F4(
-	function (a, b, c, d) {
-		return {name: a, uri: b, comment: c, tipe: d};
+var _user$project$Sidekick$ActiveHint = F5(
+	function (a, b, c, d, e) {
+		return {name: a, sourcePath: b, comment: c, tipe: d, caseTipe: e};
 	});
-var _user$project$Sidekick$Hint = F4(
-	function (a, b, c, d) {
-		return {name: a, uri: b, comment: c, tipe: d};
+var _user$project$Sidekick$Hint = F5(
+	function (a, b, c, d, e) {
+		return {name: a, sourcePath: b, comment: c, tipe: d, caseTipe: e};
 	});
 var _user$project$Sidekick$UpdatingPackageDocs = {ctor: 'UpdatingPackageDocs'};
 var _user$project$Sidekick$DocsFailed = {ctor: 'DocsFailed'};

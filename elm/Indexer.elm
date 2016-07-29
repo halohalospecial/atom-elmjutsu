@@ -103,7 +103,7 @@ port docsLoadedCmd : () -> Cmd msg
 port docsFailedCmd : () -> Cmd msg
 
 
-port goToDefinitionCmd : String -> Cmd msg
+port goToDefinitionCmd : GoToDefinitionRequest -> Cmd msg
 
 
 port goToSymbolCmd : ( Maybe String, List Symbol ) -> Cmd msg
@@ -126,7 +126,6 @@ type alias Model =
     { packageDocs : List ModuleDocs
     , tokens : TokenDict
     , hints : List Hint
-    , note : String
     , activeFilePath : Maybe String
     , sourceFileDict : SourceFileDict
     }
@@ -144,8 +143,15 @@ type alias SourceFile =
 
 type alias Symbol =
     { fullName : String
-    , uri : String
-    , caseOf : Maybe String
+    , sourcePath : String
+    , caseTipe : Maybe String
+    }
+
+
+type alias GoToDefinitionRequest =
+    { sourcePath : String
+    , name : String
+    , caseTipe : Maybe String
     }
 
 
@@ -161,7 +167,6 @@ emptyModel =
     { packageDocs = []
     , tokens = Dict.empty
     , hints = []
-    , note = "Loading..."
     , activeFilePath = Nothing
     , sourceFileDict = Dict.empty
     }
@@ -169,11 +174,11 @@ emptyModel =
 
 emptyModuleDocs : ModuleDocs
 emptyModuleDocs =
-    { packageUri = ""
+    { sourcePath = ""
     , name = ""
     , values =
         { aliases = []
-        , types = []
+        , tipes = []
         , values = []
         }
     }
@@ -206,17 +211,17 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         DocsFailed ->
-            ( { model | note = "Failed to load -_-" }
+            ( model
             , docsFailedCmd ()
             )
 
         DocsLoaded docs ->
             let
                 existingPackages =
-                    List.map .packageUri model.packageDocs
+                    List.map .sourcePath model.packageDocs
 
                 missingPackageDocs =
-                    List.filter (\{ packageUri } -> not <| List.member packageUri existingPackages) docs
+                    List.filter (\{ sourcePath } -> not <| List.member sourcePath existingPackages) docs
 
                 updatedPackageDocs =
                     missingPackageDocs ++ model.packageDocs
@@ -224,7 +229,6 @@ update msg model =
                 ( { model
                     | packageDocs = updatedPackageDocs
                     , tokens = toTokenDict (getActiveSourceFile model.activeFilePath model.sourceFileDict) model.sourceFileDict updatedPackageDocs
-                    , note = ""
                   }
                 , docsLoadedCmd ()
                 )
@@ -273,10 +277,10 @@ update msg model =
         UpdatePackageDocs packages ->
             let
                 existingPackages =
-                    List.map .packageUri model.packageDocs
+                    List.map .sourcePath model.packageDocs
 
                 missingPackages =
-                    List.filter (\packageUri -> not <| List.member packageUri existingPackages) (List.map toPackageUri packages)
+                    List.filter (\sourcePath -> not <| List.member sourcePath existingPackages) (List.map toPackageUri packages)
             in
                 ( model
                 , Cmd.batch
@@ -291,7 +295,16 @@ update msg model =
                     hintsForToken maybeToken model.tokens
             in
                 ( model
-                , Cmd.batch <| List.map (\hint -> goToDefinitionCmd hint.uri) hints
+                , Cmd.batch
+                    <| List.map
+                        (\hint ->
+                            let
+                                lastName =
+                                    List.foldl always "" (String.split "." hint.name)
+                            in
+                                goToDefinitionCmd (GoToDefinitionRequest hint.sourcePath lastName hint.caseTipe)
+                        )
+                        hints
                 )
 
         GoToSymbol ( maybeProjectDirectory, maybeToken ) ->
@@ -308,33 +321,33 @@ update msg model =
                                 |> List.concatMap
                                     (\{ moduleDocs } ->
                                         let
-                                            { packageUri, values } =
+                                            { sourcePath, values } =
                                                 moduleDocs
 
                                             valueSymbols =
                                                 List.map
                                                     (\value ->
-                                                        Symbol (moduleDocs.name ++ "." ++ value.name) (urlTo moduleDocs value.name) Nothing
+                                                        Symbol (moduleDocs.name ++ "." ++ value.name) (formatSourcePath moduleDocs value.name) Nothing
                                                     )
                                                     values.values
 
                                             tipeSymbols =
                                                 List.map
                                                     (\tipe ->
-                                                        Symbol (moduleDocs.name ++ "." ++ tipe.name) (urlTo moduleDocs tipe.name) Nothing
+                                                        Symbol (moduleDocs.name ++ "." ++ tipe.name) (formatSourcePath moduleDocs tipe.name) Nothing
                                                     )
-                                                    values.types
+                                                    values.tipes
 
                                             tipeCaseSymbols =
                                                 List.concatMap
                                                     (\tipe ->
                                                         List.map
                                                             (\caseName ->
-                                                                Symbol (moduleDocs.name ++ "." ++ caseName) (urlTo moduleDocs caseName) (Just tipe.name)
+                                                                Symbol (moduleDocs.name ++ "." ++ caseName) (formatSourcePath moduleDocs caseName) (Just tipe.name)
                                                             )
                                                             tipe.cases
                                                     )
-                                                    values.types
+                                                    values.tipes
                                         in
                                             valueSymbols ++ tipeSymbols ++ tipeCaseSymbols
                                     )
@@ -342,9 +355,11 @@ update msg model =
                         projectSymbols =
                             symbols
                                 |> List.filter
-                                    (\{ uri } ->
-                                        String.startsWith ("file://" ++ projectDirectory ++ "/") uri
-                                            || String.startsWith ("file://" ++ projectDirectory ++ "\\") uri
+                                    (\{ sourcePath } ->
+                                        not (String.startsWith packageDocsPrefix sourcePath)
+                                            && (String.startsWith (projectDirectory ++ "/") sourcePath
+                                                    || String.startsWith (projectDirectory ++ "\\") sourcePath
+                                               )
                                     )
 
                         hints =
@@ -398,7 +413,7 @@ activeFileModuleName activeFilePath sourceFileDict =
 
 
 type alias ModuleDocs =
-    { packageUri : String
+    { sourcePath : String
     , name : String
     , values : Values
     }
@@ -406,7 +421,7 @@ type alias ModuleDocs =
 
 type alias Values =
     { aliases : List Value
-    , types : List Tipe
+    , tipes : List Tipe
     , values : List Value
     }
 
@@ -426,26 +441,22 @@ type alias Value =
     }
 
 
-urlTo : ModuleDocs -> String -> String
-urlTo { packageUri, name } valueName =
-    let
-        uri =
-            if String.startsWith packageDocsPrefix packageUri then
-                packageUri ++ dotToHyphen name
-            else
-                packageUri
-    in
-        uri ++ "#" ++ valueName
+formatSourcePath : ModuleDocs -> String -> String
+formatSourcePath { sourcePath, name } valueName =
+    if String.startsWith packageDocsPrefix sourcePath then
+        sourcePath ++ dotToHyphen name ++ "#" ++ valueName
+    else
+        sourcePath
 
 
 dotToHyphen : String -> String
 dotToHyphen string =
     String.map
-        (\c ->
-            if c == '.' then
+        (\ch ->
+            if ch == '.' then
                 '-'
             else
-                c
+                ch
         )
         string
 
@@ -525,9 +536,10 @@ type alias TokenDict =
 
 type alias Hint =
     { name : String
-    , uri : String
+    , sourcePath : String
     , comment : String
     , tipe : String
+    , caseTipe : Maybe String
     }
 
 
@@ -563,10 +575,10 @@ filteredHints moduleDocs importData =
     let
         allValues =
             moduleDocs.values.aliases
-                ++ List.map tipeToValue moduleDocs.values.types
+                ++ List.map tipeToValue moduleDocs.values.tipes
                 ++ moduleDocs.values.values
     in
-        List.concatMap (unionTagsToHints moduleDocs importData) moduleDocs.values.types
+        List.concatMap (unionTagsToHints moduleDocs importData) moduleDocs.values.tipes
             ++ List.concatMap (nameToHints moduleDocs importData) allValues
 
 
@@ -577,7 +589,7 @@ nameToHints moduleDocs { alias, exposed } { name, comment, tipe } =
             moduleDocs.name ++ "." ++ name
 
         hint =
-            Hint fullName (urlTo moduleDocs name) comment tipe
+            Hint fullName (formatSourcePath moduleDocs name) comment tipe Nothing
 
         localName =
             Maybe.withDefault moduleDocs.name alias ++ "." ++ name
@@ -597,7 +609,7 @@ unionTagsToHints moduleDocs { alias, exposed } { name, cases, comment, tipe } =
                     moduleDocs.name ++ "." ++ tag
 
                 hint =
-                    Hint fullName (urlTo moduleDocs name) comment tipe
+                    Hint fullName (formatSourcePath moduleDocs name) comment tipe (Just name)
 
                 localName =
                     Maybe.withDefault moduleDocs.name alias ++ "." ++ tag
