@@ -312,7 +312,8 @@ var _user$project$Indexer$goToSymbolCmd = _elm_lang$core$Native_Platform.outgoin
 				return {
 					fullName: v.fullName,
 					sourcePath: v.sourcePath,
-					caseTipe: (v.caseTipe.ctor === 'Nothing') ? null : v.caseTipe._0
+					caseTipe: (v.caseTipe.ctor === 'Nothing') ? null : v.caseTipe._0,
+					kind: v.kind
 				};
 			})
 		];
@@ -332,7 +333,8 @@ var _user$project$Indexer$activeHintsChangedCmd = _elm_lang$core$Native_Platform
 					sourcePath: v.sourcePath,
 					comment: v.comment,
 					tipe: v.tipe,
-					caseTipe: (v.caseTipe.ctor === 'Nothing') ? null : v.caseTipe._0
+					caseTipe: (v.caseTipe.ctor === 'Nothing') ? null : v.caseTipe._0,
+					kind: v.kind
 				};
 			});
 	});
@@ -349,9 +351,9 @@ var _user$project$Indexer$SourceFile = F2(
 	function (a, b) {
 		return {moduleDocs: a, imports: b};
 	});
-var _user$project$Indexer$Symbol = F3(
-	function (a, b, c) {
-		return {fullName: a, sourcePath: b, caseTipe: c};
+var _user$project$Indexer$Symbol = F4(
+	function (a, b, c, d) {
+		return {fullName: a, sourcePath: b, caseTipe: c, kind: d};
 	});
 var _user$project$Indexer$GoToDefinitionRequest = F3(
 	function (a, b, c) {
@@ -428,12 +430,12 @@ var _user$project$Indexer$getPackageDocsList = function (packageuris) {
 		_elm_lang$core$Task$sequence(
 			A2(_elm_lang$core$List$map, _user$project$Indexer$getPackageDocs, packageuris)));
 };
-var _user$project$Indexer$Hint = F5(
-	function (a, b, c, d, e) {
-		return {name: a, sourcePath: b, comment: c, tipe: d, caseTipe: e};
+var _user$project$Indexer$Hint = F6(
+	function (a, b, c, d, e, f) {
+		return {name: a, sourcePath: b, comment: c, tipe: d, caseTipe: e, kind: f};
 	});
-var _user$project$Indexer$nameToHints = F3(
-	function (moduleDocs, _p8, _p7) {
+var _user$project$Indexer$nameToHints = F4(
+	function (moduleDocs, _p8, kind, _p7) {
 		var _p9 = _p8;
 		var _p10 = _p7;
 		var _p11 = _p10.name;
@@ -445,13 +447,14 @@ var _user$project$Indexer$nameToHints = F3(
 			_elm_lang$core$Basics_ops['++'],
 			moduleDocs.name,
 			A2(_elm_lang$core$Basics_ops['++'], '.', _p11));
-		var hint = A5(
+		var hint = A6(
 			_user$project$Indexer$Hint,
 			fullName,
 			A2(_user$project$Indexer$formatSourcePath, moduleDocs, _p11),
 			_p10.comment,
 			_p10.tipe,
-			_elm_lang$core$Maybe$Nothing);
+			_elm_lang$core$Maybe$Nothing,
+			kind);
 		return A2(_user$project$Indexer$isExposed, _p11, _p9.exposed) ? _elm_lang$core$Native_List.fromArray(
 			[
 				{ctor: '_Tuple2', _0: _p11, _1: hint},
@@ -476,13 +479,14 @@ var _user$project$Indexer$unionTagsToHints = F3(
 					_elm_lang$core$Basics_ops['++'],
 					moduleDocs.name,
 					A2(_elm_lang$core$Basics_ops['++'], '.', tag));
-				var hint = A5(
+				var hint = A6(
 					_user$project$Indexer$Hint,
 					fullName,
 					A2(_user$project$Indexer$formatSourcePath, moduleDocs, _p16),
 					_p15.comment,
 					_p15.tipe,
-					_elm_lang$core$Maybe$Just(_p16));
+					_elm_lang$core$Maybe$Just(_p16),
+					'type case');
 				return (A2(_elm_lang$core$List$member, _p16, _user$project$Indexer$defaultTypes) || A2(_user$project$Indexer$isExposed, tag, _p14.exposed)) ? A2(
 					_elm_lang$core$List_ops['::'],
 					{ctor: '_Tuple2', _0: tag, _1: hint},
@@ -509,13 +513,6 @@ var _user$project$Indexer$unionTagsToHints = F3(
 	});
 var _user$project$Indexer$filteredHints = F2(
 	function (moduleDocs, importData) {
-		var allValues = A2(
-			_elm_lang$core$Basics_ops['++'],
-			moduleDocs.values.aliases,
-			A2(
-				_elm_lang$core$Basics_ops['++'],
-				A2(_elm_lang$core$List$map, _user$project$Indexer$tipeToValue, moduleDocs.values.tipes),
-				moduleDocs.values.values));
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
 			A2(
@@ -523,9 +520,21 @@ var _user$project$Indexer$filteredHints = F2(
 				A2(_user$project$Indexer$unionTagsToHints, moduleDocs, importData),
 				moduleDocs.values.tipes),
 			A2(
-				_elm_lang$core$List$concatMap,
-				A2(_user$project$Indexer$nameToHints, moduleDocs, importData),
-				allValues));
+				_elm_lang$core$Basics_ops['++'],
+				A2(
+					_elm_lang$core$List$concatMap,
+					A3(_user$project$Indexer$nameToHints, moduleDocs, importData, 'type alias'),
+					moduleDocs.values.aliases),
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					A2(
+						_elm_lang$core$List$concatMap,
+						A3(_user$project$Indexer$nameToHints, moduleDocs, importData, 'type'),
+						A2(_elm_lang$core$List$map, _user$project$Indexer$tipeToValue, moduleDocs.values.tipes)),
+					A2(
+						_elm_lang$core$List$concatMap,
+						A3(_user$project$Indexer$nameToHints, moduleDocs, importData, ''),
+						moduleDocs.values.values))));
 	});
 var _user$project$Indexer$RawImport = F3(
 	function (a, b, c) {
@@ -905,27 +914,33 @@ var _user$project$Indexer$update = F2(
 							var valueSymbols = A2(
 								_elm_lang$core$List$map,
 								function (value) {
-									return A3(
+									var firstChar = A2(_elm_lang$core$String$left, 1, value.name);
+									var kind = _elm_lang$core$Native_Utils.eq(
+										firstChar,
+										_elm_lang$core$String$toUpper(firstChar)) ? 'type alias' : '';
+									return A4(
 										_user$project$Indexer$Symbol,
 										A2(
 											_elm_lang$core$Basics_ops['++'],
 											_p33.name,
 											A2(_elm_lang$core$Basics_ops['++'], '.', value.name)),
 										A2(_user$project$Indexer$formatSourcePath, _p33, value.name),
-										_elm_lang$core$Maybe$Nothing);
+										_elm_lang$core$Maybe$Nothing,
+										kind);
 								},
 								values.values);
 							var tipeSymbols = A2(
 								_elm_lang$core$List$map,
 								function (tipe) {
-									return A3(
+									return A4(
 										_user$project$Indexer$Symbol,
 										A2(
 											_elm_lang$core$Basics_ops['++'],
 											_p33.name,
 											A2(_elm_lang$core$Basics_ops['++'], '.', tipe.name)),
 										A2(_user$project$Indexer$formatSourcePath, _p33, tipe.name),
-										_elm_lang$core$Maybe$Nothing);
+										_elm_lang$core$Maybe$Nothing,
+										'type');
 								},
 								values.tipes);
 							var tipeCaseSymbols = A2(
@@ -934,14 +949,15 @@ var _user$project$Indexer$update = F2(
 									return A2(
 										_elm_lang$core$List$map,
 										function (caseName) {
-											return A3(
+											return A4(
 												_user$project$Indexer$Symbol,
 												A2(
 													_elm_lang$core$Basics_ops['++'],
 													_p33.name,
 													A2(_elm_lang$core$Basics_ops['++'], '.', caseName)),
 												A2(_user$project$Indexer$formatSourcePath, _p33, caseName),
-												_elm_lang$core$Maybe$Just(tipe.name));
+												_elm_lang$core$Maybe$Just(tipe.name),
+												'type case');
 										},
 										tipe.cases);
 								},

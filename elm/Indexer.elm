@@ -145,6 +145,7 @@ type alias Symbol =
     { fullName : String
     , sourcePath : String
     , caseTipe : Maybe String
+    , kind : String
     }
 
 
@@ -327,14 +328,24 @@ update msg model =
                                             valueSymbols =
                                                 List.map
                                                     (\value ->
-                                                        Symbol (moduleDocs.name ++ "." ++ value.name) (formatSourcePath moduleDocs value.name) Nothing
+                                                        let
+                                                            firstChar =
+                                                                String.left 1 value.name
+
+                                                            kind =
+                                                                if firstChar == String.toUpper firstChar then
+                                                                    "type alias"
+                                                                else
+                                                                    ""
+                                                        in
+                                                            Symbol (moduleDocs.name ++ "." ++ value.name) (formatSourcePath moduleDocs value.name) Nothing kind
                                                     )
                                                     values.values
 
                                             tipeSymbols =
                                                 List.map
                                                     (\tipe ->
-                                                        Symbol (moduleDocs.name ++ "." ++ tipe.name) (formatSourcePath moduleDocs tipe.name) Nothing
+                                                        Symbol (moduleDocs.name ++ "." ++ tipe.name) (formatSourcePath moduleDocs tipe.name) Nothing "type"
                                                     )
                                                     values.tipes
 
@@ -343,7 +354,7 @@ update msg model =
                                                     (\tipe ->
                                                         List.map
                                                             (\caseName ->
-                                                                Symbol (moduleDocs.name ++ "." ++ caseName) (formatSourcePath moduleDocs caseName) (Just tipe.name)
+                                                                Symbol (moduleDocs.name ++ "." ++ caseName) (formatSourcePath moduleDocs caseName) (Just tipe.name) ("type case")
                                                             )
                                                             tipe.cases
                                                     )
@@ -540,6 +551,7 @@ type alias Hint =
     , comment : String
     , tipe : String
     , caseTipe : Maybe String
+    , kind : String
     }
 
 
@@ -572,24 +584,20 @@ tipeToValue { name, comment, tipe } =
 
 filteredHints : ModuleDocs -> Import -> List ( String, Hint )
 filteredHints moduleDocs importData =
-    let
-        allValues =
-            moduleDocs.values.aliases
-                ++ List.map tipeToValue moduleDocs.values.tipes
-                ++ moduleDocs.values.values
-    in
-        List.concatMap (unionTagsToHints moduleDocs importData) moduleDocs.values.tipes
-            ++ List.concatMap (nameToHints moduleDocs importData) allValues
+    List.concatMap (unionTagsToHints moduleDocs importData) moduleDocs.values.tipes
+        ++ List.concatMap (nameToHints moduleDocs importData "type alias") moduleDocs.values.aliases
+        ++ List.concatMap (nameToHints moduleDocs importData "type") (List.map tipeToValue moduleDocs.values.tipes)
+        ++ List.concatMap (nameToHints moduleDocs importData "") moduleDocs.values.values
 
 
-nameToHints : ModuleDocs -> Import -> Value -> List ( String, Hint )
-nameToHints moduleDocs { alias, exposed } { name, comment, tipe } =
+nameToHints : ModuleDocs -> Import -> String -> Value -> List ( String, Hint )
+nameToHints moduleDocs { alias, exposed } kind { name, comment, tipe } =
     let
         fullName =
             moduleDocs.name ++ "." ++ name
 
         hint =
-            Hint fullName (formatSourcePath moduleDocs name) comment tipe Nothing
+            Hint fullName (formatSourcePath moduleDocs name) comment tipe Nothing kind
 
         localName =
             Maybe.withDefault moduleDocs.name alias ++ "." ++ name
@@ -609,7 +617,7 @@ unionTagsToHints moduleDocs { alias, exposed } { name, cases, comment, tipe } =
                     moduleDocs.name ++ "." ++ tag
 
                 hint =
-                    Hint fullName (formatSourcePath moduleDocs name) comment tipe (Just name)
+                    Hint fullName (formatSourcePath moduleDocs name) comment tipe (Just name) "type case"
 
                 localName =
                     Maybe.withDefault moduleDocs.name alias ++ "." ++ tag
