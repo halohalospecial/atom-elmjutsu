@@ -1,4 +1,4 @@
-# Elm-fu
+# Elm Fu
 
 Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
@@ -11,9 +11,11 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
 #### `Elm Fu: Go To Definition`
 
+![go-to-definition](https://github.com/halohalospecial/atom-elm-fu/blob/master/images/go-to-definition.gif?raw=true)
+
 #### `Elm Fu: Return From Definition`
 
-![go-to-definition](https://github.com/halohalospecial/atom-elm-fu/blob/master/images/go-to-definition.gif?raw=true)
+![return-from-definition](https://github.com/halohalospecial/atom-elm-fu/blob/master/images/return-from-definition.gif?raw=true)
 
 #### `Elm Fu: Go To Symbol`
 
