@@ -36,6 +36,10 @@ Here is an example:
   'shift-ctrl-f4': 'elm-fu:toggle-sidekick'
 ```
 
+## Credits
+
+The initial code was based on the [Try Elm](http://elm-lang.org/try) [source](https://github.com/elm-lang/elm-lang.org/tree/master/src/editor).
+
 <!---
 Warning:  Most of these are hacky experiments that may not always work properly.  Use at your own risk! :p
 

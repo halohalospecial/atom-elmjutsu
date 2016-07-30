@@ -332,7 +332,7 @@ update msg model =
                                                                 if firstChar == String.toUpper firstChar then
                                                                     "type alias"
                                                                 else
-                                                                    ""
+                                                                    "default"
                                                         in
                                                             Symbol (moduleDocs.name ++ "." ++ value.name) (formatSourcePath moduleDocs value.name) Nothing kind
                                                     )
@@ -577,7 +577,7 @@ filteredHints moduleDocs importData =
     List.concatMap (unionTagsToHints moduleDocs importData) moduleDocs.values.tipes
         ++ List.concatMap (nameToHints moduleDocs importData "type alias") moduleDocs.values.aliases
         ++ List.concatMap (nameToHints moduleDocs importData "type") (List.map tipeToValue moduleDocs.values.tipes)
-        ++ List.concatMap (nameToHints moduleDocs importData "") moduleDocs.values.values
+        ++ List.concatMap (nameToHints moduleDocs importData "default") moduleDocs.values.values
 
 
 nameToHints : ModuleDocs -> Import -> String -> Value -> List ( String, Hint )

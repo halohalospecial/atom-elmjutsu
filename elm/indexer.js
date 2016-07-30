@@ -8774,7 +8774,7 @@ var _user$project$Indexer$filteredHints = F2(
 						A2(_elm_lang$core$List$map, _user$project$Indexer$tipeToValue, moduleDocs.values.tipes)),
 					A2(
 						_elm_lang$core$List$concatMap,
-						A3(_user$project$Indexer$nameToHints, moduleDocs, importData, ''),
+						A3(_user$project$Indexer$nameToHints, moduleDocs, importData, 'default'),
 						moduleDocs.values.values))));
 	});
 var _user$project$Indexer$RawImport = F3(
@@ -9153,7 +9153,7 @@ var _user$project$Indexer$update = F2(
 									var firstChar = A2(_elm_lang$core$String$left, 1, value.name);
 									var kind = _elm_lang$core$Native_Utils.eq(
 										firstChar,
-										_elm_lang$core$String$toUpper(firstChar)) ? 'type alias' : '';
+										_elm_lang$core$String$toUpper(firstChar)) ? 'type alias' : 'default';
 									return A4(
 										_user$project$Indexer$Symbol,
 										A2(
