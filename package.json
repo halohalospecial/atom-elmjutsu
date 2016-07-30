@@ -1,7 +1,7 @@
 {
   "name": "elm-fu",
   "main": "./lib/elm-fu",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Useful editor tricks for developing with Elm.",
   "keywords": [
     "elm"
