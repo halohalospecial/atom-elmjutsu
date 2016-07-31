@@ -1,3 +1,6 @@
+## 0.1.3
+* Rename package from `elm-fu` to `elmjutsu` :-)
+
 ## 0.1.2
 * Exclude `elm-stuff` from the watched directories.  Thanks @smerchek!
 
