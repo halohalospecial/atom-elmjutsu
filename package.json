@@ -1,5 +1,5 @@
 {
-  "name": "elm-fu",
+  "name": "elmjutsu",
   "main": "./lib/elmjutsu",
   "version": "0.1.2",
   "description": "Useful editor tricks for developing with Elm.",
