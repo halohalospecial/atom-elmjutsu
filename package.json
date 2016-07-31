@@ -1,13 +1,13 @@
 {
-  "name": "elm-fu",
-  "main": "./lib/elm-fu",
+  "name": "elmjutsu",
+  "main": "./lib/elmjutsu",
   "version": "0.1.2",
   "description": "Useful editor tricks for developing with Elm.",
   "keywords": [
     "elm"
   ],
   "activationCommands": {},
-  "repository": "https://github.com/halohalospecial/atom-elm-fu",
+  "repository": "https://github.com/halohalospecial/atom-elmjutsu",
   "license": "MIT",
   "engines": {
     "atom": ">=1.0.0 <2.0.0"
