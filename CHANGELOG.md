@@ -1,3 +1,6 @@
+## 0.1.4
+* Make Sidekick position and size configurable.
+
 ## 0.1.3
 * Rename package from `elm-fu` to `elmjutsu` :-)
 
