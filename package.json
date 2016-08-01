@@ -1,6 +1,6 @@
 {
   "name": "elmjutsu",
-  "main": "./lib/elmjutsu",
+  "main": "./lib/main",
   "version": "0.1.3",
   "description": "Useful editor tricks for developing with Elm.",
   "keywords": [
@@ -20,6 +20,13 @@
     "atom-space-pen-views": "^0.20.0",
     "underscore-plus": "1.6.6",
     "chokidar": "1.5.2"
+  },
+  "providedServices": {
+    "autocomplete.provider": {
+      "versions": {
+        "2.0.0": "provideAutocomplete"
+      }
+    }
   },
   "consumedServices": {
     "linter-elm-make-get-work-directory": {

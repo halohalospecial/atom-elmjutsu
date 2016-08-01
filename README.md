@@ -22,8 +22,19 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 ![go-to-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-symbol.gif?raw=true)
 
 #### `Elmjutsu: Toggle Sidekick`
+Shows the type hints and documentation for the symbol at cursor position.  The size and position of the panel can be modified in the package settings.
 
-![sidekick](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick.gif?raw=true)
+Example #1 (default): Position = "bottom", Size = 0 (Automatically resizes to fit content.)
+
+![sidekick1](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick1.gif?raw=true)
+
+Example #2: Position = "bottom", Size = 30 (Just shows the type hints.)
+
+![sidekick2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick2.gif?raw=true)
+
+Example #3: Position = "right", Size = 300
+
+![sidekick3](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick3.gif?raw=true)
 
 ## Keybindings
 

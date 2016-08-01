@@ -5669,141 +5669,6 @@ var _elm_lang$core$Json_Decode$dict = function (decoder) {
 };
 var _elm_lang$core$Json_Decode$Decoder = {ctor: 'Decoder'};
 
-//import Maybe, Native.List //
-
-var _elm_lang$core$Native_Regex = function() {
-
-function escape(str)
-{
-	return str.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-}
-function caseInsensitive(re)
-{
-	return new RegExp(re.source, 'gi');
-}
-function regex(raw)
-{
-	return new RegExp(raw, 'g');
-}
-
-function contains(re, string)
-{
-	return string.match(re) !== null;
-}
-
-function find(n, re, str)
-{
-	n = n.ctor === 'All' ? Infinity : n._0;
-	var out = [];
-	var number = 0;
-	var string = str;
-	var lastIndex = re.lastIndex;
-	var prevLastIndex = -1;
-	var result;
-	while (number++ < n && (result = re.exec(string)))
-	{
-		if (prevLastIndex === re.lastIndex) break;
-		var i = result.length - 1;
-		var subs = new Array(i);
-		while (i > 0)
-		{
-			var submatch = result[i];
-			subs[--i] = submatch === undefined
-				? _elm_lang$core$Maybe$Nothing
-				: _elm_lang$core$Maybe$Just(submatch);
-		}
-		out.push({
-			match: result[0],
-			submatches: _elm_lang$core$Native_List.fromArray(subs),
-			index: result.index,
-			number: number
-		});
-		prevLastIndex = re.lastIndex;
-	}
-	re.lastIndex = lastIndex;
-	return _elm_lang$core$Native_List.fromArray(out);
-}
-
-function replace(n, re, replacer, string)
-{
-	n = n.ctor === 'All' ? Infinity : n._0;
-	var count = 0;
-	function jsReplacer(match)
-	{
-		if (count++ >= n)
-		{
-			return match;
-		}
-		var i = arguments.length - 3;
-		var submatches = new Array(i);
-		while (i > 0)
-		{
-			var submatch = arguments[i];
-			submatches[--i] = submatch === undefined
-				? _elm_lang$core$Maybe$Nothing
-				: _elm_lang$core$Maybe$Just(submatch);
-		}
-		return replacer({
-			match: match,
-			submatches: _elm_lang$core$Native_List.fromArray(submatches),
-			index: arguments[i - 1],
-			number: count
-		});
-	}
-	return string.replace(re, jsReplacer);
-}
-
-function split(n, re, str)
-{
-	n = n.ctor === 'All' ? Infinity : n._0;
-	if (n === Infinity)
-	{
-		return _elm_lang$core$Native_List.fromArray(str.split(re));
-	}
-	var string = str;
-	var result;
-	var out = [];
-	var start = re.lastIndex;
-	while (n--)
-	{
-		if (!(result = re.exec(string))) break;
-		out.push(string.slice(start, result.index));
-		start = re.lastIndex;
-	}
-	out.push(string.slice(start));
-	return _elm_lang$core$Native_List.fromArray(out);
-}
-
-return {
-	regex: regex,
-	caseInsensitive: caseInsensitive,
-	escape: escape,
-
-	contains: F2(contains),
-	find: F3(find),
-	replace: F4(replace),
-	split: F3(split)
-};
-
-}();
-
-var _elm_lang$core$Regex$split = _elm_lang$core$Native_Regex.split;
-var _elm_lang$core$Regex$replace = _elm_lang$core$Native_Regex.replace;
-var _elm_lang$core$Regex$find = _elm_lang$core$Native_Regex.find;
-var _elm_lang$core$Regex$contains = _elm_lang$core$Native_Regex.contains;
-var _elm_lang$core$Regex$caseInsensitive = _elm_lang$core$Native_Regex.caseInsensitive;
-var _elm_lang$core$Regex$regex = _elm_lang$core$Native_Regex.regex;
-var _elm_lang$core$Regex$escape = _elm_lang$core$Native_Regex.escape;
-var _elm_lang$core$Regex$Match = F4(
-	function (a, b, c, d) {
-		return {match: a, submatches: b, index: c, number: d};
-	});
-var _elm_lang$core$Regex$Regex = {ctor: 'Regex'};
-var _elm_lang$core$Regex$AtMost = function (a) {
-	return {ctor: 'AtMost', _0: a};
-};
-var _elm_lang$core$Regex$All = {ctor: 'All'};
-
 //import Native.Json //
 
 var _elm_lang$virtual_dom$Native_VirtualDom = function() {
@@ -7922,6 +7787,14 @@ var _evancz$elm_markdown$Markdown$Options = F4(
 var _user$project$Sidekick$packageDocsPrefix = 'http://package.elm-lang.org/packages/';
 var _user$project$Sidekick$viewHint = F2(
 	function (activeFilePath, hint) {
+		var formatComment = function (comment) {
+			var _p0 = comment;
+			if (_p0 === '') {
+				return '';
+			} else {
+				return A2(_elm_lang$core$Basics_ops['++'], '\n<br>', comment);
+			}
+		};
 		var formatTipe = function (tipe) {
 			return A2(_elm_lang$core$String$startsWith, '*', tipe) ? tipe : (_elm_lang$core$Native_Utils.eq(tipe, '') ? '' : A2(_elm_lang$core$Basics_ops['++'], ': ', tipe));
 		};
@@ -7930,16 +7803,16 @@ var _user$project$Sidekick$viewHint = F2(
 				activeFilePath,
 				_elm_lang$core$Maybe$Just(hint.sourcePath)) ? '' : A2(_elm_lang$core$Basics_ops['++'], moduleName, '.');
 		};
-		var _p0 = function () {
-			var _p1 = A2(_elm_lang$core$String$split, '.', hint.name);
-			if (_p1.ctor === '[]') {
+		var _p1 = function () {
+			var _p2 = A2(_elm_lang$core$String$split, '.', hint.name);
+			if (_p2.ctor === '[]') {
 				return {ctor: '_Tuple2', _0: '', _1: hint.name};
 			} else {
-				var reversed = _elm_lang$core$List$reverse(_p1);
+				var reversed = _elm_lang$core$List$reverse(_p2);
 				var name = function () {
-					var _p2 = _elm_lang$core$List$head(reversed);
-					if (_p2.ctor === 'Just') {
-						return _p2._0;
+					var _p3 = _elm_lang$core$List$head(reversed);
+					if (_p3.ctor === 'Just') {
+						return _p3._0;
 					} else {
 						return '';
 					}
@@ -7952,11 +7825,11 @@ var _user$project$Sidekick$viewHint = F2(
 				return {ctor: '_Tuple2', _0: moduleName, _1: name};
 			}
 		}();
-		var moduleName = _p0._0;
-		var name = _p0._1;
+		var moduleName = _p1._0;
+		var name = _p1._1;
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
-			'## ',
+			'##### ',
 			A2(
 				_elm_lang$core$Basics_ops['++'],
 				formatModule(moduleName),
@@ -7972,13 +7845,10 @@ var _user$project$Sidekick$viewHint = F2(
 							A2(
 								_elm_lang$core$Basics_ops['++'],
 								formatTipe(hint.tipe),
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									'<br><br>\n',
-									A2(_elm_lang$core$Basics_ops['++'], hint.comment, '<br>\n'))))))));
+								formatComment(hint.comment)))))));
 	});
-var _user$project$Sidekick$view = function (_p3) {
-	var _p4 = _p3;
+var _user$project$Sidekick$view = function (_p4) {
+	var _p5 = _p4;
 	var sourceView = function (hint) {
 		return A2(_elm_lang$core$String$startsWith, _user$project$Sidekick$packageDocsPrefix, hint.sourcePath) ? _elm_lang$core$Native_List.fromArray(
 			[
@@ -8001,7 +7871,7 @@ var _user$project$Sidekick$view = function (_p3) {
 			_evancz$elm_markdown$Markdown$toHtml,
 			_elm_lang$core$Native_List.fromArray(
 				[]),
-			A2(_user$project$Sidekick$viewHint, _p4.activeFilePath, hint));
+			A2(_user$project$Sidekick$viewHint, _p5.activeFilePath, hint));
 	};
 	var hintsView = A2(
 		_elm_lang$core$List$map,
@@ -8018,7 +7888,7 @@ var _user$project$Sidekick$view = function (_p3) {
 						]),
 					sourceView(hint)));
 		},
-		_p4.activeHints);
+		_p5.activeHints);
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
@@ -8027,20 +7897,20 @@ var _user$project$Sidekick$view = function (_p3) {
 			_elm_lang$core$Basics_ops['++'],
 			_elm_lang$core$Native_List.fromArray(
 				[
-					_elm_lang$html$Html$text(_p4.note)
+					_elm_lang$html$Html$text(_p5.note)
 				]),
 			hintsView));
 };
 var _user$project$Sidekick$update = F2(
 	function (msg, model) {
-		var _p5 = msg;
-		switch (_p5.ctor) {
+		var _p6 = msg;
+		switch (_p6.ctor) {
 			case 'ActiveHintsChanged':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{activeHints: _p5._0}),
+						{activeHints: _p6._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ActiveFilePathChanged':
@@ -8048,7 +7918,7 @@ var _user$project$Sidekick$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{activeFilePath: _p5._0}),
+						{activeFilePath: _p6._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DocsLoaded':
@@ -8175,15 +8045,15 @@ var _user$project$Sidekick$subscriptions = function (model) {
 				_user$project$Sidekick$activeHintsChangedSub(_user$project$Sidekick$ActiveHintsChanged),
 				_user$project$Sidekick$activeFilePathChangedSub(_user$project$Sidekick$ActiveFilePathChanged),
 				_user$project$Sidekick$docsLoadedSub(
-				function (_p6) {
+				function (_p7) {
 					return _user$project$Sidekick$DocsLoaded;
 				}),
 				_user$project$Sidekick$docsFailedSub(
-				function (_p7) {
+				function (_p8) {
 					return _user$project$Sidekick$DocsFailed;
 				}),
 				_user$project$Sidekick$updatingPackageDocsSub(
-				function (_p8) {
+				function (_p9) {
 					return _user$project$Sidekick$UpdatingPackageDocs;
 				})
 			]));

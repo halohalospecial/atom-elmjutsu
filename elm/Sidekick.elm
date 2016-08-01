@@ -2,7 +2,7 @@ port module Sidekick exposing (..)
 
 import Html exposing (..)
 import Html.App as Html
-import Html.Attributes exposing (href, title)
+import Html.Attributes exposing (href, title, style, src)
 import String
 import Markdown
 
@@ -159,7 +159,8 @@ view { note, activeHints, activeFilePath } =
             List.map
                 (\hint ->
                     div []
-                        ([ hintMarkdown hint ]
+                        ([ hintMarkdown hint
+                         ]
                             ++ sourceView hint
                         )
                 )
@@ -215,23 +216,22 @@ viewHint activeFilePath hint =
                 ""
             else
                 ": " ++ tipe
+
+        formatComment comment =
+            case comment of
+                "" ->
+                    ""
+
+                _ ->
+                    "\n<br>" ++ comment
     in
-        -- "# "
-        --     ++ formatModule moduleName
-        --     ++ "**"
-        --     ++ name
-        --     ++ "**\n"
-        --     ++ "## **"
-        --     ++ formatName name
-        "## "
+        "##### "
             ++ formatModule moduleName
             ++ "**"
             ++ name
             ++ "** "
             ++ formatTipe hint.tipe
-            ++ "<br><br>\n"
-            ++ hint.comment
-            ++ "<br>\n"
+            ++ formatComment hint.comment
 
 
 type alias Hint =
