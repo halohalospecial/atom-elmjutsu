@@ -340,14 +340,22 @@ update msg model =
                                                                 else
                                                                     KindDefault
                                                         in
-                                                            Symbol (moduleDocs.name ++ "." ++ value.name) (formatSourcePath moduleDocs value.name) Nothing kind
+                                                            { fullName = (moduleDocs.name ++ "." ++ value.name)
+                                                            , sourcePath = (formatSourcePath moduleDocs value.name)
+                                                            , caseTipe = Nothing
+                                                            , kind = kind
+                                                            }
                                                     )
                                                     values.values
 
                                             tipeSymbols =
                                                 List.map
                                                     (\tipe ->
-                                                        Symbol (moduleDocs.name ++ "." ++ tipe.name) (formatSourcePath moduleDocs tipe.name) Nothing KindType
+                                                        { fullName = (moduleDocs.name ++ "." ++ tipe.name)
+                                                        , sourcePath = (formatSourcePath moduleDocs tipe.name)
+                                                        , caseTipe = Nothing
+                                                        , kind = KindType
+                                                        }
                                                     )
                                                     values.tipes
 
@@ -356,7 +364,11 @@ update msg model =
                                                     (\tipe ->
                                                         List.map
                                                             (\caseName ->
-                                                                Symbol (moduleDocs.name ++ "." ++ caseName) (formatSourcePath moduleDocs caseName) (Just tipe.name) KindTypeCase
+                                                                { fullName = (moduleDocs.name ++ "." ++ caseName)
+                                                                , sourcePath = (formatSourcePath moduleDocs caseName)
+                                                                , caseTipe = (Just tipe.name)
+                                                                , kind = KindTypeCase
+                                                                }
                                                             )
                                                             tipe.cases
                                                     )
@@ -605,7 +617,9 @@ type alias Tipe =
 type alias Value =
     { name : String
     , comment : String
-    , tipe : String
+    , tipe :
+        String
+        -- , args : List String
     }
 
 
@@ -689,6 +703,7 @@ moduleDecoder packageUri =
                 ("comment" := Decode.string)
                 ("type" := Decode.string)
 
+        -- ("args" := Decode.list Decode.string)
         values =
             Decode.object3 Values
                 ("aliases" := Decode.list value)
@@ -727,10 +742,11 @@ type alias EncodedSymbol =
 
 encodeSymbol : Symbol -> EncodedSymbol
 encodeSymbol symbol =
-    EncodedSymbol symbol.fullName
-        symbol.sourcePath
-        symbol.caseTipe
-        (symbolKindToString symbol.kind)
+    { fullName = symbol.fullName
+    , sourcePath = symbol.sourcePath
+    , caseTipe = symbol.caseTipe
+    , kind = (symbolKindToString symbol.kind)
+    }
 
 
 type alias Hint =
@@ -740,7 +756,9 @@ type alias Hint =
     , comment : String
     , tipe : String
     , caseTipe : Maybe String
-    , kind : SymbolKind
+    , kind :
+        SymbolKind
+        -- , args : List String
     }
 
 
@@ -752,7 +770,9 @@ emptyHint =
     , comment = ""
     , tipe = ""
     , caseTipe = Nothing
-    , kind = KindDefault
+    , kind =
+        KindDefault
+        -- , args = []
     }
 
 
@@ -763,19 +783,24 @@ type alias EncodedHint =
     , comment : String
     , tipe : String
     , caseTipe : Maybe String
-    , kind : String
+    , kind :
+        String
+        -- , args : List String
     }
 
 
 encodeHint : Hint -> EncodedHint
 encodeHint hint =
-    EncodedHint hint.name
-        hint.moduleName
-        hint.sourcePath
-        hint.comment
-        hint.tipe
-        hint.caseTipe
+    { name = hint.name
+    , moduleName = hint.moduleName
+    , sourcePath = hint.sourcePath
+    , comment = hint.comment
+    , tipe = hint.tipe
+    , caseTipe = hint.caseTipe
+    , kind =
         (symbolKindToString hint.kind)
+        -- , args = hint.args
+    }
 
 
 symbolKindToString : SymbolKind -> String
@@ -827,7 +852,12 @@ toTokenDict activeFile fileContentsDict packageDocsList =
 
 tipeToValue : Tipe -> Value
 tipeToValue { name, comment, tipe } =
-    { name = name, comment = comment, tipe = tipe }
+    { name = name
+    , comment = comment
+    , tipe =
+        tipe
+        -- , args = []
+    }
 
 
 filteredHints : ModuleDocs -> Import -> List ( String, Hint )
@@ -839,13 +869,28 @@ filteredHints moduleDocs importData =
 
 
 nameToHints : ModuleDocs -> Import -> SymbolKind -> Value -> List ( String, Hint )
+
+
+
+-- nameToHints moduleDocs { alias, exposed } kind { name, comment, tipe, args } =
+
+
 nameToHints moduleDocs { alias, exposed } kind { name, comment, tipe } =
     let
         fullName =
             moduleDocs.name ++ "." ++ name
 
         hint =
-            Hint name moduleDocs.name (formatSourcePath moduleDocs name) comment tipe Nothing kind
+            { name = name
+            , moduleName = moduleDocs.name
+            , sourcePath = (formatSourcePath moduleDocs name)
+            , comment = comment
+            , tipe = tipe
+            , caseTipe = Nothing
+            , kind =
+                kind
+                -- , args = args
+            }
 
         localName =
             (Maybe.withDefault moduleDocs.name alias) ++ "." ++ name
@@ -865,7 +910,16 @@ unionTagsToHints moduleDocs { alias, exposed } { name, cases, comment, tipe } =
                     moduleDocs.name ++ "." ++ tag
 
                 hint =
-                    Hint tag moduleDocs.name (formatSourcePath moduleDocs name) comment tipe (Just tag) KindTypeCase
+                    { name = tag
+                    , moduleName = moduleDocs.name
+                    , sourcePath = (formatSourcePath moduleDocs name)
+                    , comment = comment
+                    , tipe = tipe
+                    , caseTipe = (Just tag)
+                    , kind =
+                        KindTypeCase
+                        -- , args = []
+                    }
 
                 localName =
                     (Maybe.withDefault moduleDocs.name alias) ++ "." ++ tag
