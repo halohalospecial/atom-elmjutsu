@@ -55,7 +55,7 @@ The initial code was based on the [Try Elm](http://elm-lang.org/try) [source](ht
 Warning:  Most of these are hacky experiments that may not always work properly.  Use at your own risk! :p
 
 #### `Elmjutsu: Find Usages`
-Finds all usages of the function under the cursor.
+Finds all usages of the symbol under the cursor.
 
 This works by reading the `.elmo` files in `elm-stuff` and generating a JavaScript syntax tree using [Esprima](http://esprima.org/).
 
@@ -64,7 +64,7 @@ For best results, enable `Lint On The Fly` in the [linter-elm-make](https://atom
 ![find-usages](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/find-usages.gif?raw=true)
 
 #### `Elmjutsu: Find Unused`
-Finds all unused functions in the project.
+Finds all unused symbols in the project.
 
 Uses the same technique as `Elmjutsu: Find Usages`.
 -->

@@ -135,10 +135,6 @@ update msg model =
 
 
 
--- GoToDefinition name ->
---     ( model
---     , goToDefinitionCmd name
---     )
 -- VIEW
 
 
@@ -152,7 +148,6 @@ view { note, activeHints, activeFilePath } =
             if String.startsWith packageDocsPrefix hint.sourcePath then
                 [ a [ title hint.sourcePath, href hint.sourcePath ] [ text "View in browser" ] ]
             else
-                -- a [ title hint.sourcePath, onClick (GoToDefinition hint.name) ] [ text "Go to Definition" ]
                 []
 
         hintsView =
@@ -204,11 +199,6 @@ viewHint activeFilePath hint =
             else
                 moduleName ++ "."
 
-        -- formatName name =
-        --     if Regex.contains (Regex.regex "\\w") name then
-        --         name
-        --     else
-        --         "(" ++ name ++ ")"
         formatTipe tipe =
             if String.startsWith "*" tipe then
                 tipe

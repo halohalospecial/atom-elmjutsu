@@ -39,7 +39,8 @@ import Dict
 import Html exposing (..)
 import Html.App as Html
 import Http
-import Json.Decode as Json exposing ((:=))
+import Json.Decode as Decode exposing ((:=))
+import Json.Encode as Encode
 import Set
 import String
 import Task
@@ -59,12 +60,13 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ activeTokenChangedSub CursorMove
-        , activeFilePathChangedSub UpdateActiveFilePath
-        , sourceFileChangedSub (\( filePath, moduleDocs, rawImports ) -> UpdateSourceFile filePath <| SourceFile moduleDocs (toImportDict rawImports))
-        , sourceFileRemovedSub RemoveSourceFile
+        , activeFileChangedSub UpdateActiveFile
+        , fileContentsChangedSub (\( filePath, moduleDocs, rawImports ) -> UpdateFileContents filePath (FileContents moduleDocs (toImportDict rawImports)))
+        , fileContentsRemovedSub RemoveFileContents
         , newPackagesNeededSub UpdatePackageDocs
         , goToDefinitionSub GoToDefinition
         , goToSymbolSub GoToSymbol
+        , getHintsForPartialSub GetHintsForPartial
         ]
 
 
@@ -75,13 +77,13 @@ subscriptions model =
 port activeTokenChangedSub : (Maybe String -> msg) -> Sub msg
 
 
-port activeFilePathChangedSub : (Maybe String -> msg) -> Sub msg
+port activeFileChangedSub : (Maybe ActiveFile -> msg) -> Sub msg
 
 
-port sourceFileChangedSub : (( String, ModuleDocs, List RawImport ) -> msg) -> Sub msg
+port fileContentsChangedSub : (( String, ModuleDocs, List RawImport ) -> msg) -> Sub msg
 
 
-port sourceFileRemovedSub : (String -> msg) -> Sub msg
+port fileContentsRemovedSub : (String -> msg) -> Sub msg
 
 
 port newPackagesNeededSub : (List String -> msg) -> Sub msg
@@ -91,6 +93,9 @@ port goToDefinitionSub : (Maybe String -> msg) -> Sub msg
 
 
 port goToSymbolSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
+
+
+port getHintsForPartialSub : (String -> msg) -> Sub msg
 
 
 
@@ -106,16 +111,19 @@ port docsFailedCmd : () -> Cmd msg
 port goToDefinitionCmd : GoToDefinitionRequest -> Cmd msg
 
 
-port goToSymbolCmd : ( Maybe String, Maybe String, List Symbol ) -> Cmd msg
+port goToSymbolCmd : ( Maybe String, Maybe ActiveFile, List Encode.Value ) -> Cmd msg
 
 
-port activeFilePathChangedCmd : Maybe String -> Cmd msg
+port activeFileChangedCmd : Maybe ActiveFile -> Cmd msg
 
 
-port activeHintsChangedCmd : List Hint -> Cmd msg
+port activeHintsChangedCmd : List Encode.Value -> Cmd msg
 
 
 port updatingPackageDocsCmd : () -> Cmd msg
+
+
+port gotHintsForPartialCmd : ( String, List Encode.Value ) -> Cmd msg
 
 
 
@@ -124,28 +132,26 @@ port updatingPackageDocsCmd : () -> Cmd msg
 
 type alias Model =
     { packageDocs : List ModuleDocs
-    , tokens : TokenDict
-    , hints : List Hint
-    , activeFilePath : Maybe String
-    , sourceFileDict : SourceFileDict
+    , activeTokens : TokenDict
+    , activeHints : List Hint
+    , activeFile : Maybe ActiveFile
+    , fileContentsDict : FileContentsDict
     }
 
 
-type alias SourceFileDict =
-    Dict.Dict String SourceFile
+type alias ActiveFile =
+    { filePath : String
+    , projectDirectory : String
+    }
 
 
-type alias SourceFile =
+type alias FileContentsDict =
+    Dict.Dict String FileContents
+
+
+type alias FileContents =
     { moduleDocs : ModuleDocs
     , imports : ImportDict
-    }
-
-
-type alias Symbol =
-    { fullName : String
-    , sourcePath : String
-    , caseTipe : Maybe String
-    , kind : String
     }
 
 
@@ -166,10 +172,10 @@ init =
 emptyModel : Model
 emptyModel =
     { packageDocs = []
-    , tokens = Dict.empty
-    , hints = []
-    , activeFilePath = Nothing
-    , sourceFileDict = Dict.empty
+    , activeTokens = Dict.empty
+    , activeHints = []
+    , activeFile = Nothing
+    , fileContentsDict = Dict.empty
     }
 
 
@@ -185,8 +191,8 @@ emptyModuleDocs =
     }
 
 
-emptySourceFile : SourceFile
-emptySourceFile =
+emptyFileContents : FileContents
+emptyFileContents =
     { moduleDocs = emptyModuleDocs
     , imports = defaultImports
     }
@@ -200,12 +206,13 @@ type Msg
     = DocsFailed
     | DocsLoaded (List ModuleDocs)
     | CursorMove (Maybe String)
-    | UpdateActiveFilePath (Maybe String)
-    | UpdateSourceFile String SourceFile
-    | RemoveSourceFile String
+    | UpdateActiveFile (Maybe ActiveFile)
+    | UpdateFileContents String FileContents
+    | RemoveFileContents String
     | UpdatePackageDocs (List String)
     | GoToDefinition (Maybe String)
     | GoToSymbol ( Maybe String, Maybe String )
+    | GetHintsForPartial String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -229,50 +236,52 @@ update msg model =
             in
                 ( { model
                     | packageDocs = updatedPackageDocs
-                    , tokens = toTokenDict (getActiveSourceFile model.activeFilePath model.sourceFileDict) model.sourceFileDict updatedPackageDocs
+                    , activeTokens = toTokenDict (activeFileContents model.activeFile model.fileContentsDict) model.fileContentsDict updatedPackageDocs
                   }
                 , docsLoadedCmd ()
                 )
 
         CursorMove maybeToken ->
             let
-                updatedHints =
-                    hintsForToken maybeToken model.tokens
+                updatedActiveHints =
+                    -- hintsForTokenInFile maybeToken model.activeFile model.activeTokens
+                    hintsForToken maybeToken model.activeTokens
             in
-                ( { model | hints = updatedHints }
-                , activeHintsChangedCmd updatedHints
+                ( { model | activeHints = updatedActiveHints }
+                , List.map encodeHint updatedActiveHints
+                    |> activeHintsChangedCmd
                 )
 
-        UpdateActiveFilePath activeFilePath ->
+        UpdateActiveFile activeFile ->
             ( { model
-                | activeFilePath = activeFilePath
-                , tokens = toTokenDict (getActiveSourceFile activeFilePath model.sourceFileDict) model.sourceFileDict model.packageDocs
+                | activeFile = activeFile
+                , activeTokens = toTokenDict (activeFileContents activeFile model.fileContentsDict) model.fileContentsDict model.packageDocs
               }
-            , activeFilePathChangedCmd activeFilePath
+            , activeFileChangedCmd activeFile
             )
 
-        UpdateSourceFile filePath sourceFile ->
+        UpdateFileContents filePath fileContents ->
             let
-                updatedSourceFileDict =
-                    Dict.update filePath (always <| Just sourceFile) model.sourceFileDict
+                updatedFileContentsDict =
+                    Dict.update filePath (always <| Just fileContents) model.fileContentsDict
             in
                 ( { model
-                    | sourceFileDict = updatedSourceFileDict
-                    , tokens = toTokenDict (getActiveSourceFile model.activeFilePath updatedSourceFileDict) updatedSourceFileDict model.packageDocs
+                    | fileContentsDict = updatedFileContentsDict
+                    , activeTokens = toTokenDict (activeFileContents model.activeFile updatedFileContentsDict) updatedFileContentsDict model.packageDocs
                   }
-                , activeFilePathChangedCmd model.activeFilePath
+                , activeFileChangedCmd model.activeFile
                 )
 
-        RemoveSourceFile filePath ->
+        RemoveFileContents filePath ->
             let
-                updatedSourceFileDict =
-                    Dict.remove filePath model.sourceFileDict
+                updatedFileContentsDict =
+                    Dict.remove filePath model.fileContentsDict
             in
                 ( { model
-                    | sourceFileDict = updatedSourceFileDict
-                    , tokens = toTokenDict (getActiveSourceFile model.activeFilePath updatedSourceFileDict) updatedSourceFileDict model.packageDocs
+                    | fileContentsDict = updatedFileContentsDict
+                    , activeTokens = toTokenDict (activeFileContents model.activeFile updatedFileContentsDict) updatedFileContentsDict model.packageDocs
                   }
-                , activeFilePathChangedCmd model.activeFilePath
+                , activeFileChangedCmd model.activeFile
                 )
 
         UpdatePackageDocs packages ->
@@ -292,16 +301,15 @@ update msg model =
 
         GoToDefinition maybeToken ->
             let
-                hints =
-                    hintsForToken maybeToken model.tokens
+                requests =
+                    hintsForToken maybeToken model.activeTokens
+                        |> List.map
+                            (\hint ->
+                                goToDefinitionCmd (GoToDefinitionRequest hint.sourcePath (lastName hint.name) hint.caseTipe)
+                            )
             in
                 ( model
-                , Cmd.batch
-                    <| List.map
-                        (\hint ->
-                            goToDefinitionCmd (GoToDefinitionRequest hint.sourcePath (lastName hint.name) hint.caseTipe)
-                        )
-                        hints
+                , Cmd.batch requests
                 )
 
         GoToSymbol ( maybeProjectDirectory, maybeToken ) ->
@@ -314,7 +322,7 @@ update msg model =
                 Just projectDirectory ->
                     let
                         symbols =
-                            Dict.values model.sourceFileDict
+                            Dict.values model.fileContentsDict
                                 |> List.concatMap
                                     (\{ moduleDocs } ->
                                         let
@@ -330,9 +338,9 @@ update msg model =
 
                                                             kind =
                                                                 if firstChar == String.toUpper firstChar then
-                                                                    "type alias"
+                                                                    KindTypeAlias
                                                                 else
-                                                                    "default"
+                                                                    KindDefault
                                                         in
                                                             Symbol (moduleDocs.name ++ "." ++ value.name) (formatSourcePath moduleDocs value.name) Nothing kind
                                                     )
@@ -341,7 +349,7 @@ update msg model =
                                             tipeSymbols =
                                                 List.map
                                                     (\tipe ->
-                                                        Symbol (moduleDocs.name ++ "." ++ tipe.name) (formatSourcePath moduleDocs tipe.name) Nothing "type"
+                                                        Symbol (moduleDocs.name ++ "." ++ tipe.name) (formatSourcePath moduleDocs tipe.name) Nothing KindType
                                                     )
                                                     values.tipes
 
@@ -350,7 +358,7 @@ update msg model =
                                                     (\tipe ->
                                                         List.map
                                                             (\caseName ->
-                                                                Symbol (moduleDocs.name ++ "." ++ caseName) (formatSourcePath moduleDocs caseName) (Just tipe.name) ("type case")
+                                                                Symbol (moduleDocs.name ++ "." ++ caseName) (formatSourcePath moduleDocs caseName) (Just tipe.name) KindTypeCase
                                                             )
                                                             tipe.cases
                                                     )
@@ -364,13 +372,11 @@ update msg model =
                                 |> List.filter
                                     (\{ sourcePath } ->
                                         not (String.startsWith packageDocsPrefix sourcePath)
-                                            && (String.startsWith (projectDirectory ++ "/") sourcePath
-                                                    || String.startsWith (projectDirectory ++ "\\") sourcePath
-                                               )
+                                            && isSourcePathInProjectDirectory projectDirectory sourcePath
                                     )
 
                         hints =
-                            hintsForToken maybeToken model.tokens
+                            hintsForToken maybeToken model.activeTokens
 
                         defaultSymbolName =
                             case List.head hints of
@@ -378,14 +384,26 @@ update msg model =
                                     maybeToken
 
                                 Just hint ->
-                                    if model.activeFilePath == Just hint.sourcePath then
-                                        Just (lastName hint.name)
-                                    else
-                                        Just hint.name
+                                    case model.activeFile of
+                                        Nothing ->
+                                            Just hint.name
+
+                                        Just activeFile ->
+                                            if activeFile.filePath == hint.sourcePath then
+                                                Just (lastName hint.name)
+                                            else
+                                                Just hint.name
                     in
                         ( model
-                        , goToSymbolCmd ( defaultSymbolName, model.activeFilePath, projectSymbols )
+                        , ( defaultSymbolName, model.activeFile, List.map encodeSymbol projectSymbols )
+                            |> goToSymbolCmd
                         )
+
+        GetHintsForPartial partial ->
+            ( model
+            , ( partial, List.map encodeHint (hintsForPartial partial (activeFileContents model.activeFile model.fileContentsDict) model.activeTokens) )
+                |> gotHintsForPartialCmd
+            )
 
 
 hintsForToken : Maybe String -> TokenDict -> List Hint
@@ -398,19 +416,39 @@ hintsForToken maybeToken tokens =
             Maybe.withDefault [] (Dict.get token tokens)
 
 
-getActiveSourceFile : Maybe String -> SourceFileDict -> SourceFile
-getActiveSourceFile activeFilePath sourceFileDict =
-    case activeFilePath of
-        Nothing ->
-            emptySourceFile
+hintsForPartial : String -> FileContents -> TokenDict -> List Hint
+hintsForPartial partial fileContents tokens =
+    tokens
+        |> Dict.filter
+            (\token _ ->
+                String.startsWith partial token
+            )
+        |> Dict.values
+        |> List.concatMap identity
 
-        Just filePath ->
-            case Dict.get filePath sourceFileDict of
-                Just sourceFile ->
-                    sourceFile
+
+activeFileContents : Maybe ActiveFile -> FileContentsDict -> FileContents
+activeFileContents activeFile fileContentsDict =
+    case activeFile of
+        Nothing ->
+            emptyFileContents
+
+        Just { filePath } ->
+            case Dict.get filePath fileContentsDict of
+                Just fileContents ->
+                    fileContents
 
                 Nothing ->
-                    emptySourceFile
+                    emptyFileContents
+
+
+isSourcePathInProjectDirectory : String -> String -> Bool
+isSourcePathInProjectDirectory projectDirectory sourcePath =
+    List.any
+        (\pathSep ->
+            String.startsWith (projectDirectory ++ pathSep) sourcePath
+        )
+        [ "/", "\\" ]
 
 
 type alias ModuleDocs =
@@ -499,40 +537,65 @@ getPackageDocs packageUri =
         url =
             packageUri ++ "documentation.json"
     in
-        Http.get (Json.list (moduleDecoder packageUri)) url
+        Http.get (Decode.list (moduleDecoder packageUri)) url
 
 
-moduleDecoder : String -> Json.Decoder ModuleDocs
+moduleDecoder : String -> Decode.Decoder ModuleDocs
 moduleDecoder packageUri =
     let
         name =
-            "name" := Json.string
+            "name" := Decode.string
 
         tipe =
-            Json.object4 Tipe
-                ("name" := Json.string)
-                ("comment" := Json.string)
-                ("name" := Json.string)
+            Decode.object4 Tipe
+                ("name" := Decode.string)
+                ("comment" := Decode.string)
+                ("name" := Decode.string)
                 -- type
-                ("cases" := Json.list (Json.tuple2 always Json.string Json.value))
+                ("cases" := Decode.list (Decode.tuple2 always Decode.string Decode.value))
 
         value =
-            Json.object3 Value
-                ("name" := Json.string)
-                ("comment" := Json.string)
-                ("type" := Json.string)
+            Decode.object3 Value
+                ("name" := Decode.string)
+                ("comment" := Decode.string)
+                ("type" := Decode.string)
 
         values =
-            Json.object3 Values
-                ("aliases" := Json.list value)
-                ("types" := Json.list tipe)
-                ("values" := Json.list value)
+            Decode.object3 Values
+                ("aliases" := Decode.list value)
+                ("types" := Decode.list tipe)
+                ("values" := Decode.list value)
     in
-        Json.object2 (ModuleDocs packageUri) name values
+        Decode.object2 (ModuleDocs packageUri) name values
 
 
 type alias TokenDict =
     Dict.Dict String (List Hint)
+
+
+type SymbolKind
+    = KindDefault
+    | KindTypeAlias
+    | KindType
+    | KindTypeCase
+
+
+type alias Symbol =
+    { fullName : String
+    , sourcePath : String
+    , caseTipe : Maybe String
+    , kind : SymbolKind
+    }
+
+
+encodeSymbol : Symbol -> Encode.Value
+encodeSymbol symbol =
+    Encode.object
+        [ ( "fullName", Encode.string symbol.fullName )
+        , ( "sourcePath", Encode.string symbol.sourcePath )
+        , ( "caseTipe", encodeCaseTipe symbol.caseTipe )
+        , ( "kind", Encode.string (symbolKindToString symbol.kind) )
+        ]
 
 
 type alias Hint =
@@ -541,27 +604,62 @@ type alias Hint =
     , comment : String
     , tipe : String
     , caseTipe : Maybe String
-    , kind : String
+    , kind : SymbolKind
     }
 
 
-toTokenDict : SourceFile -> SourceFileDict -> List ModuleDocs -> TokenDict
-toTokenDict activeSourceFile sourceFileDict packageDocsList =
-    let
-        sourceFileDictModuleDocs =
-            Dict.values sourceFileDict |> List.map .moduleDocs
+encodeHint : Hint -> Encode.Value
+encodeHint hint =
+    Encode.object
+        [ ( "name", Encode.string hint.name )
+        , ( "sourcePath", Encode.string hint.sourcePath )
+        , ( "comment", Encode.string hint.comment )
+        , ( "tipe", Encode.string hint.tipe )
+        , ( "caseTipe", encodeCaseTipe hint.caseTipe )
+        , ( "kind", Encode.string (symbolKindToString hint.kind) )
+        ]
 
+
+encodeCaseTipe : Maybe String -> Encode.Value
+encodeCaseTipe caseTipe =
+    case caseTipe of
+        Nothing ->
+            Encode.null
+
+        Just value ->
+            Encode.string value
+
+
+symbolKindToString : SymbolKind -> String
+symbolKindToString kind =
+    case kind of
+        KindDefault ->
+            "default"
+
+        KindTypeAlias ->
+            "type alias"
+
+        KindType ->
+            "type"
+
+        KindTypeCase ->
+            "type case"
+
+
+toTokenDict : FileContents -> FileContentsDict -> List ModuleDocs -> TokenDict
+toTokenDict activeFileContents fileContentsDict packageDocsList =
+    let
         getMaybeHints moduleDocs =
             let
-                activeSourceFileAndImports =
-                    Dict.update activeSourceFile.moduleDocs.name (always <| Just { alias = Nothing, exposed = All }) activeSourceFile.imports
+                activeFileContentsAndImports =
+                    Dict.update activeFileContents.moduleDocs.name (always <| Just { alias = Nothing, exposed = All }) activeFileContents.imports
             in
-                Maybe.map (filteredHints moduleDocs) (Dict.get moduleDocs.name activeSourceFileAndImports)
+                Maybe.map (filteredHints moduleDocs) (Dict.get moduleDocs.name activeFileContentsAndImports)
 
         insert ( token, hint ) dict =
             Dict.update token (\value -> Just (hint :: Maybe.withDefault [] value)) dict
     in
-        (packageDocsList ++ sourceFileDictModuleDocs)
+        (packageDocsList ++ [ activeFileContents.moduleDocs ])
             |> List.filterMap getMaybeHints
             |> List.concat
             |> List.foldl insert Dict.empty
@@ -575,12 +673,12 @@ tipeToValue { name, comment, tipe } =
 filteredHints : ModuleDocs -> Import -> List ( String, Hint )
 filteredHints moduleDocs importData =
     List.concatMap (unionTagsToHints moduleDocs importData) moduleDocs.values.tipes
-        ++ List.concatMap (nameToHints moduleDocs importData "type alias") moduleDocs.values.aliases
-        ++ List.concatMap (nameToHints moduleDocs importData "type") (List.map tipeToValue moduleDocs.values.tipes)
-        ++ List.concatMap (nameToHints moduleDocs importData "default") moduleDocs.values.values
+        ++ List.concatMap (nameToHints moduleDocs importData KindTypeAlias) moduleDocs.values.aliases
+        ++ List.concatMap (nameToHints moduleDocs importData KindType) (List.map tipeToValue moduleDocs.values.tipes)
+        ++ List.concatMap (nameToHints moduleDocs importData KindDefault) moduleDocs.values.values
 
 
-nameToHints : ModuleDocs -> Import -> String -> Value -> List ( String, Hint )
+nameToHints : ModuleDocs -> Import -> SymbolKind -> Value -> List ( String, Hint )
 nameToHints moduleDocs { alias, exposed } kind { name, comment, tipe } =
     let
         fullName =
@@ -590,7 +688,7 @@ nameToHints moduleDocs { alias, exposed } kind { name, comment, tipe } =
             Hint fullName (formatSourcePath moduleDocs name) comment tipe Nothing kind
 
         localName =
-            Maybe.withDefault moduleDocs.name alias ++ "." ++ name
+            (Maybe.withDefault moduleDocs.name alias) ++ "." ++ name
     in
         if isExposed name exposed then
             [ ( name, hint ), ( localName, hint ) ]
@@ -607,10 +705,10 @@ unionTagsToHints moduleDocs { alias, exposed } { name, cases, comment, tipe } =
                     moduleDocs.name ++ "." ++ tag
 
                 hint =
-                    Hint fullName (formatSourcePath moduleDocs name) comment tipe (Just name) "type case"
+                    Hint fullName (formatSourcePath moduleDocs name) comment tipe (Just name) KindTypeCase
 
                 localName =
-                    Maybe.withDefault moduleDocs.name alias ++ "." ++ tag
+                    (Maybe.withDefault moduleDocs.name alias) ++ "." ++ tag
             in
                 if List.member name defaultTypes || isExposed tag exposed then
                     ( tag, hint ) :: ( localName, hint ) :: ( fullName, hint ) :: hints
