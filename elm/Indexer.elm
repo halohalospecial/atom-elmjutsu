@@ -40,7 +40,6 @@ import Html exposing (..)
 import Html.App as Html
 import Http
 import Json.Decode as Decode exposing ((:=))
-import Json.Encode as Encode
 import Set
 import String
 import Task
@@ -111,19 +110,19 @@ port docsFailedCmd : () -> Cmd msg
 port goToDefinitionCmd : GoToDefinitionRequest -> Cmd msg
 
 
-port goToSymbolCmd : ( Maybe String, Maybe ActiveFile, List Encode.Value ) -> Cmd msg
+port goToSymbolCmd : ( Maybe String, Maybe ActiveFile, List EncodedSymbol ) -> Cmd msg
 
 
 port activeFileChangedCmd : Maybe ActiveFile -> Cmd msg
 
 
-port activeHintsChangedCmd : List Encode.Value -> Cmd msg
+port activeHintsChangedCmd : List EncodedHint -> Cmd msg
 
 
 port updatingPackageDocsCmd : () -> Cmd msg
 
 
-port gotHintsForPartialCmd : ( String, List Encode.Value ) -> Cmd msg
+port gotHintsForPartialCmd : ( String, List EncodedHint ) -> Cmd msg
 
 
 
@@ -479,7 +478,11 @@ hintsForPartial partial activeFile fileContentsDict packageDocs tokens =
                 )
                 defaultSuggestions
     in
-        hints ++ defaultHints
+        hints
+
+
+
+-- ++ defaultHints
 
 
 exposedHints : Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> List ( String, String )
@@ -714,14 +717,20 @@ type alias Symbol =
     }
 
 
-encodeSymbol : Symbol -> Encode.Value
+type alias EncodedSymbol =
+    { fullName : String
+    , sourcePath : String
+    , caseTipe : Maybe String
+    , kind : String
+    }
+
+
+encodeSymbol : Symbol -> EncodedSymbol
 encodeSymbol symbol =
-    Encode.object
-        [ ( "fullName", Encode.string symbol.fullName )
-        , ( "sourcePath", Encode.string symbol.sourcePath )
-        , ( "caseTipe", encodeCaseTipe symbol.caseTipe )
-        , ( "kind", Encode.string (symbolKindToString symbol.kind) )
-        ]
+    EncodedSymbol symbol.fullName
+        symbol.sourcePath
+        symbol.caseTipe
+        (symbolKindToString symbol.kind)
 
 
 type alias Hint =
@@ -747,27 +756,26 @@ emptyHint =
     }
 
 
-encodeHint : Hint -> Encode.Value
+type alias EncodedHint =
+    { name : String
+    , moduleName : String
+    , sourcePath : String
+    , comment : String
+    , tipe : String
+    , caseTipe : Maybe String
+    , kind : String
+    }
+
+
+encodeHint : Hint -> EncodedHint
 encodeHint hint =
-    Encode.object
-        [ ( "name", Encode.string hint.name )
-        , ( "moduleName", Encode.string hint.moduleName )
-        , ( "sourcePath", Encode.string hint.sourcePath )
-        , ( "comment", Encode.string hint.comment )
-        , ( "tipe", Encode.string hint.tipe )
-        , ( "caseTipe", encodeCaseTipe hint.caseTipe )
-        , ( "kind", Encode.string (symbolKindToString hint.kind) )
-        ]
-
-
-encodeCaseTipe : Maybe String -> Encode.Value
-encodeCaseTipe caseTipe =
-    case caseTipe of
-        Nothing ->
-            Encode.null
-
-        Just value ->
-            Encode.string value
+    EncodedHint hint.name
+        hint.moduleName
+        hint.sourcePath
+        hint.comment
+        hint.tipe
+        hint.caseTipe
+        (symbolKindToString hint.kind)
 
 
 symbolKindToString : SymbolKind -> String
