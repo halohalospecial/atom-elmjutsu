@@ -67,6 +67,7 @@ type alias Model =
 
 type alias ActiveHint =
     { name : String
+    , moduleName : String
     , sourcePath : String
     , comment : String
     , tipe : String
@@ -167,65 +168,40 @@ view { note, activeHints, activeFilePath } =
 viewHint : Maybe String -> Hint -> String
 viewHint activeFilePath hint =
     let
-        ( moduleName, name ) =
-            case String.split "." hint.name of
-                [] ->
-                    ( "", hint.name )
-
-                list ->
-                    let
-                        reversed =
-                            List.reverse list
-
-                        name =
-                            case List.head reversed of
-                                Just last ->
-                                    last
-
-                                Nothing ->
-                                    ""
-
-                        moduleName =
-                            reversed
-                                |> List.drop 1
-                                |> List.reverse
-                                |> String.join "."
-                    in
-                        ( moduleName, name )
-
-        formatModule moduleName =
+        formattedModuleName =
             if activeFilePath == (Just hint.sourcePath) then
                 ""
             else
-                moduleName ++ "."
+                hint.moduleName ++ "."
 
-        formatTipe tipe =
-            if String.startsWith "*" tipe then
-                tipe
-            else if tipe == "" then
+        formattedTipe =
+            if String.startsWith "*" hint.tipe then
+                hint.tipe
+            else if hint.tipe == "" then
                 ""
             else
-                ": " ++ tipe
+                ": " ++ hint.tipe
 
-        formatComment comment =
-            case comment of
+        formattedComment =
+            case hint.comment of
                 "" ->
                     ""
 
                 _ ->
-                    "\n<br>" ++ comment
+                    "\n<br>" ++ hint.comment
     in
         "##### "
-            ++ formatModule moduleName
+            ++ formattedModuleName
             ++ "**"
-            ++ name
+            ++ hint.name
             ++ "** "
-            ++ formatTipe hint.tipe
-            ++ formatComment hint.comment
+            ++ formattedTipe
+            ++ formattedComment
 
 
 type alias Hint =
     { name : String
+    , moduleName : String
     , sourcePath : String
     , comment : String
     , tipe : String

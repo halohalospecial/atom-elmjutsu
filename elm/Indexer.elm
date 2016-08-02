@@ -132,10 +132,10 @@ port gotHintsForPartialCmd : ( String, List Encode.Value ) -> Cmd msg
 
 type alias Model =
     { packageDocs : List ModuleDocs
+    , fileContentsDict : FileContentsDict
     , activeTokens : TokenDict
     , activeHints : List Hint
     , activeFile : Maybe ActiveFile
-    , fileContentsDict : FileContentsDict
     }
 
 
@@ -172,10 +172,10 @@ init =
 emptyModel : Model
 emptyModel =
     { packageDocs = []
+    , fileContentsDict = Dict.empty
     , activeTokens = Dict.empty
     , activeHints = []
     , activeFile = Nothing
-    , fileContentsDict = Dict.empty
     }
 
 
@@ -236,7 +236,7 @@ update msg model =
             in
                 ( { model
                     | packageDocs = updatedPackageDocs
-                    , activeTokens = toTokenDict (activeFileContents model.activeFile model.fileContentsDict) model.fileContentsDict updatedPackageDocs
+                    , activeTokens = toTokenDict model.activeFile model.fileContentsDict updatedPackageDocs
                   }
                 , docsLoadedCmd ()
                 )
@@ -244,7 +244,6 @@ update msg model =
         CursorMove maybeToken ->
             let
                 updatedActiveHints =
-                    -- hintsForTokenInFile maybeToken model.activeFile model.activeTokens
                     hintsForToken maybeToken model.activeTokens
             in
                 ( { model | activeHints = updatedActiveHints }
@@ -255,7 +254,7 @@ update msg model =
         UpdateActiveFile activeFile ->
             ( { model
                 | activeFile = activeFile
-                , activeTokens = toTokenDict (activeFileContents activeFile model.fileContentsDict) model.fileContentsDict model.packageDocs
+                , activeTokens = toTokenDict activeFile model.fileContentsDict model.packageDocs
               }
             , activeFileChangedCmd activeFile
             )
@@ -267,7 +266,7 @@ update msg model =
             in
                 ( { model
                     | fileContentsDict = updatedFileContentsDict
-                    , activeTokens = toTokenDict (activeFileContents model.activeFile updatedFileContentsDict) updatedFileContentsDict model.packageDocs
+                    , activeTokens = toTokenDict model.activeFile updatedFileContentsDict model.packageDocs
                   }
                 , activeFileChangedCmd model.activeFile
                 )
@@ -279,7 +278,7 @@ update msg model =
             in
                 ( { model
                     | fileContentsDict = updatedFileContentsDict
-                    , activeTokens = toTokenDict (activeFileContents model.activeFile updatedFileContentsDict) updatedFileContentsDict model.packageDocs
+                    , activeTokens = toTokenDict model.activeFile updatedFileContentsDict model.packageDocs
                   }
                 , activeFileChangedCmd model.activeFile
                 )
@@ -401,7 +400,10 @@ update msg model =
 
         GetHintsForPartial partial ->
             ( model
-            , ( partial, List.map encodeHint (hintsForPartial partial (activeFileContents model.activeFile model.fileContentsDict) model.activeTokens) )
+            , ( partial
+              , hintsForPartial partial model.activeFile model.fileContentsDict model.packageDocs model.activeTokens
+                    |> List.map encodeHint
+              )
                 |> gotHintsForPartialCmd
             )
 
@@ -416,15 +418,139 @@ hintsForToken maybeToken tokens =
             Maybe.withDefault [] (Dict.get token tokens)
 
 
-hintsForPartial : String -> FileContents -> TokenDict -> List Hint
-hintsForPartial partial fileContents tokens =
-    tokens
-        |> Dict.filter
-            (\token _ ->
-                String.startsWith partial token
-            )
-        |> Dict.values
-        |> List.concatMap identity
+hintsForPartial : String -> Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
+hintsForPartial partial activeFile fileContentsDict packageDocs tokens =
+    let
+        exposedList =
+            exposedHints activeFile fileContentsDict packageDocs
+
+        activeModuleName =
+            (activeFileContents activeFile fileContentsDict).moduleDocs.name
+
+        hints =
+            tokens
+                |> Dict.filter
+                    (\token _ ->
+                        let
+                            exposedNames =
+                                List.map snd exposedList
+
+                            maybeUnqualify name =
+                                if List.member name exposedNames then
+                                    lastName name
+                                else
+                                    name
+                        in
+                            String.startsWith partial (maybeUnqualify token)
+                    )
+                |> Dict.values
+                |> List.concatMap identity
+                |> List.map
+                    (\hint ->
+                        let
+                            name =
+                                lastName hint.name
+
+                            formattedModuleName =
+                                if activeModuleName == hint.moduleName then
+                                    ""
+                                else
+                                    hint.moduleName
+
+                            formattedName =
+                                if
+                                    List.any
+                                        (\( exposedModuleName, exposedName ) ->
+                                            ( exposedModuleName, exposedName ) == ( hint.moduleName, name )
+                                        )
+                                        exposedList
+                                then
+                                    name
+                                else
+                                    hint.moduleName ++ "." ++ name
+                        in
+                            { hint | name = formattedName, moduleName = formattedModuleName }
+                    )
+
+        defaultHints =
+            List.filter
+                (\{ name } ->
+                    String.startsWith partial name
+                )
+                defaultSuggestions
+    in
+        hints ++ defaultHints
+
+
+exposedHints : Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> List ( String, String )
+exposedHints activeFile fileContentsDict packageDocs =
+    case activeFile of
+        Nothing ->
+            []
+
+        Just { projectDirectory } ->
+            let
+                fileContents =
+                    activeFileContents activeFile fileContentsDict
+
+                projectModuleDocs =
+                    List.map .moduleDocs (Dict.values fileContentsDict)
+                        |> List.filter (\{ sourcePath } -> isSourcePathInProjectDirectory projectDirectory sourcePath)
+
+                importsPlusActiveModule =
+                    Dict.update fileContents.moduleDocs.name (always <| Just { alias = Nothing, exposed = All }) fileContents.imports
+
+                importedModuleNames =
+                    Dict.keys importsPlusActiveModule
+
+                importedModuleDocs =
+                    (packageDocs ++ projectModuleDocs)
+                        |> List.filter
+                            (\moduleDocs ->
+                                List.member moduleDocs.name importedModuleNames
+                            )
+
+                imports =
+                    Dict.values importsPlusActiveModule
+            in
+                importedModuleDocs
+                    |> List.concatMap
+                        (\moduleDocs ->
+                            let
+                                exposed =
+                                    case Dict.get moduleDocs.name importsPlusActiveModule of
+                                        Nothing ->
+                                            None
+
+                                        Just { exposed } ->
+                                            exposed
+                            in
+                                (((moduleDocs.values.aliases
+                                    ++ (List.map tipeToValue moduleDocs.values.tipes)
+                                    ++ moduleDocs.values.values
+                                  )
+                                    |> List.filter
+                                        (\{ name } ->
+                                            isExposed name exposed
+                                        )
+                                    |> List.map .name
+                                 )
+                                    ++ (List.concatMap
+                                            (\{ name, cases } ->
+                                                List.filter
+                                                    (\kase ->
+                                                        List.member name defaultTypes || isExposed kase exposed
+                                                    )
+                                                    cases
+                                            )
+                                            moduleDocs.values.tipes
+                                       )
+                                )
+                                    |> List.map
+                                        (\name ->
+                                            ( moduleDocs.name, name )
+                                        )
+                        )
 
 
 activeFileContents : Maybe ActiveFile -> FileContentsDict -> FileContents
@@ -600,6 +726,7 @@ encodeSymbol symbol =
 
 type alias Hint =
     { name : String
+    , moduleName : String
     , sourcePath : String
     , comment : String
     , tipe : String
@@ -608,10 +735,23 @@ type alias Hint =
     }
 
 
+emptyHint : Hint
+emptyHint =
+    { name = ""
+    , moduleName = ""
+    , sourcePath = ""
+    , comment = ""
+    , tipe = ""
+    , caseTipe = Nothing
+    , kind = KindDefault
+    }
+
+
 encodeHint : Hint -> Encode.Value
 encodeHint hint =
     Encode.object
         [ ( "name", Encode.string hint.name )
+        , ( "moduleName", Encode.string hint.moduleName )
         , ( "sourcePath", Encode.string hint.sourcePath )
         , ( "comment", Encode.string hint.comment )
         , ( "tipe", Encode.string hint.tipe )
@@ -646,23 +786,35 @@ symbolKindToString kind =
             "type case"
 
 
-toTokenDict : FileContents -> FileContentsDict -> List ModuleDocs -> TokenDict
-toTokenDict activeFileContents fileContentsDict packageDocsList =
+toTokenDict : Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> TokenDict
+toTokenDict activeFile fileContentsDict packageDocsList =
     let
-        getMaybeHints moduleDocs =
-            let
-                activeFileContentsAndImports =
-                    Dict.update activeFileContents.moduleDocs.name (always <| Just { alias = Nothing, exposed = All }) activeFileContents.imports
-            in
-                Maybe.map (filteredHints moduleDocs) (Dict.get moduleDocs.name activeFileContentsAndImports)
-
-        insert ( token, hint ) dict =
-            Dict.update token (\value -> Just (hint :: Maybe.withDefault [] value)) dict
+        fileContents =
+            activeFileContents activeFile fileContentsDict
     in
-        (packageDocsList ++ [ activeFileContents.moduleDocs ])
-            |> List.filterMap getMaybeHints
-            |> List.concat
-            |> List.foldl insert Dict.empty
+        case activeFile of
+            Nothing ->
+                Dict.empty
+
+            Just { projectDirectory } ->
+                let
+                    projectModuleDocs =
+                        List.map .moduleDocs (Dict.values fileContentsDict)
+                            |> List.filter (\{ sourcePath } -> isSourcePathInProjectDirectory projectDirectory sourcePath)
+
+                    importsPlusActiveModule =
+                        Dict.update fileContents.moduleDocs.name (always <| Just { alias = Nothing, exposed = All }) fileContents.imports
+
+                    getMaybeHints moduleDocs =
+                        Maybe.map (filteredHints moduleDocs) (Dict.get moduleDocs.name importsPlusActiveModule)
+
+                    insert ( token, hint ) dict =
+                        Dict.update token (\value -> Just (hint :: Maybe.withDefault [] value)) dict
+                in
+                    (packageDocsList ++ projectModuleDocs)
+                        |> List.filterMap getMaybeHints
+                        |> List.concat
+                        |> List.foldl insert Dict.empty
 
 
 tipeToValue : Tipe -> Value
@@ -685,7 +837,7 @@ nameToHints moduleDocs { alias, exposed } kind { name, comment, tipe } =
             moduleDocs.name ++ "." ++ name
 
         hint =
-            Hint fullName (formatSourcePath moduleDocs name) comment tipe Nothing kind
+            Hint name moduleDocs.name (formatSourcePath moduleDocs name) comment tipe Nothing kind
 
         localName =
             (Maybe.withDefault moduleDocs.name alias) ++ "." ++ name
@@ -705,7 +857,7 @@ unionTagsToHints moduleDocs { alias, exposed } { name, cases, comment, tipe } =
                     moduleDocs.name ++ "." ++ tag
 
                 hint =
-                    Hint fullName (formatSourcePath moduleDocs name) comment tipe (Just name) KindTypeCase
+                    Hint tag moduleDocs.name (formatSourcePath moduleDocs name) comment tipe (Just tag) KindTypeCase
 
                 localName =
                     (Maybe.withDefault moduleDocs.name alias) ++ "." ++ tag
@@ -800,6 +952,46 @@ defaultImports =
 defaultTypes : List String
 defaultTypes =
     [ "Maybe", "Result" ]
+
+
+defaultSuggestions : List Hint
+defaultSuggestions =
+    List.map
+        (\suggestion ->
+            { emptyHint | name = suggestion }
+        )
+        [ "True"
+        , "False"
+        , "number"
+        , "Int"
+        , "Float"
+        , "Char"
+        , "String"
+        , "Bool"
+        , "List"
+        , "if"
+        , "then"
+        , "else"
+        , "type"
+        , "case"
+        , "of"
+        , "let"
+        , "in"
+        , "as"
+        , "import"
+        , "open"
+        , "port"
+        , "exposing"
+        , "alias"
+        , "infixl"
+        , "infixr"
+        , "infix"
+        , "hiding"
+        , "export"
+        , "foreign"
+        , "perform"
+        , "deriving"
+        ]
 
 
 lastName : String -> String

@@ -7787,68 +7787,37 @@ var _evancz$elm_markdown$Markdown$Options = F4(
 var _user$project$Sidekick$packageDocsPrefix = 'http://package.elm-lang.org/packages/';
 var _user$project$Sidekick$viewHint = F2(
 	function (activeFilePath, hint) {
-		var formatComment = function (comment) {
-			var _p0 = comment;
+		var formattedComment = function () {
+			var _p0 = hint.comment;
 			if (_p0 === '') {
 				return '';
 			} else {
-				return A2(_elm_lang$core$Basics_ops['++'], '\n<br>', comment);
-			}
-		};
-		var formatTipe = function (tipe) {
-			return A2(_elm_lang$core$String$startsWith, '*', tipe) ? tipe : (_elm_lang$core$Native_Utils.eq(tipe, '') ? '' : A2(_elm_lang$core$Basics_ops['++'], ': ', tipe));
-		};
-		var formatModule = function (moduleName) {
-			return _elm_lang$core$Native_Utils.eq(
-				activeFilePath,
-				_elm_lang$core$Maybe$Just(hint.sourcePath)) ? '' : A2(_elm_lang$core$Basics_ops['++'], moduleName, '.');
-		};
-		var _p1 = function () {
-			var _p2 = A2(_elm_lang$core$String$split, '.', hint.name);
-			if (_p2.ctor === '[]') {
-				return {ctor: '_Tuple2', _0: '', _1: hint.name};
-			} else {
-				var reversed = _elm_lang$core$List$reverse(_p2);
-				var name = function () {
-					var _p3 = _elm_lang$core$List$head(reversed);
-					if (_p3.ctor === 'Just') {
-						return _p3._0;
-					} else {
-						return '';
-					}
-				}();
-				var moduleName = A2(
-					_elm_lang$core$String$join,
-					'.',
-					_elm_lang$core$List$reverse(
-						A2(_elm_lang$core$List$drop, 1, reversed)));
-				return {ctor: '_Tuple2', _0: moduleName, _1: name};
+				return A2(_elm_lang$core$Basics_ops['++'], '\n<br>', hint.comment);
 			}
 		}();
-		var moduleName = _p1._0;
-		var name = _p1._1;
+		var formattedTipe = A2(_elm_lang$core$String$startsWith, '*', hint.tipe) ? hint.tipe : (_elm_lang$core$Native_Utils.eq(hint.tipe, '') ? '' : A2(_elm_lang$core$Basics_ops['++'], ': ', hint.tipe));
+		var formattedModuleName = _elm_lang$core$Native_Utils.eq(
+			activeFilePath,
+			_elm_lang$core$Maybe$Just(hint.sourcePath)) ? '' : A2(_elm_lang$core$Basics_ops['++'], hint.moduleName, '.');
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
 			'##### ',
 			A2(
 				_elm_lang$core$Basics_ops['++'],
-				formatModule(moduleName),
+				formattedModuleName,
 				A2(
 					_elm_lang$core$Basics_ops['++'],
 					'**',
 					A2(
 						_elm_lang$core$Basics_ops['++'],
-						name,
+						hint.name,
 						A2(
 							_elm_lang$core$Basics_ops['++'],
 							'** ',
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								formatTipe(hint.tipe),
-								formatComment(hint.comment)))))));
+							A2(_elm_lang$core$Basics_ops['++'], formattedTipe, formattedComment))))));
 	});
-var _user$project$Sidekick$view = function (_p4) {
-	var _p5 = _p4;
+var _user$project$Sidekick$view = function (_p1) {
+	var _p2 = _p1;
 	var sourceView = function (hint) {
 		return A2(_elm_lang$core$String$startsWith, _user$project$Sidekick$packageDocsPrefix, hint.sourcePath) ? _elm_lang$core$Native_List.fromArray(
 			[
@@ -7871,7 +7840,7 @@ var _user$project$Sidekick$view = function (_p4) {
 			_evancz$elm_markdown$Markdown$toHtml,
 			_elm_lang$core$Native_List.fromArray(
 				[]),
-			A2(_user$project$Sidekick$viewHint, _p5.activeFilePath, hint));
+			A2(_user$project$Sidekick$viewHint, _p2.activeFilePath, hint));
 	};
 	var hintsView = A2(
 		_elm_lang$core$List$map,
@@ -7888,7 +7857,7 @@ var _user$project$Sidekick$view = function (_p4) {
 						]),
 					sourceView(hint)));
 		},
-		_p5.activeHints);
+		_p2.activeHints);
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
@@ -7897,20 +7866,20 @@ var _user$project$Sidekick$view = function (_p4) {
 			_elm_lang$core$Basics_ops['++'],
 			_elm_lang$core$Native_List.fromArray(
 				[
-					_elm_lang$html$Html$text(_p5.note)
+					_elm_lang$html$Html$text(_p2.note)
 				]),
 			hintsView));
 };
 var _user$project$Sidekick$update = F2(
 	function (msg, model) {
-		var _p6 = msg;
-		switch (_p6.ctor) {
+		var _p3 = msg;
+		switch (_p3.ctor) {
 			case 'ActiveHintsChanged':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{activeHints: _p6._0}),
+						{activeHints: _p3._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ActiveFilePathChanged':
@@ -7918,7 +7887,7 @@ var _user$project$Sidekick$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{activeFilePath: _p6._0}),
+						{activeFilePath: _p3._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DocsLoaded':
@@ -7963,30 +7932,35 @@ var _user$project$Sidekick$activeHintsChangedSub = _elm_lang$core$Native_Platfor
 			function (name) {
 				return A2(
 					_elm_lang$core$Json_Decode$andThen,
-					A2(_elm_lang$core$Json_Decode_ops[':='], 'sourcePath', _elm_lang$core$Json_Decode$string),
-					function (sourcePath) {
+					A2(_elm_lang$core$Json_Decode_ops[':='], 'moduleName', _elm_lang$core$Json_Decode$string),
+					function (moduleName) {
 						return A2(
 							_elm_lang$core$Json_Decode$andThen,
-							A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
-							function (comment) {
+							A2(_elm_lang$core$Json_Decode_ops[':='], 'sourcePath', _elm_lang$core$Json_Decode$string),
+							function (sourcePath) {
 								return A2(
 									_elm_lang$core$Json_Decode$andThen,
-									A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
-									function (tipe) {
+									A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
+									function (comment) {
 										return A2(
 											_elm_lang$core$Json_Decode$andThen,
-											A2(
-												_elm_lang$core$Json_Decode_ops[':='],
-												'caseTipe',
-												_elm_lang$core$Json_Decode$oneOf(
-													_elm_lang$core$Native_List.fromArray(
-														[
-															_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
-															A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
-														]))),
-											function (caseTipe) {
-												return _elm_lang$core$Json_Decode$succeed(
-													{name: name, sourcePath: sourcePath, comment: comment, tipe: tipe, caseTipe: caseTipe});
+											A2(_elm_lang$core$Json_Decode_ops[':='], 'tipe', _elm_lang$core$Json_Decode$string),
+											function (tipe) {
+												return A2(
+													_elm_lang$core$Json_Decode$andThen,
+													A2(
+														_elm_lang$core$Json_Decode_ops[':='],
+														'caseTipe',
+														_elm_lang$core$Json_Decode$oneOf(
+															_elm_lang$core$Native_List.fromArray(
+																[
+																	_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+																	A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
+																]))),
+													function (caseTipe) {
+														return _elm_lang$core$Json_Decode$succeed(
+															{name: name, moduleName: moduleName, sourcePath: sourcePath, comment: comment, tipe: tipe, caseTipe: caseTipe});
+													});
 											});
 									});
 							});
@@ -8021,13 +7995,13 @@ var _user$project$Sidekick$Model = F3(
 	function (a, b, c) {
 		return {note: a, activeHints: b, activeFilePath: c};
 	});
-var _user$project$Sidekick$ActiveHint = F5(
-	function (a, b, c, d, e) {
-		return {name: a, sourcePath: b, comment: c, tipe: d, caseTipe: e};
+var _user$project$Sidekick$ActiveHint = F6(
+	function (a, b, c, d, e, f) {
+		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, caseTipe: f};
 	});
-var _user$project$Sidekick$Hint = F5(
-	function (a, b, c, d, e) {
-		return {name: a, sourcePath: b, comment: c, tipe: d, caseTipe: e};
+var _user$project$Sidekick$Hint = F6(
+	function (a, b, c, d, e, f) {
+		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, caseTipe: f};
 	});
 var _user$project$Sidekick$UpdatingPackageDocs = {ctor: 'UpdatingPackageDocs'};
 var _user$project$Sidekick$DocsFailed = {ctor: 'DocsFailed'};
@@ -8045,15 +8019,15 @@ var _user$project$Sidekick$subscriptions = function (model) {
 				_user$project$Sidekick$activeHintsChangedSub(_user$project$Sidekick$ActiveHintsChanged),
 				_user$project$Sidekick$activeFilePathChangedSub(_user$project$Sidekick$ActiveFilePathChanged),
 				_user$project$Sidekick$docsLoadedSub(
-				function (_p7) {
+				function (_p4) {
 					return _user$project$Sidekick$DocsLoaded;
 				}),
 				_user$project$Sidekick$docsFailedSub(
-				function (_p8) {
+				function (_p5) {
 					return _user$project$Sidekick$DocsFailed;
 				}),
 				_user$project$Sidekick$updatingPackageDocsSub(
-				function (_p9) {
+				function (_p6) {
 					return _user$project$Sidekick$UpdatingPackageDocs;
 				})
 			]));
