@@ -66,6 +66,7 @@ subscriptions model =
         , goToDefinitionSub GoToDefinition
         , goToSymbolSub GoToSymbol
         , getHintsForPartialSub GetHintsForPartial
+        , askCanGoToDefinitionSub AskCanGoToDefinition
         ]
 
 
@@ -97,6 +98,9 @@ port goToSymbolSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
 port getHintsForPartialSub : (String -> msg) -> Sub msg
 
 
+port askCanGoToDefinitionSub : (String -> msg) -> Sub msg
+
+
 
 -- OUTGOING PORTS
 
@@ -123,6 +127,9 @@ port updatingPackageDocsCmd : () -> Cmd msg
 
 
 port gotHintsForPartialCmd : ( String, List EncodedHint ) -> Cmd msg
+
+
+port canGoToDefinitionRepliedCmd : ( String, Bool ) -> Cmd msg
 
 
 
@@ -212,6 +219,7 @@ type Msg
     | GoToDefinition (Maybe String)
     | GoToSymbol ( Maybe String, Maybe String )
     | GetHintsForPartial String
+    | AskCanGoToDefinition String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -319,72 +327,6 @@ update msg model =
 
                 Just projectDirectory ->
                     let
-                        symbols =
-                            Dict.values model.fileContentsDict
-                                |> List.concatMap
-                                    (\{ moduleDocs } ->
-                                        let
-                                            { sourcePath, values } =
-                                                moduleDocs
-
-                                            valueSymbols =
-                                                List.map
-                                                    (\value ->
-                                                        let
-                                                            firstChar =
-                                                                String.left 1 value.name
-
-                                                            kind =
-                                                                if firstChar == String.toUpper firstChar then
-                                                                    KindTypeAlias
-                                                                else
-                                                                    KindDefault
-                                                        in
-                                                            { fullName = (moduleDocs.name ++ "." ++ value.name)
-                                                            , sourcePath = (formatSourcePath moduleDocs value.name)
-                                                            , caseTipe = Nothing
-                                                            , kind = kind
-                                                            }
-                                                    )
-                                                    values.values
-
-                                            tipeSymbols =
-                                                List.map
-                                                    (\tipe ->
-                                                        { fullName = (moduleDocs.name ++ "." ++ tipe.name)
-                                                        , sourcePath = (formatSourcePath moduleDocs tipe.name)
-                                                        , caseTipe = Nothing
-                                                        , kind = KindType
-                                                        }
-                                                    )
-                                                    values.tipes
-
-                                            tipeCaseSymbols =
-                                                List.concatMap
-                                                    (\tipe ->
-                                                        List.map
-                                                            (\caseName ->
-                                                                { fullName = (moduleDocs.name ++ "." ++ caseName)
-                                                                , sourcePath = (formatSourcePath moduleDocs caseName)
-                                                                , caseTipe = (Just tipe.name)
-                                                                , kind = KindTypeCase
-                                                                }
-                                                            )
-                                                            tipe.cases
-                                                    )
-                                                    values.tipes
-                                        in
-                                            valueSymbols ++ tipeSymbols ++ tipeCaseSymbols
-                                    )
-
-                        projectSymbols =
-                            symbols
-                                |> List.filter
-                                    (\{ sourcePath } ->
-                                        not (String.startsWith packageDocsPrefix sourcePath)
-                                            && isSourcePathInProjectDirectory projectDirectory sourcePath
-                                    )
-
                         hints =
                             hintsForToken maybeToken model.activeTokens
 
@@ -405,7 +347,7 @@ update msg model =
                                                 Just hint.name
                     in
                         ( model
-                        , ( defaultSymbolName, model.activeFile, List.map encodeSymbol projectSymbols )
+                        , ( defaultSymbolName, model.activeFile, List.map encodeSymbol (projectSymbols projectDirectory model.fileContentsDict) )
                             |> goToSymbolCmd
                         )
 
@@ -417,6 +359,83 @@ update msg model =
               )
                 |> gotHintsForPartialCmd
             )
+
+        AskCanGoToDefinition token ->
+            ( model
+            , canGoToDefinitionRepliedCmd
+                ( token
+                , Dict.member token model.activeTokens
+                )
+            )
+
+
+projectSymbols : String -> FileContentsDict -> List Symbol
+projectSymbols projectDirectory fileContentsDict =
+    let
+        allFileSymbols fileContentsDict =
+            Dict.values fileContentsDict
+                |> List.concatMap
+                    (\{ moduleDocs } ->
+                        let
+                            { sourcePath, values } =
+                                moduleDocs
+
+                            valueSymbols =
+                                List.map
+                                    (\value ->
+                                        let
+                                            firstChar =
+                                                String.left 1 value.name
+
+                                            kind =
+                                                if firstChar == String.toUpper firstChar then
+                                                    KindTypeAlias
+                                                else
+                                                    KindDefault
+                                        in
+                                            { fullName = (moduleDocs.name ++ "." ++ value.name)
+                                            , sourcePath = (formatSourcePath moduleDocs value.name)
+                                            , caseTipe = Nothing
+                                            , kind = kind
+                                            }
+                                    )
+                                    values.values
+
+                            tipeSymbols =
+                                List.map
+                                    (\tipe ->
+                                        { fullName = (moduleDocs.name ++ "." ++ tipe.name)
+                                        , sourcePath = (formatSourcePath moduleDocs tipe.name)
+                                        , caseTipe = Nothing
+                                        , kind = KindType
+                                        }
+                                    )
+                                    values.tipes
+
+                            tipeCaseSymbols =
+                                List.concatMap
+                                    (\tipe ->
+                                        List.map
+                                            (\caseName ->
+                                                { fullName = (moduleDocs.name ++ "." ++ caseName)
+                                                , sourcePath = (formatSourcePath moduleDocs caseName)
+                                                , caseTipe = (Just tipe.name)
+                                                , kind = KindTypeCase
+                                                }
+                                            )
+                                            tipe.cases
+                                    )
+                                    values.tipes
+                        in
+                            valueSymbols ++ tipeSymbols ++ tipeCaseSymbols
+                    )
+    in
+        allFileSymbols fileContentsDict
+            |> List.filter
+                (\{ sourcePath } ->
+                    not (String.startsWith packageDocsPrefix sourcePath)
+                        && isSourcePathInProjectDirectory projectDirectory sourcePath
+                )
 
 
 hintsForToken : Maybe String -> TokenDict -> List Hint
@@ -432,7 +451,7 @@ hintsForToken maybeToken tokens =
 hintsForPartial : String -> Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
 hintsForPartial partial activeFile fileContentsDict packageDocs tokens =
     let
-        exposedList =
+        exposedSet =
             exposedHints activeFile fileContentsDict packageDocs
 
         activeModuleName =
@@ -444,10 +463,10 @@ hintsForPartial partial activeFile fileContentsDict packageDocs tokens =
                     (\token _ ->
                         let
                             exposedNames =
-                                List.map snd exposedList
+                                Set.map snd exposedSet
 
                             maybeUnqualify name =
-                                if List.member name exposedNames then
+                                if Set.member name exposedNames then
                                     lastName name
                                 else
                                     name
@@ -469,13 +488,7 @@ hintsForPartial partial activeFile fileContentsDict packageDocs tokens =
                                     hint.moduleName
 
                             formattedName =
-                                if
-                                    List.any
-                                        (\( exposedModuleName, exposedName ) ->
-                                            ( exposedModuleName, exposedName ) == ( hint.moduleName, name )
-                                        )
-                                        exposedList
-                                then
+                                if Set.member ( hint.moduleName, name ) exposedSet then
                                     name
                                 else
                                     hint.moduleName ++ "." ++ name
@@ -497,11 +510,11 @@ hintsForPartial partial activeFile fileContentsDict packageDocs tokens =
 -- ++ defaultHints
 
 
-exposedHints : Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> List ( String, String )
+exposedHints : Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> Set.Set ( String, String )
 exposedHints activeFile fileContentsDict packageDocs =
     case activeFile of
         Nothing ->
-            []
+            Set.empty
 
         Just { projectDirectory } ->
             let
@@ -554,7 +567,7 @@ exposedHints activeFile fileContentsDict packageDocs =
                                             (\{ name, cases } ->
                                                 List.filter
                                                     (\kase ->
-                                                        List.member name defaultTypes || isExposed kase exposed
+                                                        Set.member name defaultTypes || isExposed kase exposed
                                                     )
                                                     cases
                                             )
@@ -566,6 +579,7 @@ exposedHints activeFile fileContentsDict packageDocs =
                                             ( moduleDocs.name, name )
                                         )
                         )
+                    |> Set.fromList
 
 
 activeFileContents : Maybe ActiveFile -> FileContentsDict -> FileContents
@@ -617,9 +631,7 @@ type alias Tipe =
 type alias Value =
     { name : String
     , comment : String
-    , tipe :
-        String
-        -- , args : List String
+    , tipe : String
     }
 
 
@@ -703,7 +715,6 @@ moduleDecoder packageUri =
                 ("comment" := Decode.string)
                 ("type" := Decode.string)
 
-        -- ("args" := Decode.list Decode.string)
         values =
             Decode.object3 Values
                 ("aliases" := Decode.list value)
@@ -756,9 +767,7 @@ type alias Hint =
     , comment : String
     , tipe : String
     , caseTipe : Maybe String
-    , kind :
-        SymbolKind
-        -- , args : List String
+    , kind : SymbolKind
     }
 
 
@@ -770,9 +779,7 @@ emptyHint =
     , comment = ""
     , tipe = ""
     , caseTipe = Nothing
-    , kind =
-        KindDefault
-        -- , args = []
+    , kind = KindDefault
     }
 
 
@@ -783,9 +790,7 @@ type alias EncodedHint =
     , comment : String
     , tipe : String
     , caseTipe : Maybe String
-    , kind :
-        String
-        -- , args : List String
+    , kind : String
     }
 
 
@@ -797,9 +802,7 @@ encodeHint hint =
     , comment = hint.comment
     , tipe = hint.tipe
     , caseTipe = hint.caseTipe
-    , kind =
-        (symbolKindToString hint.kind)
-        -- , args = hint.args
+    , kind = (symbolKindToString hint.kind)
     }
 
 
@@ -854,9 +857,7 @@ tipeToValue : Tipe -> Value
 tipeToValue { name, comment, tipe } =
     { name = name
     , comment = comment
-    , tipe =
-        tipe
-        -- , args = []
+    , tipe = tipe
     }
 
 
@@ -869,12 +870,6 @@ filteredHints moduleDocs importData =
 
 
 nameToHints : ModuleDocs -> Import -> SymbolKind -> Value -> List ( String, Hint )
-
-
-
--- nameToHints moduleDocs { alias, exposed } kind { name, comment, tipe, args } =
-
-
 nameToHints moduleDocs { alias, exposed } kind { name, comment, tipe } =
     let
         fullName =
@@ -887,9 +882,7 @@ nameToHints moduleDocs { alias, exposed } kind { name, comment, tipe } =
             , comment = comment
             , tipe = tipe
             , caseTipe = Nothing
-            , kind =
-                kind
-                -- , args = args
+            , kind = kind
             }
 
         localName =
@@ -915,16 +908,14 @@ unionTagsToHints moduleDocs { alias, exposed } { name, cases, comment, tipe } =
                     , sourcePath = (formatSourcePath moduleDocs name)
                     , comment = comment
                     , tipe = tipe
-                    , caseTipe = (Just tag)
-                    , kind =
-                        KindTypeCase
-                        -- , args = []
+                    , caseTipe = (Just name)
+                    , kind = KindTypeCase
                     }
 
                 localName =
                     (Maybe.withDefault moduleDocs.name alias) ++ "." ++ tag
             in
-                if List.member name defaultTypes || isExposed tag exposed then
+                if Set.member name defaultTypes || isExposed tag exposed then
                     ( tag, hint ) :: ( localName, hint ) :: ( fullName, hint ) :: hints
                 else
                     ( localName, hint ) :: ( fullName, hint ) :: hints
@@ -1011,9 +1002,12 @@ defaultImports =
         ]
 
 
-defaultTypes : List String
+defaultTypes : Set.Set String
 defaultTypes =
-    [ "Maybe", "Result" ]
+    [ "Maybe"
+    , "Result"
+    ]
+        |> Set.fromList
 
 
 defaultSuggestions : List Hint
