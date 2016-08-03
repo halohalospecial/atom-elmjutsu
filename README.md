@@ -43,9 +43,9 @@ Example #3: Position = "right", Size = 300
 
 Autocomplete is turned off by default.  To turn it on, check the `Enable Autocomplete` option in the package settings.  It works on file symbols and imports.
 
-![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
-
 It's recommended to turn off the autocomplete feature of the [language-elm](https://atom.io/packages/language-elm) package to prevent duplicate suggestions.
+
+![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
 
 ## Keybindings
 
