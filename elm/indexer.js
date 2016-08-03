@@ -9216,6 +9216,7 @@ var _user$project$Indexer$hintsForPartial = F5(
 			_user$project$Indexer$defaultSuggestions);
 		var activeModuleName = A2(_user$project$Indexer$activeFileContents, activeFile, fileContentsDict).moduleDocs.name;
 		var exposedSet = A3(_user$project$Indexer$exposedHints, activeFile, fileContentsDict, packageDocs);
+		var exposedNames = A2(_elm_lang$core$Set$map, _elm_lang$core$Basics$snd, exposedSet);
 		var hints = A2(
 			_elm_lang$core$List$map,
 			function (hint) {
@@ -9240,7 +9241,6 @@ var _user$project$Indexer$hintsForPartial = F5(
 						_elm_lang$core$Dict$filter,
 						F2(
 							function (token, _p40) {
-								var exposedNames = A2(_elm_lang$core$Set$map, _elm_lang$core$Basics$snd, exposedSet);
 								var maybeUnqualify = function (name) {
 									return A2(_elm_lang$core$Set$member, name, exposedNames) ? _user$project$Indexer$lastName(name) : name;
 								};

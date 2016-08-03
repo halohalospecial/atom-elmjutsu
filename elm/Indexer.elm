@@ -454,6 +454,9 @@ hintsForPartial partial activeFile fileContentsDict packageDocs tokens =
         exposedSet =
             exposedHints activeFile fileContentsDict packageDocs
 
+        exposedNames =
+            Set.map snd exposedSet
+
         activeModuleName =
             (activeFileContents activeFile fileContentsDict).moduleDocs.name
 
@@ -462,9 +465,6 @@ hintsForPartial partial activeFile fileContentsDict packageDocs tokens =
                 |> Dict.filter
                     (\token _ ->
                         let
-                            exposedNames =
-                                Set.map snd exposedSet
-
                             maybeUnqualify name =
                                 if Set.member name exposedNames then
                                     lastName name
