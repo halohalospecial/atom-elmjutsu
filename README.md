@@ -9,21 +9,21 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
 ## Commands
 
-* #### `Elmjutsu: Go To Definition`
+#### `Elmjutsu: Go To Definition`
 
 ![go-to-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-definition.gif?raw=true)
 
 To make this work with the [hyperclick](https://atom.io/packages/hyperclick) package, check the `Enable Hyperclick` option in the package settings.
 
-* #### `Elmjutsu: Return From Definition`
+#### `Elmjutsu: Return From Definition`
 
 ![return-from-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/return-from-definition.gif?raw=true)
 
-* #### `Elmjutsu: Go To Symbol`
+#### `Elmjutsu: Go To Symbol`
 
 ![go-to-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-symbol.gif?raw=true)
 
-* #### `Elmjutsu: Toggle Sidekick`
+#### `Elmjutsu: Toggle Sidekick`
 Shows the type hints and documentation for the symbol at cursor position.  The size and position of the panel can be modified in the package settings.
 
 Example #1 (default): Position = "bottom", Size = 0 (Automatically resizes to fit content.)
