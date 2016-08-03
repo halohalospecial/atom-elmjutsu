@@ -1,5 +1,5 @@
 ## 0.3.0
-* Add Autocomplete for file symbols and imports.
+* Add autocomplete for file symbols and imports.
 
 ## 0.2.0
 * Add [hyperclick](https://atom.io/packages/hyperclick) integration.
