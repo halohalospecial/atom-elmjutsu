@@ -6,6 +6,7 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
 * [Elm](http://elm-lang.org/install)
 * [language-elm](https://atom.io/packages/language-elm)
+* [hyperclick](https://atom.io/packages/hyperclick) (optional)
 
 ## Commands
 

@@ -66,6 +66,7 @@ subscriptions model =
         , goToDefinitionSub GoToDefinition
         , goToSymbolSub GoToSymbol
         , getHintsForPartialSub GetHintsForPartial
+        , getSuggestionsForImportSub GetSuggestionsForImport
         , askCanGoToDefinitionSub AskCanGoToDefinition
         ]
 
@@ -98,6 +99,9 @@ port goToSymbolSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
 port getHintsForPartialSub : (String -> msg) -> Sub msg
 
 
+port getSuggestionsForImportSub : (String -> msg) -> Sub msg
+
+
 port askCanGoToDefinitionSub : (String -> msg) -> Sub msg
 
 
@@ -126,7 +130,10 @@ port activeHintsChangedCmd : List EncodedHint -> Cmd msg
 port updatingPackageDocsCmd : () -> Cmd msg
 
 
-port gotHintsForPartialCmd : ( String, List EncodedHint ) -> Cmd msg
+port hintsForPartialReceivedCmd : ( String, List EncodedHint ) -> Cmd msg
+
+
+port suggestionsForImportReceivedCmd : ( String, List ImportSuggestion ) -> Cmd msg
 
 
 port canGoToDefinitionRepliedCmd : ( String, Bool ) -> Cmd msg
@@ -194,6 +201,7 @@ emptyModuleDocs =
         , tipes = []
         , values = []
         }
+    , comment = ""
     }
 
 
@@ -219,6 +227,7 @@ type Msg
     | GoToDefinition (Maybe String)
     | GoToSymbol ( Maybe String, Maybe String )
     | GetHintsForPartial String
+    | GetSuggestionsForImport String
     | AskCanGoToDefinition String
 
 
@@ -357,7 +366,15 @@ update msg model =
               , hintsForPartial partial model.activeFile model.fileContentsDict model.packageDocs model.activeTokens
                     |> List.map encodeHint
               )
-                |> gotHintsForPartialCmd
+                |> hintsForPartialReceivedCmd
+            )
+
+        GetSuggestionsForImport partial ->
+            ( model
+            , ( partial
+              , suggestionsForImport partial model.activeFile model.fileContentsDict model.packageDocs
+              )
+                |> suggestionsForImportReceivedCmd
             )
 
         AskCanGoToDefinition token ->
@@ -510,6 +527,41 @@ hintsForPartial partial activeFile fileContentsDict packageDocs tokens =
 -- ++ defaultHints
 
 
+suggestionsForImport : String -> Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> List ImportSuggestion
+suggestionsForImport partial activeFile fileContentsDict packageDocs =
+    case activeFile of
+        Nothing ->
+            []
+
+        Just { projectDirectory } ->
+            let
+                suggestions =
+                    (projectModuleDocs projectDirectory fileContentsDict ++ packageDocs)
+                        |> List.map
+                            (\{ name, comment, sourcePath } ->
+                                { name = name
+                                , comment = comment
+                                , sourcePath =
+                                    if String.startsWith packageDocsPrefix sourcePath then
+                                        sourcePath ++ dotToHyphen name
+                                    else
+                                        ""
+                                }
+                            )
+            in
+                List.filter
+                    (\{ name } ->
+                        String.startsWith partial name
+                    )
+                    suggestions
+
+
+projectModuleDocs : String -> FileContentsDict -> List ModuleDocs
+projectModuleDocs projectDirectory fileContentsDict =
+    List.map .moduleDocs (Dict.values fileContentsDict)
+        |> List.filter (\{ sourcePath } -> isSourcePathInProjectDirectory projectDirectory sourcePath)
+
+
 exposedHints : Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> Set.Set ( String, String )
 exposedHints activeFile fileContentsDict packageDocs =
     case activeFile of
@@ -521,10 +573,6 @@ exposedHints activeFile fileContentsDict packageDocs =
                 fileContents =
                     activeFileContents activeFile fileContentsDict
 
-                projectModuleDocs =
-                    List.map .moduleDocs (Dict.values fileContentsDict)
-                        |> List.filter (\{ sourcePath } -> isSourcePathInProjectDirectory projectDirectory sourcePath)
-
                 importsPlusActiveModule =
                     Dict.update fileContents.moduleDocs.name (always <| Just { alias = Nothing, exposed = All }) fileContents.imports
 
@@ -532,7 +580,7 @@ exposedHints activeFile fileContentsDict packageDocs =
                     Dict.keys importsPlusActiveModule
 
                 importedModuleDocs =
-                    (packageDocs ++ projectModuleDocs)
+                    (packageDocs ++ projectModuleDocs projectDirectory fileContentsDict)
                         |> List.filter
                             (\moduleDocs ->
                                 List.member moduleDocs.name importedModuleNames
@@ -606,10 +654,15 @@ isSourcePathInProjectDirectory projectDirectory sourcePath =
         [ "/", "\\" ]
 
 
+
+-- TODO: Add `comments` to `ModuleDocs`
+
+
 type alias ModuleDocs =
     { sourcePath : String
     , name : String
     , values : Values
+    , comment : String
     }
 
 
@@ -721,7 +774,10 @@ moduleDecoder packageUri =
                 ("types" := Decode.list tipe)
                 ("values" := Decode.list value)
     in
-        Decode.object2 (ModuleDocs packageUri) name values
+        Decode.object3 (ModuleDocs packageUri)
+            name
+            values
+            ("comment" := Decode.string)
 
 
 type alias TokenDict =
@@ -822,6 +878,13 @@ symbolKindToString kind =
             "type case"
 
 
+type alias ImportSuggestion =
+    { name : String
+    , comment : String
+    , sourcePath : String
+    }
+
+
 toTokenDict : Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> TokenDict
 toTokenDict activeFile fileContentsDict packageDocsList =
     let
@@ -834,10 +897,6 @@ toTokenDict activeFile fileContentsDict packageDocsList =
 
             Just { projectDirectory } ->
                 let
-                    projectModuleDocs =
-                        List.map .moduleDocs (Dict.values fileContentsDict)
-                            |> List.filter (\{ sourcePath } -> isSourcePathInProjectDirectory projectDirectory sourcePath)
-
                     importsPlusActiveModule =
                         Dict.update fileContents.moduleDocs.name (always <| Just { alias = Nothing, exposed = All }) fileContents.imports
 
@@ -847,7 +906,7 @@ toTokenDict activeFile fileContentsDict packageDocsList =
                     insert ( token, hint ) dict =
                         Dict.update token (\value -> Just (hint :: Maybe.withDefault [] value)) dict
                 in
-                    (packageDocsList ++ projectModuleDocs)
+                    (packageDocsList ++ projectModuleDocs projectDirectory fileContentsDict)
                         |> List.filterMap getMaybeHints
                         |> List.concat
                         |> List.foldl insert Dict.empty

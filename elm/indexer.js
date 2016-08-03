@@ -8367,10 +8367,60 @@ var _user$project$Indexer$isSourcePathInProjectDirectory = F2(
 			_elm_lang$core$Native_List.fromArray(
 				['/', '\\']));
 	});
+var _user$project$Indexer$projectModuleDocs = F2(
+	function (projectDirectory, fileContentsDict) {
+		return A2(
+			_elm_lang$core$List$filter,
+			function (_p12) {
+				var _p13 = _p12;
+				return A2(_user$project$Indexer$isSourcePathInProjectDirectory, projectDirectory, _p13.sourcePath);
+			},
+			A2(
+				_elm_lang$core$List$map,
+				function (_) {
+					return _.moduleDocs;
+				},
+				_elm_lang$core$Dict$values(fileContentsDict)));
+	});
+var _user$project$Indexer$suggestionsForImport = F4(
+	function (partial, activeFile, fileContentsDict, packageDocs) {
+		var _p14 = activeFile;
+		if (_p14.ctor === 'Nothing') {
+			return _elm_lang$core$Native_List.fromArray(
+				[]);
+		} else {
+			var suggestions = A2(
+				_elm_lang$core$List$map,
+				function (_p15) {
+					var _p16 = _p15;
+					var _p18 = _p16.sourcePath;
+					var _p17 = _p16.name;
+					return {
+						name: _p17,
+						comment: _p16.comment,
+						sourcePath: A2(_elm_lang$core$String$startsWith, _user$project$Indexer$packageDocsPrefix, _p18) ? A2(
+							_elm_lang$core$Basics_ops['++'],
+							_p18,
+							_user$project$Indexer$dotToHyphen(_p17)) : ''
+					};
+				},
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					A2(_user$project$Indexer$projectModuleDocs, _p14._0.projectDirectory, fileContentsDict),
+					packageDocs));
+			return A2(
+				_elm_lang$core$List$filter,
+				function (_p19) {
+					var _p20 = _p19;
+					return A2(_elm_lang$core$String$startsWith, partial, _p20.name);
+				},
+				suggestions);
+		}
+	});
 var _user$project$Indexer$hintsForToken = F2(
 	function (maybeToken, tokens) {
-		var _p12 = maybeToken;
-		if (_p12.ctor === 'Nothing') {
+		var _p21 = maybeToken;
+		if (_p21.ctor === 'Nothing') {
 			return _elm_lang$core$Native_List.fromArray(
 				[]);
 		} else {
@@ -8378,7 +8428,7 @@ var _user$project$Indexer$hintsForToken = F2(
 				_elm_lang$core$Maybe$withDefault,
 				_elm_lang$core$Native_List.fromArray(
 					[]),
-				A2(_elm_lang$core$Dict$get, _p12._0, tokens));
+				A2(_elm_lang$core$Dict$get, _p21._0, tokens));
 		}
 	});
 var _user$project$Indexer$emptyModuleDocs = {
@@ -8391,7 +8441,8 @@ var _user$project$Indexer$emptyModuleDocs = {
 			[]),
 		values: _elm_lang$core$Native_List.fromArray(
 			[])
-	}
+	},
+	comment: ''
 };
 var _user$project$Indexer$emptyModel = {
 	packageDocs: _elm_lang$core$Native_List.fromArray(
@@ -8540,8 +8591,13 @@ var _user$project$Indexer$fileContentsChangedSub = _elm_lang$core$Native_Platfor
 											});
 									})),
 							function (values) {
-								return _elm_lang$core$Json_Decode$succeed(
-									{sourcePath: sourcePath, name: name, values: values});
+								return A2(
+									_elm_lang$core$Json_Decode$andThen,
+									A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string),
+									function (comment) {
+										return _elm_lang$core$Json_Decode$succeed(
+											{sourcePath: sourcePath, name: name, values: values, comment: comment});
+									});
 							});
 					});
 			}),
@@ -8615,6 +8671,7 @@ var _user$project$Indexer$goToSymbolSub = _elm_lang$core$Native_Platform.incomin
 					A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
 				]))));
 var _user$project$Indexer$getHintsForPartialSub = _elm_lang$core$Native_Platform.incomingPort('getHintsForPartialSub', _elm_lang$core$Json_Decode$string);
+var _user$project$Indexer$getSuggestionsForImportSub = _elm_lang$core$Native_Platform.incomingPort('getSuggestionsForImportSub', _elm_lang$core$Json_Decode$string);
 var _user$project$Indexer$askCanGoToDefinitionSub = _elm_lang$core$Native_Platform.incomingPort('askCanGoToDefinitionSub', _elm_lang$core$Json_Decode$string);
 var _user$project$Indexer$docsLoadedCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'docsLoadedCmd',
@@ -8678,8 +8735,8 @@ var _user$project$Indexer$updatingPackageDocsCmd = _elm_lang$core$Native_Platfor
 	function (v) {
 		return null;
 	});
-var _user$project$Indexer$gotHintsForPartialCmd = _elm_lang$core$Native_Platform.outgoingPort(
-	'gotHintsForPartialCmd',
+var _user$project$Indexer$hintsForPartialReceivedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'hintsForPartialReceivedCmd',
 	function (v) {
 		return [
 			v._0,
@@ -8694,6 +8751,17 @@ var _user$project$Indexer$gotHintsForPartialCmd = _elm_lang$core$Native_Platform
 					caseTipe: (v.caseTipe.ctor === 'Nothing') ? null : v.caseTipe._0,
 					kind: v.kind
 				};
+			})
+		];
+	});
+var _user$project$Indexer$suggestionsForImportReceivedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'suggestionsForImportReceivedCmd',
+	function (v) {
+		return [
+			v._0,
+			_elm_lang$core$Native_List.toArray(v._1).map(
+			function (v) {
+				return {name: v.name, comment: v.comment, sourcePath: v.sourcePath};
 			})
 		];
 	});
@@ -8718,9 +8786,9 @@ var _user$project$Indexer$GoToDefinitionRequest = F3(
 	function (a, b, c) {
 		return {sourcePath: a, name: b, caseTipe: c};
 	});
-var _user$project$Indexer$ModuleDocs = F3(
-	function (a, b, c) {
-		return {sourcePath: a, name: b, values: c};
+var _user$project$Indexer$ModuleDocs = F4(
+	function (a, b, c, d) {
+		return {sourcePath: a, name: b, values: c, comment: d};
 	});
 var _user$project$Indexer$Values = F3(
 	function (a, b, c) {
@@ -8768,11 +8836,12 @@ var _user$project$Indexer$moduleDecoder = function (packageUri) {
 			'values',
 			_elm_lang$core$Json_Decode$list(value)));
 	var name = A2(_elm_lang$core$Json_Decode_ops[':='], 'name', _elm_lang$core$Json_Decode$string);
-	return A3(
-		_elm_lang$core$Json_Decode$object2,
+	return A4(
+		_elm_lang$core$Json_Decode$object3,
 		_user$project$Indexer$ModuleDocs(packageUri),
 		name,
-		values);
+		values,
+		A2(_elm_lang$core$Json_Decode_ops[':='], 'comment', _elm_lang$core$Json_Decode$string));
 };
 var _user$project$Indexer$getPackageDocs = function (packageUri) {
 	var url = A2(_elm_lang$core$Basics_ops['++'], packageUri, 'documentation.json');
@@ -8805,6 +8874,10 @@ var _user$project$Indexer$EncodedHint = F7(
 	function (a, b, c, d, e, f, g) {
 		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, caseTipe: f, kind: g};
 	});
+var _user$project$Indexer$ImportSuggestion = F3(
+	function (a, b, c) {
+		return {name: a, comment: b, sourcePath: c};
+	});
 var _user$project$Indexer$RawImport = F3(
 	function (a, b, c) {
 		return {name: a, alias: b, exposed: c};
@@ -8824,6 +8897,9 @@ _user$project$Indexer_ops['=>'] = F2(
 	});
 var _user$project$Indexer$AskCanGoToDefinition = function (a) {
 	return {ctor: 'AskCanGoToDefinition', _0: a};
+};
+var _user$project$Indexer$GetSuggestionsForImport = function (a) {
+	return {ctor: 'GetSuggestionsForImport', _0: a};
 };
 var _user$project$Indexer$GetHintsForPartial = function (a) {
 	return {ctor: 'GetHintsForPartial', _0: a};
@@ -8865,30 +8941,30 @@ var _user$project$Indexer$init = {
 };
 var _user$project$Indexer$KindTypeCase = {ctor: 'KindTypeCase'};
 var _user$project$Indexer$unionTagsToHints = F3(
-	function (moduleDocs, _p14, _p13) {
-		var _p15 = _p14;
-		var _p16 = _p13;
-		var _p17 = _p16.name;
+	function (moduleDocs, _p23, _p22) {
+		var _p24 = _p23;
+		var _p25 = _p22;
+		var _p26 = _p25.name;
 		var addHints = F2(
 			function (tag, hints) {
 				var localName = A2(
 					_elm_lang$core$Basics_ops['++'],
-					A2(_elm_lang$core$Maybe$withDefault, moduleDocs.name, _p15.alias),
+					A2(_elm_lang$core$Maybe$withDefault, moduleDocs.name, _p24.alias),
 					A2(_elm_lang$core$Basics_ops['++'], '.', tag));
 				var hint = {
 					name: tag,
 					moduleName: moduleDocs.name,
-					sourcePath: A2(_user$project$Indexer$formatSourcePath, moduleDocs, _p17),
-					comment: _p16.comment,
-					tipe: _p16.tipe,
-					caseTipe: _elm_lang$core$Maybe$Just(_p17),
+					sourcePath: A2(_user$project$Indexer$formatSourcePath, moduleDocs, _p26),
+					comment: _p25.comment,
+					tipe: _p25.tipe,
+					caseTipe: _elm_lang$core$Maybe$Just(_p26),
 					kind: _user$project$Indexer$KindTypeCase
 				};
 				var fullName = A2(
 					_elm_lang$core$Basics_ops['++'],
 					moduleDocs.name,
 					A2(_elm_lang$core$Basics_ops['++'], '.', tag));
-				return (A2(_elm_lang$core$Set$member, _p17, _user$project$Indexer$defaultTypes) || A2(_user$project$Indexer$isExposed, tag, _p15.exposed)) ? A2(
+				return (A2(_elm_lang$core$Set$member, _p26, _user$project$Indexer$defaultTypes) || A2(_user$project$Indexer$isExposed, tag, _p24.exposed)) ? A2(
 					_elm_lang$core$List_ops['::'],
 					{ctor: '_Tuple2', _0: tag, _1: hint},
 					A2(
@@ -8910,7 +8986,7 @@ var _user$project$Indexer$unionTagsToHints = F3(
 			addHints,
 			_elm_lang$core$Native_List.fromArray(
 				[]),
-			_p16.cases);
+			_p25.cases);
 	});
 var _user$project$Indexer$KindType = {ctor: 'KindType'};
 var _user$project$Indexer$KindTypeAlias = {ctor: 'KindTypeAlias'};
@@ -8920,12 +8996,12 @@ var _user$project$Indexer$projectSymbols = F2(
 		var allFileSymbols = function (fileContentsDict) {
 			return A2(
 				_elm_lang$core$List$concatMap,
-				function (_p18) {
-					var _p19 = _p18;
-					var _p21 = _p19.moduleDocs;
-					var _p20 = _p21;
-					var sourcePath = _p20.sourcePath;
-					var values = _p20.values;
+				function (_p27) {
+					var _p28 = _p27;
+					var _p30 = _p28.moduleDocs;
+					var _p29 = _p30;
+					var sourcePath = _p29.sourcePath;
+					var values = _p29.values;
 					var valueSymbols = A2(
 						_elm_lang$core$List$map,
 						function (value) {
@@ -8936,9 +9012,9 @@ var _user$project$Indexer$projectSymbols = F2(
 							return {
 								fullName: A2(
 									_elm_lang$core$Basics_ops['++'],
-									_p21.name,
+									_p30.name,
 									A2(_elm_lang$core$Basics_ops['++'], '.', value.name)),
-								sourcePath: A2(_user$project$Indexer$formatSourcePath, _p21, value.name),
+								sourcePath: A2(_user$project$Indexer$formatSourcePath, _p30, value.name),
 								caseTipe: _elm_lang$core$Maybe$Nothing,
 								kind: kind
 							};
@@ -8950,9 +9026,9 @@ var _user$project$Indexer$projectSymbols = F2(
 							return {
 								fullName: A2(
 									_elm_lang$core$Basics_ops['++'],
-									_p21.name,
+									_p30.name,
 									A2(_elm_lang$core$Basics_ops['++'], '.', tipe.name)),
-								sourcePath: A2(_user$project$Indexer$formatSourcePath, _p21, tipe.name),
+								sourcePath: A2(_user$project$Indexer$formatSourcePath, _p30, tipe.name),
 								caseTipe: _elm_lang$core$Maybe$Nothing,
 								kind: _user$project$Indexer$KindType
 							};
@@ -8967,9 +9043,9 @@ var _user$project$Indexer$projectSymbols = F2(
 									return {
 										fullName: A2(
 											_elm_lang$core$Basics_ops['++'],
-											_p21.name,
+											_p30.name,
 											A2(_elm_lang$core$Basics_ops['++'], '.', caseName)),
-										sourcePath: A2(_user$project$Indexer$formatSourcePath, _p21, caseName),
+										sourcePath: A2(_user$project$Indexer$formatSourcePath, _p30, caseName),
 										caseTipe: _elm_lang$core$Maybe$Just(tipe.name),
 										kind: _user$project$Indexer$KindTypeCase
 									};
@@ -8986,11 +9062,11 @@ var _user$project$Indexer$projectSymbols = F2(
 		};
 		return A2(
 			_elm_lang$core$List$filter,
-			function (_p22) {
-				var _p23 = _p22;
-				var _p24 = _p23.sourcePath;
+			function (_p31) {
+				var _p32 = _p31;
+				var _p33 = _p32.sourcePath;
 				return _elm_lang$core$Basics$not(
-					A2(_elm_lang$core$String$startsWith, _user$project$Indexer$packageDocsPrefix, _p24)) && A2(_user$project$Indexer$isSourcePathInProjectDirectory, projectDirectory, _p24);
+					A2(_elm_lang$core$String$startsWith, _user$project$Indexer$packageDocsPrefix, _p33)) && A2(_user$project$Indexer$isSourcePathInProjectDirectory, projectDirectory, _p33);
 			},
 			allFileSymbols(fileContentsDict));
 	});
@@ -9034,25 +9110,25 @@ var _user$project$Indexer$Some = function (a) {
 	return {ctor: 'Some', _0: a};
 };
 var _user$project$Indexer$None = {ctor: 'None'};
-var _user$project$Indexer$toImport = function (_p25) {
-	var _p26 = _p25;
+var _user$project$Indexer$toImport = function (_p34) {
+	var _p35 = _p34;
 	var exposedSet = function () {
-		var _p27 = _p26.exposed;
-		if (_p27.ctor === 'Nothing') {
+		var _p36 = _p35.exposed;
+		if (_p36.ctor === 'Nothing') {
 			return _user$project$Indexer$None;
 		} else {
-			if (((_p27._0.ctor === '::') && (_p27._0._0 === '..')) && (_p27._0._1.ctor === '[]')) {
+			if (((_p36._0.ctor === '::') && (_p36._0._0 === '..')) && (_p36._0._1.ctor === '[]')) {
 				return _user$project$Indexer$All;
 			} else {
 				return _user$project$Indexer$Some(
-					_elm_lang$core$Set$fromList(_p27._0));
+					_elm_lang$core$Set$fromList(_p36._0));
 			}
 		}
 	}();
 	return {
 		ctor: '_Tuple2',
-		_0: _p26.name,
-		_1: A2(_user$project$Indexer$Import, _p26.alias, exposedSet)
+		_0: _p35.name,
+		_1: A2(_user$project$Indexer$Import, _p35.alias, exposedSet)
 	};
 };
 var _user$project$Indexer$defaultImports = _elm_lang$core$Dict$fromList(
@@ -9106,13 +9182,13 @@ var _user$project$Indexer$defaultImports = _elm_lang$core$Dict$fromList(
 var _user$project$Indexer$emptyFileContents = {moduleDocs: _user$project$Indexer$emptyModuleDocs, imports: _user$project$Indexer$defaultImports};
 var _user$project$Indexer$activeFileContents = F2(
 	function (activeFile, fileContentsDict) {
-		var _p28 = activeFile;
-		if (_p28.ctor === 'Nothing') {
+		var _p37 = activeFile;
+		if (_p37.ctor === 'Nothing') {
 			return _user$project$Indexer$emptyFileContents;
 		} else {
-			var _p29 = A2(_elm_lang$core$Dict$get, _p28._0.filePath, fileContentsDict);
-			if (_p29.ctor === 'Just') {
-				return _p29._0;
+			var _p38 = A2(_elm_lang$core$Dict$get, _p37._0.filePath, fileContentsDict);
+			if (_p38.ctor === 'Just') {
+				return _p38._0;
 			} else {
 				return _user$project$Indexer$emptyFileContents;
 			}
@@ -9120,22 +9196,10 @@ var _user$project$Indexer$activeFileContents = F2(
 	});
 var _user$project$Indexer$exposedHints = F3(
 	function (activeFile, fileContentsDict, packageDocs) {
-		var _p30 = activeFile;
-		if (_p30.ctor === 'Nothing') {
+		var _p39 = activeFile;
+		if (_p39.ctor === 'Nothing') {
 			return _elm_lang$core$Set$empty;
 		} else {
-			var projectModuleDocs = A2(
-				_elm_lang$core$List$filter,
-				function (_p31) {
-					var _p32 = _p31;
-					return A2(_user$project$Indexer$isSourcePathInProjectDirectory, _p30._0.projectDirectory, _p32.sourcePath);
-				},
-				A2(
-					_elm_lang$core$List$map,
-					function (_) {
-						return _.moduleDocs;
-					},
-					_elm_lang$core$Dict$values(fileContentsDict)));
 			var fileContents = A2(_user$project$Indexer$activeFileContents, activeFile, fileContentsDict);
 			var importsPlusActiveModule = A3(
 				_elm_lang$core$Dict$update,
@@ -9150,18 +9214,21 @@ var _user$project$Indexer$exposedHints = F3(
 				function (moduleDocs) {
 					return A2(_elm_lang$core$List$member, moduleDocs.name, importedModuleNames);
 				},
-				A2(_elm_lang$core$Basics_ops['++'], packageDocs, projectModuleDocs));
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					packageDocs,
+					A2(_user$project$Indexer$projectModuleDocs, _p39._0.projectDirectory, fileContentsDict)));
 			var imports = _elm_lang$core$Dict$values(importsPlusActiveModule);
 			return _elm_lang$core$Set$fromList(
 				A2(
 					_elm_lang$core$List$concatMap,
 					function (moduleDocs) {
 						var exposed = function () {
-							var _p33 = A2(_elm_lang$core$Dict$get, moduleDocs.name, importsPlusActiveModule);
-							if (_p33.ctor === 'Nothing') {
+							var _p40 = A2(_elm_lang$core$Dict$get, moduleDocs.name, importsPlusActiveModule);
+							if (_p40.ctor === 'Nothing') {
 								return _user$project$Indexer$None;
 							} else {
-								return _p33._0.exposed;
+								return _p40._0.exposed;
 							}
 						}();
 						return A2(
@@ -9178,9 +9245,9 @@ var _user$project$Indexer$exposedHints = F3(
 									},
 									A2(
 										_elm_lang$core$List$filter,
-										function (_p34) {
-											var _p35 = _p34;
-											return A2(_user$project$Indexer$isExposed, _p35.name, exposed);
+										function (_p41) {
+											var _p42 = _p41;
+											return A2(_user$project$Indexer$isExposed, _p42.name, exposed);
 										},
 										A2(
 											_elm_lang$core$Basics_ops['++'],
@@ -9191,14 +9258,14 @@ var _user$project$Indexer$exposedHints = F3(
 												moduleDocs.values.values)))),
 								A2(
 									_elm_lang$core$List$concatMap,
-									function (_p36) {
-										var _p37 = _p36;
+									function (_p43) {
+										var _p44 = _p43;
 										return A2(
 											_elm_lang$core$List$filter,
 											function (kase) {
-												return A2(_elm_lang$core$Set$member, _p37.name, _user$project$Indexer$defaultTypes) || A2(_user$project$Indexer$isExposed, kase, exposed);
+												return A2(_elm_lang$core$Set$member, _p44.name, _user$project$Indexer$defaultTypes) || A2(_user$project$Indexer$isExposed, kase, exposed);
 											},
-											_p37.cases);
+											_p44.cases);
 									},
 									moduleDocs.values.tipes)));
 					},
@@ -9209,9 +9276,9 @@ var _user$project$Indexer$hintsForPartial = F5(
 	function (partial, activeFile, fileContentsDict, packageDocs, tokens) {
 		var defaultHints = A2(
 			_elm_lang$core$List$filter,
-			function (_p38) {
-				var _p39 = _p38;
-				return A2(_elm_lang$core$String$startsWith, partial, _p39.name);
+			function (_p45) {
+				var _p46 = _p45;
+				return A2(_elm_lang$core$String$startsWith, partial, _p46.name);
 			},
 			_user$project$Indexer$defaultSuggestions);
 		var activeModuleName = A2(_user$project$Indexer$activeFileContents, activeFile, fileContentsDict).moduleDocs.name;
@@ -9240,7 +9307,7 @@ var _user$project$Indexer$hintsForPartial = F5(
 					A2(
 						_elm_lang$core$Dict$filter,
 						F2(
-							function (token, _p40) {
+							function (token, _p47) {
 								var maybeUnqualify = function (name) {
 									return A2(_elm_lang$core$Set$member, name, exposedNames) ? _user$project$Indexer$lastName(name) : name;
 								};
@@ -9255,21 +9322,21 @@ var _user$project$Indexer$hintsForPartial = F5(
 var _user$project$Indexer$toTokenDict = F3(
 	function (activeFile, fileContentsDict, packageDocsList) {
 		var fileContents = A2(_user$project$Indexer$activeFileContents, activeFile, fileContentsDict);
-		var _p41 = activeFile;
-		if (_p41.ctor === 'Nothing') {
+		var _p48 = activeFile;
+		if (_p48.ctor === 'Nothing') {
 			return _elm_lang$core$Dict$empty;
 		} else {
 			var insert = F2(
-				function (_p42, dict) {
-					var _p43 = _p42;
+				function (_p49, dict) {
+					var _p50 = _p49;
 					return A3(
 						_elm_lang$core$Dict$update,
-						_p43._0,
+						_p50._0,
 						function (value) {
 							return _elm_lang$core$Maybe$Just(
 								A2(
 									_elm_lang$core$List_ops['::'],
-									_p43._1,
+									_p50._1,
 									A2(
 										_elm_lang$core$Maybe$withDefault,
 										_elm_lang$core$Native_List.fromArray(
@@ -9291,18 +9358,6 @@ var _user$project$Indexer$toTokenDict = F3(
 					_user$project$Indexer$filteredHints(moduleDocs),
 					A2(_elm_lang$core$Dict$get, moduleDocs.name, importsPlusActiveModule));
 			};
-			var projectModuleDocs = A2(
-				_elm_lang$core$List$filter,
-				function (_p44) {
-					var _p45 = _p44;
-					return A2(_user$project$Indexer$isSourcePathInProjectDirectory, _p41._0.projectDirectory, _p45.sourcePath);
-				},
-				A2(
-					_elm_lang$core$List$map,
-					function (_) {
-						return _.moduleDocs;
-					},
-					_elm_lang$core$Dict$values(fileContentsDict)));
 			return A3(
 				_elm_lang$core$List$foldl,
 				insert,
@@ -9311,13 +9366,16 @@ var _user$project$Indexer$toTokenDict = F3(
 					A2(
 						_elm_lang$core$List$filterMap,
 						getMaybeHints,
-						A2(_elm_lang$core$Basics_ops['++'], packageDocsList, projectModuleDocs))));
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							packageDocsList,
+							A2(_user$project$Indexer$projectModuleDocs, _p48._0.projectDirectory, fileContentsDict)))));
 		}
 	});
 var _user$project$Indexer$update = F2(
 	function (msg, model) {
-		var _p46 = msg;
-		switch (_p46.ctor) {
+		var _p51 = msg;
+		switch (_p51.ctor) {
 			case 'DocsFailed':
 				return {
 					ctor: '_Tuple2',
@@ -9334,12 +9392,12 @@ var _user$project$Indexer$update = F2(
 					model.packageDocs);
 				var missingPackageDocs = A2(
 					_elm_lang$core$List$filter,
-					function (_p47) {
-						var _p48 = _p47;
+					function (_p52) {
+						var _p53 = _p52;
 						return _elm_lang$core$Basics$not(
-							A2(_elm_lang$core$List$member, _p48.sourcePath, existingPackages));
+							A2(_elm_lang$core$List$member, _p53.sourcePath, existingPackages));
 					},
-					_p46._0);
+					_p51._0);
 				var updatedPackageDocs = A2(_elm_lang$core$Basics_ops['++'], missingPackageDocs, model.packageDocs);
 				return {
 					ctor: '_Tuple2',
@@ -9353,7 +9411,7 @@ var _user$project$Indexer$update = F2(
 						{ctor: '_Tuple0'})
 				};
 			case 'CursorMove':
-				var updatedActiveHints = A2(_user$project$Indexer$hintsForToken, _p46._0, model.activeTokens);
+				var updatedActiveHints = A2(_user$project$Indexer$hintsForToken, _p51._0, model.activeTokens);
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -9363,23 +9421,23 @@ var _user$project$Indexer$update = F2(
 						A2(_elm_lang$core$List$map, _user$project$Indexer$encodeHint, updatedActiveHints))
 				};
 			case 'UpdateActiveFile':
-				var _p49 = _p46._0;
+				var _p54 = _p51._0;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{
-							activeFile: _p49,
-							activeTokens: A3(_user$project$Indexer$toTokenDict, _p49, model.fileContentsDict, model.packageDocs)
+							activeFile: _p54,
+							activeTokens: A3(_user$project$Indexer$toTokenDict, _p54, model.fileContentsDict, model.packageDocs)
 						}),
-					_1: _user$project$Indexer$activeFileChangedCmd(_p49)
+					_1: _user$project$Indexer$activeFileChangedCmd(_p54)
 				};
 			case 'UpdateFileContents':
 				var updatedFileContentsDict = A3(
 					_elm_lang$core$Dict$update,
-					_p46._0,
+					_p51._0,
 					_elm_lang$core$Basics$always(
-						_elm_lang$core$Maybe$Just(_p46._1)),
+						_elm_lang$core$Maybe$Just(_p51._1)),
 					model.fileContentsDict);
 				return {
 					ctor: '_Tuple2',
@@ -9392,7 +9450,7 @@ var _user$project$Indexer$update = F2(
 					_1: _user$project$Indexer$activeFileChangedCmd(model.activeFile)
 				};
 			case 'RemoveFileContents':
-				var updatedFileContentsDict = A2(_elm_lang$core$Dict$remove, _p46._0, model.fileContentsDict);
+				var updatedFileContentsDict = A2(_elm_lang$core$Dict$remove, _p51._0, model.fileContentsDict);
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -9416,7 +9474,7 @@ var _user$project$Indexer$update = F2(
 						return _elm_lang$core$Basics$not(
 							A2(_elm_lang$core$List$member, sourcePath, existingPackages));
 					},
-					A2(_elm_lang$core$List$map, _user$project$Indexer$toPackageUri, _p46._0));
+					A2(_elm_lang$core$List$map, _user$project$Indexer$toPackageUri, _p51._0));
 				return {
 					ctor: '_Tuple2',
 					_0: model,
@@ -9443,31 +9501,31 @@ var _user$project$Indexer$update = F2(
 								_user$project$Indexer$lastName(hint.name),
 								hint.caseTipe));
 					},
-					A2(_user$project$Indexer$hintsForToken, _p46._0, model.activeTokens));
+					A2(_user$project$Indexer$hintsForToken, _p51._0, model.activeTokens));
 				return {
 					ctor: '_Tuple2',
 					_0: model,
 					_1: _elm_lang$core$Platform_Cmd$batch(requests)
 				};
 			case 'GoToSymbol':
-				var _p54 = _p46._0._1;
-				var _p50 = _p46._0._0;
-				if (_p50.ctor === 'Nothing') {
+				var _p59 = _p51._0._1;
+				var _p55 = _p51._0._0;
+				if (_p55.ctor === 'Nothing') {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
 				} else {
-					var hints = A2(_user$project$Indexer$hintsForToken, _p54, model.activeTokens);
+					var hints = A2(_user$project$Indexer$hintsForToken, _p59, model.activeTokens);
 					var defaultSymbolName = function () {
-						var _p51 = _elm_lang$core$List$head(hints);
-						if (_p51.ctor === 'Nothing') {
-							return _p54;
+						var _p56 = _elm_lang$core$List$head(hints);
+						if (_p56.ctor === 'Nothing') {
+							return _p59;
 						} else {
-							var _p53 = _p51._0;
-							var _p52 = model.activeFile;
-							if (_p52.ctor === 'Nothing') {
-								return _elm_lang$core$Maybe$Just(_p53.name);
+							var _p58 = _p56._0;
+							var _p57 = model.activeFile;
+							if (_p57.ctor === 'Nothing') {
+								return _elm_lang$core$Maybe$Just(_p58.name);
 							} else {
-								return _elm_lang$core$Native_Utils.eq(_p52._0.filePath, _p53.sourcePath) ? _elm_lang$core$Maybe$Just(
-									_user$project$Indexer$lastName(_p53.name)) : _elm_lang$core$Maybe$Just(_p53.name);
+								return _elm_lang$core$Native_Utils.eq(_p57._0.filePath, _p58.sourcePath) ? _elm_lang$core$Maybe$Just(
+									_user$project$Indexer$lastName(_p58.name)) : _elm_lang$core$Maybe$Just(_p58.name);
 							}
 						}
 					}();
@@ -9482,35 +9540,47 @@ var _user$project$Indexer$update = F2(
 								_2: A2(
 									_elm_lang$core$List$map,
 									_user$project$Indexer$encodeSymbol,
-									A2(_user$project$Indexer$projectSymbols, _p50._0, model.fileContentsDict))
+									A2(_user$project$Indexer$projectSymbols, _p55._0, model.fileContentsDict))
 							})
 					};
 				}
 			case 'GetHintsForPartial':
-				var _p55 = _p46._0;
+				var _p60 = _p51._0;
 				return {
 					ctor: '_Tuple2',
 					_0: model,
-					_1: _user$project$Indexer$gotHintsForPartialCmd(
+					_1: _user$project$Indexer$hintsForPartialReceivedCmd(
 						{
 							ctor: '_Tuple2',
-							_0: _p55,
+							_0: _p60,
 							_1: A2(
 								_elm_lang$core$List$map,
 								_user$project$Indexer$encodeHint,
-								A5(_user$project$Indexer$hintsForPartial, _p55, model.activeFile, model.fileContentsDict, model.packageDocs, model.activeTokens))
+								A5(_user$project$Indexer$hintsForPartial, _p60, model.activeFile, model.fileContentsDict, model.packageDocs, model.activeTokens))
+						})
+				};
+			case 'GetSuggestionsForImport':
+				var _p61 = _p51._0;
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: _user$project$Indexer$suggestionsForImportReceivedCmd(
+						{
+							ctor: '_Tuple2',
+							_0: _p61,
+							_1: A4(_user$project$Indexer$suggestionsForImport, _p61, model.activeFile, model.fileContentsDict, model.packageDocs)
 						})
 				};
 			default:
-				var _p56 = _p46._0;
+				var _p62 = _p51._0;
 				return {
 					ctor: '_Tuple2',
 					_0: model,
 					_1: _user$project$Indexer$canGoToDefinitionRepliedCmd(
 						{
 							ctor: '_Tuple2',
-							_0: _p56,
-							_1: A2(_elm_lang$core$Dict$member, _p56, model.activeTokens)
+							_0: _p62,
+							_1: A2(_elm_lang$core$Dict$member, _p62, model.activeTokens)
 						})
 				};
 		}
@@ -9529,21 +9599,22 @@ var _user$project$Indexer$subscriptions = function (model) {
 				_user$project$Indexer$activeTokenChangedSub(_user$project$Indexer$CursorMove),
 				_user$project$Indexer$activeFileChangedSub(_user$project$Indexer$UpdateActiveFile),
 				_user$project$Indexer$fileContentsChangedSub(
-				function (_p57) {
-					var _p58 = _p57;
+				function (_p63) {
+					var _p64 = _p63;
 					return A2(
 						_user$project$Indexer$UpdateFileContents,
-						_p58._0,
+						_p64._0,
 						A2(
 							_user$project$Indexer$FileContents,
-							_p58._1,
-							_user$project$Indexer$toImportDict(_p58._2)));
+							_p64._1,
+							_user$project$Indexer$toImportDict(_p64._2)));
 				}),
 				_user$project$Indexer$fileContentsRemovedSub(_user$project$Indexer$RemoveFileContents),
 				_user$project$Indexer$newPackagesNeededSub(_user$project$Indexer$UpdatePackageDocs),
 				_user$project$Indexer$goToDefinitionSub(_user$project$Indexer$GoToDefinition),
 				_user$project$Indexer$goToSymbolSub(_user$project$Indexer$GoToSymbol),
 				_user$project$Indexer$getHintsForPartialSub(_user$project$Indexer$GetHintsForPartial),
+				_user$project$Indexer$getSuggestionsForImportSub(_user$project$Indexer$GetSuggestionsForImport),
 				_user$project$Indexer$askCanGoToDefinitionSub(_user$project$Indexer$AskCanGoToDefinition)
 			]));
 };
@@ -9551,7 +9622,7 @@ var _user$project$Indexer$main = {
 	main: _elm_lang$html$Html_App$program(
 		{
 			init: _user$project$Indexer$init,
-			view: function (_p59) {
+			view: function (_p65) {
 				return A2(
 					_elm_lang$html$Html$div,
 					_elm_lang$core$Native_List.fromArray(
