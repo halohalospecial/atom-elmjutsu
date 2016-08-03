@@ -7903,7 +7903,7 @@ var _user$project$Sidekick$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{note: 'Failed to load -_-'}),
+						{note: 'Failed to load package docs -_-'}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			default:
@@ -7911,7 +7911,7 @@ var _user$project$Sidekick$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{note: 'Loading...'}),
+						{note: 'Loading package docs...'}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 		}

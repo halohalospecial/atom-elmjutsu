@@ -1,3 +1,6 @@
+## 0.2.0
+* Add [hyperclick](https://atom.io/packages/hyperclick) integration.
+
 ## 0.1.4
 * Make Sidekick position and size configurable.
 

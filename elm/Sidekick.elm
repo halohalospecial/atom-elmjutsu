@@ -125,12 +125,12 @@ update msg model =
             )
 
         DocsFailed ->
-            ( { model | note = "Failed to load -_-" }
+            ( { model | note = "Failed to load package docs -_-" }
             , Cmd.none
             )
 
         UpdatingPackageDocs ->
-            ( { model | note = "Loading..." }
+            ( { model | note = "Loading package docs..." }
             , Cmd.none
             )
 
