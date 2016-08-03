@@ -8,7 +8,7 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 * [language-elm](https://atom.io/packages/language-elm)
 * [hyperclick](https://atom.io/packages/hyperclick) (optional)
 
-## Commands
+## Features
 
 #### `Elmjutsu: Go To Definition`
 
@@ -38,6 +38,14 @@ Example #2: Position = "bottom", Size = 30 (Just shows the type hints.)
 Example #3: Position = "right", Size = 300
 
 ![sidekick3](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick3.gif?raw=true)
+
+#### Autocomplete
+
+Autocomplete is turned off by default.  To turn it on, check the `Enable Autocomplete` option in the package settings.  It works on file symbols and imports.
+
+![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
+
+It's recommended to turn off the autocomplete feature of the [language-elm](https://atom.io/packages/language-elm) package to prevent duplicate suggestions.
 
 ## Keybindings
 

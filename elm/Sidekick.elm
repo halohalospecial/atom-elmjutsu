@@ -169,7 +169,7 @@ viewHint : Maybe String -> Hint -> String
 viewHint activeFilePath hint =
     let
         formattedModuleName =
-            if activeFilePath == (Just hint.sourcePath) then
+            if hint.moduleName == "" || activeFilePath == (Just hint.sourcePath) then
                 ""
             else
                 hint.moduleName ++ "."

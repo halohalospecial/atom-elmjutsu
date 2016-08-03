@@ -247,8 +247,20 @@ update msg model =
                 missingPackageDocs =
                     List.filter (\{ sourcePath } -> not <| List.member sourcePath existingPackages) docs
 
+                truncateComment moduleDocs =
+                    let
+                        truncatedComment =
+                            case List.head (String.split "\n\n" moduleDocs.comment) of
+                                Nothing ->
+                                    ""
+
+                                Just comment ->
+                                    comment
+                    in
+                        { moduleDocs | comment = truncatedComment }
+
                 updatedPackageDocs =
-                    missingPackageDocs ++ model.packageDocs
+                    (List.map truncateComment missingPackageDocs) ++ model.packageDocs
             in
                 ( { model
                     | packageDocs = updatedPackageDocs
@@ -397,6 +409,13 @@ projectSymbols projectDirectory fileContentsDict =
                             { sourcePath, values } =
                                 moduleDocs
 
+                            moduleDocsSymbol =
+                                { fullName = moduleDocs.name
+                                , sourcePath = sourcePath
+                                , caseTipe = Nothing
+                                , kind = KindModule
+                                }
+
                             valueSymbols =
                                 List.map
                                     (\value ->
@@ -444,7 +463,7 @@ projectSymbols projectDirectory fileContentsDict =
                                     )
                                     values.tipes
                         in
-                            valueSymbols ++ tipeSymbols ++ tipeCaseSymbols
+                            valueSymbols ++ tipeSymbols ++ tipeCaseSymbols ++ [ moduleDocsSymbol ]
                     )
     in
         allFileSymbols fileContentsDict
@@ -495,20 +514,23 @@ hintsForPartial partial activeFile fileContentsDict packageDocs tokens =
                 |> List.map
                     (\hint ->
                         let
-                            name =
-                                lastName hint.name
-
                             formattedModuleName =
-                                if activeModuleName == hint.moduleName then
+                                if hint.moduleName == "" || activeModuleName == hint.moduleName then
                                     ""
                                 else
                                     hint.moduleName
 
                             formattedName =
-                                if Set.member ( hint.moduleName, name ) exposedSet then
-                                    name
-                                else
-                                    hint.moduleName ++ "." ++ name
+                                let
+                                    name =
+                                        lastName hint.name
+                                in
+                                    if hint.moduleName == "" then
+                                        hint.name
+                                    else if Set.member ( hint.moduleName, name ) exposedSet then
+                                        name
+                                    else
+                                        hint.moduleName ++ "." ++ name
                         in
                             { hint | name = formattedName, moduleName = formattedModuleName }
                     )
@@ -789,6 +811,7 @@ type SymbolKind
     | KindTypeAlias
     | KindType
     | KindTypeCase
+    | KindModule
 
 
 type alias Symbol =
@@ -877,6 +900,9 @@ symbolKindToString kind =
         KindTypeCase ->
             "type case"
 
+        KindModule ->
+            "module"
+
 
 type alias ImportSuggestion =
     { name : String
@@ -926,14 +952,12 @@ filteredHints moduleDocs importData =
         ++ List.concatMap (nameToHints moduleDocs importData KindTypeAlias) moduleDocs.values.aliases
         ++ List.concatMap (nameToHints moduleDocs importData KindType) (List.map tipeToValue moduleDocs.values.tipes)
         ++ List.concatMap (nameToHints moduleDocs importData KindDefault) moduleDocs.values.values
+        ++ moduleToHints moduleDocs importData
 
 
 nameToHints : ModuleDocs -> Import -> SymbolKind -> Value -> List ( String, Hint )
 nameToHints moduleDocs { alias, exposed } kind { name, comment, tipe } =
     let
-        fullName =
-            moduleDocs.name ++ "." ++ name
-
         hint =
             { name = name
             , moduleName = moduleDocs.name
@@ -980,6 +1004,27 @@ unionTagsToHints moduleDocs { alias, exposed } { name, cases, comment, tipe } =
                     ( localName, hint ) :: ( fullName, hint ) :: hints
     in
         List.foldl addHints [] cases
+
+
+moduleToHints : ModuleDocs -> Import -> List ( String, Hint )
+moduleToHints { name, comment, sourcePath } { alias, exposed } =
+    let
+        hint =
+            { name = name
+            , moduleName = ""
+            , sourcePath = sourcePath
+            , comment = comment
+            , tipe = ""
+            , caseTipe = Nothing
+            , kind = KindModule
+            }
+    in
+        case alias of
+            Nothing ->
+                [ ( name, hint ) ]
+
+            Just alias ->
+                [ ( name, hint ), ( alias, hint ) ]
 
 
 type alias RawImport =

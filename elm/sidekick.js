@@ -7796,9 +7796,9 @@ var _user$project$Sidekick$viewHint = F2(
 			}
 		}();
 		var formattedTipe = A2(_elm_lang$core$String$startsWith, '*', hint.tipe) ? hint.tipe : (_elm_lang$core$Native_Utils.eq(hint.tipe, '') ? '' : A2(_elm_lang$core$Basics_ops['++'], ': ', hint.tipe));
-		var formattedModuleName = _elm_lang$core$Native_Utils.eq(
+		var formattedModuleName = (_elm_lang$core$Native_Utils.eq(hint.moduleName, '') || _elm_lang$core$Native_Utils.eq(
 			activeFilePath,
-			_elm_lang$core$Maybe$Just(hint.sourcePath)) ? '' : A2(_elm_lang$core$Basics_ops['++'], hint.moduleName, '.');
+			_elm_lang$core$Maybe$Just(hint.sourcePath))) ? '' : A2(_elm_lang$core$Basics_ops['++'], hint.moduleName, '.');
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
 			'##### ',
