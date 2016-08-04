@@ -511,61 +511,67 @@ hintsForPartial partial activeFile fileContentsDict packageDocs tokens =
                                     Nothing
                     )
 
+        maybeIncludeHint hint =
+            let
+                isIncluded =
+                    if hint.moduleName == "" || Set.member ( hint.moduleName, hint.name ) exposedSet then
+                        String.startsWith partial hint.name
+                    else
+                        True
+            in
+                if not isIncluded then
+                    Nothing
+                else
+                    let
+                        moduleNameToShow =
+                            if hint.moduleName == "" || fileContents.moduleDocs.name == hint.moduleName then
+                                ""
+                            else
+                                hint.moduleName
+
+                        nameToShow =
+                            if hint.moduleName == "" then
+                                hint.name
+                            else if Set.member ( hint.moduleName, hint.name ) exposedSet then
+                                hint.name
+                            else
+                                let
+                                    moduleNamePrefix =
+                                        case Dict.get hint.moduleName fileContents.imports of
+                                            Nothing ->
+                                                ""
+
+                                            Just { alias } ->
+                                                case alias of
+                                                    Nothing ->
+                                                        hint.moduleName ++ "."
+
+                                                    Just moduleAlias ->
+                                                        moduleAlias ++ "."
+                                in
+                                    moduleNamePrefix ++ hint.name
+                    in
+                        Just { hint | name = nameToShow, moduleName = moduleNameToShow }
+
         hints =
             tokens
-                |> Dict.filter
-                    (\token _ ->
-                        if Set.member (lastName token) exposedNames then
-                            String.startsWith partial (lastName token)
-                                || String.startsWith partial token
-                        else
-                            String.startsWith partial token
+                |> Dict.map
+                    (\token hints ->
+                        let
+                            isIncluded =
+                                if Set.member (lastName token) exposedNames then
+                                    String.startsWith partial (lastName token)
+                                        || String.startsWith partial token
+                                else
+                                    String.startsWith partial token
+                        in
+                            if isIncluded then
+                                List.filterMap maybeIncludeHint hints
+                            else
+                                []
                     )
                 |> Dict.values
                 |> List.concatMap identity
-                |> List.filterMap
-                    (\hint ->
-                        let
-                            include =
-                                if hint.moduleName == "" || Set.member ( hint.moduleName, hint.name ) exposedSet then
-                                    String.startsWith partial hint.name
-                                else
-                                    True
-                        in
-                            if not include then
-                                Nothing
-                            else
-                                let
-                                    moduleNameToShow =
-                                        if hint.moduleName == "" || fileContents.moduleDocs.name == hint.moduleName then
-                                            ""
-                                        else
-                                            hint.moduleName
-
-                                    nameToShow =
-                                        if hint.moduleName == "" then
-                                            hint.name
-                                        else if Set.member ( hint.moduleName, hint.name ) exposedSet then
-                                            hint.name
-                                        else
-                                            let
-                                                moduleNamePrefix =
-                                                    case Dict.get hint.moduleName fileContents.imports of
-                                                        Nothing ->
-                                                            ""
-
-                                                        Just { alias } ->
-                                                            case alias of
-                                                                Nothing ->
-                                                                    hint.moduleName ++ "."
-
-                                                                Just moduleAlias ->
-                                                                    moduleAlias ++ "."
-                                            in
-                                                moduleNamePrefix ++ hint.name
-                                in
-                                    Just { hint | name = nameToShow, moduleName = moduleNameToShow }
-                    )
 
         -- defaultHints =
         --     List.filter
