@@ -10,21 +10,41 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
 ## Features
 
-#### `Elmjutsu: Go To Definition`
+[Autocomplete](#autocomplete)
+
+[Go To Definition](#elmjutsu-go-to-definition)
+
+[Return From Definition](#elmjutsu-return-from-definition)
+
+[Go To Symbol](#elmjutsu-go-to-symbol)
+
+[Toggle Sidekick](#elmjutsu-toggle-sidekick)
+
+### Autocomplete
+
+Autocomplete is turned off by default.  To turn it on, check the `Enable Autocomplete` option in the package settings.
+
+It's recommended to turn off the autocomplete feature of the [language-elm](https://atom.io/packages/language-elm) package to prevent duplicate suggestions.
+
+You can also turn on `Enable Autocomplete Snippets` if you prefer.
+
+![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
+
+### `Elmjutsu: Go To Definition`
 
 To make this work with the [hyperclick](https://atom.io/packages/hyperclick) package, check the `Enable Hyperclick` option in the package settings.
 
 ![go-to-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-definition.gif?raw=true)
 
-#### `Elmjutsu: Return From Definition`
+### `Elmjutsu: Return From Definition`
 
 ![return-from-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/return-from-definition.gif?raw=true)
 
-#### `Elmjutsu: Go To Symbol`
+### `Elmjutsu: Go To Symbol`
 
 ![go-to-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-symbol.gif?raw=true)
 
-#### `Elmjutsu: Toggle Sidekick`
+### `Elmjutsu: Toggle Sidekick`
 Shows the type hints and documentation for the symbol at cursor position.  The size and position of the panel can be modified in the package settings.
 
 Example #1 (default): `Sidekick Position` = "bottom", `Sidekick Size` = 0 (Automatically resizes to fit content.)
@@ -38,14 +58,6 @@ Example #2: `Sidekick Position` = "bottom", `Sidekick Size` = 30 (Just shows the
 Example #3: `Sidekick Position` = "right", `Sidekick Size` = 300
 
 ![sidekick3](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick3.gif?raw=true)
-
-#### Autocomplete
-
-Autocomplete is turned off by default.  To turn it on, check the `Enable Autocomplete` option in the package settings.
-
-It's recommended to turn off the autocomplete feature of the [language-elm](https://atom.io/packages/language-elm) package to prevent duplicate suggestions.
-
-![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
 
 ## Keybindings
 
