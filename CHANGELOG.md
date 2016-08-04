@@ -1,4 +1,5 @@
 ## 0.4.0
+* Fix autocomplete bug.
 * Sort autocomplete suggestions.
 * Add autocomplete snippets.
 
