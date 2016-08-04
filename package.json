@@ -14,12 +14,12 @@
     "atom": ">=1.0.0 <2.0.0"
   },
   "dependencies": {
-    "atom-linter": "^5.0.1",
+    "underscore-plus": "1.6.6",
+    "atom-space-pen-views": "^0.20.0",
+    "chokidar": "1.5.2",
     "esprima": "2.7.2",
     "ast-traverse": "0.1.1",
-    "atom-space-pen-views": "^0.20.0",
-    "underscore-plus": "1.6.6",
-    "chokidar": "1.5.2"
+    "atom-linter": "^5.0.1"
   },
   "providedServices": {
     "autocomplete.provider": {

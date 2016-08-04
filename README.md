@@ -12,9 +12,9 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
 #### `Elmjutsu: Go To Definition`
 
-![go-to-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-definition.gif?raw=true)
-
 To make this work with the [hyperclick](https://atom.io/packages/hyperclick) package, check the `Enable Hyperclick` option in the package settings.
+
+![go-to-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-definition.gif?raw=true)
 
 #### `Elmjutsu: Return From Definition`
 
@@ -27,21 +27,21 @@ To make this work with the [hyperclick](https://atom.io/packages/hyperclick) pac
 #### `Elmjutsu: Toggle Sidekick`
 Shows the type hints and documentation for the symbol at cursor position.  The size and position of the panel can be modified in the package settings.
 
-Example #1 (default): Position = "bottom", Size = 0 (Automatically resizes to fit content.)
+Example #1 (default): `Sidekick Position` = "bottom", `Sidekick Size` = 0 (Automatically resizes to fit content.)
 
 ![sidekick1](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick1.gif?raw=true)
 
-Example #2: Position = "bottom", Size = 30 (Just shows the type hints.)
+Example #2: `Sidekick Position` = "bottom", `Sidekick Size` = 30 (Just shows the type hints.)
 
 ![sidekick2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick2.gif?raw=true)
 
-Example #3: Position = "right", Size = 300
+Example #3: `Sidekick Position` = "right", `Sidekick Size` = 300
 
 ![sidekick3](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick3.gif?raw=true)
 
 #### Autocomplete
 
-Autocomplete is turned off by default.  To turn it on, check the `Enable Autocomplete` option in the package settings.  It works on file symbols and imports.
+Autocomplete is turned off by default.  To turn it on, check the `Enable Autocomplete` option in the package settings.
 
 It's recommended to turn off the autocomplete feature of the [language-elm](https://atom.io/packages/language-elm) package to prevent duplicate suggestions.
 
@@ -60,7 +60,9 @@ Here is an example:
 
 ## Credits
 
-The initial code was based on the [Try Elm](http://elm-lang.org/try) [source](https://github.com/elm-lang/elm-lang.org/tree/master/src/editor).
+- The initial code was based on the [source](https://github.com/elm-lang/elm-lang.org) of [Try Elm](http://elm-lang.org/try).
+- The [code](https://github.com/edubkendo/atom-elm) for computing snippet tab stops was from [language-elm](https://atom.io/packages/language-elm).
+
 
 <!---
 Warning:  Most of these are hacky experiments that may not always work properly.  Use at your own risk! :p

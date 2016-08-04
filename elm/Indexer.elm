@@ -493,60 +493,102 @@ hintsForPartial partial activeFile fileContentsDict packageDocs tokens =
         exposedNames =
             Set.map snd exposedSet
 
-        activeModuleName =
-            (activeFileContents activeFile fileContentsDict).moduleDocs.name
+        fileContents =
+            activeFileContents activeFile fileContentsDict
+
+        importAliases =
+            Dict.values fileContents.imports
+                |> List.filterMap
+                    (\{ alias } ->
+                        case alias of
+                            Nothing ->
+                                Nothing
+
+                            Just alias ->
+                                if String.startsWith partial alias then
+                                    Just { emptyHint | name = alias }
+                                else
+                                    Nothing
+                    )
 
         hints =
             tokens
                 |> Dict.filter
                     (\token _ ->
-                        let
-                            maybeUnqualify name =
-                                if Set.member name exposedNames then
-                                    lastName name
-                                else
-                                    name
-                        in
-                            String.startsWith partial (maybeUnqualify token)
+                        if Set.member (lastName token) exposedNames then
+                            String.startsWith partial (lastName token)
+                                || String.startsWith partial token
+                        else
+                            String.startsWith partial token
                     )
                 |> Dict.values
                 |> List.concatMap identity
-                |> List.map
+                |> List.filterMap
                     (\hint ->
                         let
-                            formattedModuleName =
-                                if hint.moduleName == "" || activeModuleName == hint.moduleName then
-                                    ""
+                            include =
+                                if hint.moduleName == "" || Set.member ( hint.moduleName, hint.name ) exposedSet then
+                                    String.startsWith partial hint.name
                                 else
-                                    hint.moduleName
-
-                            formattedName =
-                                let
-                                    name =
-                                        lastName hint.name
-                                in
-                                    if hint.moduleName == "" then
-                                        hint.name
-                                    else if Set.member ( hint.moduleName, name ) exposedSet then
-                                        name
-                                    else
-                                        hint.moduleName ++ "." ++ name
+                                    True
                         in
-                            { hint | name = formattedName, moduleName = formattedModuleName }
+                            if not include then
+                                Nothing
+                            else
+                                let
+                                    moduleNameToShow =
+                                        if hint.moduleName == "" || fileContents.moduleDocs.name == hint.moduleName then
+                                            ""
+                                        else
+                                            hint.moduleName
+
+                                    nameToShow =
+                                        if hint.moduleName == "" then
+                                            hint.name
+                                        else if Set.member ( hint.moduleName, hint.name ) exposedSet then
+                                            hint.name
+                                        else
+                                            let
+                                                moduleNamePrefix =
+                                                    case Dict.get hint.moduleName fileContents.imports of
+                                                        Nothing ->
+                                                            ""
+
+                                                        Just { alias } ->
+                                                            case alias of
+                                                                Nothing ->
+                                                                    hint.moduleName ++ "."
+
+                                                                Just moduleAlias ->
+                                                                    moduleAlias ++ "."
+                                            in
+                                                moduleNamePrefix ++ hint.name
+                                in
+                                    Just { hint | name = nameToShow, moduleName = moduleNameToShow }
                     )
 
-        defaultHints =
-            List.filter
-                (\{ name } ->
-                    String.startsWith partial name
-                )
-                defaultSuggestions
+        -- defaultHints =
+        --     List.filter
+        --         (\{ name } ->
+        --             String.startsWith partial name
+        --         )
+        --         defaultSuggestions
     in
-        hints
+        importAliases
+            ++ hints
+            |> List.sortBy .name
 
 
 
 -- ++ defaultHints
+
+
+hintFullName : Hint -> String
+hintFullName hint =
+    if hint.moduleName == "" then
+        hint.name
+    else
+        hint.moduleName ++ "." ++ hint.name
 
 
 suggestionsForImport : String -> Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> List ImportSuggestion
@@ -576,6 +618,7 @@ suggestionsForImport partial activeFile fileContentsDict packageDocs =
                         String.startsWith partial name
                     )
                     suggestions
+                    |> List.sortBy .name
 
 
 projectModuleDocs : String -> FileContentsDict -> List ModuleDocs
@@ -1114,44 +1157,45 @@ defaultTypes =
         |> Set.fromList
 
 
-defaultSuggestions : List Hint
-defaultSuggestions =
-    List.map
-        (\suggestion ->
-            { emptyHint | name = suggestion }
-        )
-        [ "True"
-        , "False"
-        , "number"
-        , "Int"
-        , "Float"
-        , "Char"
-        , "String"
-        , "Bool"
-        , "List"
-        , "if"
-        , "then"
-        , "else"
-        , "type"
-        , "case"
-        , "of"
-        , "let"
-        , "in"
-        , "as"
-        , "import"
-        , "open"
-        , "port"
-        , "exposing"
-        , "alias"
-        , "infixl"
-        , "infixr"
-        , "infix"
-        , "hiding"
-        , "export"
-        , "foreign"
-        , "perform"
-        , "deriving"
-        ]
+
+-- defaultSuggestions : List Hint
+-- defaultSuggestions =
+--     List.map
+--         (\suggestion ->
+--             { emptyHint | name = suggestion }
+--         )
+--         [ "True"
+--         , "False"
+--         , "number"
+--         , "Int"
+--         , "Float"
+--         , "Char"
+--         , "String"
+--         , "Bool"
+--         , "List"
+--         , "if"
+--         , "then"
+--         , "else"
+--         , "type"
+--         , "case"
+--         , "of"
+--         , "let"
+--         , "in"
+--         , "as"
+--         , "import"
+--         , "open"
+--         , "port"
+--         , "exposing"
+--         , "alias"
+--         , "infixl"
+--         , "infixr"
+--         , "infix"
+--         , "hiding"
+--         , "export"
+--         , "foreign"
+--         , "perform"
+--         , "deriving"
+--         ]
 
 
 lastName : String -> String

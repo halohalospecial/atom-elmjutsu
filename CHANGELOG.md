@@ -1,3 +1,7 @@
+## 0.4.0
+* Sort autocomplete suggestions.
+* Add autocomplete snippets.
+
 ## 0.3.0
 * Add autocomplete for file symbols and imports.
 
