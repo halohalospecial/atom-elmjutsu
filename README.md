@@ -32,7 +32,7 @@ You can also turn on `Enable Autocomplete Snippets` if you prefer.
 
 ### `Elmjutsu: Go To Definition`
 
-To make this work with the [hyperclick](https://atom.io/packages/hyperclick) package, check the `Enable Hyperclick` option in the package settings.
+If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, you can check the `Enable Hyperclick` option to jump to definition using `Ctrl` + click / `Cmd` + click (Mac).
 
 ![go-to-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-definition.gif?raw=true)
 

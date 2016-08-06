@@ -43,6 +43,7 @@ import Json.Decode as Decode exposing ((:=))
 import Set
 import String
 import Task
+import Regex
 
 
 main : Program Never
@@ -420,11 +421,8 @@ projectSymbols projectDirectory fileContentsDict =
                                 List.map
                                     (\value ->
                                         let
-                                            firstChar =
-                                                String.left 1 value.name
-
                                             kind =
-                                                if firstChar == String.toUpper firstChar then
+                                                if Regex.contains capitalizedRegex value.name then
                                                     KindTypeAlias
                                                 else
                                                     KindDefault
@@ -1207,3 +1205,8 @@ defaultTypes =
 lastName : String -> String
 lastName fullName =
     List.foldl always "" (String.split "." fullName)
+
+
+capitalizedRegex : Regex.Regex
+capitalizedRegex =
+    Regex.regex "^[A-Z]"

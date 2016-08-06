@@ -1,3 +1,4 @@
+var _user$project$Indexer$capitalizedRegex = _elm_lang$core$Regex$regex('^[A-Z]');
 var _user$project$Indexer$lastName = function (fullName) {
 	return A3(
 		_elm_lang$core$List$foldl,
@@ -803,10 +804,7 @@ var _user$project$Indexer$projectSymbols = F2(
 					var valueSymbols = A2(
 						_elm_lang$core$List$map,
 						function (value) {
-							var firstChar = A2(_elm_lang$core$String$left, 1, value.name);
-							var kind = _elm_lang$core$Native_Utils.eq(
-								firstChar,
-								_elm_lang$core$String$toUpper(firstChar)) ? _user$project$Indexer$KindTypeAlias : _user$project$Indexer$KindDefault;
+							var kind = A2(_elm_lang$core$Regex$contains, _user$project$Indexer$capitalizedRegex, value.name) ? _user$project$Indexer$KindTypeAlias : _user$project$Indexer$KindDefault;
 							return {
 								fullName: A2(
 									_elm_lang$core$Basics_ops['++'],
