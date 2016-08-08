@@ -1,3 +1,7 @@
+## 0.4.1
+* Add default suggestions to autocomplete.
+* Allow args in type alias.
+
 ## 0.4.0
 * Fix autocomplete bug.
 * Sort autocomplete suggestions.

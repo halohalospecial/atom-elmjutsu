@@ -1076,7 +1076,7 @@ type alias RawImport =
 
 
 type alias ImportDict =
-    Dict.Dict Strings Imports
+    Dict.Dict String Import
 
 
 type alias Import =

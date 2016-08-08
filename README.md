@@ -10,15 +10,15 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
 ## Features
 
-[Autocomplete](#autocomplete)
+* [Autocomplete](#autocomplete)
 
-[Go To Definition](#elmjutsu-go-to-definition)
+* [Go To Definition](#elmjutsu-go-to-definition)
 
-[Return From Definition](#elmjutsu-return-from-definition)
+* [Return From Definition](#elmjutsu-return-from-definition)
 
-[Go To Symbol](#elmjutsu-go-to-symbol)
+* [Go To Symbol](#elmjutsu-go-to-symbol)
 
-[Toggle Sidekick](#elmjutsu-toggle-sidekick)
+* [Toggle Sidekick](#elmjutsu-toggle-sidekick)
 
 ### Autocomplete
 
@@ -26,15 +26,17 @@ Autocomplete is turned off by default.  To turn it on, check the `Enable Autocom
 
 It's recommended to turn off the autocomplete feature of the [language-elm](https://atom.io/packages/language-elm) package to prevent duplicate suggestions.
 
+![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
+
 You can also turn on `Enable Autocomplete Snippets` if you prefer.
 
-![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
+![autocomplete-snippet](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-snippet.gif?raw=true)
 
 ### `Elmjutsu: Go To Definition`
 
-If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, you can check the `Enable Hyperclick` option to jump to definition using `Ctrl` + click / `Cmd` + click (Mac).
-
 ![go-to-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-definition.gif?raw=true)
+
+If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, you can also check the `Enable Hyperclick` option to jump to definition using `Ctrl` + click / `Cmd` + click (Mac).
 
 ### `Elmjutsu: Return From Definition`
 
