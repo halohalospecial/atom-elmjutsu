@@ -571,20 +571,18 @@ hintsForPartial partial activeFile fileContentsDict packageDocs tokens =
                 |> Dict.values
                 |> List.concatMap identity
 
-        -- defaultHints =
-        --     List.filter
-        --         (\{ name } ->
-        --             String.startsWith partial name
-        --         )
-        --         defaultSuggestions
+        defaultHints =
+            List.filter
+                (\{ name } ->
+                    String.startsWith partial name
+                )
+                defaultSuggestions
     in
-        importAliases
+        (importAliases
             ++ hints
             |> List.sortBy .name
-
-
-
--- ++ defaultHints
+        )
+            ++ defaultHints
 
 
 hintFullName : Hint -> String
@@ -1161,45 +1159,44 @@ defaultTypes =
         |> Set.fromList
 
 
-
--- defaultSuggestions : List Hint
--- defaultSuggestions =
---     List.map
---         (\suggestion ->
---             { emptyHint | name = suggestion }
---         )
---         [ "True"
---         , "False"
---         , "number"
---         , "Int"
---         , "Float"
---         , "Char"
---         , "String"
---         , "Bool"
---         , "List"
---         , "if"
---         , "then"
---         , "else"
---         , "type"
---         , "case"
---         , "of"
---         , "let"
---         , "in"
---         , "as"
---         , "import"
---         , "open"
---         , "port"
---         , "exposing"
---         , "alias"
---         , "infixl"
---         , "infixr"
---         , "infix"
---         , "hiding"
---         , "export"
---         , "foreign"
---         , "perform"
---         , "deriving"
---         ]
+defaultSuggestions : List Hint
+defaultSuggestions =
+    List.map
+        (\suggestion ->
+            { emptyHint | name = suggestion }
+        )
+        [ "True"
+        , "False"
+        , "number"
+        , "Int"
+        , "Float"
+        , "Char"
+        , "String"
+        , "Bool"
+        , "List"
+        , "if"
+        , "then"
+        , "else"
+        , "type"
+        , "case"
+        , "of"
+        , "let"
+        , "in"
+        , "as"
+        , "import"
+        , "open"
+        , "port"
+        , "exposing"
+        , "alias"
+        , "infixl"
+        , "infixr"
+        , "infix"
+        , "hiding"
+        , "export"
+        , "foreign"
+        , "perform"
+        , "deriving"
+        ]
 
 
 lastName : String -> String
