@@ -64,10 +64,10 @@ Example #3: `Sidekick Position` = "right", `Sidekick Size` = 300
 Here is an example:
 ```
 'atom-text-editor:not([mini])[data-grammar^="source elm"]':
-  'f4': 'elmjutsu:go-to-definition'
-  'shift-f4': 'elmjutsu:return-from-definition'
-  'ctrl-f4': 'elmjutsu:go-to-symbol'
-  'shift-ctrl-f4': 'elmjutsu:toggle-sidekick'
+  'f12': 'elmjutsu:go-to-definition'
+  'shift-f12': 'elmjutsu:return-from-definition'
+  'ctrl-t': 'elmjutsu:go-to-symbol'
+  'f1': 'elmjutsu:toggle-sidekick'
 ```
 
 ## Credits

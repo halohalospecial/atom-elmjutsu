@@ -9250,7 +9250,7 @@ var _user$project$Indexer$defaultSuggestions = A2(
 			{name: suggestion});
 	},
 	_elm_lang$core$Native_List.fromArray(
-		['True', 'False', 'number', 'Int', 'Float', 'Char', 'String', 'Bool', 'List', 'if', 'then', 'else', 'type', 'case', 'of', 'let', 'in', 'as', 'import', 'open', 'port', 'exposing', 'alias', 'infixl', 'infixr', 'infix', 'hiding', 'export', 'foreign', 'perform', 'deriving']));
+		['=', '->', 'True', 'False', 'number', 'Int', 'Float', 'Char', 'String', 'Bool', 'List', 'if', 'then', 'else', 'type', 'case', 'of', 'let', 'in', 'as', 'import', 'open', 'port', 'exposing', 'alias', 'infixl', 'infixr', 'infix', 'hiding', 'export', 'foreign', 'perform', 'deriving']));
 var _user$project$Indexer$filteredHints = F2(
 	function (moduleDocs, importData) {
 		return A2(

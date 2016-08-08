@@ -721,10 +721,6 @@ isSourcePathInProjectDirectory projectDirectory sourcePath =
         [ "/", "\\" ]
 
 
-
--- TODO: Add `comments` to `ModuleDocs`
-
-
 type alias ModuleDocs =
     { sourcePath : String
     , name : String
@@ -1080,7 +1076,7 @@ type alias RawImport =
 
 
 type alias ImportDict =
-    Dict.Dict String Import
+    Dict.Dict Strings Imports
 
 
 type alias Import =
@@ -1165,7 +1161,9 @@ defaultSuggestions =
         (\suggestion ->
             { emptyHint | name = suggestion }
         )
-        [ "True"
+        [ "="
+        , "->"
+        , "True"
         , "False"
         , "number"
         , "Int"
