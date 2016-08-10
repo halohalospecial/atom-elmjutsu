@@ -1,8 +1,6 @@
-<!--
 ## 1.0.0
 * BREAKING CHANGE:  Removed `Return From Definition` and added the `Go Back` command.
 * Each invocation of `Go To Definition` and `Go To Symbol` will add the current cursor position to a navigation stack.  Invoking `Go Back` pops from the stack.
--->
 
 ## 0.4.2
 * Allow args in type.
