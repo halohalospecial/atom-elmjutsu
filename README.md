@@ -74,7 +74,7 @@ Here is an example:
 ```
 'atom-text-editor:not([mini])[data-grammar^="source elm"]':
   'f12': 'elmjutsu:go-to-definition'
-  'shift-f12': 'elmjutsu:return-from-definition'
+  'shift-f12': 'elmjutsu:go-back'
   'ctrl-r': 'elmjutsu:go-to-symbol'
   'f1': 'elmjutsu:toggle-sidekick'
 ```
