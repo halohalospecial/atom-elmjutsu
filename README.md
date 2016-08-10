@@ -2,12 +2,6 @@
 
 Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
-## Requirements
-
-* [Elm](http://elm-lang.org/install)
-* [language-elm](https://atom.io/packages/language-elm)
-* [hyperclick](https://atom.io/packages/hyperclick) (optional)
-
 ## Features
 
 * [Autocomplete](#autocomplete)
@@ -19,6 +13,16 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 * [Go To Symbol](#elmjutsu-go-to-symbol)
 
 * [Toggle Sidekick](#elmjutsu-toggle-sidekick)
+
+## Requirements
+
+* [Elm](http://elm-lang.org/install)
+* [language-elm](https://atom.io/packages/language-elm)
+* For `Go To Definition`:
+  * [hyperclick](https://atom.io/packages/hyperclick) (optional)
+* For `Autocomplete`:
+  * [autocomplete-plus](https://atom.io/packages/autocomplete-plus) (installed by default)
+  * [snippets](https://atom.io/packages/snippets) (installed by default)
 
 ### Autocomplete
 
@@ -68,14 +72,24 @@ Here is an example:
 'atom-text-editor:not([mini])[data-grammar^="source elm"]':
   'f12': 'elmjutsu:go-to-definition'
   'shift-f12': 'elmjutsu:return-from-definition'
-  'ctrl-t': 'elmjutsu:go-to-symbol'
+  'ctrl-r': 'elmjutsu:go-to-symbol'
   'f1': 'elmjutsu:toggle-sidekick'
 ```
 
+Add above to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
+
+## Notes
+
+* The commands only work for top-level values for now.
+* If you find yourself always autocompleting "==" for "=" when you press <kbd>enter</kbd>, you can do one of the following:
+  * Press <kbd>escape</kbd> to cancel autocomplete before pressing <kbd>enter</kbd>.
+  * Set the value of `Autocomplete Min Chars` in the package settings to a higher number, let's say `2`.
+  * Set the value of `Keymap For Confirming A Suggestion` in the package settings of `autocomplete-plus` to `tab always, enter when suggestion explicitly selected`, instead of the default `tab and enter`.
+
 ## Credits
 
-- The initial code was based on the [source](https://github.com/elm-lang/elm-lang.org) of [Try Elm](http://elm-lang.org/try).
-- The [code](https://github.com/edubkendo/atom-elm) for computing snippet tab stops was from [language-elm](https://atom.io/packages/language-elm).
+* The initial code was based on the [source](https://github.com/elm-lang/elm-lang.org) of [Try Elm](http://elm-lang.org/try).
+* The [code](https://github.com/edubkendo/atom-elm) for computing snippet tab stops was from [language-elm](https://atom.io/packages/language-elm).
 
 
 <!---
