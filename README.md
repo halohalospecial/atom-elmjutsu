@@ -8,11 +8,12 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
 * [Go To Definition](#elmjutsu-go-to-definition)
 
-* [Return From Definition](#elmjutsu-return-from-definition)
-
 * [Go To Symbol](#elmjutsu-go-to-symbol)
 
+* [Go Back](#elmjutsu-go-back)
+
 * [Toggle Sidekick](#elmjutsu-toggle-sidekick)
+  * Show type hints and documentation for the symbol at cursor position.
 
 ## Requirements
 
@@ -42,13 +43,15 @@ You can also turn on `Enable Autocomplete Snippets` if you prefer.
 
 If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, you can also check the `Enable Hyperclick` option to jump to definition using `Ctrl` + click / `Cmd` + click (Mac).
 
-### `Elmjutsu: Return From Definition`
-
-![return-from-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/return-from-definition.gif?raw=true)
-
 ### `Elmjutsu: Go To Symbol`
 
 ![go-to-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-symbol.gif?raw=true)
+
+### `Elmjutsu: Go Back`
+
+The current cursor position is added to a navigation stack before jumping via `Go To Definition` or `Go To Symbol`.  Invoke this command to jump back to the previous position.
+
+![go-back](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-back.gif?raw=true)
 
 ### `Elmjutsu: Toggle Sidekick`
 Shows the type hints and documentation for the symbol at cursor position.  The size and position of the panel can be modified in the package settings.
@@ -81,10 +84,11 @@ Add above to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
 ## Notes
 
 * The commands only work for top-level values for now.
+* You may encounter weird behaviors if multiple files are using the same module name in your project.
 * If you find yourself always autocompleting "==" for "=" when you press <kbd>enter</kbd>, you can do one of the following:
   * Press <kbd>escape</kbd> to cancel autocomplete before pressing <kbd>enter</kbd>.
-  * Set the value of `Autocomplete Min Chars` in the package settings to a higher number, let's say `2`.
   * Set the value of `Keymap For Confirming A Suggestion` in the package settings of `autocomplete-plus` to `tab always, enter when suggestion explicitly selected`, instead of the default `tab and enter`.
+  * Set the value of `Autocomplete Min Chars` in the package settings to a higher number, let's say `2`.  
 
 ## Credits
 
