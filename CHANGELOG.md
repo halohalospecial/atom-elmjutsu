@@ -1,8 +1,6 @@
-<!--
 ## 0.4.2
 * Allow args in type.
 * Fix `Go To Symbol` marker bug.
--->
 
 ## 0.4.1
 * Add default suggestions to autocomplete.
