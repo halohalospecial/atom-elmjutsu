@@ -6,12 +6,12 @@
         "command": "elmjutsu:go-to-definition"
       },
       {
-        "label": "Elmjutsu: Return From Definition",
-        "command": "elmjutsu:return-from-definition"
-      },
-      {
         "label": "Elmjutsu: Go To Symbol",
         "command": "elmjutsu:go-to-symbol"
+      },
+      {
+        "label": "Elmjutsu: Go Back",
+        "command": "elmjutsu:go-back"
       }
     ]
   },
@@ -27,8 +27,12 @@
               "command": "elmjutsu:go-to-definition"
             },
             {
-              "label": "Elmjutsu: Return From Definition",
-              "command": "elmjutsu:return-from-definition"
+              "label": "Elmjutsu: Go To Symbol",
+              "command": "elmjutsu:go-to-symbol"
+            },
+            {
+              "label": "Elmjutsu: Go Back",
+              "command": "elmjutsu:go-back"
             }
           ]
         }
