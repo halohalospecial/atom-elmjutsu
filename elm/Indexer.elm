@@ -144,7 +144,7 @@ port suggestionsForImportReceivedCmd : ( String, List ImportSuggestion ) -> Cmd 
 port canGoToDefinitionRepliedCmd : ( String, Bool ) -> Cmd msg
 
 
-port importersForTokenReceivedCmd : ( Maybe String, List ( String, String ) ) -> Cmd msg
+port importersForTokenReceivedCmd : ( Maybe String, List ( String, List String ) ) -> Cmd msg
 
 
 
@@ -640,38 +640,56 @@ getSuggestionsForImport partial maybeActiveFile fileContentsDict packageDocs =
                     |> List.sortBy .name
 
 
-getImportersForToken : Maybe String -> Maybe ActiveFile -> TokenDict -> FileContentsDict -> List ( String, String )
+getImportersForToken : Maybe String -> Maybe ActiveFile -> TokenDict -> FileContentsDict -> List ( String, List String )
 getImportersForToken maybeToken maybeActiveFile tokens fileContentsDict =
     case ( maybeToken, maybeActiveFile ) of
         ( Just token, Just { projectDirectory } ) ->
             let
                 hints =
                     getHintsForToken maybeToken tokens
-
-                -- activeModuleName =
-                --     (getActiveFileContents maybeActiveFile fileContentsDict).moduleDocs.name
             in
                 getProjectFileContents projectDirectory fileContentsDict
-                    |> List.filterMap
+                    |> List.concatMap
                         (\{ moduleDocs, imports } ->
-                            -- -- -- TODO List.map on hints instead of List.head
-                            case List.head hints of
-                                Nothing ->
-                                    Nothing
-
-                                Just hint ->
-                                    if hint.moduleName == moduleDocs.name then
-                                        Just ( moduleDocs.sourcePath, hint.name )
-                                    else
-                                        case Dict.get hint.moduleName imports of
-                                            Nothing ->
+                            let
+                                getSourcePathAndLocalNames hint =
+                                    case Dict.get hint.moduleName imports of
+                                        Nothing ->
+                                            if hint.moduleName == moduleDocs.name then
+                                                Just ( moduleDocs.sourcePath, [ hint.name ] )
+                                            else
                                                 Nothing
 
-                                            Just { alias, exposed } ->
-                                                if isExposed hint.name exposed then
-                                                    Just ( moduleDocs.sourcePath, getLocalName moduleDocs.name alias hint.name )
-                                                else
-                                                    Nothing
+                                        Just { alias, exposed } ->
+                                            let
+                                                localNames =
+                                                    case ( alias, exposed ) of
+                                                        ( Nothing, None ) ->
+                                                            [ hint.moduleName ++ "." ++ hint.name ]
+
+                                                        ( Just alias, None ) ->
+                                                            [ alias ++ "." ++ hint.name ]
+
+                                                        ( _, All ) ->
+                                                            [ hint.name, getLocalName hint.moduleName alias hint.name ]
+
+                                                        ( _, Some exposedSet ) ->
+                                                            if Set.member hint.name exposedSet then
+                                                                [ hint.name, getLocalName hint.moduleName alias hint.name ]
+                                                            else
+                                                                [ getLocalName hint.moduleName alias hint.name ]
+
+                                                uniqueLocalNames =
+                                                    localNames |> Set.fromList |> Set.toList
+                                            in
+                                                case uniqueLocalNames of
+                                                    [] ->
+                                                        Nothing
+
+                                                    _ ->
+                                                        Just ( moduleDocs.sourcePath, uniqueLocalNames )
+                            in
+                                List.filterMap getSourcePathAndLocalNames hints
                         )
 
         _ ->
