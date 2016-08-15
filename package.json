@@ -17,8 +17,6 @@
     "underscore-plus": "1.6.6",
     "atom-space-pen-views": "^0.20.0",
     "chokidar": "1.5.2",
-    "esprima": "2.7.2",
-    "ast-traverse": "0.1.1",
     "atom-linter": "^5.0.1"
   },
   "providedServices": {
@@ -30,13 +28,6 @@
     "hyperclick.provider": {
       "versions": {
         "0.0.0": "provideHyperclick"
-      }
-    }
-  },
-  "consumedServices": {
-    "linter-elm-make-get-work-directory": {
-      "versions": {
-        "^1.0.0": "consumeGetWorkDirectory"
       }
     }
   }

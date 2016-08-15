@@ -12,6 +12,10 @@
       {
         "label": "Elmjutsu: Go Back",
         "command": "elmjutsu:go-back"
+      },
+      {
+        "label": "Elmjutsu: Find Usages",
+        "command": "elmjutsu:find-usages"
       }
     ]
   },
@@ -33,6 +37,10 @@
             {
               "label": "Elmjutsu: Go Back",
               "command": "elmjutsu:go-back"
+            },
+            {
+              "label": "Elmjutsu: Find Usages",
+              "command": "elmjutsu:find-usages"
             }
           ]
         }

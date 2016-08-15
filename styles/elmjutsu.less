@@ -1,5 +1,9 @@
 @import "ui-variables";
 
+.elmjutsu-symbol-highlight {
+  border: 1px solid @ui-site-color-5;
+  border-radius: @component-border-radius;
+}
 .elmjutsu-go-to-symbol {
   .module-name,
   .symbol-kind-module {
@@ -24,26 +28,47 @@
   }
 }
 .elmjutsu-find-usages {
-  .source-path {
+  height: 100%;
+  overflow: auto;
+  padding: @component-padding;
+  font-size: @font-size;
+  white-space: pre;
+  .header {
     color: @text-color-subtle;
+    border-bottom: solid 1px rgba(255,255,255,0.1);
   }
-}
-.elmjutsu-find-unused {
-  .module-name {
+  ul {
+    list-style-type: none;
+    padding: 0px;
+    li {
+      cursor: pointer;
+      padding: @component-padding / 2;
+      border-bottom: solid 1px rgba(255,255,255,0.05);
+      .symbol {
+        // .elmjutsu-symbol-highlight;
+        border-bottom: solid 1px fadeout(@ui-site-color-5, 50%);
+        font-weight: bold;
+      }
+    }
+    li:hover {
+      background-color: @background-color-highlight;
+    }
+    li.selected {
+      background-color: @background-color-selected;
+    }
   }
-  .function-name {
-    color: @ui-site-color-5;
+  .source-path {
+    font-size: 90%;
+    color: @text-color-subtle;
   }
 }
 atom-text-editor,
 atom-text-editor::shadow {
-  .elmjutsu-symbol-highlight .region {
-    border: 1px solid @ui-site-color-5;
-    border-radius: @component-border-radius;
+  .elmjutsu-symbol-marker .region {
+    .elmjutsu-symbol-highlight;
   }
-  .elmjutsu-usage-highlight .region {
-    border: 1px solid @ui-site-color-5;
-    border-radius: @component-border-radius;
+  .elmjutsu-usage-marker .region {
+    .elmjutsu-symbol-highlight;
   }
 }
 .elmjutsu.sidekick {
