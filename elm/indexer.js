@@ -9037,7 +9037,7 @@ var _user$project$Indexer$importersForTokenReceivedCmd = _elm_lang$core$Native_P
 	'importersForTokenReceivedCmd',
 	function (v) {
 		return [
-			(v._0.ctor === 'Nothing') ? null : v._0._0,
+			v._0,
 			_elm_lang$core$Native_List.toArray(v._1).map(
 			function (v) {
 				return [
@@ -9960,7 +9960,6 @@ var _user$project$Indexer$update = F2(
 						})
 				};
 			default:
-				var _p85 = _p71._0._1;
 				var _p84 = _p71._0._0;
 				if (_p84.ctor === 'Nothing') {
 					return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
@@ -9971,8 +9970,8 @@ var _user$project$Indexer$update = F2(
 						_1: _user$project$Indexer$importersForTokenReceivedCmd(
 							{
 								ctor: '_Tuple2',
-								_0: _p85,
-								_1: A4(_user$project$Indexer$getImportersForToken, _p85, model.activeFile, model.activeTokens, model.fileContentsDict)
+								_0: _p84._0,
+								_1: A4(_user$project$Indexer$getImportersForToken, _p71._0._1, model.activeFile, model.activeTokens, model.fileContentsDict)
 							})
 					};
 				}
@@ -9992,15 +9991,15 @@ var _user$project$Indexer$subscriptions = function (model) {
 				_user$project$Indexer$activeTokenChangedSub(_user$project$Indexer$CursorMove),
 				_user$project$Indexer$activeFileChangedSub(_user$project$Indexer$UpdateActiveFile),
 				_user$project$Indexer$fileContentsChangedSub(
-				function (_p86) {
-					var _p87 = _p86;
+				function (_p85) {
+					var _p86 = _p85;
 					return A2(
 						_user$project$Indexer$UpdateFileContents,
-						_p87._0,
+						_p86._0,
 						A2(
 							_user$project$Indexer$FileContents,
-							_p87._1,
-							_user$project$Indexer$toImportDict(_p87._2)));
+							_p86._1,
+							_user$project$Indexer$toImportDict(_p86._2)));
 				}),
 				_user$project$Indexer$fileContentsRemovedSub(_user$project$Indexer$RemoveFileContents),
 				_user$project$Indexer$newPackagesNeededSub(_user$project$Indexer$UpdatePackageDocs),
@@ -10016,7 +10015,7 @@ var _user$project$Indexer$main = {
 	main: _elm_lang$html$Html_App$program(
 		{
 			init: _user$project$Indexer$init,
-			view: function (_p88) {
+			view: function (_p87) {
 				return A2(
 					_elm_lang$html$Html$div,
 					_elm_lang$core$Native_List.fromArray(

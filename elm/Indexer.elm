@@ -144,7 +144,7 @@ port suggestionsForImportReceivedCmd : ( String, List ImportSuggestion ) -> Cmd 
 port canGoToDefinitionRepliedCmd : ( String, Bool ) -> Cmd msg
 
 
-port importersForTokenReceivedCmd : ( Maybe String, List ( String, List String ) ) -> Cmd msg
+port importersForTokenReceivedCmd : ( String, List ( String, List String ) ) -> Cmd msg
 
 
 
@@ -418,7 +418,7 @@ update msg model =
 
                 Just projectDirectory ->
                     ( model
-                    , ( maybeToken
+                    , ( projectDirectory
                       , getImportersForToken maybeToken model.activeFile model.activeTokens model.fileContentsDict
                       )
                         |> importersForTokenReceivedCmd

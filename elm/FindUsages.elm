@@ -31,7 +31,7 @@ subscriptions model =
 -- INCOMING PORTS
 
 
-port setUsagesSub : (Array.Array Usage -> msg) -> Sub msg
+port setUsagesSub : (( String, Array.Array Usage ) -> msg) -> Sub msg
 
 
 port selectNextUsageSub : (() -> msg) -> Sub msg
@@ -53,6 +53,7 @@ port viewInEditorCmd : Usage -> Cmd msg
 
 type alias Model =
     { usages : Array.Array Usage
+    , projectDirectory : String
     , selectedIndex : Int
     }
 
@@ -60,6 +61,7 @@ type alias Model =
 emptyModel : Model
 emptyModel =
     { usages = Array.empty
+    , projectDirectory = ""
     , selectedIndex = -1
     }
 
@@ -95,7 +97,7 @@ init =
 
 
 type Msg
-    = SetUsages (Array.Array Usage)
+    = SetUsages ( String, Array.Array Usage )
     | SelectNextUsage
     | SelectPreviousUsage
     | SelectIndex Int
@@ -104,8 +106,8 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetUsages usages ->
-            ( { model | usages = usages, selectedIndex = -1 }
+        SetUsages ( projectDirectory, usages ) ->
+            ( { model | projectDirectory = projectDirectory, usages = usages, selectedIndex = -1 }
             , Cmd.none
             )
 
@@ -151,22 +153,22 @@ maybeViewInEditor index model =
 
 
 view : Model -> Html Msg
-view { usages, selectedIndex } =
+view { usages, projectDirectory, selectedIndex } =
     div []
         [ div [ class "header" ]
             [ text ("Usages: " ++ (toString <| Array.length usages)) ]
         , div []
             [ ul
                 []
-                ((Array.indexedMap (usageView selectedIndex) usages)
+                ((Array.indexedMap (usageView projectDirectory selectedIndex) usages)
                     |> Array.toList
                 )
             ]
         ]
 
 
-usageView : Int -> Int -> Usage -> Html Msg
-usageView selectedIndex index usage =
+usageView : String -> Int -> Int -> Usage -> Html Msg
+usageView projectDirectory selectedIndex index usage =
     let
         { lineText, sourcePath, range } =
             usage
@@ -194,5 +196,5 @@ usageView selectedIndex index usage =
                 , span [ class "symbol" ] [ text symbolText ]
                 , span [] [ text postSymbolText ]
                 ]
-            , div [ class "source-path" ] [ text (sourcePath ++ " (" ++ (toString <| range.start.row + 1) ++ "," ++ (toString <| range.start.column + 1) ++ ")") ]
+            , div [ class "source-path" ] [ text (String.dropLeft (String.length projectDirectory) sourcePath ++ " (" ++ (toString <| range.start.row + 1) ++ "," ++ (toString <| range.start.column + 1) ++ ")") ]
             ]

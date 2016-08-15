@@ -7746,70 +7746,77 @@ var _elm_lang$html$Html_Events$Options = F2(
 		return {stopPropagation: a, preventDefault: b};
 	});
 
-var _user$project$FindUsages$emptyModel = {usages: _elm_lang$core$Array$empty, selectedIndex: -1};
+var _user$project$FindUsages$emptyModel = {usages: _elm_lang$core$Array$empty, projectDirectory: '', selectedIndex: -1};
 var _user$project$FindUsages$init = {ctor: '_Tuple2', _0: _user$project$FindUsages$emptyModel, _1: _elm_lang$core$Platform_Cmd$none};
 var _user$project$FindUsages$setUsagesSub = _elm_lang$core$Native_Platform.incomingPort(
 	'setUsagesSub',
-	_elm_lang$core$Json_Decode$array(
-		A2(
-			_elm_lang$core$Json_Decode$andThen,
-			A2(_elm_lang$core$Json_Decode_ops[':='], 'sourcePath', _elm_lang$core$Json_Decode$string),
-			function (sourcePath) {
-				return A2(
-					_elm_lang$core$Json_Decode$andThen,
-					A2(_elm_lang$core$Json_Decode_ops[':='], 'lineText', _elm_lang$core$Json_Decode$string),
-					function (lineText) {
-						return A2(
-							_elm_lang$core$Json_Decode$andThen,
-							A2(
-								_elm_lang$core$Json_Decode_ops[':='],
-								'range',
+	A3(
+		_elm_lang$core$Json_Decode$tuple2,
+		F2(
+			function (x1, x2) {
+				return {ctor: '_Tuple2', _0: x1, _1: x2};
+			}),
+		_elm_lang$core$Json_Decode$string,
+		_elm_lang$core$Json_Decode$array(
+			A2(
+				_elm_lang$core$Json_Decode$andThen,
+				A2(_elm_lang$core$Json_Decode_ops[':='], 'sourcePath', _elm_lang$core$Json_Decode$string),
+				function (sourcePath) {
+					return A2(
+						_elm_lang$core$Json_Decode$andThen,
+						A2(_elm_lang$core$Json_Decode_ops[':='], 'lineText', _elm_lang$core$Json_Decode$string),
+						function (lineText) {
+							return A2(
+								_elm_lang$core$Json_Decode$andThen,
 								A2(
-									_elm_lang$core$Json_Decode$andThen,
+									_elm_lang$core$Json_Decode_ops[':='],
+									'range',
 									A2(
-										_elm_lang$core$Json_Decode_ops[':='],
-										'start',
+										_elm_lang$core$Json_Decode$andThen,
 										A2(
-											_elm_lang$core$Json_Decode$andThen,
-											A2(_elm_lang$core$Json_Decode_ops[':='], 'row', _elm_lang$core$Json_Decode$int),
-											function (row) {
-												return A2(
-													_elm_lang$core$Json_Decode$andThen,
-													A2(_elm_lang$core$Json_Decode_ops[':='], 'column', _elm_lang$core$Json_Decode$int),
-													function (column) {
-														return _elm_lang$core$Json_Decode$succeed(
-															{row: row, column: column});
-													});
-											})),
-									function (start) {
-										return A2(
-											_elm_lang$core$Json_Decode$andThen,
+											_elm_lang$core$Json_Decode_ops[':='],
+											'start',
 											A2(
-												_elm_lang$core$Json_Decode_ops[':='],
-												'end',
+												_elm_lang$core$Json_Decode$andThen,
+												A2(_elm_lang$core$Json_Decode_ops[':='], 'row', _elm_lang$core$Json_Decode$int),
+												function (row) {
+													return A2(
+														_elm_lang$core$Json_Decode$andThen,
+														A2(_elm_lang$core$Json_Decode_ops[':='], 'column', _elm_lang$core$Json_Decode$int),
+														function (column) {
+															return _elm_lang$core$Json_Decode$succeed(
+																{row: row, column: column});
+														});
+												})),
+										function (start) {
+											return A2(
+												_elm_lang$core$Json_Decode$andThen,
 												A2(
-													_elm_lang$core$Json_Decode$andThen,
-													A2(_elm_lang$core$Json_Decode_ops[':='], 'row', _elm_lang$core$Json_Decode$int),
-													function (row) {
-														return A2(
-															_elm_lang$core$Json_Decode$andThen,
-															A2(_elm_lang$core$Json_Decode_ops[':='], 'column', _elm_lang$core$Json_Decode$int),
-															function (column) {
-																return _elm_lang$core$Json_Decode$succeed(
-																	{row: row, column: column});
-															});
-													})),
-											function (end) {
-												return _elm_lang$core$Json_Decode$succeed(
-													{start: start, end: end});
-											});
-									})),
-							function (range) {
-								return _elm_lang$core$Json_Decode$succeed(
-									{sourcePath: sourcePath, lineText: lineText, range: range});
-							});
-					});
-			})));
+													_elm_lang$core$Json_Decode_ops[':='],
+													'end',
+													A2(
+														_elm_lang$core$Json_Decode$andThen,
+														A2(_elm_lang$core$Json_Decode_ops[':='], 'row', _elm_lang$core$Json_Decode$int),
+														function (row) {
+															return A2(
+																_elm_lang$core$Json_Decode$andThen,
+																A2(_elm_lang$core$Json_Decode_ops[':='], 'column', _elm_lang$core$Json_Decode$int),
+																function (column) {
+																	return _elm_lang$core$Json_Decode$succeed(
+																		{row: row, column: column});
+																});
+														})),
+												function (end) {
+													return _elm_lang$core$Json_Decode$succeed(
+														{start: start, end: end});
+												});
+										})),
+								function (range) {
+									return _elm_lang$core$Json_Decode$succeed(
+										{sourcePath: sourcePath, lineText: lineText, range: range});
+								});
+						});
+				}))));
 var _user$project$FindUsages$selectNextUsageSub = _elm_lang$core$Native_Platform.incomingPort(
 	'selectNextUsageSub',
 	_elm_lang$core$Json_Decode$null(
@@ -7862,7 +7869,7 @@ var _user$project$FindUsages$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{usages: _p1._0, selectedIndex: -1}),
+						{projectDirectory: _p1._0._0, usages: _p1._0._1, selectedIndex: -1}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'SelectNextUsage':
@@ -7880,9 +7887,9 @@ var _user$project$FindUsages$update = F2(
 				};
 		}
 	});
-var _user$project$FindUsages$Model = F2(
-	function (a, b) {
-		return {usages: a, selectedIndex: b};
+var _user$project$FindUsages$Model = F3(
+	function (a, b, c) {
+		return {usages: a, projectDirectory: b, selectedIndex: c};
 	});
 var _user$project$FindUsages$Usage = F3(
 	function (a, b, c) {
@@ -7899,8 +7906,8 @@ var _user$project$FindUsages$Point = F2(
 var _user$project$FindUsages$SelectIndex = function (a) {
 	return {ctor: 'SelectIndex', _0: a};
 };
-var _user$project$FindUsages$usageView = F3(
-	function (selectedIndex, index, usage) {
+var _user$project$FindUsages$usageView = F4(
+	function (projectDirectory, selectedIndex, index, usage) {
 		var attrs = A2(
 			_elm_lang$core$Basics_ops['++'],
 			_elm_lang$core$Native_List.fromArray(
@@ -7977,7 +7984,10 @@ var _user$project$FindUsages$usageView = F3(
 							_elm_lang$html$Html$text(
 							A2(
 								_elm_lang$core$Basics_ops['++'],
-								sourcePath,
+								A2(
+									_elm_lang$core$String$dropLeft,
+									_elm_lang$core$String$length(projectDirectory),
+									sourcePath),
 								A2(
 									_elm_lang$core$Basics_ops['++'],
 									' (',
@@ -8031,7 +8041,7 @@ var _user$project$FindUsages$view = function (_p5) {
 						_elm_lang$core$Array$toList(
 							A2(
 								_elm_lang$core$Array$indexedMap,
-								_user$project$FindUsages$usageView(_p6.selectedIndex),
+								A2(_user$project$FindUsages$usageView, _p6.projectDirectory, _p6.selectedIndex),
 								_p7)))
 					]))
 			]));

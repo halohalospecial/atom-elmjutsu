@@ -10,12 +10,24 @@
         "command": "elmjutsu:go-to-symbol"
       },
       {
+        "label": "Elmjutsu: Find Usages",
+        "command": "elmjutsu:find-usages"
+      },
+      {
+        "label": "Elmjutsu: Go To Next Usage",
+        "command": "elmjutsu:go-to-next-usage"
+      },
+      {
+        "label": "Elmjutsu: Go To Previous Usage",
+        "command": "elmjutsu:go-to-previous-usage"
+      },
+      {
         "label": "Elmjutsu: Go Back",
         "command": "elmjutsu:go-back"
       },
       {
-        "label": "Elmjutsu: Find Usages",
-        "command": "elmjutsu:find-usages"
+        "label": "Elmjutsu: Toggle Sidekick",
+        "command": "elmjutsu:toggle-sidekick"
       }
     ]
   },
@@ -35,12 +47,24 @@
               "command": "elmjutsu:go-to-symbol"
             },
             {
+              "label": "Elmjutsu: Find Usages",
+              "command": "elmjutsu:find-usages"
+            },
+            {
+              "label": "Elmjutsu: Go To Next Usage",
+              "command": "elmjutsu:go-to-next-usage"
+            },
+            {
+              "label": "Elmjutsu: Go To Previous Usage",
+              "command": "elmjutsu:go-to-previous-usage"
+            },
+            {
               "label": "Elmjutsu: Go Back",
               "command": "elmjutsu:go-back"
             },
             {
-              "label": "Elmjutsu: Find Usages",
-              "command": "elmjutsu:find-usages"
+              "label": "Elmjutsu: Toggle Sidekick",
+              "command": "elmjutsu:toggle-sidekick"
             }
           ]
         }
