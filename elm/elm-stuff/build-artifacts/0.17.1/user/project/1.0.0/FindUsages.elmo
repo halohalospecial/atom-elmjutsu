@@ -100,10 +100,10 @@ var _user$project$FindUsages$maybeViewInEditor = F2(
 	});
 var _user$project$FindUsages$selectDelta = F2(
 	function (delta, model) {
-		var updatedSelectedIndex = A2(
-			_elm_lang$core$Basics_ops['%'],
-			model.selectedIndex + delta,
-			_elm_lang$core$Array$length(model.usages));
+		var updatedSelectedIndex = function () {
+			var n = _elm_lang$core$Array$length(model.usages);
+			return (_elm_lang$core$Native_Utils.cmp(n, 0) > 0) ? A2(_elm_lang$core$Basics_ops['%'], model.selectedIndex + delta, n) : model.selectedIndex;
+		}();
 		return {
 			ctor: '_Tuple2',
 			_0: _elm_lang$core$Native_Utils.update(

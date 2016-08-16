@@ -2,7 +2,7 @@
 
 Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
-## Features
+## Feature Overview
 
 * [Autocomplete](#autocomplete)
 
@@ -24,6 +24,8 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 * For `Autocomplete`:
   * [autocomplete-plus](https://atom.io/packages/autocomplete-plus) (installed by default)
   * [snippets](https://atom.io/packages/snippets) (installed by default)
+
+## Feature Details
 
 ### Autocomplete
 

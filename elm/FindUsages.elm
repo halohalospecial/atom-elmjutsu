@@ -127,8 +127,14 @@ selectDelta : Int -> Model -> ( Model, Cmd Msg )
 selectDelta delta model =
     let
         updatedSelectedIndex =
-            -- clamp 0 ((Array.length model.usages) - 1) (model.selectedIndex + delta)
-            (model.selectedIndex + delta) % Array.length model.usages
+            let
+                n =
+                    Array.length model.usages
+            in
+                if n > 0 then
+                    (model.selectedIndex + delta) % n
+                else
+                    model.selectedIndex
     in
         ( { model | selectedIndex = updatedSelectedIndex }
         , if model.selectedIndex /= updatedSelectedIndex then

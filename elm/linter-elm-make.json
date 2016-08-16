@@ -1,7 +1,7 @@
 {
   "mainPaths": [
     "Indexer.elm",
-    "Sidekick.elm",
-    "FindUsages.elm"
+    "FindUsages.elm",
+    "Sidekick.elm"
   ]
 }
