@@ -107,7 +107,7 @@ port getSuggestionsForImportSub : (String -> msg) -> Sub msg
 port askCanGoToDefinitionSub : (String -> msg) -> Sub msg
 
 
-port getImportersForTokenSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
+port getImportersForTokenSub : (( Maybe String, Maybe String, Maybe Bool ) -> msg) -> Sub msg
 
 
 
@@ -144,7 +144,7 @@ port suggestionsForImportReceivedCmd : ( String, List ImportSuggestion ) -> Cmd 
 port canGoToDefinitionRepliedCmd : ( String, Bool ) -> Cmd msg
 
 
-port importersForTokenReceivedCmd : ( String, List ( String, List String ) ) -> Cmd msg
+port importersForTokenReceivedCmd : ( String, String, Bool, List ( String, Bool, List String ) ) -> Cmd msg
 
 
 
@@ -230,7 +230,7 @@ type Msg
     | GetHintsForPartial String
     | GetSuggestionsForImport String
     | AskCanGoToDefinition String
-    | GetImporterSourcePathsForToken ( Maybe String, Maybe String )
+    | GetImporterSourcePathsForToken ( Maybe String, Maybe String, Maybe Bool )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -409,19 +409,21 @@ update msg model =
                 |> canGoToDefinitionRepliedCmd
             )
 
-        GetImporterSourcePathsForToken ( maybeProjectDirectory, maybeToken ) ->
-            case maybeProjectDirectory of
-                Nothing ->
-                    ( model
-                    , Cmd.none
-                    )
-
-                Just projectDirectory ->
+        GetImporterSourcePathsForToken ( maybeProjectDirectory, maybeToken, maybeIsCursorAtLastPartOfToken ) ->
+            case ( maybeProjectDirectory, maybeToken, maybeIsCursorAtLastPartOfToken ) of
+                ( Just projectDirectory, Just token, Just isCursorAtLastPartOfToken ) ->
                     ( model
                     , ( projectDirectory
-                      , getImportersForToken maybeToken model.activeFile model.activeTokens model.fileContentsDict
+                      , token
+                      , isCursorAtLastPartOfToken
+                      , getImportersForToken token isCursorAtLastPartOfToken model.activeFile model.activeTokens model.fileContentsDict
                       )
                         |> importersForTokenReceivedCmd
+                    )
+
+                _ ->
+                    ( model
+                    , Cmd.none
                     )
 
 
@@ -640,13 +642,26 @@ getSuggestionsForImport partial maybeActiveFile fileContentsDict packageDocs =
                     |> List.sortBy .name
 
 
-getImportersForToken : Maybe String -> Maybe ActiveFile -> TokenDict -> FileContentsDict -> List ( String, List String )
-getImportersForToken maybeToken maybeActiveFile tokens fileContentsDict =
-    case ( maybeToken, maybeActiveFile ) of
-        ( Just token, Just { projectDirectory } ) ->
+getImportersForToken : String -> Bool -> Maybe ActiveFile -> TokenDict -> FileContentsDict -> List ( String, Bool, List String )
+getImportersForToken rawToken isCursorAtLastPartOfToken maybeActiveFile tokens fileContentsDict =
+    case maybeActiveFile of
+        Just { projectDirectory } ->
             let
+                activeFileContents =
+                    getActiveFileContents maybeActiveFile fileContentsDict
+
+                ( token, willUseFullToken ) =
+                    if rawToken == activeFileContents.moduleDocs.name then
+                        ( rawToken, True )
+                    else if Dict.get rawToken activeFileContents.imports /= Nothing then
+                        ( rawToken, True )
+                    else if isCursorAtLastPartOfToken then
+                        ( rawToken, False )
+                    else
+                        ( getModuleName rawToken, False )
+
                 hints =
-                    getHintsForToken maybeToken tokens
+                    getHintsForToken (Just token) tokens
 
                 projectFileContents =
                     getProjectFileContents projectDirectory fileContentsDict
@@ -660,8 +675,8 @@ getImportersForToken maybeToken maybeActiveFile tokens fileContentsDict =
                                         isHintAModule hint =
                                             hint.moduleName == "" && Regex.contains capitalizedRegex hint.name
                                     in
-                                        if isHintAModule hint && Dict.get hint.name imports /= Nothing then
-                                            Just ( moduleDocs.sourcePath, [ hint.name ] )
+                                        if isHintAModule hint && Dict.get token imports /= Nothing then
+                                            Just ( moduleDocs.sourcePath, willUseFullToken, [ hint.name ] )
                                         else
                                             case Dict.get hint.moduleName imports of
                                                 Nothing ->
@@ -672,8 +687,10 @@ getImportersForToken maybeToken maybeActiveFile tokens fileContentsDict =
                                                         isHintThisModule =
                                                             isHintAModule hint && hint.name == moduleDocs.name
                                                     in
-                                                        if isHintInThisModule || isHintThisModule then
-                                                            Just ( moduleDocs.sourcePath, [ hint.name ] )
+                                                        if isHintInThisModule then
+                                                            Just ( moduleDocs.sourcePath, willUseFullToken, [ hint.name ] )
+                                                        else if isHintThisModule then
+                                                            Just ( moduleDocs.sourcePath, willUseFullToken, [ token ] )
                                                         else
                                                             Nothing
 
@@ -704,7 +721,7 @@ getImportersForToken maybeToken maybeActiveFile tokens fileContentsDict =
                                                                 Nothing
 
                                                             _ ->
-                                                                Just ( moduleDocs.sourcePath, names )
+                                                                Just ( moduleDocs.sourcePath, willUseFullToken, names )
                             in
                                 List.filterMap getSourcePathAndLocalNames hints
                         )
@@ -1314,6 +1331,17 @@ defaultSuggestions =
 getLastName : String -> String
 getLastName fullName =
     List.foldl always "" (String.split "." fullName)
+
+
+getModuleName : String -> String
+getModuleName fullName =
+    fullName
+        |> String.split "."
+        |> List.reverse
+        |> List.tail
+        |> Maybe.withDefault []
+        |> List.reverse
+        |> String.join "."
 
 
 capitalizedRegex : Regex.Regex
