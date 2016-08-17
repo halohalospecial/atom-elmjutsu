@@ -674,54 +674,61 @@ getImportersForToken rawToken isCursorAtLastPartOfToken maybeActiveFile tokens f
                                     let
                                         isHintAModule hint =
                                             hint.moduleName == "" && Regex.contains capitalizedRegex hint.name
+
+                                        isHintThisModule =
+                                            isHintAModule hint && hint.name == moduleDocs.name
                                     in
-                                        if isHintAModule hint && Dict.get token imports /= Nothing then
+                                        if isHintThisModule then
+                                            Just ( moduleDocs.sourcePath, willUseFullToken, [ token ] )
+                                        else if isHintAModule hint && Dict.get token imports /= Nothing then
                                             Just ( moduleDocs.sourcePath, willUseFullToken, [ hint.name ] )
                                         else
-                                            case Dict.get hint.moduleName imports of
-                                                Nothing ->
-                                                    let
-                                                        isHintInThisModule =
-                                                            hint.moduleName == moduleDocs.name
+                                            let
+                                                importAliases =
+                                                    List.filterMap .alias (Dict.values imports)
+                                            in
+                                                if List.member token importAliases then
+                                                    Just ( moduleDocs.sourcePath, willUseFullToken, [ token ] )
+                                                else
+                                                    case Dict.get hint.moduleName imports of
+                                                        Nothing ->
+                                                            let
+                                                                isHintInThisModule =
+                                                                    hint.moduleName == moduleDocs.name
+                                                            in
+                                                                if isHintInThisModule then
+                                                                    Just ( moduleDocs.sourcePath, willUseFullToken, [ hint.name ] )
+                                                                else
+                                                                    Nothing
 
-                                                        isHintThisModule =
-                                                            isHintAModule hint && hint.name == moduleDocs.name
-                                                    in
-                                                        if isHintInThisModule then
-                                                            Just ( moduleDocs.sourcePath, willUseFullToken, [ hint.name ] )
-                                                        else if isHintThisModule then
-                                                            Just ( moduleDocs.sourcePath, willUseFullToken, [ token ] )
-                                                        else
-                                                            Nothing
+                                                        Just { alias, exposed } ->
+                                                            let
+                                                                localNames =
+                                                                    case ( alias, exposed ) of
+                                                                        ( Nothing, None ) ->
+                                                                            [ hint.moduleName ++ "." ++ hint.name ]
 
-                                                Just { alias, exposed } ->
-                                                    let
-                                                        localNames =
-                                                            case ( alias, exposed ) of
-                                                                ( Nothing, None ) ->
-                                                                    [ hint.moduleName ++ "." ++ hint.name ]
+                                                                        ( Just alias, None ) ->
+                                                                            [ alias ++ "." ++ hint.name ]
 
-                                                                ( Just alias, None ) ->
-                                                                    [ alias ++ "." ++ hint.name ]
+                                                                        ( _, All ) ->
+                                                                            [ hint.name, getLocalName hint.moduleName alias hint.name ]
 
-                                                                ( _, All ) ->
-                                                                    [ hint.name, getLocalName hint.moduleName alias hint.name ]
+                                                                        ( _, Some exposedSet ) ->
+                                                                            if Set.member hint.name exposedSet then
+                                                                                [ hint.name, getLocalName hint.moduleName alias hint.name ]
+                                                                            else
+                                                                                [ getLocalName hint.moduleName alias hint.name ]
 
-                                                                ( _, Some exposedSet ) ->
-                                                                    if Set.member hint.name exposedSet then
-                                                                        [ hint.name, getLocalName hint.moduleName alias hint.name ]
-                                                                    else
-                                                                        [ getLocalName hint.moduleName alias hint.name ]
+                                                                names =
+                                                                    localNames |> Set.fromList |> Set.toList
+                                                            in
+                                                                case names of
+                                                                    [] ->
+                                                                        Nothing
 
-                                                        names =
-                                                            localNames |> Set.fromList |> Set.toList
-                                                    in
-                                                        case names of
-                                                            [] ->
-                                                                Nothing
-
-                                                            _ ->
-                                                                Just ( moduleDocs.sourcePath, willUseFullToken, names )
+                                                                    _ ->
+                                                                        Just ( moduleDocs.sourcePath, willUseFullToken, names )
                             in
                                 List.filterMap getSourcePathAndLocalNames hints
                         )
