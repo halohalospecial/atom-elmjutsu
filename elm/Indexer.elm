@@ -645,12 +645,12 @@ getSuggestionsForImport partial maybeActiveFile fileContentsDict packageDocs =
 getImportersForToken : String -> Bool -> Maybe ActiveFile -> TokenDict -> FileContentsDict -> List ( String, Bool, List String )
 getImportersForToken rawToken isCursorAtLastPartOfToken maybeActiveFile tokens fileContentsDict =
     case maybeActiveFile of
-        Just { projectDirectory } ->
+        Just { projectDirectory, filePath } ->
             let
                 activeFileContents =
                     getActiveFileContents maybeActiveFile fileContentsDict
 
-                ( token, willUseFullToken ) =
+                ( token, isModuleName ) =
                     if rawToken == activeFileContents.moduleDocs.name then
                         ( rawToken, True )
                     else if Dict.get rawToken activeFileContents.imports /= Nothing then
@@ -679,56 +679,51 @@ getImportersForToken rawToken isCursorAtLastPartOfToken maybeActiveFile tokens f
                                             isHintAModule hint && hint.name == moduleDocs.name
                                     in
                                         if isHintThisModule then
-                                            Just ( moduleDocs.sourcePath, willUseFullToken, [ token ] )
+                                            Just ( moduleDocs.sourcePath, isModuleName, [ token ] )
                                         else if isHintAModule hint && Dict.get token imports /= Nothing then
-                                            Just ( moduleDocs.sourcePath, willUseFullToken, [ hint.name ] )
+                                            Just ( moduleDocs.sourcePath, isModuleName, [ hint.name ] )
+                                        else if filePath == moduleDocs.sourcePath && List.member token (List.filterMap .alias (Dict.values imports)) then
+                                            Just ( moduleDocs.sourcePath, isModuleName, [ token ] )
                                         else
-                                            let
-                                                importAliases =
-                                                    List.filterMap .alias (Dict.values imports)
-                                            in
-                                                if List.member token importAliases then
-                                                    Just ( moduleDocs.sourcePath, willUseFullToken, [ token ] )
-                                                else
-                                                    case Dict.get hint.moduleName imports of
-                                                        Nothing ->
-                                                            let
-                                                                isHintInThisModule =
-                                                                    hint.moduleName == moduleDocs.name
-                                                            in
-                                                                if isHintInThisModule then
-                                                                    Just ( moduleDocs.sourcePath, willUseFullToken, [ hint.name ] )
-                                                                else
-                                                                    Nothing
+                                            case Dict.get hint.moduleName imports of
+                                                Nothing ->
+                                                    let
+                                                        isHintInThisModule =
+                                                            hint.moduleName == moduleDocs.name
+                                                    in
+                                                        if isHintInThisModule then
+                                                            Just ( moduleDocs.sourcePath, isModuleName, [ hint.name ] )
+                                                        else
+                                                            Nothing
 
-                                                        Just { alias, exposed } ->
-                                                            let
-                                                                localNames =
-                                                                    case ( alias, exposed ) of
-                                                                        ( Nothing, None ) ->
-                                                                            [ hint.moduleName ++ "." ++ hint.name ]
+                                                Just { alias, exposed } ->
+                                                    let
+                                                        localNames =
+                                                            case ( alias, exposed ) of
+                                                                ( Nothing, None ) ->
+                                                                    [ hint.moduleName ++ "." ++ hint.name ]
 
-                                                                        ( Just alias, None ) ->
-                                                                            [ alias ++ "." ++ hint.name ]
+                                                                ( Just alias, None ) ->
+                                                                    [ alias ++ "." ++ hint.name ]
 
-                                                                        ( _, All ) ->
-                                                                            [ hint.name, getLocalName hint.moduleName alias hint.name ]
+                                                                ( _, All ) ->
+                                                                    [ hint.name, getLocalName hint.moduleName alias hint.name ]
 
-                                                                        ( _, Some exposedSet ) ->
-                                                                            if Set.member hint.name exposedSet then
-                                                                                [ hint.name, getLocalName hint.moduleName alias hint.name ]
-                                                                            else
-                                                                                [ getLocalName hint.moduleName alias hint.name ]
+                                                                ( _, Some exposedSet ) ->
+                                                                    if Set.member hint.name exposedSet then
+                                                                        [ hint.name, getLocalName hint.moduleName alias hint.name ]
+                                                                    else
+                                                                        [ getLocalName hint.moduleName alias hint.name ]
 
-                                                                names =
-                                                                    localNames |> Set.fromList |> Set.toList
-                                                            in
-                                                                case names of
-                                                                    [] ->
-                                                                        Nothing
+                                                        names =
+                                                            localNames |> Set.fromList |> Set.toList
+                                                    in
+                                                        case names of
+                                                            [] ->
+                                                                Nothing
 
-                                                                    _ ->
-                                                                        Just ( moduleDocs.sourcePath, willUseFullToken, names )
+                                                            _ ->
+                                                                Just ( moduleDocs.sourcePath, isModuleName, names )
                             in
                                 List.filterMap getSourcePathAndLocalNames hints
                         )
@@ -1093,15 +1088,15 @@ type alias ImportSuggestion =
 
 
 toTokenDict : Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> TokenDict
-toTokenDict activeFile fileContentsDict packageDocsList =
-    case activeFile of
+toTokenDict maybeActiveFile fileContentsDict packageDocsList =
+    case maybeActiveFile of
         Nothing ->
             Dict.empty
 
         Just { projectDirectory } ->
             let
                 getMaybeHints moduleDocs =
-                    Maybe.map (filteredHints moduleDocs) (Dict.get moduleDocs.name (getImportsPlusActiveModuleForActiveFile activeFile fileContentsDict))
+                    Maybe.map (filteredHints moduleDocs) (Dict.get moduleDocs.name (getImportsPlusActiveModuleForActiveFile maybeActiveFile fileContentsDict))
 
                 insert ( token, hint ) dict =
                     Dict.update token (\value -> Just (hint :: Maybe.withDefault [] value)) dict

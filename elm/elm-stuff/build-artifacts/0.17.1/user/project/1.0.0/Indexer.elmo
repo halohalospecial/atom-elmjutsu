@@ -1095,7 +1095,7 @@ var _user$project$Indexer$getImportersForToken = F5(
 				_1: false
 			}));
 			var token = _p47._0;
-			var willUseFullToken = _p47._1;
+			var isModuleName = _p47._1;
 			var hints = A2(
 				_user$project$Indexer$getHintsForToken,
 				_elm_lang$core$Maybe$Just(token),
@@ -1116,7 +1116,7 @@ var _user$project$Indexer$getImportersForToken = F5(
 								{
 									ctor: '_Tuple3',
 									_0: _p55.sourcePath,
-									_1: willUseFullToken,
+									_1: isModuleName,
 									_2: _elm_lang$core$Native_List.fromArray(
 										[token])
 								});
@@ -1128,23 +1128,25 @@ var _user$project$Indexer$getImportersForToken = F5(
 									{
 										ctor: '_Tuple3',
 										_0: _p55.sourcePath,
-										_1: willUseFullToken,
+										_1: isModuleName,
 										_2: _elm_lang$core$Native_List.fromArray(
 											[hint.name])
 									});
 							} else {
-								var importAliases = A2(
-									_elm_lang$core$List$filterMap,
-									function (_) {
-										return _.alias;
-									},
-									_elm_lang$core$Dict$values(_p54));
-								if (A2(_elm_lang$core$List$member, token, importAliases)) {
+								if (_elm_lang$core$Native_Utils.eq(_p46._0.filePath, _p55.sourcePath) && A2(
+									_elm_lang$core$List$member,
+									token,
+									A2(
+										_elm_lang$core$List$filterMap,
+										function (_) {
+											return _.alias;
+										},
+										_elm_lang$core$Dict$values(_p54)))) {
 									return _elm_lang$core$Maybe$Just(
 										{
 											ctor: '_Tuple3',
 											_0: _p55.sourcePath,
-											_1: willUseFullToken,
+											_1: isModuleName,
 											_2: _elm_lang$core$Native_List.fromArray(
 												[token])
 										});
@@ -1156,7 +1158,7 @@ var _user$project$Indexer$getImportersForToken = F5(
 											{
 												ctor: '_Tuple3',
 												_0: _p55.sourcePath,
-												_1: willUseFullToken,
+												_1: isModuleName,
 												_2: _elm_lang$core$Native_List.fromArray(
 													[hint.name])
 											}) : _elm_lang$core$Maybe$Nothing;
@@ -1207,7 +1209,7 @@ var _user$project$Indexer$getImportersForToken = F5(
 											return _elm_lang$core$Maybe$Nothing;
 										} else {
 											return _elm_lang$core$Maybe$Just(
-												{ctor: '_Tuple3', _0: _p55.sourcePath, _1: willUseFullToken, _2: names});
+												{ctor: '_Tuple3', _0: _p55.sourcePath, _1: isModuleName, _2: names});
 										}
 									}
 								}
@@ -1398,8 +1400,8 @@ var _user$project$Indexer$getHintsForPartial = F5(
 				A2(_elm_lang$core$Basics_ops['++'], hints, defaultHints)));
 	});
 var _user$project$Indexer$toTokenDict = F3(
-	function (activeFile, fileContentsDict, packageDocsList) {
-		var _p70 = activeFile;
+	function (maybeActiveFile, fileContentsDict, packageDocsList) {
+		var _p70 = maybeActiveFile;
 		if (_p70.ctor === 'Nothing') {
 			return _elm_lang$core$Dict$empty;
 		} else {
@@ -1429,7 +1431,7 @@ var _user$project$Indexer$toTokenDict = F3(
 					A2(
 						_elm_lang$core$Dict$get,
 						moduleDocs.name,
-						A2(_user$project$Indexer$getImportsPlusActiveModuleForActiveFile, activeFile, fileContentsDict)));
+						A2(_user$project$Indexer$getImportsPlusActiveModuleForActiveFile, maybeActiveFile, fileContentsDict)));
 			};
 			return A3(
 				_elm_lang$core$List$foldl,
