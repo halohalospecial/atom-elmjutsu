@@ -8986,7 +8986,8 @@ var _user$project$Indexer$importersForTokenReceivedCmd = _elm_lang$core$Native_P
 					v._0,
 					v._1,
 					v._2,
-					_elm_lang$core$Native_List.toArray(v._3).map(
+					v._3,
+					_elm_lang$core$Native_List.toArray(v._4).map(
 					function (v) {
 						return v;
 					})
@@ -9477,11 +9478,12 @@ var _user$project$Indexer$getImportersForToken = F5(
 				return _elm_lang$core$Native_List.fromArray(
 					[
 						{
-						ctor: '_Tuple4',
+						ctor: '_Tuple5',
 						_0: activeFileContents.moduleDocs.sourcePath,
 						_1: willUseFullToken,
 						_2: true,
-						_3: _elm_lang$core$Native_List.fromArray(
+						_3: true,
+						_4: _elm_lang$core$Native_List.fromArray(
 							[token])
 					}
 					]);
@@ -9508,22 +9510,24 @@ var _user$project$Indexer$getImportersForToken = F5(
 							if (isHintThisModule) {
 								return _elm_lang$core$Maybe$Just(
 									{
-										ctor: '_Tuple4',
+										ctor: '_Tuple5',
 										_0: _p55.sourcePath,
 										_1: willUseFullToken,
-										_2: false,
-										_3: _elm_lang$core$Native_List.fromArray(
+										_2: true,
+										_3: false,
+										_4: _elm_lang$core$Native_List.fromArray(
 											[token])
 									});
 							} else {
 								if (isHintAnImport) {
 									return _elm_lang$core$Maybe$Just(
 										{
-											ctor: '_Tuple4',
+											ctor: '_Tuple5',
 											_0: _p55.sourcePath,
 											_1: willUseFullToken,
-											_2: false,
-											_3: _elm_lang$core$Native_List.fromArray(
+											_2: true,
+											_3: false,
+											_4: _elm_lang$core$Native_List.fromArray(
 												[hint.name])
 										});
 								} else {
@@ -9532,11 +9536,12 @@ var _user$project$Indexer$getImportersForToken = F5(
 										var isHintInThisModule = _elm_lang$core$Native_Utils.eq(hint.moduleName, _p55.name);
 										return isHintInThisModule ? _elm_lang$core$Maybe$Just(
 											{
-												ctor: '_Tuple4',
+												ctor: '_Tuple5',
 												_0: _p55.sourcePath,
 												_1: willUseFullToken,
 												_2: false,
-												_3: _elm_lang$core$Native_List.fromArray(
+												_3: false,
+												_4: _elm_lang$core$Native_List.fromArray(
 													[hint.name])
 											}) : _elm_lang$core$Maybe$Nothing;
 									} else {
@@ -9586,7 +9591,7 @@ var _user$project$Indexer$getImportersForToken = F5(
 											return _elm_lang$core$Maybe$Nothing;
 										} else {
 											return _elm_lang$core$Maybe$Just(
-												{ctor: '_Tuple4', _0: _p55.sourcePath, _1: willUseFullToken, _2: false, _3: names});
+												{ctor: '_Tuple5', _0: _p55.sourcePath, _1: willUseFullToken, _2: false, _3: false, _4: names});
 										}
 									}
 								}

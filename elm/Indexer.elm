@@ -144,7 +144,7 @@ port suggestionsForImportReceivedCmd : ( String, List ImportSuggestion ) -> Cmd 
 port canGoToDefinitionRepliedCmd : ( String, Bool ) -> Cmd msg
 
 
-port importersForTokenReceivedCmd : ( String, String, Bool, List ( String, Bool, Bool, List String ) ) -> Cmd msg
+port importersForTokenReceivedCmd : ( String, String, Bool, List ( String, Bool, Bool, Bool, List String ) ) -> Cmd msg
 
 
 
@@ -642,7 +642,7 @@ getSuggestionsForImport partial maybeActiveFile fileContentsDict packageDocs =
                     |> List.sortBy .name
 
 
-getImportersForToken : String -> Bool -> Maybe ActiveFile -> TokenDict -> FileContentsDict -> List ( String, Bool, Bool, List String )
+getImportersForToken : String -> Bool -> Maybe ActiveFile -> TokenDict -> FileContentsDict -> List ( String, Bool, Bool, Bool, List String )
 getImportersForToken rawToken isCursorAtLastPartOfToken maybeActiveFile tokens fileContentsDict =
     case maybeActiveFile of
         Just { projectDirectory, filePath } ->
@@ -664,7 +664,7 @@ getImportersForToken rawToken isCursorAtLastPartOfToken maybeActiveFile tokens f
                     List.member token (List.filterMap .alias (Dict.values activeFileContents.imports))
             in
                 if isImportAlias then
-                    [ ( activeFileContents.moduleDocs.sourcePath, willUseFullToken, True, [ token ] ) ]
+                    [ ( activeFileContents.moduleDocs.sourcePath, willUseFullToken, True, True, [ token ] ) ]
                 else
                     let
                         hints =
@@ -689,11 +689,9 @@ getImportersForToken rawToken isCursorAtLastPartOfToken maybeActiveFile tokens f
                                                     isHintAModule hint && Dict.get token imports /= Nothing
                                             in
                                                 if isHintThisModule then
-                                                    Just ( moduleDocs.sourcePath, willUseFullToken, False, [ token ] )
+                                                    Just ( moduleDocs.sourcePath, willUseFullToken, True, False, [ token ] )
                                                 else if isHintAnImport then
-                                                    Just ( moduleDocs.sourcePath, willUseFullToken, False, [ hint.name ] )
-                                                    -- else if filePath == moduleDocs.sourcePath && List.member token (List.filterMap .alias (Dict.values imports)) then
-                                                    --     Just ( moduleDocs.sourcePath, willUseFullToken, True, [ token ] )
+                                                    Just ( moduleDocs.sourcePath, willUseFullToken, True, False, [ hint.name ] )
                                                 else
                                                     case Dict.get hint.moduleName imports of
                                                         Nothing ->
@@ -702,7 +700,7 @@ getImportersForToken rawToken isCursorAtLastPartOfToken maybeActiveFile tokens f
                                                                     hint.moduleName == moduleDocs.name
                                                             in
                                                                 if isHintInThisModule then
-                                                                    Just ( moduleDocs.sourcePath, willUseFullToken, False, [ hint.name ] )
+                                                                    Just ( moduleDocs.sourcePath, willUseFullToken, False, False, [ hint.name ] )
                                                                 else
                                                                     Nothing
 
@@ -733,7 +731,7 @@ getImportersForToken rawToken isCursorAtLastPartOfToken maybeActiveFile tokens f
                                                                         Nothing
 
                                                                     _ ->
-                                                                        Just ( moduleDocs.sourcePath, willUseFullToken, False, names )
+                                                                        Just ( moduleDocs.sourcePath, willUseFullToken, False, False, names )
                                     in
                                         List.filterMap getSourcePathAndLocalNames hints
                                 )
