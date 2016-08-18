@@ -10,6 +10,12 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 
 * [Go To Symbol](#elmjutsu-go-to-symbol)
 
+* [Find Usages](#elmjutsu-find-usages)
+
+* [Go To Next Usage](#elmjutsu-go-to-next-usage)
+
+* [Go To Previous Usage](#elmjutsu-go-to-previous-usage)
+
 * [Go Back](#elmjutsu-go-back)
 
 * [Toggle Sidekick](#elmjutsu-toggle-sidekick)
@@ -49,9 +55,31 @@ If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, y
 
 ![go-to-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-symbol.gif?raw=true)
 
+### `Elmjutsu: Find Usages`
+
+![find-usages](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/find-usages.gif?raw=true)
+
+### `Elmjutsu: Cancel Find Usages`
+
+Closes the `Find Usages` panel.
+
+### `Elmjutsu: Go To Next Usage`
+
+When the `Find Usages` panel is shown, this command moves the cursor to the position of the next usage in the list.
+
+### `Elmjutsu: Go To Previous Usage`
+
+When the `Find Usages` panel is shown, this command moves the cursor to the position of the previous usage in the list.
+
 ### `Elmjutsu: Go Back`
 
-The current cursor position is added to a navigation stack before jumping via `Go To Definition` or `Go To Symbol`.  Invoke this command to jump back to the previous position.
+The current cursor position is added to a navigation stack before jumping via:
+  - `Go To Definition`
+  - `Go To Symbol`
+  - `Go To Next Usage`
+  - `Go To Previous Usage`
+
+Invoke this command to jump back to the previous position.
 
 ![go-back](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-back.gif?raw=true)
 
@@ -76,9 +104,15 @@ Here is an example:
 ```
 'atom-text-editor:not([mini])[data-grammar^="source elm"]':
   'f12': 'elmjutsu:go-to-definition'
-  'shift-f12': 'elmjutsu:go-back'
   'ctrl-r': 'elmjutsu:go-to-symbol'
+  'shift-f12': 'elmjutsu:find-usages'
+  'f8': 'elmjutsu:go-to-next-usage'
+  'shift-f8': 'elmjutsu:go-to-previous-usage'
+  'ctrl-f12': 'elmjutsu:go-back'
+
+'atom-workspace':
   'f1': 'elmjutsu:toggle-sidekick'
+  'ctrl-shift-f12': 'elmjutsu:cancel-find-usages'
 ```
 
 Add above to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
@@ -96,22 +130,3 @@ Add above to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
 
 * The initial code was based on the [source](https://github.com/elm-lang/elm-lang.org) of [Try Elm](http://elm-lang.org/try).
 * The [code](https://github.com/edubkendo/atom-elm) for computing snippet tab stops was from [language-elm](https://atom.io/packages/language-elm).
-
-
-<!---
-Warning:  Most of these are hacky experiments that may not always work properly.  Use at your own risk! :p
-
-#### `Elmjutsu: Find Usages`
-Finds all usages of the symbol under the cursor.
-
-This works by reading the `.elmo` files in `elm-stuff` and generating a JavaScript syntax tree using [Esprima](http://esprima.org/).
-
-For best results, enable `Lint On The Fly` in the [linter-elm-make](https://atom.io/packages/linter-elm-make) settings.
-
-![find-usages](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/find-usages.gif?raw=true)
-
-#### `Elmjutsu: Find Unused`
-Finds all unused symbols in the project.
-
-Uses the same technique as `Elmjutsu: Find Usages`.
--->

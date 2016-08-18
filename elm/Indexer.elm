@@ -144,7 +144,7 @@ port suggestionsForImportReceivedCmd : ( String, List ImportSuggestion ) -> Cmd 
 port canGoToDefinitionRepliedCmd : ( String, Bool ) -> Cmd msg
 
 
-port importersForTokenReceivedCmd : ( String, String, Bool, List ( String, Bool, Bool, Bool, List String ) ) -> Cmd msg
+port importersForTokenReceivedCmd : ( String, String, Bool, Bool, List ( String, Bool, Bool, List String ) ) -> Cmd msg
 
 
 
@@ -411,15 +411,30 @@ update msg model =
 
         GetImporterSourcePathsForToken ( maybeProjectDirectory, maybeToken, maybeIsCursorAtLastPartOfToken ) ->
             case ( maybeProjectDirectory, maybeToken, maybeIsCursorAtLastPartOfToken ) of
-                ( Just projectDirectory, Just token, Just isCursorAtLastPartOfToken ) ->
-                    ( model
-                    , ( projectDirectory
-                      , token
-                      , isCursorAtLastPartOfToken
-                      , getImportersForToken token isCursorAtLastPartOfToken model.activeFile model.activeTokens model.fileContentsDict
-                      )
-                        |> importersForTokenReceivedCmd
-                    )
+                ( Just projectDirectory, Just rawToken, Just isCursorAtLastPartOfToken ) ->
+                    let
+                        activeFileContents =
+                            getActiveFileContents model.activeFile model.fileContentsDict
+
+                        ( token, willUseFullToken ) =
+                            if rawToken == activeFileContents.moduleDocs.name then
+                                ( rawToken, True )
+                            else if Dict.get rawToken activeFileContents.imports /= Nothing then
+                                ( rawToken, True )
+                            else if isCursorAtLastPartOfToken then
+                                ( rawToken, False )
+                            else
+                                ( getModuleName rawToken, False )
+                    in
+                        ( model
+                        , ( projectDirectory
+                          , rawToken
+                          , willUseFullToken
+                          , isCursorAtLastPartOfToken
+                          , getImportersForToken token isCursorAtLastPartOfToken model.activeFile model.activeTokens activeFileContents model.fileContentsDict
+                          )
+                            |> importersForTokenReceivedCmd
+                        )
 
                 _ ->
                     ( model
@@ -642,29 +657,16 @@ getSuggestionsForImport partial maybeActiveFile fileContentsDict packageDocs =
                     |> List.sortBy .name
 
 
-getImportersForToken : String -> Bool -> Maybe ActiveFile -> TokenDict -> FileContentsDict -> List ( String, Bool, Bool, Bool, List String )
-getImportersForToken rawToken isCursorAtLastPartOfToken maybeActiveFile tokens fileContentsDict =
+getImportersForToken : String -> Bool -> Maybe ActiveFile -> TokenDict -> FileContents -> FileContentsDict -> List ( String, Bool, Bool, List String )
+getImportersForToken token isCursorAtLastPartOfToken maybeActiveFile tokens activeFileContents fileContentsDict =
     case maybeActiveFile of
         Just { projectDirectory, filePath } ->
             let
-                activeFileContents =
-                    getActiveFileContents maybeActiveFile fileContentsDict
-
-                ( token, willUseFullToken ) =
-                    if rawToken == activeFileContents.moduleDocs.name then
-                        ( rawToken, True )
-                    else if Dict.get rawToken activeFileContents.imports /= Nothing then
-                        ( rawToken, True )
-                    else if isCursorAtLastPartOfToken then
-                        ( rawToken, False )
-                    else
-                        ( getModuleName rawToken, False )
-
                 isImportAlias =
                     List.member token (List.filterMap .alias (Dict.values activeFileContents.imports))
             in
                 if isImportAlias then
-                    [ ( activeFileContents.moduleDocs.sourcePath, willUseFullToken, True, True, [ token ] ) ]
+                    [ ( activeFileContents.moduleDocs.sourcePath, True, True, [ token ] ) ]
                 else
                     let
                         hints =
@@ -689,9 +691,9 @@ getImportersForToken rawToken isCursorAtLastPartOfToken maybeActiveFile tokens f
                                                     isHintAModule hint && Dict.get token imports /= Nothing
                                             in
                                                 if isHintThisModule then
-                                                    Just ( moduleDocs.sourcePath, willUseFullToken, True, False, [ token ] )
+                                                    Just ( moduleDocs.sourcePath, True, False, [ token ] )
                                                 else if isHintAnImport then
-                                                    Just ( moduleDocs.sourcePath, willUseFullToken, True, False, [ hint.name ] )
+                                                    Just ( moduleDocs.sourcePath, True, False, [ hint.name ] )
                                                 else
                                                     case Dict.get hint.moduleName imports of
                                                         Nothing ->
@@ -700,7 +702,7 @@ getImportersForToken rawToken isCursorAtLastPartOfToken maybeActiveFile tokens f
                                                                     hint.moduleName == moduleDocs.name
                                                             in
                                                                 if isHintInThisModule then
-                                                                    Just ( moduleDocs.sourcePath, willUseFullToken, False, False, [ hint.name ] )
+                                                                    Just ( moduleDocs.sourcePath, False, False, [ hint.name ] )
                                                                 else
                                                                     Nothing
 
@@ -731,7 +733,7 @@ getImportersForToken rawToken isCursorAtLastPartOfToken maybeActiveFile tokens f
                                                                         Nothing
 
                                                                     _ ->
-                                                                        Just ( moduleDocs.sourcePath, willUseFullToken, False, False, names )
+                                                                        Just ( moduleDocs.sourcePath, False, False, names )
                                     in
                                         List.filterMap getSourcePathAndLocalNames hints
                                 )

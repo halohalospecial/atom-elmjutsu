@@ -1,13 +1,14 @@
-var _user$project$FindUsages$emptyModel = {usages: _elm_lang$core$Array$empty, projectDirectory: '', selectedIndex: -1};
+var _user$project$FindUsages$emptyModel = {usages: _elm_lang$core$Array$empty, token: '', projectDirectory: '', selectedIndex: -1};
 var _user$project$FindUsages$init = {ctor: '_Tuple2', _0: _user$project$FindUsages$emptyModel, _1: _elm_lang$core$Platform_Cmd$none};
 var _user$project$FindUsages$setUsagesSub = _elm_lang$core$Native_Platform.incomingPort(
 	'setUsagesSub',
-	A3(
-		_elm_lang$core$Json_Decode$tuple2,
-		F2(
-			function (x1, x2) {
-				return {ctor: '_Tuple2', _0: x1, _1: x2};
+	A4(
+		_elm_lang$core$Json_Decode$tuple3,
+		F3(
+			function (x1, x2, x3) {
+				return {ctor: '_Tuple3', _0: x1, _1: x2, _2: x3};
 			}),
+		_elm_lang$core$Json_Decode$string,
 		_elm_lang$core$Json_Decode$string,
 		_elm_lang$core$Json_Decode$array(
 			A2(
@@ -121,7 +122,7 @@ var _user$project$FindUsages$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{projectDirectory: _p1._0._0, usages: _p1._0._1, selectedIndex: -1}),
+						{projectDirectory: _p1._0._0, token: _p1._0._1, usages: _p1._0._2, selectedIndex: -1}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'SelectNextUsage':
@@ -139,9 +140,9 @@ var _user$project$FindUsages$update = F2(
 				};
 		}
 	});
-var _user$project$FindUsages$Model = F3(
-	function (a, b, c) {
-		return {usages: a, projectDirectory: b, selectedIndex: c};
+var _user$project$FindUsages$Model = F4(
+	function (a, b, c, d) {
+		return {usages: a, token: b, projectDirectory: c, selectedIndex: d};
 	});
 var _user$project$FindUsages$Usage = F3(
 	function (a, b, c) {
@@ -276,9 +277,15 @@ var _user$project$FindUsages$view = function (_p5) {
 						_elm_lang$html$Html$text(
 						A2(
 							_elm_lang$core$Basics_ops['++'],
-							'Usages: ',
-							_elm_lang$core$Basics$toString(
-								_elm_lang$core$Array$length(_p7))))
+							'Usages for `',
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								_p6.token,
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									'`: ',
+									_elm_lang$core$Basics$toString(
+										_elm_lang$core$Array$length(_p7))))))
 					])),
 				A2(
 				_elm_lang$html$Html$div,

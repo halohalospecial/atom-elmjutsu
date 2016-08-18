@@ -31,7 +31,7 @@ subscriptions model =
 -- INCOMING PORTS
 
 
-port setUsagesSub : (( String, Array.Array Usage ) -> msg) -> Sub msg
+port setUsagesSub : (( String, String, Array.Array Usage ) -> msg) -> Sub msg
 
 
 port selectNextUsageSub : (() -> msg) -> Sub msg
@@ -53,6 +53,7 @@ port viewInEditorCmd : Usage -> Cmd msg
 
 type alias Model =
     { usages : Array.Array Usage
+    , token : String
     , projectDirectory : String
     , selectedIndex : Int
     }
@@ -61,6 +62,7 @@ type alias Model =
 emptyModel : Model
 emptyModel =
     { usages = Array.empty
+    , token = ""
     , projectDirectory = ""
     , selectedIndex = -1
     }
@@ -97,7 +99,7 @@ init =
 
 
 type Msg
-    = SetUsages ( String, Array.Array Usage )
+    = SetUsages ( String, String, Array.Array Usage )
     | SelectNextUsage
     | SelectPreviousUsage
     | SelectIndex Int
@@ -106,8 +108,8 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetUsages ( projectDirectory, usages ) ->
-            ( { model | projectDirectory = projectDirectory, usages = usages, selectedIndex = -1 }
+        SetUsages ( projectDirectory, token, usages ) ->
+            ( { model | projectDirectory = projectDirectory, token = token, usages = usages, selectedIndex = -1 }
             , Cmd.none
             )
 
@@ -159,10 +161,10 @@ maybeViewInEditor index model =
 
 
 view : Model -> Html Msg
-view { usages, projectDirectory, selectedIndex } =
+view { usages, token, projectDirectory, selectedIndex } =
     div []
         [ div [ class "header" ]
-            [ text ("Usages: " ++ (toString <| Array.length usages)) ]
+            [ text ("Usages for `" ++ token ++ "`: " ++ (toString <| Array.length usages)) ]
         , div []
             [ ul
                 []
