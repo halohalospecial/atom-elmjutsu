@@ -2,6 +2,8 @@
 
 Hacky editor tricks for developing with [Elm](http://elm-lang.org).
 
+https://atom.io/packages/elmjutsu
+
 ## Feature Overview
 
 * [Autocomplete](#autocomplete)
