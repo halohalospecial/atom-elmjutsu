@@ -125,7 +125,7 @@ update msg model =
             )
 
         DocsFailed ->
-            ( { model | note = "Failed to load package docs. (•́︿•̀)" }
+            ( { model | note = "Failed to load package docs." }
             , Cmd.none
             )
 

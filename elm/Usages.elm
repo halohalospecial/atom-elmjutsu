@@ -24,7 +24,7 @@ subscriptions model =
         [ setUsagesSub SetUsages
         , selectNextUsageSub (\_ -> SelectNextUsage)
         , selectPreviousUsageSub (\_ -> SelectPreviousUsage)
-        , getIncludedUsagesSub (\_ -> GetIncludedUsages)
+        , getCheckedUsagesSub (\_ -> GetCheckedUsages)
         ]
 
 
@@ -41,7 +41,7 @@ port selectNextUsageSub : (() -> msg) -> Sub msg
 port selectPreviousUsageSub : (() -> msg) -> Sub msg
 
 
-port getIncludedUsagesSub : (() -> msg) -> Sub msg
+port getCheckedUsagesSub : (() -> msg) -> Sub msg
 
 
 
@@ -51,7 +51,7 @@ port getIncludedUsagesSub : (() -> msg) -> Sub msg
 port viewInEditorCmd : Usage -> Cmd msg
 
 
-port includedUsagesReceivedCmd : Array.Array Usage -> Cmd msg
+port checkedUsagesReceivedCmd : Array.Array Usage -> Cmd msg
 
 
 
@@ -81,7 +81,7 @@ type alias Usage =
     { sourcePath : String
     , lineText : String
     , range : Range
-    , willInclude : Bool
+    , checked : Bool
     }
 
 
@@ -113,8 +113,8 @@ type Msg
     | SelectNextUsage
     | SelectPreviousUsage
     | SelectIndex Int
-    | GetIncludedUsages
-    | SetUsageWillInclude Int Bool
+    | GetCheckedUsages
+    | SetUsageChecked Int Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -136,12 +136,12 @@ update msg model =
             , maybeViewInEditor index model
             )
 
-        GetIncludedUsages ->
+        GetCheckedUsages ->
             ( model
-            , includedUsagesReceivedCmd (Array.filter (\usage -> usage.willInclude) model.usages)
+            , checkedUsagesReceivedCmd (checkedUsages model.usages)
             )
 
-        SetUsageWillInclude index willInclude ->
+        SetUsageChecked index checked ->
             case Array.get index model.usages of
                 Nothing ->
                     ( model
@@ -149,9 +149,14 @@ update msg model =
                     )
 
                 Just usage ->
-                    ( { model | usages = Array.set index { usage | willInclude = willInclude } model.usages }
+                    ( { model | usages = Array.set index { usage | checked = checked } model.usages }
                     , Cmd.none
                     )
+
+
+checkedUsages : Array.Array Usage -> Array.Array Usage
+checkedUsages usages =
+    Array.filter (\usage -> usage.checked) usages
 
 
 selectDelta : Int -> Model -> ( Model, Cmd Msg )
@@ -191,17 +196,24 @@ maybeViewInEditor index model =
 
 view : Model -> Html Msg
 view { usages, token, projectDirectory, selectedIndex, willShowRenamePanel } =
-    div []
-        [ div [ class "header" ]
-            [ text ("Usages for `" ++ token ++ "`: " ++ (toString <| Array.length usages)) ]
-        , div []
-            [ ul
-                []
-                ((Array.indexedMap (usageView projectDirectory selectedIndex willShowRenamePanel) usages)
-                    |> Array.toList
-                )
+    let
+        headerText =
+            if willShowRenamePanel then
+                "Will rename " ++ (toString <| Array.length (checkedUsages usages)) ++ " out of " ++ (toString <| Array.length usages) ++ " usages"
+            else
+                "Usages for `" ++ token ++ "`: " ++ (toString <| Array.length usages)
+    in
+        div []
+            [ div [ class "header" ]
+                [ text headerText ]
+            , div []
+                [ ul
+                    []
+                    ((Array.indexedMap (usageView projectDirectory selectedIndex willShowRenamePanel) usages)
+                        |> Array.toList
+                    )
+                ]
             ]
-        ]
 
 
 usageView : String -> Int -> Bool -> Int -> Usage -> Html Msg
@@ -219,7 +231,7 @@ usageView projectDirectory selectedIndex willShowRenamePanel index usage =
         postSymbolText =
             String.right ((String.length lineText) - range.end.column) lineText
 
-        klass =
+        listItemClass =
             if selectedIndex == index then
                 "selected"
             else
@@ -227,13 +239,19 @@ usageView projectDirectory selectedIndex willShowRenamePanel index usage =
 
         maybeRenamePanelView =
             if willShowRenamePanel then
-                [ input [ type' "checkbox", checked usage.willInclude, onCheck (SetUsageWillInclude index) ] [] ]
+                [ input [ type' "checkbox", checked usage.checked, onCheck (SetUsageChecked index) ] [] ]
             else
                 []
+
+        usageTextClass =
+            if usage.checked then
+                "usage-text"
+            else
+                "usage-text-unchecked"
     in
-        li [ class klass ]
+        li [ class listItemClass ]
             (maybeRenamePanelView
-                ++ [ div [ onClick (SelectIndex index), class "usage-text" ]
+                ++ [ div [ onClick (SelectIndex index), class usageTextClass ]
                         [ div []
                             [ span [] [ text preSymbolText ]
                             , span [ class "symbol" ] [ text symbolText ]

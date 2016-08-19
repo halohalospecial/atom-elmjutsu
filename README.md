@@ -61,17 +61,13 @@ If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, y
 
 ![find-usages](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/find-usages.gif?raw=true)
 
-### `Elmjutsu: Cancel Find Usages`
-
-Closes the `Find Usages` panel.
-
 ### `Elmjutsu: Go To Next Usage`
 
-When the `Find Usages` panel is shown, this command moves the cursor to the position of the next usage in the list.
+When the `Usages` panel is shown, this command moves the cursor to the position of the next usage in the list.
 
 ### `Elmjutsu: Go To Previous Usage`
 
-When the `Find Usages` panel is shown, this command moves the cursor to the position of the previous usage in the list.
+When the `Usages` panel is shown, this command moves the cursor to the position of the previous usage in the list.
 
 ### `Elmjutsu: Go Back`
 
@@ -86,6 +82,14 @@ Invoke this command to jump back to the previous position.
 ### `Elmjutsu: Rename Symbol`
 
 Renames the symbol across the whole project.  Take note that this is an undoable operation.  Use at your own risk!
+
+![rename-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/rename-symbol.gif?raw=true)
+
+Press <kbd>enter</kbd> to rename or <kbd>escape</kbd> to cancel.
+
+### `Elmjutsu: Hide Usages Panel`
+
+Closes the `Usages` panel (the panel is shown after invoking `Find Usages` or `Rename Symbol`).
 
 ### `Elmjutsu: Toggle Sidekick`
 Shows the type hints and documentation for the symbol at cursor position.  The size and position of the panel can be modified in the package settings.
@@ -117,7 +121,7 @@ Here is an example:
 
 'atom-workspace':
   'f1': 'elmjutsu:toggle-sidekick'
-  'ctrl-shift-f12': 'elmjutsu:cancel-find-usages'
+  'ctrl-shift-f12': 'elmjutsu:hide-usages-panel'
 ```
 
 Add above to your `keymap.cson` or bind them from `Settings` > `Keybindings`.

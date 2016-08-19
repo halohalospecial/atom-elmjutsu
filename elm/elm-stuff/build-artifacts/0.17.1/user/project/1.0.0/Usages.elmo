@@ -1,3 +1,11 @@
+var _user$project$Usages$checkedUsages = function (usages) {
+	return A2(
+		_elm_lang$core$Array$filter,
+		function (usage) {
+			return usage.checked;
+		},
+		usages);
+};
 var _user$project$Usages$emptyModel = {usages: _elm_lang$core$Array$empty, token: '', projectDirectory: '', selectedIndex: -1, willShowRenamePanel: false};
 var _user$project$Usages$init = {ctor: '_Tuple2', _0: _user$project$Usages$emptyModel, _1: _elm_lang$core$Platform_Cmd$none};
 var _user$project$Usages$setUsagesSub = _elm_lang$core$Native_Platform.incomingPort(
@@ -67,10 +75,10 @@ var _user$project$Usages$setUsagesSub = _elm_lang$core$Native_Platform.incomingP
 								function (range) {
 									return A2(
 										_elm_lang$core$Json_Decode$andThen,
-										A2(_elm_lang$core$Json_Decode_ops[':='], 'willInclude', _elm_lang$core$Json_Decode$bool),
-										function (willInclude) {
+										A2(_elm_lang$core$Json_Decode_ops[':='], 'checked', _elm_lang$core$Json_Decode$bool),
+										function (checked) {
 											return _elm_lang$core$Json_Decode$succeed(
-												{sourcePath: sourcePath, lineText: lineText, range: range, willInclude: willInclude});
+												{sourcePath: sourcePath, lineText: lineText, range: range, checked: checked});
 										});
 								});
 						});
@@ -84,8 +92,8 @@ var _user$project$Usages$selectPreviousUsageSub = _elm_lang$core$Native_Platform
 	'selectPreviousUsageSub',
 	_elm_lang$core$Json_Decode$null(
 		{ctor: '_Tuple0'}));
-var _user$project$Usages$getIncludedUsagesSub = _elm_lang$core$Native_Platform.incomingPort(
-	'getIncludedUsagesSub',
+var _user$project$Usages$getCheckedUsagesSub = _elm_lang$core$Native_Platform.incomingPort(
+	'getCheckedUsagesSub',
 	_elm_lang$core$Json_Decode$null(
 		{ctor: '_Tuple0'}));
 var _user$project$Usages$viewInEditorCmd = _elm_lang$core$Native_Platform.outgoingPort(
@@ -98,7 +106,7 @@ var _user$project$Usages$viewInEditorCmd = _elm_lang$core$Native_Platform.outgoi
 				start: {row: v.range.start.row, column: v.range.start.column},
 				end: {row: v.range.end.row, column: v.range.end.column}
 			},
-			willInclude: v.willInclude
+			checked: v.checked
 		};
 	});
 var _user$project$Usages$maybeViewInEditor = F2(
@@ -124,8 +132,8 @@ var _user$project$Usages$selectDelta = F2(
 			_1: (!_elm_lang$core$Native_Utils.eq(model.selectedIndex, updatedSelectedIndex)) ? A2(_user$project$Usages$maybeViewInEditor, updatedSelectedIndex, model) : _elm_lang$core$Platform_Cmd$none
 		};
 	});
-var _user$project$Usages$includedUsagesReceivedCmd = _elm_lang$core$Native_Platform.outgoingPort(
-	'includedUsagesReceivedCmd',
+var _user$project$Usages$checkedUsagesReceivedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'checkedUsagesReceivedCmd',
 	function (v) {
 		return _elm_lang$core$Native_Array.toJSArray(v).map(
 			function (v) {
@@ -136,7 +144,7 @@ var _user$project$Usages$includedUsagesReceivedCmd = _elm_lang$core$Native_Platf
 						start: {row: v.range.start.row, column: v.range.start.column},
 						end: {row: v.range.end.row, column: v.range.end.column}
 					},
-					willInclude: v.willInclude
+					checked: v.checked
 				};
 			});
 	});
@@ -165,17 +173,12 @@ var _user$project$Usages$update = F2(
 						{selectedIndex: _p2}),
 					_1: A2(_user$project$Usages$maybeViewInEditor, _p2, model)
 				};
-			case 'GetIncludedUsages':
+			case 'GetCheckedUsages':
 				return {
 					ctor: '_Tuple2',
 					_0: model,
-					_1: _user$project$Usages$includedUsagesReceivedCmd(
-						A2(
-							_elm_lang$core$Array$filter,
-							function (usage) {
-								return usage.willInclude;
-							},
-							model.usages))
+					_1: _user$project$Usages$checkedUsagesReceivedCmd(
+						_user$project$Usages$checkedUsages(model.usages))
 				};
 			default:
 				var _p4 = _p1._0;
@@ -193,7 +196,7 @@ var _user$project$Usages$update = F2(
 									_p4,
 									_elm_lang$core$Native_Utils.update(
 										_p3._0,
-										{willInclude: _p1._1}),
+										{checked: _p1._1}),
 									model.usages)
 							}),
 						_1: _elm_lang$core$Platform_Cmd$none
@@ -207,7 +210,7 @@ var _user$project$Usages$Model = F5(
 	});
 var _user$project$Usages$Usage = F4(
 	function (a, b, c, d) {
-		return {sourcePath: a, lineText: b, range: c, willInclude: d};
+		return {sourcePath: a, lineText: b, range: c, checked: d};
 	});
 var _user$project$Usages$Range = F2(
 	function (a, b) {
@@ -217,16 +220,17 @@ var _user$project$Usages$Point = F2(
 	function (a, b) {
 		return {row: a, column: b};
 	});
-var _user$project$Usages$SetUsageWillInclude = F2(
+var _user$project$Usages$SetUsageChecked = F2(
 	function (a, b) {
-		return {ctor: 'SetUsageWillInclude', _0: a, _1: b};
+		return {ctor: 'SetUsageChecked', _0: a, _1: b};
 	});
-var _user$project$Usages$GetIncludedUsages = {ctor: 'GetIncludedUsages'};
+var _user$project$Usages$GetCheckedUsages = {ctor: 'GetCheckedUsages'};
 var _user$project$Usages$SelectIndex = function (a) {
 	return {ctor: 'SelectIndex', _0: a};
 };
 var _user$project$Usages$usageView = F5(
 	function (projectDirectory, selectedIndex, willShowRenamePanel, index, usage) {
+		var usageTextClass = usage.checked ? 'usage-text' : 'usage-text-unchecked';
 		var maybeRenamePanelView = willShowRenamePanel ? _elm_lang$core$Native_List.fromArray(
 			[
 				A2(
@@ -234,15 +238,15 @@ var _user$project$Usages$usageView = F5(
 				_elm_lang$core$Native_List.fromArray(
 					[
 						_elm_lang$html$Html_Attributes$type$('checkbox'),
-						_elm_lang$html$Html_Attributes$checked(usage.willInclude),
+						_elm_lang$html$Html_Attributes$checked(usage.checked),
 						_elm_lang$html$Html_Events$onCheck(
-						_user$project$Usages$SetUsageWillInclude(index))
+						_user$project$Usages$SetUsageChecked(index))
 					]),
 				_elm_lang$core$Native_List.fromArray(
 					[]))
 			]) : _elm_lang$core$Native_List.fromArray(
 			[]);
-		var klass = _elm_lang$core$Native_Utils.eq(selectedIndex, index) ? 'selected' : '';
+		var listItemClass = _elm_lang$core$Native_Utils.eq(selectedIndex, index) ? 'selected' : '';
 		var _p5 = usage;
 		var lineText = _p5.lineText;
 		var sourcePath = _p5.sourcePath;
@@ -262,7 +266,7 @@ var _user$project$Usages$usageView = F5(
 			_elm_lang$html$Html$li,
 			_elm_lang$core$Native_List.fromArray(
 				[
-					_elm_lang$html$Html_Attributes$class(klass)
+					_elm_lang$html$Html_Attributes$class(listItemClass)
 				]),
 			A2(
 				_elm_lang$core$Basics_ops['++'],
@@ -275,7 +279,7 @@ var _user$project$Usages$usageView = F5(
 							[
 								_elm_lang$html$Html_Events$onClick(
 								_user$project$Usages$SelectIndex(index)),
-								_elm_lang$html$Html_Attributes$class('usage-text')
+								_elm_lang$html$Html_Attributes$class(usageTextClass)
 							]),
 						_elm_lang$core$Native_List.fromArray(
 							[
@@ -346,7 +350,34 @@ var _user$project$Usages$usageView = F5(
 	});
 var _user$project$Usages$view = function (_p7) {
 	var _p8 = _p7;
+	var _p10 = _p8.willShowRenamePanel;
 	var _p9 = _p8.usages;
+	var headerText = _p10 ? A2(
+		_elm_lang$core$Basics_ops['++'],
+		'Will rename ',
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			_elm_lang$core$Basics$toString(
+				_elm_lang$core$Array$length(
+					_user$project$Usages$checkedUsages(_p9))),
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				' out of ',
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					_elm_lang$core$Basics$toString(
+						_elm_lang$core$Array$length(_p9)),
+					' usages')))) : A2(
+		_elm_lang$core$Basics_ops['++'],
+		'Usages for `',
+		A2(
+			_elm_lang$core$Basics_ops['++'],
+			_p8.token,
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				'`: ',
+				_elm_lang$core$Basics$toString(
+					_elm_lang$core$Array$length(_p9)))));
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
@@ -361,18 +392,7 @@ var _user$project$Usages$view = function (_p7) {
 					]),
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_elm_lang$html$Html$text(
-						A2(
-							_elm_lang$core$Basics_ops['++'],
-							'Usages for `',
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								_p8.token,
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									'`: ',
-									_elm_lang$core$Basics$toString(
-										_elm_lang$core$Array$length(_p9))))))
+						_elm_lang$html$Html$text(headerText)
 					])),
 				A2(
 				_elm_lang$html$Html$div,
@@ -387,7 +407,7 @@ var _user$project$Usages$view = function (_p7) {
 						_elm_lang$core$Array$toList(
 							A2(
 								_elm_lang$core$Array$indexedMap,
-								A3(_user$project$Usages$usageView, _p8.projectDirectory, _p8.selectedIndex, _p8.willShowRenamePanel),
+								A3(_user$project$Usages$usageView, _p8.projectDirectory, _p8.selectedIndex, _p10),
 								_p9)))
 					]))
 			]));
@@ -403,16 +423,16 @@ var _user$project$Usages$subscriptions = function (model) {
 			[
 				_user$project$Usages$setUsagesSub(_user$project$Usages$SetUsages),
 				_user$project$Usages$selectNextUsageSub(
-				function (_p10) {
+				function (_p11) {
 					return _user$project$Usages$SelectNextUsage;
 				}),
 				_user$project$Usages$selectPreviousUsageSub(
-				function (_p11) {
+				function (_p12) {
 					return _user$project$Usages$SelectPreviousUsage;
 				}),
-				_user$project$Usages$getIncludedUsagesSub(
-				function (_p12) {
-					return _user$project$Usages$GetIncludedUsages;
+				_user$project$Usages$getCheckedUsagesSub(
+				function (_p13) {
+					return _user$project$Usages$GetCheckedUsages;
 				})
 			]));
 };
