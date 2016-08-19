@@ -1,3 +1,6 @@
+## 2.0.1
+* Do not crash if `linter-elm-make` is not installed.
+
 ## 2.0.0
 * BREAKING CHANGE: Replace `Cancel Find Usages` with `Hide Usages Panel`.
 * Add `Rename Symbol`.
