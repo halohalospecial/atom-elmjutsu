@@ -1,6 +1,6 @@
 # Elmjutsu
 
-Useful editor tricks for developing with [Elm](http://elm-lang.org).
+Hacky editor tricks for developing with [Elm](http://elm-lang.org).
 
 ## Feature Overview
 
@@ -17,6 +17,8 @@ Useful editor tricks for developing with [Elm](http://elm-lang.org).
 * [Go To Previous Usage](#elmjutsu-go-to-previous-usage)
 
 * [Go Back](#elmjutsu-go-back)
+
+* [Rename Symbol](#elmjutsu-rename-symbol)
 
 * [Toggle Sidekick](#elmjutsu-toggle-sidekick)
   * Show type hints and documentation for the symbol at cursor position.
@@ -81,7 +83,9 @@ The current cursor position is added to a navigation stack before jumping via:
 
 Invoke this command to jump back to the previous position.
 
-![go-back](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-back.gif?raw=true)
+### `Elmjutsu: Rename Symbol`
+
+Renames the symbol across the whole project.  Take note that this is an undoable operation.  Use at your own risk!
 
 ### `Elmjutsu: Toggle Sidekick`
 Shows the type hints and documentation for the symbol at cursor position.  The size and position of the panel can be modified in the package settings.
@@ -109,6 +113,7 @@ Here is an example:
   'f8': 'elmjutsu:go-to-next-usage'
   'shift-f8': 'elmjutsu:go-to-previous-usage'
   'ctrl-f12': 'elmjutsu:go-back'
+  'f2': 'elmjutsu:rename-symbol'
 
 'atom-workspace':
   'f1': 'elmjutsu:toggle-sidekick'

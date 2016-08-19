@@ -26,6 +26,10 @@
         "command": "elmjutsu:go-back"
       },
       {
+        "label": "Elmjutsu: Rename Symbol",
+        "command": "elmjutsu:rename-symbol"
+      },
+      {
         "label": "Elmjutsu: Toggle Sidekick",
         "command": "elmjutsu:toggle-sidekick"
       }
@@ -61,6 +65,10 @@
             {
               "label": "Elmjutsu: Go Back",
               "command": "elmjutsu:go-back"
+            },
+            {
+              "label": "Elmjutsu: Rename Symbol",
+              "command": "elmjutsu:rename-symbol"
             },
             {
               "label": "Elmjutsu: Toggle Sidekick",

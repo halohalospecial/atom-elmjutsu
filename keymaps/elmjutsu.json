@@ -1,0 +1,6 @@
+{
+  "atom-text-editor.elmjutsu-rename-symbol": {
+    "escape": "elmjutsu:cancel-rename-symbol",
+    "enter": "elmjutsu:confirm-rename-symbol"
+  }
+}
