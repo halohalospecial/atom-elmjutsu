@@ -1,0 +1,402 @@
+var _user$project$Usages$emptyModel = {usages: _elm_lang$core$Array$empty, token: '', projectDirectory: '', selectedIndex: -1, willShowRenamePanel: false};
+var _user$project$Usages$init = {ctor: '_Tuple2', _0: _user$project$Usages$emptyModel, _1: _elm_lang$core$Platform_Cmd$none};
+var _user$project$Usages$setUsagesSub = _elm_lang$core$Native_Platform.incomingPort(
+	'setUsagesSub',
+	A5(
+		_elm_lang$core$Json_Decode$tuple4,
+		F4(
+			function (x1, x2, x3, x4) {
+				return {ctor: '_Tuple4', _0: x1, _1: x2, _2: x3, _3: x4};
+			}),
+		_elm_lang$core$Json_Decode$string,
+		_elm_lang$core$Json_Decode$string,
+		_elm_lang$core$Json_Decode$array(
+			A2(
+				_elm_lang$core$Json_Decode$andThen,
+				A2(_elm_lang$core$Json_Decode_ops[':='], 'sourcePath', _elm_lang$core$Json_Decode$string),
+				function (sourcePath) {
+					return A2(
+						_elm_lang$core$Json_Decode$andThen,
+						A2(_elm_lang$core$Json_Decode_ops[':='], 'lineText', _elm_lang$core$Json_Decode$string),
+						function (lineText) {
+							return A2(
+								_elm_lang$core$Json_Decode$andThen,
+								A2(
+									_elm_lang$core$Json_Decode_ops[':='],
+									'range',
+									A2(
+										_elm_lang$core$Json_Decode$andThen,
+										A2(
+											_elm_lang$core$Json_Decode_ops[':='],
+											'start',
+											A2(
+												_elm_lang$core$Json_Decode$andThen,
+												A2(_elm_lang$core$Json_Decode_ops[':='], 'row', _elm_lang$core$Json_Decode$int),
+												function (row) {
+													return A2(
+														_elm_lang$core$Json_Decode$andThen,
+														A2(_elm_lang$core$Json_Decode_ops[':='], 'column', _elm_lang$core$Json_Decode$int),
+														function (column) {
+															return _elm_lang$core$Json_Decode$succeed(
+																{row: row, column: column});
+														});
+												})),
+										function (start) {
+											return A2(
+												_elm_lang$core$Json_Decode$andThen,
+												A2(
+													_elm_lang$core$Json_Decode_ops[':='],
+													'end',
+													A2(
+														_elm_lang$core$Json_Decode$andThen,
+														A2(_elm_lang$core$Json_Decode_ops[':='], 'row', _elm_lang$core$Json_Decode$int),
+														function (row) {
+															return A2(
+																_elm_lang$core$Json_Decode$andThen,
+																A2(_elm_lang$core$Json_Decode_ops[':='], 'column', _elm_lang$core$Json_Decode$int),
+																function (column) {
+																	return _elm_lang$core$Json_Decode$succeed(
+																		{row: row, column: column});
+																});
+														})),
+												function (end) {
+													return _elm_lang$core$Json_Decode$succeed(
+														{start: start, end: end});
+												});
+										})),
+								function (range) {
+									return A2(
+										_elm_lang$core$Json_Decode$andThen,
+										A2(_elm_lang$core$Json_Decode_ops[':='], 'willInclude', _elm_lang$core$Json_Decode$bool),
+										function (willInclude) {
+											return _elm_lang$core$Json_Decode$succeed(
+												{sourcePath: sourcePath, lineText: lineText, range: range, willInclude: willInclude});
+										});
+								});
+						});
+				})),
+		_elm_lang$core$Json_Decode$bool));
+var _user$project$Usages$selectNextUsageSub = _elm_lang$core$Native_Platform.incomingPort(
+	'selectNextUsageSub',
+	_elm_lang$core$Json_Decode$null(
+		{ctor: '_Tuple0'}));
+var _user$project$Usages$selectPreviousUsageSub = _elm_lang$core$Native_Platform.incomingPort(
+	'selectPreviousUsageSub',
+	_elm_lang$core$Json_Decode$null(
+		{ctor: '_Tuple0'}));
+var _user$project$Usages$viewInEditorCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'viewInEditorCmd',
+	function (v) {
+		return {
+			sourcePath: v.sourcePath,
+			lineText: v.lineText,
+			range: {
+				start: {row: v.range.start.row, column: v.range.start.column},
+				end: {row: v.range.end.row, column: v.range.end.column}
+			},
+			willInclude: v.willInclude
+		};
+	});
+var _user$project$Usages$maybeViewInEditor = F2(
+	function (index, model) {
+		var _p0 = A2(_elm_lang$core$Array$get, index, model.usages);
+		if (_p0.ctor === 'Nothing') {
+			return _elm_lang$core$Platform_Cmd$none;
+		} else {
+			return _user$project$Usages$viewInEditorCmd(_p0._0);
+		}
+	});
+var _user$project$Usages$selectDelta = F2(
+	function (delta, model) {
+		var updatedSelectedIndex = function () {
+			var n = _elm_lang$core$Array$length(model.usages);
+			return (_elm_lang$core$Native_Utils.cmp(n, 0) > 0) ? A2(_elm_lang$core$Basics_ops['%'], model.selectedIndex + delta, n) : model.selectedIndex;
+		}();
+		return {
+			ctor: '_Tuple2',
+			_0: _elm_lang$core$Native_Utils.update(
+				model,
+				{selectedIndex: updatedSelectedIndex}),
+			_1: (!_elm_lang$core$Native_Utils.eq(model.selectedIndex, updatedSelectedIndex)) ? A2(_user$project$Usages$maybeViewInEditor, updatedSelectedIndex, model) : _elm_lang$core$Platform_Cmd$none
+		};
+	});
+var _user$project$Usages$update = F2(
+	function (msg, model) {
+		var _p1 = msg;
+		switch (_p1.ctor) {
+			case 'SetUsages':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{projectDirectory: _p1._0._0, token: _p1._0._1, usages: _p1._0._2, selectedIndex: -1, willShowRenamePanel: _p1._0._3}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'SelectNextUsage':
+				return A2(_user$project$Usages$selectDelta, 1, model);
+			case 'SelectPreviousUsage':
+				return A2(_user$project$Usages$selectDelta, -1, model);
+			case 'SelectIndex':
+				var _p2 = _p1._0;
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{selectedIndex: _p2}),
+					_1: A2(_user$project$Usages$maybeViewInEditor, _p2, model)
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							usages: A2(
+								_elm_lang$core$Array$map,
+								function (usage) {
+									return _elm_lang$core$Native_Utils.update(
+										usage,
+										{willInclude: _p1._0});
+								},
+								model.usages)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+		}
+	});
+var _user$project$Usages$Model = F5(
+	function (a, b, c, d, e) {
+		return {usages: a, token: b, projectDirectory: c, selectedIndex: d, willShowRenamePanel: e};
+	});
+var _user$project$Usages$Usage = F4(
+	function (a, b, c, d) {
+		return {sourcePath: a, lineText: b, range: c, willInclude: d};
+	});
+var _user$project$Usages$Range = F2(
+	function (a, b) {
+		return {start: a, end: b};
+	});
+var _user$project$Usages$Point = F2(
+	function (a, b) {
+		return {row: a, column: b};
+	});
+var _user$project$Usages$UpdateAllWillInclude = function (a) {
+	return {ctor: 'UpdateAllWillInclude', _0: a};
+};
+var _user$project$Usages$SelectIndex = function (a) {
+	return {ctor: 'SelectIndex', _0: a};
+};
+var _user$project$Usages$usageView = F5(
+	function (projectDirectory, selectedIndex, willShowRenamePanel, index, usage) {
+		var maybeRenamePanelView = willShowRenamePanel ? _elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$input,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$type$('checkbox'),
+						_elm_lang$html$Html_Attributes$checked(usage.willInclude)
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[]))
+			]) : _elm_lang$core$Native_List.fromArray(
+			[]);
+		var klass = _elm_lang$core$Native_Utils.eq(selectedIndex, index) ? 'selected' : '';
+		var _p3 = usage;
+		var lineText = _p3.lineText;
+		var sourcePath = _p3.sourcePath;
+		var range = _p3.range;
+		var preSymbolText = A2(_elm_lang$core$String$left, range.start.column, lineText);
+		var symbolText = function (_p4) {
+			return A2(
+				_elm_lang$core$String$left,
+				range.end.column - range.start.column,
+				A2(_elm_lang$core$String$dropLeft, range.start.column, _p4));
+		}(lineText);
+		var postSymbolText = A2(
+			_elm_lang$core$String$right,
+			_elm_lang$core$String$length(lineText) - range.end.column,
+			lineText);
+		return A2(
+			_elm_lang$html$Html$li,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html_Attributes$class(klass)
+				]),
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				maybeRenamePanelView,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						A2(
+						_elm_lang$html$Html$div,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html_Events$onClick(
+								_user$project$Usages$SelectIndex(index)),
+								_elm_lang$html$Html_Attributes$class('usage-text')
+							]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								A2(
+								_elm_lang$html$Html$div,
+								_elm_lang$core$Native_List.fromArray(
+									[]),
+								_elm_lang$core$Native_List.fromArray(
+									[
+										A2(
+										_elm_lang$html$Html$span,
+										_elm_lang$core$Native_List.fromArray(
+											[]),
+										_elm_lang$core$Native_List.fromArray(
+											[
+												_elm_lang$html$Html$text(preSymbolText)
+											])),
+										A2(
+										_elm_lang$html$Html$span,
+										_elm_lang$core$Native_List.fromArray(
+											[
+												_elm_lang$html$Html_Attributes$class('symbol')
+											]),
+										_elm_lang$core$Native_List.fromArray(
+											[
+												_elm_lang$html$Html$text(symbolText)
+											])),
+										A2(
+										_elm_lang$html$Html$span,
+										_elm_lang$core$Native_List.fromArray(
+											[]),
+										_elm_lang$core$Native_List.fromArray(
+											[
+												_elm_lang$html$Html$text(postSymbolText)
+											]))
+									])),
+								A2(
+								_elm_lang$html$Html$div,
+								_elm_lang$core$Native_List.fromArray(
+									[
+										_elm_lang$html$Html_Attributes$class('source-path')
+									]),
+								_elm_lang$core$Native_List.fromArray(
+									[
+										_elm_lang$html$Html$text(
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											A2(
+												_elm_lang$core$String$dropLeft,
+												_elm_lang$core$String$length(projectDirectory),
+												sourcePath),
+											A2(
+												_elm_lang$core$Basics_ops['++'],
+												' (',
+												A2(
+													_elm_lang$core$Basics_ops['++'],
+													_elm_lang$core$Basics$toString(range.start.row + 1),
+													A2(
+														_elm_lang$core$Basics_ops['++'],
+														',',
+														A2(
+															_elm_lang$core$Basics_ops['++'],
+															_elm_lang$core$Basics$toString(range.start.column + 1),
+															')'))))))
+									]))
+							]))
+					])));
+	});
+var _user$project$Usages$view = function (_p5) {
+	var _p6 = _p5;
+	var _p8 = _p6.willShowRenamePanel;
+	var _p7 = _p6.usages;
+	var maybeRenamePanel = _p8 ? _elm_lang$core$Native_List.fromArray(
+		[
+			A2(
+			_elm_lang$html$Html$div,
+			_elm_lang$core$Native_List.fromArray(
+				[]),
+			_elm_lang$core$Native_List.fromArray(
+				[
+					A2(
+					_elm_lang$html$Html$input,
+					_elm_lang$core$Native_List.fromArray(
+						[
+							_elm_lang$html$Html_Attributes$type$('checkbox'),
+							_elm_lang$html$Html_Events$onCheck(_user$project$Usages$UpdateAllWillInclude)
+						]),
+					_elm_lang$core$Native_List.fromArray(
+						[])),
+					_elm_lang$html$Html$text('Include All')
+				]))
+		]) : _elm_lang$core$Native_List.fromArray(
+		[]);
+	return A2(
+		_elm_lang$html$Html$div,
+		_elm_lang$core$Native_List.fromArray(
+			[]),
+		_elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$class('header')
+					]),
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					_elm_lang$core$Native_List.fromArray(
+						[
+							_elm_lang$html$Html$text(
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								'Usages for `',
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									_p6.token,
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										'`: ',
+										_elm_lang$core$Basics$toString(
+											_elm_lang$core$Array$length(_p7))))))
+						]),
+					maybeRenamePanel)),
+				A2(
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						A2(
+						_elm_lang$html$Html$ul,
+						_elm_lang$core$Native_List.fromArray(
+							[]),
+						_elm_lang$core$Array$toList(
+							A2(
+								_elm_lang$core$Array$indexedMap,
+								A3(_user$project$Usages$usageView, _p6.projectDirectory, _p6.selectedIndex, _p8),
+								_p7)))
+					]))
+			]));
+};
+var _user$project$Usages$SelectPreviousUsage = {ctor: 'SelectPreviousUsage'};
+var _user$project$Usages$SelectNextUsage = {ctor: 'SelectNextUsage'};
+var _user$project$Usages$SetUsages = function (a) {
+	return {ctor: 'SetUsages', _0: a};
+};
+var _user$project$Usages$subscriptions = function (model) {
+	return _elm_lang$core$Platform_Sub$batch(
+		_elm_lang$core$Native_List.fromArray(
+			[
+				_user$project$Usages$setUsagesSub(_user$project$Usages$SetUsages),
+				_user$project$Usages$selectNextUsageSub(
+				function (_p9) {
+					return _user$project$Usages$SelectNextUsage;
+				}),
+				_user$project$Usages$selectPreviousUsageSub(
+				function (_p10) {
+					return _user$project$Usages$SelectPreviousUsage;
+				})
+			]));
+};
+var _user$project$Usages$main = {
+	main: _elm_lang$html$Html_App$program(
+		{init: _user$project$Usages$init, view: _user$project$Usages$view, update: _user$project$Usages$update, subscriptions: _user$project$Usages$subscriptions})
+};

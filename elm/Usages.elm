@@ -1,9 +1,9 @@
-port module FindUsages exposing (..)
+port module Usages exposing (..)
 
 import Html exposing (..)
 import Html.App as Html
-import Html.Attributes exposing (class)
-import Html.Events exposing (onClick)
+import Html.Attributes exposing (class, type', checked)
+import Html.Events exposing (onClick, onCheck)
 import String
 import Array
 
@@ -31,7 +31,7 @@ subscriptions model =
 -- INCOMING PORTS
 
 
-port setUsagesSub : (( String, String, Array.Array Usage ) -> msg) -> Sub msg
+port setUsagesSub : (( String, String, Array.Array Usage, Bool ) -> msg) -> Sub msg
 
 
 port selectNextUsageSub : (() -> msg) -> Sub msg
@@ -56,6 +56,7 @@ type alias Model =
     , token : String
     , projectDirectory : String
     , selectedIndex : Int
+    , willShowRenamePanel : Bool
     }
 
 
@@ -65,6 +66,7 @@ emptyModel =
     , token = ""
     , projectDirectory = ""
     , selectedIndex = -1
+    , willShowRenamePanel = False
     }
 
 
@@ -72,6 +74,7 @@ type alias Usage =
     { sourcePath : String
     , lineText : String
     , range : Range
+    , willInclude : Bool
     }
 
 
@@ -99,17 +102,18 @@ init =
 
 
 type Msg
-    = SetUsages ( String, String, Array.Array Usage )
+    = SetUsages ( String, String, Array.Array Usage, Bool )
     | SelectNextUsage
     | SelectPreviousUsage
     | SelectIndex Int
+    | UpdateAllWillInclude Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetUsages ( projectDirectory, token, usages ) ->
-            ( { model | projectDirectory = projectDirectory, token = token, usages = usages, selectedIndex = -1 }
+        SetUsages ( projectDirectory, token, usages, willShowRenamePanel ) ->
+            ( { model | projectDirectory = projectDirectory, token = token, usages = usages, selectedIndex = -1, willShowRenamePanel = willShowRenamePanel }
             , Cmd.none
             )
 
@@ -122,6 +126,11 @@ update msg model =
         SelectIndex index ->
             ( { model | selectedIndex = index }
             , maybeViewInEditor index model
+            )
+
+        UpdateAllWillInclude willInclude ->
+            ( { model | usages = Array.map (\usage -> { usage | willInclude = willInclude }) model.usages }
+            , Cmd.none
             )
 
 
@@ -161,22 +170,33 @@ maybeViewInEditor index model =
 
 
 view : Model -> Html Msg
-view { usages, token, projectDirectory, selectedIndex } =
-    div []
-        [ div [ class "header" ]
-            [ text ("Usages for `" ++ token ++ "`: " ++ (toString <| Array.length usages)) ]
-        , div []
-            [ ul
+view { usages, token, projectDirectory, selectedIndex, willShowRenamePanel } =
+    let
+        maybeRenamePanel =
+            if willShowRenamePanel then
+                [ div []
+                    [ input [ type' "checkbox", onCheck UpdateAllWillInclude ] []
+                    , text "Include All"
+                    ]
+                ]
+            else
                 []
-                ((Array.indexedMap (usageView projectDirectory selectedIndex) usages)
-                    |> Array.toList
-                )
+    in
+        div []
+            [ div [ class "header" ]
+                ([ text ("Usages for `" ++ token ++ "`: " ++ (toString <| Array.length usages)) ] ++ maybeRenamePanel)
+            , div []
+                [ ul
+                    []
+                    ((Array.indexedMap (usageView projectDirectory selectedIndex willShowRenamePanel) usages)
+                        |> Array.toList
+                    )
+                ]
             ]
-        ]
 
 
-usageView : String -> Int -> Int -> Usage -> Html Msg
-usageView projectDirectory selectedIndex index usage =
+usageView : String -> Int -> Bool -> Int -> Usage -> Html Msg
+usageView projectDirectory selectedIndex willShowRenamePanel index usage =
     let
         { lineText, sourcePath, range } =
             usage
@@ -190,19 +210,27 @@ usageView projectDirectory selectedIndex index usage =
         postSymbolText =
             String.right ((String.length lineText) - range.end.column) lineText
 
-        attrs =
-            [ onClick (SelectIndex index) ]
-                ++ (if selectedIndex == index then
-                        [ class "selected" ]
-                    else
-                        []
-                   )
+        klass =
+            if selectedIndex == index then
+                "selected"
+            else
+                ""
+
+        maybeRenamePanelView =
+            if willShowRenamePanel then
+                [ input [ type' "checkbox", checked usage.willInclude ] [] ]
+            else
+                []
     in
-        li attrs
-            [ div []
-                [ span [] [ text preSymbolText ]
-                , span [ class "symbol" ] [ text symbolText ]
-                , span [] [ text postSymbolText ]
-                ]
-            , div [ class "source-path" ] [ text (String.dropLeft (String.length projectDirectory) sourcePath ++ " (" ++ (toString <| range.start.row + 1) ++ "," ++ (toString <| range.start.column + 1) ++ ")") ]
-            ]
+        li [ class klass ]
+            (maybeRenamePanelView
+                ++ [ div [ onClick (SelectIndex index), class "usage-text" ]
+                        [ div []
+                            [ span [] [ text preSymbolText ]
+                            , span [ class "symbol" ] [ text symbolText ]
+                            , span [] [ text postSymbolText ]
+                            ]
+                        , div [ class "source-path" ] [ text (String.dropLeft (String.length projectDirectory) sourcePath ++ " (" ++ (toString <| range.start.row + 1) ++ "," ++ (toString <| range.start.column + 1) ++ ")") ]
+                        ]
+                   ]
+            )

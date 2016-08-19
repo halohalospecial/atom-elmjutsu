@@ -7746,15 +7746,15 @@ var _elm_lang$html$Html_Events$Options = F2(
 		return {stopPropagation: a, preventDefault: b};
 	});
 
-var _user$project$FindUsages$emptyModel = {usages: _elm_lang$core$Array$empty, token: '', projectDirectory: '', selectedIndex: -1};
-var _user$project$FindUsages$init = {ctor: '_Tuple2', _0: _user$project$FindUsages$emptyModel, _1: _elm_lang$core$Platform_Cmd$none};
-var _user$project$FindUsages$setUsagesSub = _elm_lang$core$Native_Platform.incomingPort(
+var _user$project$Usages$emptyModel = {usages: _elm_lang$core$Array$empty, token: '', projectDirectory: '', selectedIndex: -1, willShowRenamePanel: false};
+var _user$project$Usages$init = {ctor: '_Tuple2', _0: _user$project$Usages$emptyModel, _1: _elm_lang$core$Platform_Cmd$none};
+var _user$project$Usages$setUsagesSub = _elm_lang$core$Native_Platform.incomingPort(
 	'setUsagesSub',
-	A4(
-		_elm_lang$core$Json_Decode$tuple3,
-		F3(
-			function (x1, x2, x3) {
-				return {ctor: '_Tuple3', _0: x1, _1: x2, _2: x3};
+	A5(
+		_elm_lang$core$Json_Decode$tuple4,
+		F4(
+			function (x1, x2, x3, x4) {
+				return {ctor: '_Tuple4', _0: x1, _1: x2, _2: x3, _3: x4};
 			}),
 		_elm_lang$core$Json_Decode$string,
 		_elm_lang$core$Json_Decode$string,
@@ -7813,20 +7813,26 @@ var _user$project$FindUsages$setUsagesSub = _elm_lang$core$Native_Platform.incom
 												});
 										})),
 								function (range) {
-									return _elm_lang$core$Json_Decode$succeed(
-										{sourcePath: sourcePath, lineText: lineText, range: range});
+									return A2(
+										_elm_lang$core$Json_Decode$andThen,
+										A2(_elm_lang$core$Json_Decode_ops[':='], 'willInclude', _elm_lang$core$Json_Decode$bool),
+										function (willInclude) {
+											return _elm_lang$core$Json_Decode$succeed(
+												{sourcePath: sourcePath, lineText: lineText, range: range, willInclude: willInclude});
+										});
 								});
 						});
-				}))));
-var _user$project$FindUsages$selectNextUsageSub = _elm_lang$core$Native_Platform.incomingPort(
+				})),
+		_elm_lang$core$Json_Decode$bool));
+var _user$project$Usages$selectNextUsageSub = _elm_lang$core$Native_Platform.incomingPort(
 	'selectNextUsageSub',
 	_elm_lang$core$Json_Decode$null(
 		{ctor: '_Tuple0'}));
-var _user$project$FindUsages$selectPreviousUsageSub = _elm_lang$core$Native_Platform.incomingPort(
+var _user$project$Usages$selectPreviousUsageSub = _elm_lang$core$Native_Platform.incomingPort(
 	'selectPreviousUsageSub',
 	_elm_lang$core$Json_Decode$null(
 		{ctor: '_Tuple0'}));
-var _user$project$FindUsages$viewInEditorCmd = _elm_lang$core$Native_Platform.outgoingPort(
+var _user$project$Usages$viewInEditorCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'viewInEditorCmd',
 	function (v) {
 		return {
@@ -7835,19 +7841,20 @@ var _user$project$FindUsages$viewInEditorCmd = _elm_lang$core$Native_Platform.ou
 			range: {
 				start: {row: v.range.start.row, column: v.range.start.column},
 				end: {row: v.range.end.row, column: v.range.end.column}
-			}
+			},
+			willInclude: v.willInclude
 		};
 	});
-var _user$project$FindUsages$maybeViewInEditor = F2(
+var _user$project$Usages$maybeViewInEditor = F2(
 	function (index, model) {
 		var _p0 = A2(_elm_lang$core$Array$get, index, model.usages);
 		if (_p0.ctor === 'Nothing') {
 			return _elm_lang$core$Platform_Cmd$none;
 		} else {
-			return _user$project$FindUsages$viewInEditorCmd(_p0._0);
+			return _user$project$Usages$viewInEditorCmd(_p0._0);
 		}
 	});
-var _user$project$FindUsages$selectDelta = F2(
+var _user$project$Usages$selectDelta = F2(
 	function (delta, model) {
 		var updatedSelectedIndex = function () {
 			var n = _elm_lang$core$Array$length(model.usages);
@@ -7858,10 +7865,10 @@ var _user$project$FindUsages$selectDelta = F2(
 			_0: _elm_lang$core$Native_Utils.update(
 				model,
 				{selectedIndex: updatedSelectedIndex}),
-			_1: (!_elm_lang$core$Native_Utils.eq(model.selectedIndex, updatedSelectedIndex)) ? A2(_user$project$FindUsages$maybeViewInEditor, updatedSelectedIndex, model) : _elm_lang$core$Platform_Cmd$none
+			_1: (!_elm_lang$core$Native_Utils.eq(model.selectedIndex, updatedSelectedIndex)) ? A2(_user$project$Usages$maybeViewInEditor, updatedSelectedIndex, model) : _elm_lang$core$Platform_Cmd$none
 		};
 	});
-var _user$project$FindUsages$update = F2(
+var _user$project$Usages$update = F2(
 	function (msg, model) {
 		var _p1 = msg;
 		switch (_p1.ctor) {
@@ -7870,57 +7877,79 @@ var _user$project$FindUsages$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{projectDirectory: _p1._0._0, token: _p1._0._1, usages: _p1._0._2, selectedIndex: -1}),
+						{projectDirectory: _p1._0._0, token: _p1._0._1, usages: _p1._0._2, selectedIndex: -1, willShowRenamePanel: _p1._0._3}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'SelectNextUsage':
-				return A2(_user$project$FindUsages$selectDelta, 1, model);
+				return A2(_user$project$Usages$selectDelta, 1, model);
 			case 'SelectPreviousUsage':
-				return A2(_user$project$FindUsages$selectDelta, -1, model);
-			default:
+				return A2(_user$project$Usages$selectDelta, -1, model);
+			case 'SelectIndex':
 				var _p2 = _p1._0;
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{selectedIndex: _p2}),
-					_1: A2(_user$project$FindUsages$maybeViewInEditor, _p2, model)
+					_1: A2(_user$project$Usages$maybeViewInEditor, _p2, model)
+				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{
+							usages: A2(
+								_elm_lang$core$Array$map,
+								function (usage) {
+									return _elm_lang$core$Native_Utils.update(
+										usage,
+										{willInclude: _p1._0});
+								},
+								model.usages)
+						}),
+					_1: _elm_lang$core$Platform_Cmd$none
 				};
 		}
 	});
-var _user$project$FindUsages$Model = F4(
+var _user$project$Usages$Model = F5(
+	function (a, b, c, d, e) {
+		return {usages: a, token: b, projectDirectory: c, selectedIndex: d, willShowRenamePanel: e};
+	});
+var _user$project$Usages$Usage = F4(
 	function (a, b, c, d) {
-		return {usages: a, token: b, projectDirectory: c, selectedIndex: d};
+		return {sourcePath: a, lineText: b, range: c, willInclude: d};
 	});
-var _user$project$FindUsages$Usage = F3(
-	function (a, b, c) {
-		return {sourcePath: a, lineText: b, range: c};
-	});
-var _user$project$FindUsages$Range = F2(
+var _user$project$Usages$Range = F2(
 	function (a, b) {
 		return {start: a, end: b};
 	});
-var _user$project$FindUsages$Point = F2(
+var _user$project$Usages$Point = F2(
 	function (a, b) {
 		return {row: a, column: b};
 	});
-var _user$project$FindUsages$SelectIndex = function (a) {
+var _user$project$Usages$UpdateAllWillInclude = function (a) {
+	return {ctor: 'UpdateAllWillInclude', _0: a};
+};
+var _user$project$Usages$SelectIndex = function (a) {
 	return {ctor: 'SelectIndex', _0: a};
 };
-var _user$project$FindUsages$usageView = F4(
-	function (projectDirectory, selectedIndex, index, usage) {
-		var attrs = A2(
-			_elm_lang$core$Basics_ops['++'],
-			_elm_lang$core$Native_List.fromArray(
-				[
-					_elm_lang$html$Html_Events$onClick(
-					_user$project$FindUsages$SelectIndex(index))
-				]),
-			_elm_lang$core$Native_Utils.eq(selectedIndex, index) ? _elm_lang$core$Native_List.fromArray(
-				[
-					_elm_lang$html$Html_Attributes$class('selected')
-				]) : _elm_lang$core$Native_List.fromArray(
-				[]));
+var _user$project$Usages$usageView = F5(
+	function (projectDirectory, selectedIndex, willShowRenamePanel, index, usage) {
+		var maybeRenamePanelView = willShowRenamePanel ? _elm_lang$core$Native_List.fromArray(
+			[
+				A2(
+				_elm_lang$html$Html$input,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Attributes$type$('checkbox'),
+						_elm_lang$html$Html_Attributes$checked(usage.willInclude)
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[]))
+			]) : _elm_lang$core$Native_List.fromArray(
+			[]);
+		var klass = _elm_lang$core$Native_Utils.eq(selectedIndex, index) ? 'selected' : '';
 		var _p3 = usage;
 		var lineText = _p3.lineText;
 		var sourcePath = _p3.sourcePath;
@@ -7938,76 +7967,115 @@ var _user$project$FindUsages$usageView = F4(
 			lineText);
 		return A2(
 			_elm_lang$html$Html$li,
-			attrs,
+			_elm_lang$core$Native_List.fromArray(
+				[
+					_elm_lang$html$Html_Attributes$class(klass)
+				]),
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				maybeRenamePanelView,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						A2(
+						_elm_lang$html$Html$div,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html_Events$onClick(
+								_user$project$Usages$SelectIndex(index)),
+								_elm_lang$html$Html_Attributes$class('usage-text')
+							]),
+						_elm_lang$core$Native_List.fromArray(
+							[
+								A2(
+								_elm_lang$html$Html$div,
+								_elm_lang$core$Native_List.fromArray(
+									[]),
+								_elm_lang$core$Native_List.fromArray(
+									[
+										A2(
+										_elm_lang$html$Html$span,
+										_elm_lang$core$Native_List.fromArray(
+											[]),
+										_elm_lang$core$Native_List.fromArray(
+											[
+												_elm_lang$html$Html$text(preSymbolText)
+											])),
+										A2(
+										_elm_lang$html$Html$span,
+										_elm_lang$core$Native_List.fromArray(
+											[
+												_elm_lang$html$Html_Attributes$class('symbol')
+											]),
+										_elm_lang$core$Native_List.fromArray(
+											[
+												_elm_lang$html$Html$text(symbolText)
+											])),
+										A2(
+										_elm_lang$html$Html$span,
+										_elm_lang$core$Native_List.fromArray(
+											[]),
+										_elm_lang$core$Native_List.fromArray(
+											[
+												_elm_lang$html$Html$text(postSymbolText)
+											]))
+									])),
+								A2(
+								_elm_lang$html$Html$div,
+								_elm_lang$core$Native_List.fromArray(
+									[
+										_elm_lang$html$Html_Attributes$class('source-path')
+									]),
+								_elm_lang$core$Native_List.fromArray(
+									[
+										_elm_lang$html$Html$text(
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											A2(
+												_elm_lang$core$String$dropLeft,
+												_elm_lang$core$String$length(projectDirectory),
+												sourcePath),
+											A2(
+												_elm_lang$core$Basics_ops['++'],
+												' (',
+												A2(
+													_elm_lang$core$Basics_ops['++'],
+													_elm_lang$core$Basics$toString(range.start.row + 1),
+													A2(
+														_elm_lang$core$Basics_ops['++'],
+														',',
+														A2(
+															_elm_lang$core$Basics_ops['++'],
+															_elm_lang$core$Basics$toString(range.start.column + 1),
+															')'))))))
+									]))
+							]))
+					])));
+	});
+var _user$project$Usages$view = function (_p5) {
+	var _p6 = _p5;
+	var _p8 = _p6.willShowRenamePanel;
+	var _p7 = _p6.usages;
+	var maybeRenamePanel = _p8 ? _elm_lang$core$Native_List.fromArray(
+		[
+			A2(
+			_elm_lang$html$Html$div,
+			_elm_lang$core$Native_List.fromArray(
+				[]),
 			_elm_lang$core$Native_List.fromArray(
 				[
 					A2(
-					_elm_lang$html$Html$div,
-					_elm_lang$core$Native_List.fromArray(
-						[]),
+					_elm_lang$html$Html$input,
 					_elm_lang$core$Native_List.fromArray(
 						[
-							A2(
-							_elm_lang$html$Html$span,
-							_elm_lang$core$Native_List.fromArray(
-								[]),
-							_elm_lang$core$Native_List.fromArray(
-								[
-									_elm_lang$html$Html$text(preSymbolText)
-								])),
-							A2(
-							_elm_lang$html$Html$span,
-							_elm_lang$core$Native_List.fromArray(
-								[
-									_elm_lang$html$Html_Attributes$class('symbol')
-								]),
-							_elm_lang$core$Native_List.fromArray(
-								[
-									_elm_lang$html$Html$text(symbolText)
-								])),
-							A2(
-							_elm_lang$html$Html$span,
-							_elm_lang$core$Native_List.fromArray(
-								[]),
-							_elm_lang$core$Native_List.fromArray(
-								[
-									_elm_lang$html$Html$text(postSymbolText)
-								]))
-						])),
-					A2(
-					_elm_lang$html$Html$div,
-					_elm_lang$core$Native_List.fromArray(
-						[
-							_elm_lang$html$Html_Attributes$class('source-path')
+							_elm_lang$html$Html_Attributes$type$('checkbox'),
+							_elm_lang$html$Html_Events$onCheck(_user$project$Usages$UpdateAllWillInclude)
 						]),
 					_elm_lang$core$Native_List.fromArray(
-						[
-							_elm_lang$html$Html$text(
-							A2(
-								_elm_lang$core$Basics_ops['++'],
-								A2(
-									_elm_lang$core$String$dropLeft,
-									_elm_lang$core$String$length(projectDirectory),
-									sourcePath),
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									' (',
-									A2(
-										_elm_lang$core$Basics_ops['++'],
-										_elm_lang$core$Basics$toString(range.start.row + 1),
-										A2(
-											_elm_lang$core$Basics_ops['++'],
-											',',
-											A2(
-												_elm_lang$core$Basics_ops['++'],
-												_elm_lang$core$Basics$toString(range.start.column + 1),
-												')'))))))
-						]))
-				]));
-	});
-var _user$project$FindUsages$view = function (_p5) {
-	var _p6 = _p5;
-	var _p7 = _p6.usages;
+						[])),
+					_elm_lang$html$Html$text('Include All')
+				]))
+		]) : _elm_lang$core$Native_List.fromArray(
+		[]);
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(
@@ -8020,21 +8088,24 @@ var _user$project$FindUsages$view = function (_p5) {
 					[
 						_elm_lang$html$Html_Attributes$class('header')
 					]),
-				_elm_lang$core$Native_List.fromArray(
-					[
-						_elm_lang$html$Html$text(
-						A2(
-							_elm_lang$core$Basics_ops['++'],
-							'Usages for `',
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					_elm_lang$core$Native_List.fromArray(
+						[
+							_elm_lang$html$Html$text(
 							A2(
 								_elm_lang$core$Basics_ops['++'],
-								_p6.token,
+								'Usages for `',
 								A2(
 									_elm_lang$core$Basics_ops['++'],
-									'`: ',
-									_elm_lang$core$Basics$toString(
-										_elm_lang$core$Array$length(_p7))))))
-					])),
+									_p6.token,
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										'`: ',
+										_elm_lang$core$Basics$toString(
+											_elm_lang$core$Array$length(_p7))))))
+						]),
+					maybeRenamePanel)),
 				A2(
 				_elm_lang$html$Html$div,
 				_elm_lang$core$Native_List.fromArray(
@@ -8048,39 +8119,39 @@ var _user$project$FindUsages$view = function (_p5) {
 						_elm_lang$core$Array$toList(
 							A2(
 								_elm_lang$core$Array$indexedMap,
-								A2(_user$project$FindUsages$usageView, _p6.projectDirectory, _p6.selectedIndex),
+								A3(_user$project$Usages$usageView, _p6.projectDirectory, _p6.selectedIndex, _p8),
 								_p7)))
 					]))
 			]));
 };
-var _user$project$FindUsages$SelectPreviousUsage = {ctor: 'SelectPreviousUsage'};
-var _user$project$FindUsages$SelectNextUsage = {ctor: 'SelectNextUsage'};
-var _user$project$FindUsages$SetUsages = function (a) {
+var _user$project$Usages$SelectPreviousUsage = {ctor: 'SelectPreviousUsage'};
+var _user$project$Usages$SelectNextUsage = {ctor: 'SelectNextUsage'};
+var _user$project$Usages$SetUsages = function (a) {
 	return {ctor: 'SetUsages', _0: a};
 };
-var _user$project$FindUsages$subscriptions = function (model) {
+var _user$project$Usages$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$batch(
 		_elm_lang$core$Native_List.fromArray(
 			[
-				_user$project$FindUsages$setUsagesSub(_user$project$FindUsages$SetUsages),
-				_user$project$FindUsages$selectNextUsageSub(
-				function (_p8) {
-					return _user$project$FindUsages$SelectNextUsage;
-				}),
-				_user$project$FindUsages$selectPreviousUsageSub(
+				_user$project$Usages$setUsagesSub(_user$project$Usages$SetUsages),
+				_user$project$Usages$selectNextUsageSub(
 				function (_p9) {
-					return _user$project$FindUsages$SelectPreviousUsage;
+					return _user$project$Usages$SelectNextUsage;
+				}),
+				_user$project$Usages$selectPreviousUsageSub(
+				function (_p10) {
+					return _user$project$Usages$SelectPreviousUsage;
 				})
 			]));
 };
-var _user$project$FindUsages$main = {
+var _user$project$Usages$main = {
 	main: _elm_lang$html$Html_App$program(
-		{init: _user$project$FindUsages$init, view: _user$project$FindUsages$view, update: _user$project$FindUsages$update, subscriptions: _user$project$FindUsages$subscriptions})
+		{init: _user$project$Usages$init, view: _user$project$Usages$view, update: _user$project$Usages$update, subscriptions: _user$project$Usages$subscriptions})
 };
 
 var Elm = {};
-Elm['FindUsages'] = Elm['FindUsages'] || {};
-_elm_lang$core$Native_Platform.addPublicModule(Elm['FindUsages'], 'FindUsages', typeof _user$project$FindUsages$main === 'undefined' ? null : _user$project$FindUsages$main);
+Elm['Usages'] = Elm['Usages'] || {};
+_elm_lang$core$Native_Platform.addPublicModule(Elm['Usages'], 'Usages', typeof _user$project$Usages$main === 'undefined' ? null : _user$project$Usages$main);
 
 if (typeof define === "function" && define['amd'])
 {
