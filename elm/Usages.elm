@@ -24,6 +24,7 @@ subscriptions model =
         [ setUsagesSub SetUsages
         , selectNextUsageSub (\_ -> SelectNextUsage)
         , selectPreviousUsageSub (\_ -> SelectPreviousUsage)
+        , getIncludedUsagesSub (\_ -> GetIncludedUsages)
         ]
 
 
@@ -40,11 +41,17 @@ port selectNextUsageSub : (() -> msg) -> Sub msg
 port selectPreviousUsageSub : (() -> msg) -> Sub msg
 
 
+port getIncludedUsagesSub : (() -> msg) -> Sub msg
+
+
 
 -- OUTGOING PORTS
 
 
 port viewInEditorCmd : Usage -> Cmd msg
+
+
+port includedUsagesReceivedCmd : Array.Array Usage -> Cmd msg
 
 
 
@@ -106,7 +113,8 @@ type Msg
     | SelectNextUsage
     | SelectPreviousUsage
     | SelectIndex Int
-    | UpdateAllWillInclude Bool
+    | GetIncludedUsages
+    | SetUsageWillInclude Int Bool
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -128,10 +136,22 @@ update msg model =
             , maybeViewInEditor index model
             )
 
-        UpdateAllWillInclude willInclude ->
-            ( { model | usages = Array.map (\usage -> { usage | willInclude = willInclude }) model.usages }
-            , Cmd.none
+        GetIncludedUsages ->
+            ( model
+            , includedUsagesReceivedCmd (Array.filter (\usage -> usage.willInclude) model.usages)
             )
+
+        SetUsageWillInclude index willInclude ->
+            case Array.get index model.usages of
+                Nothing ->
+                    ( model
+                    , Cmd.none
+                    )
+
+                Just usage ->
+                    ( { model | usages = Array.set index { usage | willInclude = willInclude } model.usages }
+                    , Cmd.none
+                    )
 
 
 selectDelta : Int -> Model -> ( Model, Cmd Msg )
@@ -171,28 +191,17 @@ maybeViewInEditor index model =
 
 view : Model -> Html Msg
 view { usages, token, projectDirectory, selectedIndex, willShowRenamePanel } =
-    let
-        maybeRenamePanel =
-            if willShowRenamePanel then
-                [ div []
-                    [ input [ type' "checkbox", onCheck UpdateAllWillInclude ] []
-                    , text "Include All"
-                    ]
-                ]
-            else
+    div []
+        [ div [ class "header" ]
+            [ text ("Usages for `" ++ token ++ "`: " ++ (toString <| Array.length usages)) ]
+        , div []
+            [ ul
                 []
-    in
-        div []
-            [ div [ class "header" ]
-                ([ text ("Usages for `" ++ token ++ "`: " ++ (toString <| Array.length usages)) ] ++ maybeRenamePanel)
-            , div []
-                [ ul
-                    []
-                    ((Array.indexedMap (usageView projectDirectory selectedIndex willShowRenamePanel) usages)
-                        |> Array.toList
-                    )
-                ]
+                ((Array.indexedMap (usageView projectDirectory selectedIndex willShowRenamePanel) usages)
+                    |> Array.toList
+                )
             ]
+        ]
 
 
 usageView : String -> Int -> Bool -> Int -> Usage -> Html Msg
@@ -218,7 +227,7 @@ usageView projectDirectory selectedIndex willShowRenamePanel index usage =
 
         maybeRenamePanelView =
             if willShowRenamePanel then
-                [ input [ type' "checkbox", checked usage.willInclude ] [] ]
+                [ input [ type' "checkbox", checked usage.willInclude, onCheck (SetUsageWillInclude index) ] [] ]
             else
                 []
     in
