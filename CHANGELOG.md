@@ -1,3 +1,9 @@
+## 2.1.0
+* Autocomplete: Insert a newline if the typed text is equal to the chosen suggestion.
+* Go To Symbol: Fix highlighting module names with dots.
+* Rename Symbol: Allow scrolling.
+* Remove `atom-linter` dependency.
+
 ## 2.0.1
 * Do not crash if `linter-elm-make` is not installed.
 

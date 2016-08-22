@@ -8,8 +8,8 @@ var _user$project$Usages$checkedUsages = function (usages) {
 };
 var _user$project$Usages$emptyModel = {usages: _elm_lang$core$Array$empty, token: '', projectDirectory: '', selectedIndex: -1, willShowRenamePanel: false};
 var _user$project$Usages$init = {ctor: '_Tuple2', _0: _user$project$Usages$emptyModel, _1: _elm_lang$core$Platform_Cmd$none};
-var _user$project$Usages$setUsagesSub = _elm_lang$core$Native_Platform.incomingPort(
-	'setUsagesSub',
+var _user$project$Usages$setContentsSub = _elm_lang$core$Native_Platform.incomingPort(
+	'setContentsSub',
 	A5(
 		_elm_lang$core$Json_Decode$tuple4,
 		F4(
@@ -152,7 +152,7 @@ var _user$project$Usages$update = F2(
 	function (msg, model) {
 		var _p1 = msg;
 		switch (_p1.ctor) {
-			case 'SetUsages':
+			case 'SetContents':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -414,14 +414,14 @@ var _user$project$Usages$view = function (_p7) {
 };
 var _user$project$Usages$SelectPreviousUsage = {ctor: 'SelectPreviousUsage'};
 var _user$project$Usages$SelectNextUsage = {ctor: 'SelectNextUsage'};
-var _user$project$Usages$SetUsages = function (a) {
-	return {ctor: 'SetUsages', _0: a};
+var _user$project$Usages$SetContents = function (a) {
+	return {ctor: 'SetContents', _0: a};
 };
 var _user$project$Usages$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$batch(
 		_elm_lang$core$Native_List.fromArray(
 			[
-				_user$project$Usages$setUsagesSub(_user$project$Usages$SetUsages),
+				_user$project$Usages$setContentsSub(_user$project$Usages$SetContents),
 				_user$project$Usages$selectNextUsageSub(
 				function (_p11) {
 					return _user$project$Usages$SelectNextUsage;

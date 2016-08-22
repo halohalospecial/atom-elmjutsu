@@ -21,7 +21,7 @@ main =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ setUsagesSub SetUsages
+        [ setContentsSub SetContents
         , selectNextUsageSub (\_ -> SelectNextUsage)
         , selectPreviousUsageSub (\_ -> SelectPreviousUsage)
         , getCheckedUsagesSub (\_ -> GetCheckedUsages)
@@ -32,7 +32,7 @@ subscriptions model =
 -- INCOMING PORTS
 
 
-port setUsagesSub : (( String, String, Array.Array Usage, Bool ) -> msg) -> Sub msg
+port setContentsSub : (( String, String, Array.Array Usage, Bool ) -> msg) -> Sub msg
 
 
 port selectNextUsageSub : (() -> msg) -> Sub msg
@@ -109,7 +109,7 @@ init =
 
 
 type Msg
-    = SetUsages ( String, String, Array.Array Usage, Bool )
+    = SetContents ( String, String, Array.Array Usage, Bool )
     | SelectNextUsage
     | SelectPreviousUsage
     | SelectIndex Int
@@ -120,7 +120,7 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetUsages ( projectDirectory, token, usages, willShowRenamePanel ) ->
+        SetContents ( projectDirectory, token, usages, willShowRenamePanel ) ->
             ( { model | projectDirectory = projectDirectory, token = token, usages = usages, selectedIndex = -1, willShowRenamePanel = willShowRenamePanel }
             , Cmd.none
             )

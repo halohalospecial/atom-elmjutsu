@@ -132,10 +132,6 @@ Add above to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
 
 * The commands only work for top-level values for now.
 * You may encounter weird behaviors if multiple files are using the same module name in your project.
-* If you find yourself always autocompleting "==" for "=" when you press <kbd>enter</kbd>, you can do one of the following:
-  * Press <kbd>escape</kbd> to cancel autocomplete before pressing <kbd>enter</kbd>.
-  * Set the value of `Keymap For Confirming A Suggestion` in the package settings of `autocomplete-plus` to `tab always, enter when suggestion explicitly selected`, instead of the default `tab and enter`.
-  * Set the value of `Autocomplete Min Chars` in the package settings to a higher number, let's say `2`.  
 
 ## Credits
 
