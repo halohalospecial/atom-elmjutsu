@@ -1,3 +1,6 @@
+## 2.2.0
+* Use `elm-package.json` to approximate project dependency versions.
+
 ## 2.1.1
 * Autocomplete: Fix bug when snippets are enabled.
 
