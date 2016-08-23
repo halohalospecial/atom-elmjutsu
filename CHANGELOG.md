@@ -1,3 +1,6 @@
+## 2.1.1
+* Autocomplete: Fix bug when snippets are enabled.
+
 ## 2.1.0
 * Autocomplete: Insert a newline if the typed text is equal to the chosen suggestion.
 * Go To Symbol: Fix highlighting module names with dots.
