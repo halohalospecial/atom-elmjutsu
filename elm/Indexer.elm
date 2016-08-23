@@ -63,7 +63,7 @@ subscriptions model =
         , activeFileChangedSub UpdateActiveFile
         , fileContentsChangedSub (\( filePath, moduleDocs, rawImports ) -> UpdateFileContents filePath (FileContents moduleDocs (toImportDict rawImports)))
         , fileContentsRemovedSub RemoveFileContents
-        , newPackagesNeededSub UpdatePackageDocs
+        , projectDependenciesChangedSub UpdateProjectDependencies
         , goToDefinitionSub GoToDefinition
         , goToSymbolSub GoToSymbol
         , getHintsForPartialSub GetHintsForPartial
@@ -89,7 +89,7 @@ port fileContentsChangedSub : (( String, ModuleDocs, List RawImport ) -> msg) ->
 port fileContentsRemovedSub : (String -> msg) -> Sub msg
 
 
-port newPackagesNeededSub : (List String -> msg) -> Sub msg
+port projectDependenciesChangedSub : (( String, List Dependency ) -> msg) -> Sub msg
 
 
 port goToDefinitionSub : (Maybe String -> msg) -> Sub msg
@@ -157,6 +157,7 @@ type alias Model =
     , activeTokens : TokenDict
     , activeHints : List Hint
     , activeFile : Maybe ActiveFile
+    , projectDependencies : Dict.Dict String (List Dependency)
     }
 
 
@@ -176,10 +177,16 @@ type alias FileContents =
     }
 
 
+type alias Dependency =
+    -- ( ProjectDirectory, Version )
+    ( String, String )
+
+
 init : ( Model, Cmd Msg )
 init =
     ( emptyModel
-    , Task.perform (always DocsFailed) DocsLoaded (getPackageDocsList defaultPackages)
+      -- , Task.perform (always DocsFailed) DocsLoaded (getPackageDocsList defaultPackages)
+    , Cmd.none
     )
 
 
@@ -190,6 +197,7 @@ emptyModel =
     , activeTokens = Dict.empty
     , activeHints = []
     , activeFile = Nothing
+    , projectDependencies = Dict.empty
     }
 
 
@@ -224,7 +232,7 @@ type Msg
     | UpdateActiveFile (Maybe ActiveFile)
     | UpdateFileContents String FileContents
     | RemoveFileContents String
-    | UpdatePackageDocs (List String)
+    | UpdateProjectDependencies ( String, List Dependency )
     | GoToDefinition (Maybe String)
     | GoToSymbol ( Maybe String, Maybe String )
     | GetHintsForPartial String
@@ -266,7 +274,7 @@ update msg model =
             in
                 ( { model
                     | packageDocs = updatedPackageDocs
-                    , activeTokens = toTokenDict model.activeFile model.fileContentsDict updatedPackageDocs
+                    , activeTokens = toTokenDict model.activeFile model.fileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies updatedPackageDocs)
                   }
                 , docsLoadedCmd ()
                 )
@@ -281,12 +289,12 @@ update msg model =
                     |> activeHintsChangedCmd
                 )
 
-        UpdateActiveFile activeFile ->
+        UpdateActiveFile maybeActiveFile ->
             ( { model
-                | activeFile = activeFile
-                , activeTokens = toTokenDict activeFile model.fileContentsDict model.packageDocs
+                | activeFile = maybeActiveFile
+                , activeTokens = toTokenDict maybeActiveFile model.fileContentsDict (getProjectPackageDocs maybeActiveFile model.projectDependencies model.packageDocs)
               }
-            , activeFileChangedCmd activeFile
+            , activeFileChangedCmd maybeActiveFile
             )
 
         UpdateFileContents filePath fileContents ->
@@ -296,7 +304,7 @@ update msg model =
             in
                 ( { model
                     | fileContentsDict = updatedFileContentsDict
-                    , activeTokens = toTokenDict model.activeFile updatedFileContentsDict model.packageDocs
+                    , activeTokens = toTokenDict model.activeFile updatedFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
                   }
                 , activeFileChangedCmd model.activeFile
                 )
@@ -308,20 +316,20 @@ update msg model =
             in
                 ( { model
                     | fileContentsDict = updatedFileContentsDict
-                    , activeTokens = toTokenDict model.activeFile updatedFileContentsDict model.packageDocs
+                    , activeTokens = toTokenDict model.activeFile updatedFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
                   }
                 , activeFileChangedCmd model.activeFile
                 )
 
-        UpdatePackageDocs packages ->
+        UpdateProjectDependencies ( projectDirectory, packageNameAndVersionList ) ->
             let
                 existingPackages =
                     List.map .sourcePath model.packageDocs
 
                 missingPackages =
-                    List.filter (\sourcePath -> not <| List.member sourcePath existingPackages) (List.map toPackageUri packages)
+                    List.filter (\sourcePath -> not <| List.member sourcePath existingPackages) (List.map toPackageUri packageNameAndVersionList)
             in
-                ( model
+                ( { model | projectDependencies = Dict.update projectDirectory (always <| Just packageNameAndVersionList) model.projectDependencies }
                 , Cmd.batch
                     [ updatingPackageDocsCmd ()
                     , Task.perform (always DocsFailed) DocsLoaded (getPackageDocsList missingPackages)
@@ -387,7 +395,7 @@ update msg model =
         GetHintsForPartial partial ->
             ( model
             , ( partial
-              , getHintsForPartial partial model.activeFile model.fileContentsDict model.packageDocs model.activeTokens
+              , getHintsForPartial partial model.activeFile model.fileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
                     |> List.map encodeHint
               )
                 |> hintsForPartialReceivedCmd
@@ -396,7 +404,7 @@ update msg model =
         GetSuggestionsForImport partial ->
             ( model
             , ( partial
-              , getSuggestionsForImport partial model.activeFile model.fileContentsDict model.packageDocs
+              , getSuggestionsForImport partial model.activeFile model.fileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
               )
                 |> suggestionsForImportReceivedCmd
             )
@@ -440,6 +448,29 @@ update msg model =
                     ( model
                     , Cmd.none
                     )
+
+
+getProjectPackageDocs : Maybe ActiveFile -> Dict.Dict String (List Dependency) -> List ModuleDocs -> List ModuleDocs
+getProjectPackageDocs maybeActiveFile projectDependencies packageDocs =
+    case maybeActiveFile of
+        Nothing ->
+            []
+
+        Just activeFile ->
+            case Dict.get activeFile.projectDirectory projectDependencies of
+                Nothing ->
+                    []
+
+                Just dependencies ->
+                    let
+                        packageUris =
+                            List.map toPackageUri dependencies
+                    in
+                        List.filter
+                            (\moduleDocs ->
+                                List.member moduleDocs.sourcePath packageUris
+                            )
+                            packageDocs
 
 
 getProjectSymbols : String -> FileContentsDict -> List Symbol
@@ -526,10 +557,10 @@ getHintsForToken maybeToken tokens =
 
 
 getHintsForPartial : String -> Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
-getHintsForPartial partial activeFile fileContentsDict packageDocs tokens =
+getHintsForPartial partial activeFile fileContentsDict projectPackageDocs tokens =
     let
         exposedSet =
-            getExposedHints activeFile fileContentsDict packageDocs
+            getExposedHints activeFile fileContentsDict projectPackageDocs
 
         exposedNames =
             Set.map snd exposedSet
@@ -628,7 +659,7 @@ getHintsForPartial partial activeFile fileContentsDict packageDocs tokens =
 
 
 getSuggestionsForImport : String -> Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> List ImportSuggestion
-getSuggestionsForImport partial maybeActiveFile fileContentsDict packageDocs =
+getSuggestionsForImport partial maybeActiveFile fileContentsDict projectPackageDocs =
     case maybeActiveFile of
         Nothing ->
             []
@@ -636,7 +667,7 @@ getSuggestionsForImport partial maybeActiveFile fileContentsDict packageDocs =
         Just { projectDirectory } ->
             let
                 suggestions =
-                    (getProjectModuleDocs projectDirectory fileContentsDict ++ packageDocs)
+                    (getProjectModuleDocs projectDirectory fileContentsDict ++ projectPackageDocs)
                         |> List.map
                             (\{ name, comment, sourcePath } ->
                                 { name = name
@@ -768,7 +799,7 @@ getProjectFileContents projectDirectory fileContentsDict =
 
 
 getExposedHints : Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> Set.Set ( String, String )
-getExposedHints activeFile fileContentsDict packageDocs =
+getExposedHints activeFile fileContentsDict projectPackageDocs =
     case activeFile of
         Nothing ->
             Set.empty
@@ -782,7 +813,7 @@ getExposedHints activeFile fileContentsDict packageDocs =
                     Dict.keys importsPlusActiveModule
 
                 importedModuleDocs =
-                    (packageDocs ++ getProjectModuleDocs projectDirectory fileContentsDict)
+                    (projectPackageDocs ++ getProjectModuleDocs projectDirectory fileContentsDict)
                         |> List.filter
                             (\moduleDocs ->
                                 List.member moduleDocs.name importedModuleNames
@@ -916,22 +947,25 @@ dotToHyphen string =
         string
 
 
-defaultPackages : List String
-defaultPackages =
-    List.map toPackageUri
-        [ "elm-lang/core"
-          -- , "elm-lang/html"
-          -- , "elm-lang/svg"
-          -- , "evancz/elm-markdown"
-          -- , "evancz/elm-http"
-        ]
+
+-- defaultPackages : List String
+-- defaultPackages =
+--     List.map toPackageUri
+--         [ ( "elm-lang/core", "latest" )
+--           -- , ("elm-lang/html", "latest" )
+--           -- , ("elm-lang/svg", "latest" )
+--           -- , ("evancz/elm-markdown", "latest" )
+--           -- , ("evancz/elm-http", "latest" )
+--         ]
 
 
-toPackageUri : String -> String
-toPackageUri package =
+toPackageUri : ( String, String ) -> String
+toPackageUri ( packageName, version ) =
     packageDocsPrefix
-        ++ package
-        ++ "/latest/"
+        ++ packageName
+        ++ "/"
+        ++ version
+        ++ "/"
 
 
 packageDocsPrefix : String
@@ -940,8 +974,8 @@ packageDocsPrefix =
 
 
 getPackageDocsList : List String -> Task.Task Http.Error (List ModuleDocs)
-getPackageDocsList packageuris =
-    packageuris
+getPackageDocsList packageUris =
+    packageUris
         |> List.map getPackageDocs
         |> Task.sequence
         |> Task.map List.concat
@@ -1098,7 +1132,7 @@ type alias ImportSuggestion =
 
 
 toTokenDict : Maybe ActiveFile -> FileContentsDict -> List ModuleDocs -> TokenDict
-toTokenDict maybeActiveFile fileContentsDict packageDocsList =
+toTokenDict maybeActiveFile fileContentsDict projectPackageDocs =
     case maybeActiveFile of
         Nothing ->
             Dict.empty
@@ -1111,7 +1145,7 @@ toTokenDict maybeActiveFile fileContentsDict packageDocsList =
                 insert ( token, hint ) dict =
                     Dict.update token (\value -> Just (hint :: Maybe.withDefault [] value)) dict
             in
-                (packageDocsList ++ getProjectModuleDocs projectDirectory fileContentsDict)
+                (projectPackageDocs ++ getProjectModuleDocs projectDirectory fileContentsDict)
                     |> List.filterMap getMaybeHints
                     |> List.concat
                     |> List.foldl insert Dict.empty
