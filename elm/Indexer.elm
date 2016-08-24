@@ -114,7 +114,7 @@ port getImportersForTokenSub : (( Maybe String, Maybe String, Maybe Bool ) -> ms
 -- OUTGOING PORTS
 
 
-port docsLoadedCmd : () -> Cmd msg
+port docsLoadedCmd : List ( Dependency, String ) -> Cmd msg
 
 
 port docsFailedCmd : () -> Cmd msg
@@ -227,7 +227,7 @@ emptyFileContents =
 
 type Msg
     = DocsFailed
-    | DocsLoaded (List ModuleDocs)
+    | DocsLoaded (List ( Dependency, String, List ModuleDocs ))
     | CursorMove (Maybe String)
     | UpdateActiveFile (Maybe ActiveFile)
     | UpdateFileContents String FileContents
@@ -249,13 +249,25 @@ update msg model =
             , docsFailedCmd ()
             )
 
-        DocsLoaded docs ->
+        DocsLoaded result ->
             let
                 existingPackages =
                     List.map .sourcePath model.packageDocs
 
+                loadedPackageDocs =
+                    List.concatMap (\( _, _, moduleDocsList ) -> moduleDocsList) result
+
+                loadedDependenciesAndJson =
+                    List.map (\( dependency, jsonString, _ ) -> ( dependency, jsonString )) result
+
                 missingPackageDocs =
-                    List.filter (\{ sourcePath } -> not <| List.member sourcePath existingPackages) docs
+                    List.filter
+                        (\{ sourcePath } ->
+                            not <|
+                                List.member sourcePath
+                                    existingPackages
+                        )
+                        loadedPackageDocs
 
                 truncateComment moduleDocs =
                     let
@@ -276,7 +288,7 @@ update msg model =
                     | packageDocs = updatedPackageDocs
                     , activeTokens = toTokenDict model.activeFile model.fileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies updatedPackageDocs)
                   }
-                , docsLoadedCmd ()
+                , docsLoadedCmd loadedDependenciesAndJson
                 )
 
         CursorMove maybeToken ->
@@ -321,15 +333,15 @@ update msg model =
                 , activeFileChangedCmd model.activeFile
                 )
 
-        UpdateProjectDependencies ( projectDirectory, packageNameAndVersionList ) ->
+        UpdateProjectDependencies ( projectDirectory, dependencies ) ->
             let
                 existingPackages =
                     List.map .sourcePath model.packageDocs
 
                 missingPackages =
-                    List.filter (\sourcePath -> not <| List.member sourcePath existingPackages) (List.map toPackageUri packageNameAndVersionList)
+                    List.filter (\dependency -> not <| List.member (toPackageUri dependency) existingPackages) dependencies
             in
-                ( { model | projectDependencies = Dict.update projectDirectory (always <| Just packageNameAndVersionList) model.projectDependencies }
+                ( { model | projectDependencies = Dict.update projectDirectory (always <| Just dependencies) model.projectDependencies }
                 , Cmd.batch
                     [ updatingPackageDocsCmd ()
                     , Task.perform (always DocsFailed) DocsLoaded (getPackageDocsList missingPackages)
@@ -973,25 +985,36 @@ packageDocsPrefix =
     "http://package.elm-lang.org/packages/"
 
 
-getPackageDocsList : List String -> Task.Task Http.Error (List ModuleDocs)
-getPackageDocsList packageUris =
-    packageUris
+getPackageDocsList : List Dependency -> Task.Task Http.Error (List ( Dependency, String, List ModuleDocs ))
+getPackageDocsList dependencies =
+    dependencies
         |> List.map getPackageDocs
         |> Task.sequence
-        |> Task.map List.concat
 
 
-getPackageDocs : String -> Task.Task Http.Error (List ModuleDocs)
-getPackageDocs packageUri =
+getPackageDocs : Dependency -> Task.Task Http.Error ( Dependency, String, List ModuleDocs )
+getPackageDocs dependency =
     let
+        packageUri =
+            toPackageUri dependency
+
         url =
             packageUri ++ "documentation.json"
     in
-        Http.get (Decode.list (moduleDecoder packageUri)) url
+        Http.getString url
+            |> Task.map
+                (\rawResponse ->
+                    ( dependency
+                    , rawResponse
+                    , Decode.decodeString (Decode.list (moduleDocsDecoder packageUri)) rawResponse
+                        |> Result.toMaybe
+                        |> Maybe.withDefault []
+                    )
+                )
 
 
-moduleDecoder : String -> Decode.Decoder ModuleDocs
-moduleDecoder packageUri =
+moduleDocsDecoder : String -> Decode.Decoder ModuleDocs
+moduleDocsDecoder packageUri =
     let
         name =
             "name" := Decode.string
