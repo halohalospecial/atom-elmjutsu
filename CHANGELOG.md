@@ -1,6 +1,9 @@
-## 2.3.0
+## 2.5.0
 * Use `elm-stuff/exact-dependencies.json` (if it exists) to get the project dependency versions.  Use `elm-package.json` as fallback.
 * Downloaded package docs are saved in the `Cache Directory`.  User can specify the directory in the package settings.
+
+## 2.3.0, 2.4.0
+* These versions were not released due to publish failures.
 
 ## 2.2.0
 * Use `elm-package.json` to approximate project dependency versions.
