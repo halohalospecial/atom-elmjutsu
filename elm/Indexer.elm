@@ -64,6 +64,8 @@ subscriptions model =
         , fileContentsChangedSub (\( filePath, moduleDocs, rawImports ) -> UpdateFileContents filePath (FileContents moduleDocs (toImportDict rawImports)))
         , fileContentsRemovedSub RemoveFileContents
         , projectDependenciesChangedSub UpdateProjectDependencies
+        , downloadMissingPackageDocsSub DownloadMissingPackageDocs
+        , docsReadSub DocsRead
         , goToDefinitionSub GoToDefinition
         , goToSymbolSub GoToSymbol
         , getHintsForPartialSub GetHintsForPartial
@@ -90,6 +92,12 @@ port fileContentsRemovedSub : (String -> msg) -> Sub msg
 
 
 port projectDependenciesChangedSub : (( String, List Dependency ) -> msg) -> Sub msg
+
+
+port downloadMissingPackageDocsSub : (List Dependency -> msg) -> Sub msg
+
+
+port docsReadSub : (List ( Dependency, String ) -> msg) -> Sub msg
 
 
 port goToDefinitionSub : (Maybe String -> msg) -> Sub msg
@@ -133,6 +141,9 @@ port activeHintsChangedCmd : List EncodedHint -> Cmd msg
 
 
 port updatingPackageDocsCmd : () -> Cmd msg
+
+
+port readPackageDocsCmd : List Dependency -> Cmd msg
 
 
 port hintsForPartialReceivedCmd : ( String, List EncodedHint ) -> Cmd msg
@@ -185,7 +196,7 @@ type alias Dependency =
 init : ( Model, Cmd Msg )
 init =
     ( emptyModel
-      -- , Task.perform (always DocsFailed) DocsLoaded (getPackageDocsList defaultPackages)
+      -- , Task.perform (always LoadDocsFailed) DocsDownloaded (downloadPackageDocsList defaultPackages)
     , Cmd.none
     )
 
@@ -226,8 +237,9 @@ emptyFileContents =
 
 
 type Msg
-    = DocsFailed
-    | DocsLoaded (List ( Dependency, String, List ModuleDocs ))
+    = LoadDocsFailed
+    | DocsDownloaded (List ( Dependency, String, List ModuleDocs ))
+    | DocsRead (List ( Dependency, String ))
     | CursorMove (Maybe String)
     | UpdateActiveFile (Maybe ActiveFile)
     | UpdateFileContents String FileContents
@@ -239,56 +251,36 @@ type Msg
     | GetSuggestionsForImport String
     | AskCanGoToDefinition String
     | GetImporterSourcePathsForToken ( Maybe String, Maybe String, Maybe Bool )
+    | DownloadMissingPackageDocs (List Dependency)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        DocsFailed ->
+        LoadDocsFailed ->
             ( model
             , docsFailedCmd ()
             )
 
-        DocsLoaded result ->
+        DocsDownloaded result ->
             let
-                existingPackages =
-                    List.map .sourcePath model.packageDocs
-
                 loadedPackageDocs =
                     List.concatMap (\( _, _, moduleDocsList ) -> moduleDocsList) result
 
                 loadedDependenciesAndJson =
                     List.map (\( dependency, jsonString, _ ) -> ( dependency, jsonString )) result
-
-                missingPackageDocs =
-                    List.filter
-                        (\{ sourcePath } ->
-                            not <|
-                                List.member sourcePath
-                                    existingPackages
-                        )
-                        loadedPackageDocs
-
-                truncateComment moduleDocs =
-                    let
-                        truncatedComment =
-                            case List.head (String.split "\n\n" moduleDocs.comment) of
-                                Nothing ->
-                                    ""
-
-                                Just comment ->
-                                    comment
-                    in
-                        { moduleDocs | comment = truncatedComment }
-
-                updatedPackageDocs =
-                    (List.map truncateComment missingPackageDocs) ++ model.packageDocs
             in
-                ( { model
-                    | packageDocs = updatedPackageDocs
-                    , activeTokens = toTokenDict model.activeFile model.fileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies updatedPackageDocs)
-                  }
+                ( addLoadedPackageDocs loadedPackageDocs model
                 , docsLoadedCmd loadedDependenciesAndJson
+                )
+
+        DocsRead result ->
+            let
+                loadedPackageDocs =
+                    List.concatMap (\( dependency, jsonString ) -> toModuleDocs (toPackageUri dependency) jsonString) result
+            in
+                ( addLoadedPackageDocs loadedPackageDocs model
+                , Cmd.none
                 )
 
         CursorMove maybeToken ->
@@ -338,15 +330,20 @@ update msg model =
                 existingPackages =
                     List.map .sourcePath model.packageDocs
 
-                missingPackages =
+                missingDependencies =
                     List.filter (\dependency -> not <| List.member (toPackageUri dependency) existingPackages) dependencies
             in
                 ( { model | projectDependencies = Dict.update projectDirectory (always <| Just dependencies) model.projectDependencies }
                 , Cmd.batch
                     [ updatingPackageDocsCmd ()
-                    , Task.perform (always DocsFailed) DocsLoaded (getPackageDocsList missingPackages)
+                    , readPackageDocsCmd missingDependencies
                     ]
                 )
+
+        DownloadMissingPackageDocs dependencies ->
+            ( model
+            , Task.perform (always LoadDocsFailed) DocsDownloaded (downloadPackageDocsList dependencies)
+            )
 
         GoToDefinition maybeToken ->
             let
@@ -460,6 +457,40 @@ update msg model =
                     ( model
                     , Cmd.none
                     )
+
+
+addLoadedPackageDocs : List ModuleDocs -> Model -> Model
+addLoadedPackageDocs loadedPackageDocs model =
+    let
+        existingPackages =
+            List.map .sourcePath model.packageDocs
+
+        missingPackageDocs =
+            List.filter
+                (\{ sourcePath } -> not (List.member sourcePath existingPackages))
+                loadedPackageDocs
+
+        updatedPackageDocs =
+            List.map truncateModuleComment missingPackageDocs ++ model.packageDocs
+    in
+        { model
+            | packageDocs = updatedPackageDocs
+            , activeTokens = toTokenDict model.activeFile model.fileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies updatedPackageDocs)
+        }
+
+
+truncateModuleComment : ModuleDocs -> ModuleDocs
+truncateModuleComment moduleDocs =
+    let
+        truncatedComment =
+            case List.head (String.split "\n\n" moduleDocs.comment) of
+                Nothing ->
+                    ""
+
+                Just comment ->
+                    comment
+    in
+        { moduleDocs | comment = truncatedComment }
 
 
 getProjectPackageDocs : Maybe ActiveFile -> Dict.Dict String (List Dependency) -> List ModuleDocs -> List ModuleDocs
@@ -985,15 +1016,15 @@ packageDocsPrefix =
     "http://package.elm-lang.org/packages/"
 
 
-getPackageDocsList : List Dependency -> Task.Task Http.Error (List ( Dependency, String, List ModuleDocs ))
-getPackageDocsList dependencies =
+downloadPackageDocsList : List Dependency -> Task.Task Http.Error (List ( Dependency, String, List ModuleDocs ))
+downloadPackageDocsList dependencies =
     dependencies
-        |> List.map getPackageDocs
+        |> List.map downloadPackageDocs
         |> Task.sequence
 
 
-getPackageDocs : Dependency -> Task.Task Http.Error ( Dependency, String, List ModuleDocs )
-getPackageDocs dependency =
+downloadPackageDocs : Dependency -> Task.Task Http.Error ( Dependency, String, List ModuleDocs )
+downloadPackageDocs dependency =
     let
         packageUri =
             toPackageUri dependency
@@ -1003,14 +1034,21 @@ getPackageDocs dependency =
     in
         Http.getString url
             |> Task.map
-                (\rawResponse ->
+                (\jsonString ->
                     ( dependency
-                    , rawResponse
-                    , Decode.decodeString (Decode.list (moduleDocsDecoder packageUri)) rawResponse
+                    , jsonString
+                    , Decode.decodeString (Decode.list (moduleDocsDecoder packageUri)) jsonString
                         |> Result.toMaybe
                         |> Maybe.withDefault []
                     )
                 )
+
+
+toModuleDocs : String -> String -> List ModuleDocs
+toModuleDocs packageUri jsonString =
+    Decode.decodeString (Decode.list (moduleDocsDecoder packageUri)) jsonString
+        |> Result.toMaybe
+        |> Maybe.withDefault []
 
 
 moduleDocsDecoder : String -> Decode.Decoder ModuleDocs

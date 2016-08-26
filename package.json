@@ -2,7 +2,7 @@
   "name": "elmjutsu",
   "main": "./lib/main",
   "version": "2.2.0",
-  "description": "Hacky editor tricks for developing with Elm.",
+  "description": "A bag of tricks for developing with Elm.",
   "keywords": [
     "elm",
     "ide"
@@ -14,9 +14,11 @@
     "atom": ">=1.0.0 <2.0.0"
   },
   "dependencies": {
+    "fs-extra": "0.30.0",
     "underscore-plus": "1.6.6",
     "atom-space-pen-views": "^0.20.0",
-    "chokidar": "1.5.2"
+    "chokidar": "1.5.2",
+    "tmp": "0.0.28"
   },
   "providedServices": {
     "autocomplete.provider": {

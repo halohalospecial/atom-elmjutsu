@@ -1,6 +1,6 @@
 # Elmjutsu
 
-Hacky editor tricks for developing with [Elm](http://elm-lang.org).
+A bag of tricks for developing with [Elm](http://elm-lang.org).
 
 https://atom.io/packages/elmjutsu
 
@@ -130,6 +130,7 @@ Add above to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
 
 ## Notes
 
+* Make sure to check out the [settings](http://flight-manual.atom.io/using-atom/sections/atom-packages/#package-settings) for this package to find out about the available options.
 * The commands only work for top-level values for now.
 * You may encounter weird behaviors if multiple files are using the same module name in your project.
 
