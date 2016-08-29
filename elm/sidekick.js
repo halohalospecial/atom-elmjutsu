@@ -7848,7 +7848,9 @@ var _user$project$Sidekick$view = function (_p1) {
 			return A2(
 				_elm_lang$html$Html$div,
 				_elm_lang$core$Native_List.fromArray(
-					[]),
+					[
+						_elm_lang$html$Html_Attributes$class('hint')
+					]),
 				A2(
 					_elm_lang$core$Basics_ops['++'],
 					_elm_lang$core$Native_List.fromArray(
@@ -7890,7 +7892,7 @@ var _user$project$Sidekick$update = F2(
 						{activeFilePath: _p3._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			case 'DocsLoaded':
+			case 'DocsRead':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
@@ -7898,12 +7900,28 @@ var _user$project$Sidekick$update = F2(
 						{note: ''}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			case 'DocsFailed':
+			case 'DocsDownloaded':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{note: 'Failed to load package docs.'}),
+						{note: ''}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'DownloadDocsFailed':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{note: 'Failed to download package docs.'}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
+			case 'ReadingPackageDocs':
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{note: 'Reading package docs...'}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			default:
@@ -7911,7 +7929,7 @@ var _user$project$Sidekick$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{note: 'Loading package docs...'}),
+						{note: 'Downloading package docs...'}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 		}
@@ -7974,23 +7992,26 @@ var _user$project$Sidekick$activeFilePathChangedSub = _elm_lang$core$Native_Plat
 				_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
 				A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string)
 			])));
-var _user$project$Sidekick$docsLoadedSub = _elm_lang$core$Native_Platform.incomingPort(
-	'docsLoadedSub',
+var _user$project$Sidekick$docsReadSub = _elm_lang$core$Native_Platform.incomingPort(
+	'docsReadSub',
 	_elm_lang$core$Json_Decode$null(
 		{ctor: '_Tuple0'}));
-var _user$project$Sidekick$docsFailedSub = _elm_lang$core$Native_Platform.incomingPort(
-	'docsFailedSub',
+var _user$project$Sidekick$docsDownloadedSub = _elm_lang$core$Native_Platform.incomingPort(
+	'docsDownloadedSub',
 	_elm_lang$core$Json_Decode$null(
 		{ctor: '_Tuple0'}));
-var _user$project$Sidekick$updatingPackageDocsSub = _elm_lang$core$Native_Platform.incomingPort(
-	'updatingPackageDocsSub',
+var _user$project$Sidekick$downloadDocsFailedSub = _elm_lang$core$Native_Platform.incomingPort(
+	'downloadDocsFailedSub',
 	_elm_lang$core$Json_Decode$null(
 		{ctor: '_Tuple0'}));
-var _user$project$Sidekick$goToDefinitionCmd = _elm_lang$core$Native_Platform.outgoingPort(
-	'goToDefinitionCmd',
-	function (v) {
-		return v;
-	});
+var _user$project$Sidekick$readingPackageDocsSub = _elm_lang$core$Native_Platform.incomingPort(
+	'readingPackageDocsSub',
+	_elm_lang$core$Json_Decode$null(
+		{ctor: '_Tuple0'}));
+var _user$project$Sidekick$downloadingPackageDocsSub = _elm_lang$core$Native_Platform.incomingPort(
+	'downloadingPackageDocsSub',
+	_elm_lang$core$Json_Decode$null(
+		{ctor: '_Tuple0'}));
 var _user$project$Sidekick$Model = F3(
 	function (a, b, c) {
 		return {note: a, activeHints: b, activeFilePath: c};
@@ -8003,9 +8024,11 @@ var _user$project$Sidekick$Hint = F6(
 	function (a, b, c, d, e, f) {
 		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, caseTipe: f};
 	});
-var _user$project$Sidekick$UpdatingPackageDocs = {ctor: 'UpdatingPackageDocs'};
-var _user$project$Sidekick$DocsFailed = {ctor: 'DocsFailed'};
-var _user$project$Sidekick$DocsLoaded = {ctor: 'DocsLoaded'};
+var _user$project$Sidekick$DownloadingPackageDocs = {ctor: 'DownloadingPackageDocs'};
+var _user$project$Sidekick$ReadingPackageDocs = {ctor: 'ReadingPackageDocs'};
+var _user$project$Sidekick$DownloadDocsFailed = {ctor: 'DownloadDocsFailed'};
+var _user$project$Sidekick$DocsDownloaded = {ctor: 'DocsDownloaded'};
+var _user$project$Sidekick$DocsRead = {ctor: 'DocsRead'};
 var _user$project$Sidekick$ActiveFilePathChanged = function (a) {
 	return {ctor: 'ActiveFilePathChanged', _0: a};
 };
@@ -8018,17 +8041,25 @@ var _user$project$Sidekick$subscriptions = function (model) {
 			[
 				_user$project$Sidekick$activeHintsChangedSub(_user$project$Sidekick$ActiveHintsChanged),
 				_user$project$Sidekick$activeFilePathChangedSub(_user$project$Sidekick$ActiveFilePathChanged),
-				_user$project$Sidekick$docsLoadedSub(
+				_user$project$Sidekick$docsReadSub(
 				function (_p4) {
-					return _user$project$Sidekick$DocsLoaded;
+					return _user$project$Sidekick$DocsRead;
 				}),
-				_user$project$Sidekick$docsFailedSub(
+				_user$project$Sidekick$docsDownloadedSub(
 				function (_p5) {
-					return _user$project$Sidekick$DocsFailed;
+					return _user$project$Sidekick$DocsDownloaded;
 				}),
-				_user$project$Sidekick$updatingPackageDocsSub(
+				_user$project$Sidekick$downloadDocsFailedSub(
 				function (_p6) {
-					return _user$project$Sidekick$UpdatingPackageDocs;
+					return _user$project$Sidekick$DownloadDocsFailed;
+				}),
+				_user$project$Sidekick$readingPackageDocsSub(
+				function (_p7) {
+					return _user$project$Sidekick$ReadingPackageDocs;
+				}),
+				_user$project$Sidekick$downloadingPackageDocsSub(
+				function (_p8) {
+					return _user$project$Sidekick$DownloadingPackageDocs;
 				})
 			]));
 };

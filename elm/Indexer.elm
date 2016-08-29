@@ -122,10 +122,13 @@ port getImportersForTokenSub : (( Maybe String, Maybe String, Maybe Bool ) -> ms
 -- OUTGOING PORTS
 
 
-port docsLoadedCmd : List ( Dependency, String ) -> Cmd msg
+port docsReadCmd : () -> Cmd msg
 
 
-port docsFailedCmd : () -> Cmd msg
+port docsDownloadedCmd : List ( Dependency, String ) -> Cmd msg
+
+
+port downloadDocsFailedCmd : () -> Cmd msg
 
 
 port goToDefinitionCmd : EncodedSymbol -> Cmd msg
@@ -140,7 +143,10 @@ port activeFileChangedCmd : Maybe ActiveFile -> Cmd msg
 port activeHintsChangedCmd : List EncodedHint -> Cmd msg
 
 
-port updatingPackageDocsCmd : () -> Cmd msg
+port readingPackageDocsCmd : () -> Cmd msg
+
+
+port downloadingPackageDocsCmd : () -> Cmd msg
 
 
 port readPackageDocsCmd : List Dependency -> Cmd msg
@@ -196,7 +202,7 @@ type alias Dependency =
 init : ( Model, Cmd Msg )
 init =
     ( emptyModel
-      -- , Task.perform (always LoadDocsFailed) DocsDownloaded (downloadPackageDocsList defaultPackages)
+      -- , Task.perform (always DownloadDocsFailed) DocsDownloaded (downloadPackageDocsList defaultPackages)
     , Cmd.none
     )
 
@@ -237,7 +243,7 @@ emptyFileContents =
 
 
 type Msg
-    = LoadDocsFailed
+    = DownloadDocsFailed
     | DocsDownloaded (List ( Dependency, String, List ModuleDocs ))
     | DocsRead (List ( Dependency, String ))
     | CursorMove (Maybe String)
@@ -257,9 +263,9 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        LoadDocsFailed ->
+        DownloadDocsFailed ->
             ( model
-            , docsFailedCmd ()
+            , downloadDocsFailedCmd ()
             )
 
         DocsDownloaded result ->
@@ -271,7 +277,7 @@ update msg model =
                     List.map (\( dependency, jsonString, _ ) -> ( dependency, jsonString )) result
             in
                 ( addLoadedPackageDocs loadedPackageDocs model
-                , docsLoadedCmd loadedDependenciesAndJson
+                , docsDownloadedCmd loadedDependenciesAndJson
                 )
 
         DocsRead result ->
@@ -280,7 +286,7 @@ update msg model =
                     List.concatMap (\( dependency, jsonString ) -> toModuleDocs (toPackageUri dependency) jsonString) result
             in
                 ( addLoadedPackageDocs loadedPackageDocs model
-                , Cmd.none
+                , docsReadCmd ()
                 )
 
         CursorMove maybeToken ->
@@ -335,14 +341,17 @@ update msg model =
             in
                 ( { model | projectDependencies = Dict.update projectDirectory (always <| Just dependencies) model.projectDependencies }
                 , Cmd.batch
-                    [ updatingPackageDocsCmd ()
+                    [ readingPackageDocsCmd ()
                     , readPackageDocsCmd missingDependencies
                     ]
                 )
 
         DownloadMissingPackageDocs dependencies ->
             ( model
-            , Task.perform (always LoadDocsFailed) DocsDownloaded (downloadPackageDocsList dependencies)
+            , Cmd.batch
+                [ downloadingPackageDocsCmd ()
+                , Task.perform (always DownloadDocsFailed) DocsDownloaded (downloadPackageDocsList dependencies)
+                ]
             )
 
         GoToDefinition maybeToken ->

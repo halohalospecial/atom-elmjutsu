@@ -84,8 +84,13 @@
     color: @text-color-subtle;
   }
 }
-atom-text-editor,
-atom-text-editor::shadow {
+.elmjutsu-rename-symbol {
+  .notes {
+    color: @text-color-error;
+    padding: @component-padding;
+  }
+}
+atom-text-editor, atom-text-editor::shadow {
   .elmjutsu-symbol-marker .region {
     .elmjutsu-symbol-highlight;
   }
@@ -93,12 +98,12 @@ atom-text-editor::shadow {
     .elmjutsu-symbol-highlight;
   }
 }
-.elmjutsu.sidekick {
+.elmjutsu-sidekick {
   height: 100%;
   overflow: auto;
-  padding: 4px;
+  padding: 0px;
   font-size: @font-size;
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   a {
     border-bottom: 1px solid rgba(255, 255, 255, 0.25);
   }
@@ -108,10 +113,8 @@ atom-text-editor::shadow {
     margin-top: 0px;
     margin-bottom: 0px;
   }
-}
-.elmjutsu.rename-symbol {
-  .notes {
-    color: @text-color-error;
-    padding: @component-padding;
+  .hint {
+    padding: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
   }
 }

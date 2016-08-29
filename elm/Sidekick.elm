@@ -2,7 +2,7 @@ port module Sidekick exposing (..)
 
 import Html exposing (..)
 import Html.App as Html
-import Html.Attributes exposing (href, title, style, src)
+import Html.Attributes exposing (href, title, style, src, class)
 import String
 import Markdown
 
@@ -22,9 +22,11 @@ subscriptions model =
     Sub.batch
         [ activeHintsChangedSub ActiveHintsChanged
         , activeFilePathChangedSub ActiveFilePathChanged
-        , docsLoadedSub (\_ -> DocsLoaded)
-        , docsFailedSub (\_ -> DocsFailed)
-        , updatingPackageDocsSub (\_ -> UpdatingPackageDocs)
+        , docsReadSub (\_ -> DocsRead)
+        , docsDownloadedSub (\_ -> DocsDownloaded)
+        , downloadDocsFailedSub (\_ -> DownloadDocsFailed)
+        , readingPackageDocsSub (\_ -> ReadingPackageDocs)
+        , downloadingPackageDocsSub (\_ -> DownloadingPackageDocs)
         ]
 
 
@@ -38,20 +40,19 @@ port activeHintsChangedSub : (List ActiveHint -> msg) -> Sub msg
 port activeFilePathChangedSub : (Maybe String -> msg) -> Sub msg
 
 
-port docsLoadedSub : (() -> msg) -> Sub msg
+port docsReadSub : (() -> msg) -> Sub msg
 
 
-port docsFailedSub : (() -> msg) -> Sub msg
+port docsDownloadedSub : (() -> msg) -> Sub msg
 
 
-port updatingPackageDocsSub : (() -> msg) -> Sub msg
+port downloadDocsFailedSub : (() -> msg) -> Sub msg
 
 
+port readingPackageDocsSub : (() -> msg) -> Sub msg
 
--- OUTGOING PORTS
 
-
-port goToDefinitionCmd : String -> Cmd msg
+port downloadingPackageDocsSub : (() -> msg) -> Sub msg
 
 
 
@@ -97,13 +98,11 @@ emptyModel =
 type Msg
     = ActiveHintsChanged (List ActiveHint)
     | ActiveFilePathChanged (Maybe String)
-    | DocsLoaded
-    | DocsFailed
-    | UpdatingPackageDocs
-
-
-
--- | GoToDefinition String
+    | DocsRead
+    | DocsDownloaded
+    | DownloadDocsFailed
+    | ReadingPackageDocs
+    | DownloadingPackageDocs
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -119,18 +118,28 @@ update msg model =
             , Cmd.none
             )
 
-        DocsLoaded ->
+        DocsRead ->
             ( { model | note = "" }
             , Cmd.none
             )
 
-        DocsFailed ->
-            ( { model | note = "Failed to load package docs." }
+        DocsDownloaded ->
+            ( { model | note = "" }
             , Cmd.none
             )
 
-        UpdatingPackageDocs ->
-            ( { model | note = "Loading package docs..." }
+        DownloadDocsFailed ->
+            ( { model | note = "Failed to download package docs." }
+            , Cmd.none
+            )
+
+        ReadingPackageDocs ->
+            ( { model | note = "Reading package docs..." }
+            , Cmd.none
+            )
+
+        DownloadingPackageDocs ->
+            ( { model | note = "Downloading package docs..." }
             , Cmd.none
             )
 
@@ -154,7 +163,7 @@ view { note, activeHints, activeFilePath } =
         hintsView =
             List.map
                 (\hint ->
-                    div []
+                    div [ class "hint" ]
                         ([ hintMarkdown hint
                          ]
                             ++ sourceView hint

@@ -9100,8 +9100,13 @@ var _user$project$Indexer$getImportersForTokenSub = _elm_lang$core$Native_Platfo
 					_elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
 					A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$bool)
 				]))));
-var _user$project$Indexer$docsLoadedCmd = _elm_lang$core$Native_Platform.outgoingPort(
-	'docsLoadedCmd',
+var _user$project$Indexer$docsReadCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'docsReadCmd',
+	function (v) {
+		return null;
+	});
+var _user$project$Indexer$docsDownloadedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'docsDownloadedCmd',
 	function (v) {
 		return _elm_lang$core$Native_List.toArray(v).map(
 			function (v) {
@@ -9111,8 +9116,8 @@ var _user$project$Indexer$docsLoadedCmd = _elm_lang$core$Native_Platform.outgoin
 				];
 			});
 	});
-var _user$project$Indexer$docsFailedCmd = _elm_lang$core$Native_Platform.outgoingPort(
-	'docsFailedCmd',
+var _user$project$Indexer$downloadDocsFailedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'downloadDocsFailedCmd',
 	function (v) {
 		return null;
 	});
@@ -9164,8 +9169,13 @@ var _user$project$Indexer$activeHintsChangedCmd = _elm_lang$core$Native_Platform
 				};
 			});
 	});
-var _user$project$Indexer$updatingPackageDocsCmd = _elm_lang$core$Native_Platform.outgoingPort(
-	'updatingPackageDocsCmd',
+var _user$project$Indexer$readingPackageDocsCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'readingPackageDocsCmd',
+	function (v) {
+		return null;
+	});
+var _user$project$Indexer$downloadingPackageDocsCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'downloadingPackageDocsCmd',
 	function (v) {
 		return null;
 	});
@@ -9424,7 +9434,7 @@ var _user$project$Indexer$DocsRead = function (a) {
 var _user$project$Indexer$DocsDownloaded = function (a) {
 	return {ctor: 'DocsDownloaded', _0: a};
 };
-var _user$project$Indexer$LoadDocsFailed = {ctor: 'LoadDocsFailed'};
+var _user$project$Indexer$DownloadDocsFailed = {ctor: 'DownloadDocsFailed'};
 var _user$project$Indexer$KindModule = {ctor: 'KindModule'};
 var _user$project$Indexer$moduleToHints = F2(
 	function (_p38, _p37) {
@@ -9971,11 +9981,11 @@ var _user$project$Indexer$update = F2(
 	function (msg, model) {
 		var _p79 = msg;
 		switch (_p79.ctor) {
-			case 'LoadDocsFailed':
+			case 'DownloadDocsFailed':
 				return {
 					ctor: '_Tuple2',
 					_0: model,
-					_1: _user$project$Indexer$docsFailedCmd(
+					_1: _user$project$Indexer$downloadDocsFailedCmd(
 						{ctor: '_Tuple0'})
 				};
 			case 'DocsDownloaded':
@@ -9997,7 +10007,7 @@ var _user$project$Indexer$update = F2(
 				return {
 					ctor: '_Tuple2',
 					_0: A2(_user$project$Indexer$addLoadedPackageDocs, loadedPackageDocs, model),
-					_1: _user$project$Indexer$docsLoadedCmd(loadedDependenciesAndJson)
+					_1: _user$project$Indexer$docsDownloadedCmd(loadedDependenciesAndJson)
 				};
 			case 'DocsRead':
 				var loadedPackageDocs = A2(
@@ -10013,7 +10023,8 @@ var _user$project$Indexer$update = F2(
 				return {
 					ctor: '_Tuple2',
 					_0: A2(_user$project$Indexer$addLoadedPackageDocs, loadedPackageDocs, model),
-					_1: _elm_lang$core$Platform_Cmd$none
+					_1: _user$project$Indexer$docsReadCmd(
+						{ctor: '_Tuple0'})
 				};
 			case 'CursorMove':
 				var updatedActiveHints = A2(_user$project$Indexer$getHintsForToken, _p79._0, model.activeTokens);
@@ -10111,7 +10122,7 @@ var _user$project$Indexer$update = F2(
 					_1: _elm_lang$core$Platform_Cmd$batch(
 						_elm_lang$core$Native_List.fromArray(
 							[
-								_user$project$Indexer$updatingPackageDocsCmd(
+								_user$project$Indexer$readingPackageDocsCmd(
 								{ctor: '_Tuple0'}),
 								_user$project$Indexer$readPackageDocsCmd(missingDependencies)
 							]))
@@ -10120,11 +10131,17 @@ var _user$project$Indexer$update = F2(
 				return {
 					ctor: '_Tuple2',
 					_0: model,
-					_1: A3(
-						_elm_lang$core$Task$perform,
-						_elm_lang$core$Basics$always(_user$project$Indexer$LoadDocsFailed),
-						_user$project$Indexer$DocsDownloaded,
-						_user$project$Indexer$downloadPackageDocsList(_p79._0))
+					_1: _elm_lang$core$Platform_Cmd$batch(
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_user$project$Indexer$downloadingPackageDocsCmd(
+								{ctor: '_Tuple0'}),
+								A3(
+								_elm_lang$core$Task$perform,
+								_elm_lang$core$Basics$always(_user$project$Indexer$DownloadDocsFailed),
+								_user$project$Indexer$DocsDownloaded,
+								_user$project$Indexer$downloadPackageDocsList(_p79._0))
+							]))
 				};
 			case 'GoToDefinition':
 				var requests = A2(
