@@ -1,3 +1,6 @@
+## 2.5.2
+* Sidekick: Fix loading messages.
+
 ## 2.5.1
 * Add additional check for `getWorkDirectory` (Fix #11).
 * Remove extra log messages.
