@@ -1,3 +1,6 @@
+## 2.5.3
+* Fix `Rename Symbol`, `Find Usages` crash accidentally caused by v2.5.2.
+
 ## 2.5.2
 * Sidekick: Fix loading messages.
 

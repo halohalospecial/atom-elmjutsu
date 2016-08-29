@@ -199,7 +199,14 @@ view { usages, token, projectDirectory, selectedIndex, willShowRenamePanel } =
     let
         headerText =
             if willShowRenamePanel then
-                "Will rename " ++ (toString <| Array.length (checkedUsages usages)) ++ " out of " ++ (toString <| Array.length usages) ++ " usages"
+                let
+                    usageOrUsages =
+                        if Array.length usages == 1 then
+                            " usage"
+                        else
+                            " usages"
+                in
+                    "Will rename " ++ (toString <| Array.length (checkedUsages usages)) ++ " out of " ++ (toString <| Array.length usages) ++ usageOrUsages
             else
                 "Usages for `" ++ token ++ "`: " ++ (toString <| Array.length usages)
     in

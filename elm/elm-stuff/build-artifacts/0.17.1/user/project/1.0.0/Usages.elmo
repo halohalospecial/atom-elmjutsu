@@ -352,32 +352,41 @@ var _user$project$Usages$view = function (_p7) {
 	var _p8 = _p7;
 	var _p10 = _p8.willShowRenamePanel;
 	var _p9 = _p8.usages;
-	var headerText = _p10 ? A2(
-		_elm_lang$core$Basics_ops['++'],
-		'Will rename ',
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			_elm_lang$core$Basics$toString(
-				_elm_lang$core$Array$length(
-					_user$project$Usages$checkedUsages(_p9))),
-			A2(
+	var headerText = function () {
+		if (_p10) {
+			var usageOrUsages = _elm_lang$core$Native_Utils.eq(
+				_elm_lang$core$Array$length(_p9),
+				1) ? ' usage' : ' usages';
+			return A2(
 				_elm_lang$core$Basics_ops['++'],
-				' out of ',
+				'Will rename ',
 				A2(
 					_elm_lang$core$Basics_ops['++'],
 					_elm_lang$core$Basics$toString(
-						_elm_lang$core$Array$length(_p9)),
-					' usages')))) : A2(
-		_elm_lang$core$Basics_ops['++'],
-		'Usages for `',
-		A2(
-			_elm_lang$core$Basics_ops['++'],
-			_p8.token,
-			A2(
+						_elm_lang$core$Array$length(
+							_user$project$Usages$checkedUsages(_p9))),
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						' out of ',
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							_elm_lang$core$Basics$toString(
+								_elm_lang$core$Array$length(_p9)),
+							usageOrUsages))));
+		} else {
+			return A2(
 				_elm_lang$core$Basics_ops['++'],
-				'`: ',
-				_elm_lang$core$Basics$toString(
-					_elm_lang$core$Array$length(_p9)))));
+				'Usages for `',
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					_p8.token,
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						'`: ',
+						_elm_lang$core$Basics$toString(
+							_elm_lang$core$Array$length(_p9)))));
+		}
+	}();
 	return A2(
 		_elm_lang$html$Html$div,
 		_elm_lang$core$Native_List.fromArray(

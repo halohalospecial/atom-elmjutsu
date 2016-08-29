@@ -130,7 +130,8 @@ Add above to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
 
 ## Notes
 
-* Make sure to check out the [settings](http://flight-manual.atom.io/using-atom/sections/atom-packages/#package-settings) for this package to find out about the available options.
+* Be sure to check out the [settings](http://flight-manual.atom.io/using-atom/sections/atom-packages/#package-settings) for this package to find out about the available options.
+* It's highly recommended to read `CHANGELOG.md` before upgrading to a newer version to check for breaking changes.
 * The commands only work for top-level values for now.
 * You may encounter weird behaviors if multiple files are using the same module name in your project.
 
