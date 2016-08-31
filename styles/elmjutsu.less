@@ -90,7 +90,8 @@
     padding: @component-padding;
   }
 }
-atom-text-editor, atom-text-editor::shadow {
+atom-text-editor,
+atom-text-editor::shadow {
   .elmjutsu-symbol-marker .region {
     .elmjutsu-symbol-highlight;
   }
@@ -107,6 +108,19 @@ atom-text-editor, atom-text-editor::shadow {
     border-right: 1px dotted @text-color-removed;
     border-bottom: 1px dotted @text-color-removed;
   }
+}
+atom-text-editor.elmjutsu-pipe-selections,
+atom-text-editor.elmjutsu-pipe-selections::shadow {
+  // Imitate mini editor.
+  margin: 4px 2px;
+  padding: 4px 2px;
+  background-color: @button-border-color;
+  border: 2px solid @button-background-color-selected;
+  box-sizing: border-box;
+  border-radius: @component-border-radius;
+}
+atom-text-editor.elmjutsu-pipe-selections.processing {
+  border-color: @background-color-warning;
 }
 .elmjutsu-sidekick {
   height: 100%;

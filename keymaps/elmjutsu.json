@@ -1,9 +1,9 @@
 {
-  "atom-workspace atom-text-editor:not(mini).elmjutsu-rename-symbol": {
+  "atom-workspace atom-text-editor:not([mini]).elmjutsu-rename-symbol": {
     "escape": "elmjutsu:cancel-rename-symbol",
     "enter": "elmjutsu:confirm-rename-symbol"
   },
-  "atom-workspace atom-text-editor:not(mini).elmjutsu-pipe-selections": {
+  "atom-workspace atom-text-editor:not([mini]).elmjutsu-pipe-selections": {
     "escape": "elmjutsu:cancel-pipe-selections",
     "ctrl-enter": "elmjutsu:apply-pipe-selections",
     "cmd-enter": "elmjutsu:apply-pipe-selections"

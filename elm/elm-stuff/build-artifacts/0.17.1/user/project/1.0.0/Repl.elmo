@@ -1,4 +1,10 @@
 var _user$project$Repl$t_s_o_l = {ctor: '_Tuple0'};
+var _user$project$Repl$d_e_l_t_r_o_n_3_0_3_0 = A2(
+	_elm_lang$core$String$split,
+	',',
+	_elm_lang$core$String$concat(
+		_elm_lang$core$Native_List.fromArray(
+			['abc-def,ghi-jkl,mno-pqr,stu-vwx'])));
 var _user$project$Repl$enumerate = _elm_lang$core$List$indexedMap(
 	F2(
 		function (i, s) {
