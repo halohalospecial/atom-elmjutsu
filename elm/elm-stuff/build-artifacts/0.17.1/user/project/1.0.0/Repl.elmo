@@ -1,2 +1,9 @@
 var _user$project$Repl$t_s_o_l = {ctor: '_Tuple0'};
-var _user$project$Repl$d_e_l_t_r_o_n_3_0_3_0 = _user$project$Sidekick$ActiveHint;
+var _user$project$Repl$enumerate = _elm_lang$core$List$indexedMap(
+	F2(
+		function (i, s) {
+			return A2(
+				_elm_lang$core$Basics_ops['++'],
+				_elm_lang$core$Basics$toString(i + 1),
+				A2(_elm_lang$core$Basics_ops['++'], '. ', s));
+		}));

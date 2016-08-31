@@ -18,7 +18,8 @@
     "underscore-plus": "1.6.6",
     "atom-space-pen-views": "^0.20.0",
     "chokidar": "1.5.2",
-    "tmp": "0.0.28"
+    "tmp": "0.0.28",
+    "untildify": "3.0.2"
   },
   "providedServices": {
     "autocomplete.provider": {

@@ -2,6 +2,7 @@
   "mainPaths": [
     "Indexer.elm",
     "Sidekick.elm",
-    "Usages.elm"
+    "Usages.elm",
+    "PipeSelectionsPrelude.elm"
   ]
 }
