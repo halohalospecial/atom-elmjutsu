@@ -120,6 +120,7 @@ Here is an example:
   'shift-f8': 'elmjutsu:go-to-previous-usage'
   'ctrl-f12': 'elmjutsu:go-back'
   'f2': 'elmjutsu:rename-symbol'
+  'f9': 'elmjutsu:eval'
 
 'atom-workspace atom-text-editor:not([mini])':
   'ctrl-enter': 'elmjutsu:pipe-selections'
