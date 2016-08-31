@@ -97,6 +97,16 @@ atom-text-editor, atom-text-editor::shadow {
   .elmjutsu-usage-marker .region {
     .elmjutsu-symbol-highlight;
   }
+  .elmjutsu-pipe-selection-start .region {
+    box-sizing: border-box;
+    border-left: 1px dotted @text-color-added;
+    border-top: 1px dotted @text-color-added;
+  }
+  .elmjutsu-pipe-selection-end .region {
+    box-sizing: border-box;
+    border-right: 1px dotted @text-color-removed;
+    border-bottom: 1px dotted @text-color-removed;
+  }
 }
 .elmjutsu-sidekick {
   height: 100%;
