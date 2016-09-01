@@ -7,12 +7,24 @@ import String.Extra exposing (..)
 
 
 enumerate =
-    L.indexedMap (\i a -> toString (i + 1) ++ ". " ++ a)
+    List.indexedMap (\i a -> toString (i + 1) ++ ". " ++ a)
 
 
-append b =
-    L.map (\a -> a ++ b)
+appendAll b =
+    List.map (\a -> a ++ b)
 
 
-prepend b =
-    L.map (\a -> b ++ a)
+prependAll b =
+    List.map (\a -> b ++ a)
+
+
+trimAll =
+    List.map String.trim
+
+
+toFloatList list =
+    List.map (String.toFloat >> Result.withDefault 0) list
+
+
+total list =
+    list ++ [ List.sum (toFloatList list) |> toString ]
