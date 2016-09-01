@@ -98,15 +98,18 @@ atom-text-editor::shadow {
   .elmjutsu-usage-marker .region {
     .elmjutsu-symbol-highlight;
   }
+  .elmjutsu-eval .region {
+    background-color: fadeout(@background-color-warning, 75%);
+  }
   .elmjutsu-pipe-selection-start .region {
     box-sizing: border-box;
-    border-left: 1px dotted @text-color-added;
-    border-top: 1px dotted @text-color-added;
+    border-left: 1px solid fadeout(@text-color-added, 25%);
+    // border-top: 1px solid fadeout(@text-color-added, 25%);
   }
   .elmjutsu-pipe-selection-end .region {
     box-sizing: border-box;
-    border-right: 1px dotted @text-color-removed;
-    border-bottom: 1px dotted @text-color-removed;
+    border-right: 1px solid fadeout(@text-color-removed, 25%);
+    // border-bottom: 1px solid fadeout(@text-color-removed, 25%);
   }
 }
 atom-text-editor.elmjutsu-pipe-selections,

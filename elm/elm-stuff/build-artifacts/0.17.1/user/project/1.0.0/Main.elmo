@@ -1,0 +1,16 @@
+var _user$project$Main$append = _elm_lang$core$List$indexedMap(
+	F2(
+		function (i, s) {
+			return A2(
+				_elm_lang$core$Basics_ops['++'],
+				_elm_lang$core$Basics$toString(i + 1),
+				A2(_elm_lang$core$Basics_ops['++'], '. ', s));
+		}));
+var _user$project$Main$enumerate = _elm_lang$core$List$indexedMap(
+	F2(
+		function (i, s) {
+			return A2(
+				_elm_lang$core$Basics_ops['++'],
+				_elm_lang$core$Basics$toString(i + 1),
+				A2(_elm_lang$core$Basics_ops['++'], '. ', s));
+		}));
