@@ -5,3 +5,4 @@ elm/linter-elm-make.json
 elm/elm-stuff
 **/Repl.elmi
 **/Repl.elmo
+!.gitignore
