@@ -184,7 +184,7 @@ view { note, activeHints, activeFile } =
                     if String.startsWith (packageDocsPrefix ++ "/") hint.sourcePath then
                         [ span [ class "icon-link-external" ] [], a [ title hint.sourcePath, href hint.sourcePath ] [ text (removePrefix packageDocsPrefix hint.sourcePath) ] ]
                     else
-                        [ span [ class "icon-code" ] [], a [ title hint.sourcePath, onClick (GoToDefinition hint.name) ] [ text (removePrefix projectDirectory hint.sourcePath) ] ]
+                        [ a [ title hint.sourcePath, onClick (GoToDefinition hint.name) ] [ text (removePrefix projectDirectory hint.sourcePath) ] ]
 
                 hintsView =
                     List.map
@@ -224,7 +224,7 @@ viewHint activeFilePath hint =
                 _ ->
                     "\n<br>" ++ hint.comment
     in
-        "##### "
+        "#### "
             ++ formattedModuleName
             ++ "**"
             ++ hint.name

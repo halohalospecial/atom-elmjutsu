@@ -130,22 +130,23 @@ atom-text-editor.elmjutsu-pipe-selections.processing {
   overflow: auto;
   padding: 0px;
   font-size: @font-size;
+  font-family: @font-family;
   border: 1px solid rgba(255, 255, 255, 0.1);
+  h4 {
+    padding: 0px;
+    margin: 0px;
+  }
   a {
-    border-bottom: 1px solid @text-color-subtle;
+    border-bottom: 1px solid fadeout(@text-color-subtle, 40%);
   }
   p {
-  }
-  h5 {
-    margin-top: 0px;
-    margin-bottom: 0px;
   }
   .hint {
     padding: 2px;
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
   .source-path {
-    margin-top: 2px;
+    margin-top: @component-padding;
     .icon-code, .icon-link-external {
       color: @text-color-subtle;
     }

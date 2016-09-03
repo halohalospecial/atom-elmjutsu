@@ -8201,7 +8201,7 @@ var _user$project$Sidekick$viewHint = F2(
 		var formattedModuleName = (_elm_lang$core$Native_Utils.eq(hint.moduleName, '') || _elm_lang$core$Native_Utils.eq(activeFilePath, hint.sourcePath)) ? '' : A2(_elm_lang$core$Basics_ops['++'], hint.moduleName, '.');
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
-			'##### ',
+			'#### ',
 			A2(
 				_elm_lang$core$Basics_ops['++'],
 				formattedModuleName,
@@ -8434,14 +8434,6 @@ var _user$project$Sidekick$view = function (_p3) {
 						]))
 				]) : _elm_lang$core$Native_List.fromArray(
 				[
-					A2(
-					_elm_lang$html$Html$span,
-					_elm_lang$core$Native_List.fromArray(
-						[
-							_elm_lang$html$Html_Attributes$class('icon-code')
-						]),
-					_elm_lang$core$Native_List.fromArray(
-						[])),
 					A2(
 					_elm_lang$html$Html$a,
 					_elm_lang$core$Native_List.fromArray(

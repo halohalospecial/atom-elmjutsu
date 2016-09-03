@@ -4,6 +4,7 @@
 * Sidekick: Add link to project symbol source.
 * View in browser: Fix module URLs.
 * Autocomplete: Increase max width of popup.
+* Rename Symbol: Remove flicker after renaming.
 
 ## 2.5.3
 * Fix `Rename Symbol`, `Find Usages` crash accidentally caused by v2.5.2.
