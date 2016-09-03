@@ -1,3 +1,10 @@
+## 2.5.4
+* Parse docs of project files.
+* Go To Definition: Fix bug where it could not find definition with comments.
+* Sidekick: Add link to project symbol source.
+* View in browser: Fix module URLs.
+* Autocomplete: Increase max width of popup.
+
 ## 2.5.3
 * Fix `Rename Symbol`, `Find Usages` crash accidentally caused by v2.5.2.
 

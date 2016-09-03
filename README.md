@@ -121,15 +121,12 @@ Here is an example:
   'ctrl-f12': 'elmjutsu:go-back'
   'f2': 'elmjutsu:rename-symbol'
 
-'atom-workspace atom-text-editor:not([mini])':
-  'ctrl-enter': 'elmjutsu:pipe-selections'
-
 'atom-workspace':
   'f1': 'elmjutsu:toggle-sidekick'
   'ctrl-shift-f12': 'elmjutsu:hide-usages-panel'
 ```
 
-Add above to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
+Add them to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
 
 ## Notes
 

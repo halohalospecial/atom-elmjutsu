@@ -1,8 +1,5 @@
 {
   "mainPaths": [
-    "Indexer.elm",
-    "Sidekick.elm",
-    "Usages.elm",
-    "PipeSelectionsPrelude.elm"
+    "Sidekick.elm"
   ]
 }

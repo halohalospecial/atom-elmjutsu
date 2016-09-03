@@ -3,8 +3,10 @@ port module Sidekick exposing (..)
 import Html exposing (..)
 import Html.App as Html
 import Html.Attributes exposing (href, title, style, src, class)
+import Html.Events exposing (onClick)
 import String
 import Markdown
+import Regex
 
 
 main : Program Never
@@ -21,7 +23,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ activeHintsChangedSub ActiveHintsChanged
-        , activeFilePathChangedSub ActiveFilePathChanged
+        , activeFileChangedSub ActiveFileChanged
         , docsReadSub (\_ -> DocsRead)
         , docsDownloadedSub (\_ -> DocsDownloaded)
         , downloadDocsFailedSub (\_ -> DownloadDocsFailed)
@@ -37,7 +39,7 @@ subscriptions model =
 port activeHintsChangedSub : (List ActiveHint -> msg) -> Sub msg
 
 
-port activeFilePathChangedSub : (Maybe String -> msg) -> Sub msg
+port activeFileChangedSub : (Maybe ActiveFile -> msg) -> Sub msg
 
 
 port docsReadSub : (() -> msg) -> Sub msg
@@ -56,13 +58,20 @@ port downloadingPackageDocsSub : (() -> msg) -> Sub msg
 
 
 
+-- OUTGOING PORTS
+
+
+port goToDefinitionCmd : String -> Cmd msg
+
+
+
 -- MODEL
 
 
 type alias Model =
     { note : String
     , activeHints : List ActiveHint
-    , activeFilePath : Maybe String
+    , activeFile : Maybe ActiveFile
     }
 
 
@@ -73,6 +82,12 @@ type alias ActiveHint =
     , comment : String
     , tipe : String
     , caseTipe : Maybe String
+    }
+
+
+type alias ActiveFile =
+    { filePath : String
+    , projectDirectory : String
     }
 
 
@@ -87,7 +102,7 @@ emptyModel : Model
 emptyModel =
     { note = ""
     , activeHints = []
-    , activeFilePath = Nothing
+    , activeFile = Nothing
     }
 
 
@@ -97,12 +112,13 @@ emptyModel =
 
 type Msg
     = ActiveHintsChanged (List ActiveHint)
-    | ActiveFilePathChanged (Maybe String)
+    | ActiveFileChanged (Maybe ActiveFile)
     | DocsRead
     | DocsDownloaded
     | DownloadDocsFailed
     | ReadingPackageDocs
     | DownloadingPackageDocs
+    | GoToDefinition String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -113,8 +129,8 @@ update msg model =
             , Cmd.none
             )
 
-        ActiveFilePathChanged filePath ->
-            ( { model | activeFilePath = filePath }
+        ActiveFileChanged activeFile ->
+            ( { model | activeFile = activeFile }
             , Cmd.none
             )
 
@@ -143,42 +159,51 @@ update msg model =
             , Cmd.none
             )
 
+        GoToDefinition name ->
+            ( model
+            , goToDefinitionCmd name
+            )
+
 
 
 -- VIEW
 
 
 view : Model -> Html Msg
-view { note, activeHints, activeFilePath } =
-    let
-        hintMarkdown hint =
-            Markdown.toHtml [] (viewHint activeFilePath hint)
+view { note, activeHints, activeFile } =
+    case activeFile of
+        Nothing ->
+            text ""
 
-        sourceView hint =
-            if String.startsWith packageDocsPrefix hint.sourcePath then
-                [ a [ title hint.sourcePath, href hint.sourcePath ] [ text "View in browser" ] ]
-            else
-                []
+        Just { filePath, projectDirectory } ->
+            let
+                hintMarkdown hint =
+                    Markdown.toHtml [] (viewHint filePath hint)
 
-        hintsView =
-            List.map
-                (\hint ->
-                    div [ class "hint" ]
-                        ([ hintMarkdown hint
-                         ]
-                            ++ sourceView hint
+                sourcePathView hint =
+                    if String.startsWith (packageDocsPrefix ++ "/") hint.sourcePath then
+                        [ span [ class "icon-link-external" ] [], a [ title hint.sourcePath, href hint.sourcePath ] [ text (removePrefix packageDocsPrefix hint.sourcePath) ] ]
+                    else
+                        [ span [ class "icon-code" ] [], a [ title hint.sourcePath, onClick (GoToDefinition hint.name) ] [ text (removePrefix projectDirectory hint.sourcePath) ] ]
+
+                hintsView =
+                    List.map
+                        (\hint ->
+                            div [ class "hint" ]
+                                [ hintMarkdown hint
+                                , div [ class "source-path" ] (sourcePathView hint)
+                                ]
                         )
-                )
-                activeHints
-    in
-        div [] <| [ text note ] ++ hintsView
+                        activeHints
+            in
+                div [] <| [ text note ] ++ hintsView
 
 
-viewHint : Maybe String -> Hint -> String
+viewHint : String -> Hint -> String
 viewHint activeFilePath hint =
     let
         formattedModuleName =
-            if hint.moduleName == "" || activeFilePath == (Just hint.sourcePath) then
+            if hint.moduleName == "" || activeFilePath == hint.sourcePath then
                 ""
             else
                 hint.moduleName ++ "."
@@ -220,4 +245,9 @@ type alias Hint =
 
 packageDocsPrefix : String
 packageDocsPrefix =
-    "http://package.elm-lang.org/packages/"
+    "http://package.elm-lang.org/packages"
+
+
+removePrefix : String -> String -> String
+removePrefix prefix text =
+    text |> Regex.replace (Regex.AtMost 1) (Regex.regex ("^" ++ prefix ++ "[/\\\\]")) (\_ -> "")

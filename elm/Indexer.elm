@@ -981,10 +981,17 @@ type alias Value =
 
 formatSourcePath : ModuleDocs -> String -> String
 formatSourcePath { sourcePath, name } valueName =
-    if String.startsWith packageDocsPrefix sourcePath then
-        sourcePath ++ dotToHyphen name ++ "#" ++ valueName
-    else
-        sourcePath
+    let
+        anchor =
+            if valueName == "" then
+                ""
+            else
+                "#" ++ valueName
+    in
+        if String.startsWith packageDocsPrefix sourcePath then
+            sourcePath ++ dotToHyphen name ++ anchor
+        else
+            sourcePath
 
 
 dotToHyphen : String -> String
@@ -1290,12 +1297,15 @@ unionTagsToHints moduleDocs { alias, exposed } { name, cases, comment, tipe } =
 
 
 moduleToHints : ModuleDocs -> Import -> List ( String, Hint )
-moduleToHints { name, comment, sourcePath } { alias, exposed } =
+moduleToHints moduleDocs { alias, exposed } =
     let
+        { name, comment, sourcePath } =
+            moduleDocs
+
         hint =
             { name = name
             , moduleName = ""
-            , sourcePath = sourcePath
+            , sourcePath = formatSourcePath moduleDocs ""
             , comment = comment
             , tipe = ""
             , caseTipe = Nothing

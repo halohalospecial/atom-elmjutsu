@@ -132,7 +132,7 @@ atom-text-editor.elmjutsu-pipe-selections.processing {
   font-size: @font-size;
   border: 1px solid rgba(255, 255, 255, 0.1);
   a {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    border-bottom: 1px solid @text-color-subtle;
   }
   p {
   }
@@ -144,4 +144,24 @@ atom-text-editor.elmjutsu-pipe-selections.processing {
     padding: 2px;
     border: 1px solid rgba(255, 255, 255, 0.05);
   }
+  .source-path {
+    margin-top: 2px;
+    .icon-code, .icon-link-external {
+      color: @text-color-subtle;
+    }
+    a {
+      color: @text-color-subtle;
+    }
+  }
+}
+atom-text-editor[data-grammar="source elm"] autocomplete-suggestion-list {
+  .word {
+    max-width: 250px;
+  }
+  .right-label {
+    max-width: 400px;
+  }
+}
+atom-text-editor[data-grammar="source elm"] autocomplete-suggestion-list.select-list.popover-list {
+  max-width: 650px;
 }

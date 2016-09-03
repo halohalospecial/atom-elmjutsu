@@ -32,14 +32,6 @@
       {
         "label": "Elmjutsu: Toggle Sidekick",
         "command": "elmjutsu:toggle-sidekick"
-      },
-      {
-        "label": "Elmjutsu: Eval",
-        "command": "elmjutsu:eval"
-      },
-      {
-        "label": "Elmjutsu: Pipe Selections",
-        "command": "elmjutsu:pipe-selections"
       }
     ]
   },
@@ -81,14 +73,6 @@
             {
               "label": "Elmjutsu: Toggle Sidekick",
               "command": "elmjutsu:toggle-sidekick"
-            },
-            {
-              "label": "Elmjutsu: Eval",
-              "command": "elmjutsu:eval"
-            },
-            {
-              "label": "Elmjutsu: Pipe Selections",
-              "command": "elmjutsu:pipe-selections"
             }
           ]
         }
