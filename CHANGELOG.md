@@ -1,5 +1,5 @@
 ## 2.5.5
-* Do not use `@text-color-added` and `@text-color-removed` because not all themes support them.
+* Do not use `@text-color-added` and `@text-color-removed` because not all themes support them.  Thanks @otijhuis!
 
 ## 2.5.4
 * Parse docs of project files.
