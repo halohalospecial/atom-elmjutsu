@@ -1,3 +1,6 @@
+## 2.5.5
+* Do not use `@text-color-added` and `@text-color-removed` because not all themes support them.
+
 ## 2.5.4
 * Parse docs of project files.
 * Go To Definition: Fix bug where it could not find definition with comments.

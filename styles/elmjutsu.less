@@ -103,13 +103,11 @@ atom-text-editor::shadow {
   }
   .elmjutsu-pipe-selection-start .region {
     box-sizing: border-box;
-    border-left: 1px solid fadeout(@text-color-added, 25%);
-    // border-top: 1px solid fadeout(@text-color-added, 25%);
+    border-left: 1px solid fadeout(@text-color-success, 25%);
   }
   .elmjutsu-pipe-selection-end .region {
     box-sizing: border-box;
-    border-right: 1px solid fadeout(@text-color-removed, 25%);
-    // border-bottom: 1px solid fadeout(@text-color-removed, 25%);
+    border-right: 1px solid fadeout(@text-color-error, 25%);
   }
 }
 atom-text-editor.elmjutsu-pipe-selections,
@@ -139,7 +137,9 @@ atom-text-editor.elmjutsu-pipe-selections.processing {
   a {
     border-bottom: 1px solid fadeout(@text-color-subtle, 40%);
   }
-  p {
+  code {
+    font-size: @font-size;
+    font-family: @font-family;
   }
   .hint {
     padding: 2px;
@@ -156,13 +156,14 @@ atom-text-editor.elmjutsu-pipe-selections.processing {
   }
 }
 atom-text-editor[data-grammar="source elm"] autocomplete-suggestion-list {
+  // font-size: @font-size;
   .word {
-    max-width: 250px;
+    max-width: 300px;
   }
   .right-label {
     max-width: 400px;
   }
 }
 atom-text-editor[data-grammar="source elm"] autocomplete-suggestion-list.select-list.popover-list {
-  max-width: 650px;
+  max-width: 700px;
 }
