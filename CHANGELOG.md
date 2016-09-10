@@ -1,5 +1,5 @@
 ## 2.5.6
-* Check if source directory exists first before parsing (https://github.com/halohalospecial/atom-elmjutsu/issues/13).
+* Check if source directory exists first before parsing (Fix #13).  Thanks @note89!
 
 ## 2.5.5
 * Do not use `@text-color-added` and `@text-color-removed` because not all themes support them.  Thanks @otijhuis!
@@ -19,7 +19,7 @@
 * Sidekick: Fix loading messages.
 
 ## 2.5.1
-* Add additional check for `getWorkDirectory` (Fix #11).
+* Add additional check for `getWorkDirectory` (Fix #11).  Thanks @Ryan1729!
 * Remove extra log messages.
 
 ## 2.5.0
