@@ -1,3 +1,6 @@
+## 2.5.6
+* Check if source directory exists first before parsing (https://github.com/halohalospecial/atom-elmjutsu/issues/13).
+
 ## 2.5.5
 * Do not use `@text-color-added` and `@text-color-removed` because not all themes support them.  Thanks @otijhuis!
 
