@@ -33,7 +33,7 @@ https://atom.io/packages/elmjutsu
   * [hyperclick](https://atom.io/packages/hyperclick) (optional)
 * For `Autocomplete`:
   * [autocomplete-plus](https://atom.io/packages/autocomplete-plus) (installed by default)
-  * [snippets](https://atom.io/packages/snippets) (installed by default)
+  * [snippets](https://atom.io/packages/snippets) (optional, installed by default)
 
 ## Feature Details
 
@@ -42,6 +42,8 @@ https://atom.io/packages/elmjutsu
 Autocomplete is turned off by default.  To turn it on, check the `Enable Autocomplete` option in the package settings.
 
 It's recommended to turn off the autocomplete feature of the [language-elm](https://atom.io/packages/language-elm) package to prevent duplicate suggestions.
+
+This provides suggestions for imports, project symbols, and 3rd party package symbols.
 
 ![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
 
@@ -65,11 +67,11 @@ If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, y
 
 ### `Elmjutsu: Go To Next Usage`
 
-When the `Usages` panel is shown, this command moves the cursor to the position of the next usage in the list.
+If the `Usages` panel is shown, this command moves the cursor to the position of the next usage in the list.
 
 ### `Elmjutsu: Go To Previous Usage`
 
-When the `Usages` panel is shown, this command moves the cursor to the position of the previous usage in the list.
+If the `Usages` panel is shown, this command moves the cursor to the position of the previous usage in the list.
 
 ### `Elmjutsu: Go Back`
 
@@ -83,7 +85,7 @@ Invoke this command to jump back to the previous position.
 
 ### `Elmjutsu: Rename Symbol`
 
-Renames the symbol across the whole project.  Take note that this is an undoable operation.  Use at your own risk!
+Renames the symbol across the whole project.  Take note that this is an undoable operation.  Modified modules with open editors will not be saved automatically.
 
 ![rename-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/rename-symbol.gif?raw=true)
 
