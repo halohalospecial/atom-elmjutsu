@@ -85,7 +85,7 @@ Invoke this command to jump back to the previous position.
 
 ### `Elmjutsu: Rename Symbol`
 
-Renames the symbol across the whole project.  Take note that this is an undoable operation.  Modified modules with open editors will not be saved automatically.
+Renames the symbol across the whole project.  Take note that this is *not* an undoable operation.  Modified modules with open editors will not be saved automatically.
 
 ![rename-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/rename-symbol.gif?raw=true)
 
