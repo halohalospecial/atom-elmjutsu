@@ -1,4 +1,4 @@
-## 2.5.7
+## 2.6.0
 * Go To Definition: Now works for 3rd-party packages (Fix #15).  Thanks @abhinavzspace!
 
 ## 2.5.6
