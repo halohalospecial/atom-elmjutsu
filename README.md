@@ -43,7 +43,7 @@ Autocomplete is turned off by default.  To turn it on, check the `Enable Autocom
 
 It's recommended to turn off the autocomplete feature of the [language-elm](https://atom.io/packages/language-elm) package to prevent duplicate suggestions.
 
-This provides suggestions for imports, project symbols, and 3rd party package symbols.
+This provides suggestions for imports, project symbols, and 3rd-party package symbols.
 
 ![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
 

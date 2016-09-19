@@ -8484,11 +8484,11 @@ var _user$project$Sidekick$view = function (_p3) {
 				[]),
 			A2(
 				_elm_lang$core$Basics_ops['++'],
+				hintsView,
 				_elm_lang$core$Native_List.fromArray(
 					[
 						_elm_lang$html$Html$text(_p4.note)
-					]),
-				hintsView));
+					])));
 	}
 };
 var _user$project$Sidekick$DownloadingPackageDocs = {ctor: 'DownloadingPackageDocs'};
