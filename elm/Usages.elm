@@ -257,7 +257,9 @@ usageView projectDirectory selectedIndex willShowRenamePanel index usage =
 
         maybeRenamePanelView =
             if willShowRenamePanel then
-                [ input [ type' "checkbox", checked usage.checked, onCheck (SetUsageChecked index) ] [] ]
+                [ div []
+                    [ input [ type' "checkbox", checked usage.checked, onCheck (SetUsageChecked index) ] [] ]
+                ]
             else
                 []
 

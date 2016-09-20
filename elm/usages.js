@@ -8147,16 +8147,23 @@ var _user$project$Usages$usageView = F5(
 		var maybeRenamePanelView = willShowRenamePanel ? _elm_lang$core$Native_List.fromArray(
 			[
 				A2(
-				_elm_lang$html$Html$input,
+				_elm_lang$html$Html$div,
+				_elm_lang$core$Native_List.fromArray(
+					[]),
 				_elm_lang$core$Native_List.fromArray(
 					[
-						_elm_lang$html$Html_Attributes$type$('checkbox'),
-						_elm_lang$html$Html_Attributes$checked(usage.checked),
-						_elm_lang$html$Html_Events$onCheck(
-						_user$project$Usages$SetUsageChecked(index))
-					]),
-				_elm_lang$core$Native_List.fromArray(
-					[]))
+						A2(
+						_elm_lang$html$Html$input,
+						_elm_lang$core$Native_List.fromArray(
+							[
+								_elm_lang$html$Html_Attributes$type$('checkbox'),
+								_elm_lang$html$Html_Attributes$checked(usage.checked),
+								_elm_lang$html$Html_Events$onCheck(
+								_user$project$Usages$SetUsageChecked(index))
+							]),
+						_elm_lang$core$Native_List.fromArray(
+							[]))
+					]))
 			]) : _elm_lang$core$Native_List.fromArray(
 			[]);
 		var listItemClass = _elm_lang$core$Native_Utils.eq(selectedIndex, index) ? 'selected' : '';

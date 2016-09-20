@@ -158,7 +158,7 @@ atom-text-editor.elmjutsu-pipe-selections.processing {
     }
   }
 }
-atom-text-editor[data-grammar="source elm"] autocomplete-suggestion-list {
+atom-text-editor:not([mini])[data-grammar="source elm"] autocomplete-suggestion-list {
   // font-size: @font-size;
   .word {
     max-width: 300px;
@@ -167,6 +167,6 @@ atom-text-editor[data-grammar="source elm"] autocomplete-suggestion-list {
     max-width: 400px;
   }
 }
-atom-text-editor[data-grammar="source elm"] autocomplete-suggestion-list.select-list.popover-list {
+atom-text-editor:not([mini])[data-grammar="source elm"] autocomplete-suggestion-list.select-list.popover-list {
   max-width: 700px;
 }
