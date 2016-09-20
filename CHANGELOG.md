@@ -1,3 +1,8 @@
+## 2.7.0
+* Find Usages: Select usage at cursor position.
+* Go To Next Usage / Go To Previous Usage: Now works without invoking `Find Usages` first.
+* Reorganized menu and context menu items.
+
 ## 2.6.0
 * Go To Definition: Now works for 3rd-party packages (Fix #15).  Thanks @abhinavzspace!
 

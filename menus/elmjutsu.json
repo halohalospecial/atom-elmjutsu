@@ -1,37 +1,42 @@
 {
   "context-menu": {
-    "atom-text-editor": [
-      {
-        "label": "Elmjutsu: Go To Definition",
-        "command": "elmjutsu:go-to-definition"
-      },
-      {
-        "label": "Elmjutsu: Go To Symbol",
-        "command": "elmjutsu:go-to-symbol"
-      },
-      {
-        "label": "Elmjutsu: Find Usages",
-        "command": "elmjutsu:find-usages"
-      },
-      {
-        "label": "Elmjutsu: Go To Next Usage",
-        "command": "elmjutsu:go-to-next-usage"
-      },
-      {
-        "label": "Elmjutsu: Go To Previous Usage",
-        "command": "elmjutsu:go-to-previous-usage"
-      },
-      {
-        "label": "Elmjutsu: Go Back",
-        "command": "elmjutsu:go-back"
-      },
-      {
-        "label": "Elmjutsu: Rename Symbol",
-        "command": "elmjutsu:rename-symbol"
-      },
-      {
-        "label": "Elmjutsu: Toggle Sidekick",
-        "command": "elmjutsu:toggle-sidekick"
+    "atom-text-editor:not([mini])[data-grammar^=\"source elm\"": [
+        {
+          "label": "Elmjutsu",
+          "submenu": [
+          {
+            "label": "Go To Definition",
+            "command": "elmjutsu:go-to-definition"
+          },
+          {
+            "label": "Go To Symbol",
+            "command": "elmjutsu:go-to-symbol"
+          },
+          {
+            "label": "Find Usages",
+            "command": "elmjutsu:find-usages"
+          },
+          {
+            "label": "Go To Next Usage",
+            "command": "elmjutsu:go-to-next-usage"
+          },
+          {
+            "label": "Go To Previous Usage",
+            "command": "elmjutsu:go-to-previous-usage"
+          },
+          {
+            "label": "Go Back",
+            "command": "elmjutsu:go-back"
+          },
+          {
+            "label": "Rename Symbol",
+            "command": "elmjutsu:rename-symbol"
+          },
+          {
+            "label": "Toggle Sidekick",
+            "command": "elmjutsu:toggle-sidekick"
+          }
+        ]
       }
     ]
   },
@@ -43,35 +48,35 @@
           "label": "Elmjutsu",
           "submenu": [
             {
-              "label": "Elmjutsu: Go To Definition",
+              "label": "Go To Definition",
               "command": "elmjutsu:go-to-definition"
             },
             {
-              "label": "Elmjutsu: Go To Symbol",
+              "label": "Go To Symbol",
               "command": "elmjutsu:go-to-symbol"
             },
             {
-              "label": "Elmjutsu: Find Usages",
+              "label": "Find Usages",
               "command": "elmjutsu:find-usages"
             },
             {
-              "label": "Elmjutsu: Go To Next Usage",
+              "label": "Go To Next Usage",
               "command": "elmjutsu:go-to-next-usage"
             },
             {
-              "label": "Elmjutsu: Go To Previous Usage",
+              "label": "Go To Previous Usage",
               "command": "elmjutsu:go-to-previous-usage"
             },
             {
-              "label": "Elmjutsu: Go Back",
+              "label": "Go Back",
               "command": "elmjutsu:go-back"
             },
             {
-              "label": "Elmjutsu: Rename Symbol",
+              "label": "Rename Symbol",
               "command": "elmjutsu:rename-symbol"
             },
             {
-              "label": "Elmjutsu: Toggle Sidekick",
+              "label": "Toggle Sidekick",
               "command": "elmjutsu:toggle-sidekick"
             }
           ]

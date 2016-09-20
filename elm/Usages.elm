@@ -32,7 +32,7 @@ subscriptions model =
 -- INCOMING PORTS
 
 
-port setContentsSub : (( String, String, Array.Array Usage, Bool ) -> msg) -> Sub msg
+port setContentsSub : (( String, String, Int, Array.Array Usage, Bool ) -> msg) -> Sub msg
 
 
 port selectNextUsageSub : (() -> msg) -> Sub msg
@@ -72,7 +72,7 @@ emptyModel =
     { usages = Array.empty
     , token = ""
     , projectDirectory = ""
-    , selectedIndex = -1
+    , selectedIndex = 0
     , willShowRenamePanel = False
     }
 
@@ -109,7 +109,7 @@ init =
 
 
 type Msg
-    = SetContents ( String, String, Array.Array Usage, Bool )
+    = SetContents ( String, String, Int, Array.Array Usage, Bool )
     | SelectNextUsage
     | SelectPreviousUsage
     | SelectIndex Int
@@ -120,10 +120,23 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        SetContents ( projectDirectory, token, usages, willShowRenamePanel ) ->
-            ( { model | projectDirectory = projectDirectory, token = token, usages = usages, selectedIndex = -1, willShowRenamePanel = willShowRenamePanel }
-            , Cmd.none
-            )
+        SetContents ( projectDirectory, token, selectedIndex, usages, willShowRenamePanel ) ->
+            let
+                updatedModel =
+                    { model
+                        | projectDirectory = projectDirectory
+                        , token = token
+                        , usages = usages
+                        , selectedIndex = normalizeIndex selectedIndex usages
+                        , willShowRenamePanel = willShowRenamePanel
+                    }
+            in
+                ( updatedModel
+                , if willShowRenamePanel then
+                    Cmd.none
+                  else
+                    maybeViewInEditor updatedModel.selectedIndex updatedModel.usages
+                )
 
         SelectNextUsage ->
             selectDelta 1 model
@@ -133,7 +146,7 @@ update msg model =
 
         SelectIndex index ->
             ( { model | selectedIndex = index }
-            , maybeViewInEditor index model
+            , maybeViewInEditor index model.usages
             )
 
         GetCheckedUsages ->
@@ -163,26 +176,24 @@ selectDelta : Int -> Model -> ( Model, Cmd Msg )
 selectDelta delta model =
     let
         updatedSelectedIndex =
-            let
-                n =
-                    Array.length model.usages
-            in
-                if n > 0 then
-                    (model.selectedIndex + delta) % n
-                else
-                    model.selectedIndex
+            normalizeIndex (model.selectedIndex + delta) model.usages
     in
         ( { model | selectedIndex = updatedSelectedIndex }
         , if model.selectedIndex /= updatedSelectedIndex then
-            maybeViewInEditor updatedSelectedIndex model
+            maybeViewInEditor updatedSelectedIndex model.usages
           else
             Cmd.none
         )
 
 
-maybeViewInEditor : Int -> Model -> Cmd Msg
-maybeViewInEditor index model =
-    case Array.get index model.usages of
+normalizeIndex : Int -> Array.Array Usage -> Int
+normalizeIndex index usages =
+    index % (Array.length usages)
+
+
+maybeViewInEditor : Int -> Array.Array Usage -> Cmd Msg
+maybeViewInEditor index usages =
+    case Array.get index usages of
         Nothing ->
             Cmd.none
 

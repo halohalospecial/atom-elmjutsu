@@ -67,11 +67,11 @@ If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, y
 
 ### `Elmjutsu: Go To Next Usage`
 
-If the `Usages` panel is shown, this command moves the cursor to the position of the next usage in the list.
+Moves the cursor to the position of the next usage in the list.
 
 ### `Elmjutsu: Go To Previous Usage`
 
-If the `Usages` panel is shown, this command moves the cursor to the position of the previous usage in the list.
+Moves the cursor to the position of the previous usage in the list.
 
 ### `Elmjutsu: Go Back`
 
