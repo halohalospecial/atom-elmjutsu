@@ -1,3 +1,6 @@
+## 2.8.1
+* Fix regex bug where a usage is not included in the results.
+
 ## 2.8.0
 * Go To Next Usage / Go To Previous Usage: Won't automatically open the `Usages` panel anymore.
 

@@ -39,15 +39,15 @@ https://atom.io/packages/elmjutsu
 
 ### Autocomplete
 
-Autocomplete is turned off by default.  To turn it on, check the `Enable Autocomplete` option in the package settings.
-
-It's recommended to turn off the autocomplete feature of the [language-elm](https://atom.io/packages/language-elm) package to prevent duplicate suggestions.
+Autocomplete is turned off by default.  To turn it on, check `Enable Autocomplete` in the package settings.
 
 This provides suggestions for imports, project symbols, and 3rd-party package symbols.
 
+* It's recommended to uncheck `Enable autocomplete` of the [language-elm](https://atom.io/packages/language-elm) package to prevent duplicate suggestions.
+
 ![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
 
-You can also turn on `Enable Autocomplete Snippets` if you prefer.
+* You can also check `Enable Autocomplete Snippets` if you prefer.
 
 ![autocomplete-snippet](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-snippet.gif?raw=true)
 
@@ -55,7 +55,7 @@ You can also turn on `Enable Autocomplete Snippets` if you prefer.
 
 ![go-to-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-definition.gif?raw=true)
 
-If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, you can also check the `Enable Hyperclick` option to jump to definition using `Ctrl` + click / `Cmd` + click (Mac).
+If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, you can also check `Enable Hyperclick` to jump to definition using `Ctrl` + click / `Cmd` + click (Mac).
 
 ### `Elmjutsu: Go To Symbol`
 
@@ -76,10 +76,10 @@ Moves the cursor to the position of the previous usage.
 ### `Elmjutsu: Go Back`
 
 The current cursor position is added to a navigation stack before jumping via:
-  - `Go To Definition`
-  - `Go To Symbol`
-  - `Go To Next Usage`
-  - `Go To Previous Usage`
+  * `Go To Definition`
+  * `Go To Symbol`
+  * `Go To Next Usage`
+  * `Go To Previous Usage`
 
 Invoke this command to jump back to the previous position.
 
@@ -87,10 +87,10 @@ Invoke this command to jump back to the previous position.
 
 Renames the symbol across the whole project.  Take note that this is *not* an undoable operation.
 
-- Press <kbd>enter</kbd> to rename or <kbd>escape</kbd> to cancel.
-- Uncheck usages to exclude.
-- Modified modules with open editors will *not* be saved automatically.
-- Renaming a module will *not* rename the associated file.
+* Press <kbd>enter</kbd> to rename or <kbd>escape</kbd> to cancel.
+* Uncheck usages to exclude.
+* Modified modules with open editors will *not* be saved automatically.
+* Renaming a module will *not* rename the associated file.
 
 ![rename-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/rename-symbol.gif?raw=true)
 
@@ -101,15 +101,15 @@ Closes the `Usages` panel (the panel is shown after invoking `Find Usages` or `R
 ### `Elmjutsu: Toggle Sidekick`
 Shows the type hints and documentation for the symbol at cursor position.  The size and position of the panel can be modified in the package settings.
 
-Example #1 (default): `Sidekick Position` = "bottom", `Sidekick Size` = 0 (Automatically resizes to fit content.)
+* Example #1 (default): `Sidekick Position` = "bottom", `Sidekick Size` = 0 (Automatically resizes to fit content.)
 
 ![sidekick1](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick1.gif?raw=true)
 
-Example #2: `Sidekick Position` = "bottom", `Sidekick Size` = 30 (Just shows the type hints.)
+* Example #2: `Sidekick Position` = "bottom", `Sidekick Size` = 30 (Just shows the type hints.)
 
 ![sidekick2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick2.gif?raw=true)
 
-Example #3: `Sidekick Position` = "right", `Sidekick Size` = 300
+* Example #3: `Sidekick Position` = "right", `Sidekick Size` = 300
 
 ![sidekick3](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick3.gif?raw=true)
 
@@ -136,7 +136,8 @@ Add them to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
 ## Notes
 
 * Be sure to check out the [settings](http://flight-manual.atom.io/using-atom/sections/atom-packages/#package-settings) for this package to find out about the available options.
-* It's highly recommended to read `CHANGELOG.md` before upgrading to a newer version to check for breaking changes.
+* It's highly recommended to read `CHANGELOG.md` before upgrading to a
+newer version to check for breaking changes.
 * The commands only work for top-level values for now.
 * You may encounter weird behaviors if multiple files are using the same module name in your project.
 
