@@ -67,11 +67,11 @@ If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, y
 
 ### `Elmjutsu: Go To Next Usage`
 
-Moves the cursor to the position of the next usage in the list.
+Moves the cursor to the position of the next usage.
 
 ### `Elmjutsu: Go To Previous Usage`
 
-Moves the cursor to the position of the previous usage in the list.
+Moves the cursor to the position of the previous usage.
 
 ### `Elmjutsu: Go Back`
 
@@ -85,11 +85,14 @@ Invoke this command to jump back to the previous position.
 
 ### `Elmjutsu: Rename Symbol`
 
-Renames the symbol across the whole project.  Take note that this is *not* an undoable operation.  Modified modules with open editors will not be saved automatically.
+Renames the symbol across the whole project.  Take note that this is *not* an undoable operation.
+
+- Press <kbd>enter</kbd> to rename or <kbd>escape</kbd> to cancel.
+- Uncheck usages to exclude.
+- Modified modules with open editors will *not* be saved automatically.
+- Renaming a module will *not* rename the associated file.
 
 ![rename-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/rename-symbol.gif?raw=true)
-
-Press <kbd>enter</kbd> to rename or <kbd>escape</kbd> to cancel.
 
 ### `Elmjutsu: Hide Usages Panel`
 

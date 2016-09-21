@@ -1,3 +1,6 @@
+## 2.8.0
+* Go To Next Usage / Go To Previous Usage: Won't automatically open the `Usages` panel anymore.
+
 ## 2.7.0
 * Find Usages: Select usage at cursor position.
 * Go To Next Usage / Go To Previous Usage: Now works without invoking `Find Usages` first.

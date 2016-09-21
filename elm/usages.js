@@ -7899,10 +7899,11 @@ var _elm_lang$html$Html_Events$Options = F2(
 
 var _user$project$Usages$normalizeIndex = F2(
 	function (index, usages) {
-		return A2(
+		var n = _elm_lang$core$Array$length(usages);
+		return (_elm_lang$core$Native_Utils.cmp(n, 0) > 0) ? A2(
 			_elm_lang$core$Basics_ops['%'],
 			index,
-			_elm_lang$core$Array$length(usages));
+			_elm_lang$core$Array$length(usages)) : -1;
 	});
 var _user$project$Usages$checkedUsages = function (usages) {
 	return A2(

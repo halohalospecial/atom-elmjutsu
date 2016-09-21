@@ -188,7 +188,14 @@ selectDelta delta model =
 
 normalizeIndex : Int -> Array.Array Usage -> Int
 normalizeIndex index usages =
-    index % (Array.length usages)
+    let
+        n =
+            Array.length usages
+    in
+        if n > 0 then
+            index % (Array.length usages)
+        else
+            -1
 
 
 maybeViewInEditor : Int -> Array.Array Usage -> Cmd Msg
