@@ -1,3 +1,6 @@
+## 2.8.2
+* Fix #20.  Thanks @chalmagean!
+
 ## 2.8.1
 * Fix regex bug where a usage is not included in the results.
 
