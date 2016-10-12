@@ -1,3 +1,6 @@
+## 2.8.3
+* Remove unneccessary addition of `SymbolFinderView` emitter events to `CompositeDisposable` (causes an error when disabling the package).
+
 ## 2.8.2
 * Fix #20.  Thanks @chalmagean!
 
