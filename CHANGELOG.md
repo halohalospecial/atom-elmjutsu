@@ -1,3 +1,6 @@
+## 2.8.4
+* Only register the `Pipe Selections` editor the first time it's shown to avoid watching its project directory on package activate.
+
 ## 2.8.3
 * Remove unneccessary addition of `SymbolFinderView` emitter events to `CompositeDisposable` (causes an error when disabling the package).
 
