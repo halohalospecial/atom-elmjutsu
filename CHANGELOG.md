@@ -1,3 +1,6 @@
+## 2.9.0
+* Upgrade to Elm 0.18.  Add `String` and `Tuple` to default imports.
+
 ## 2.8.4
 * Only register the `Pipe Selections` editor the first time it's shown to avoid watching its project directory on package activate.
 
