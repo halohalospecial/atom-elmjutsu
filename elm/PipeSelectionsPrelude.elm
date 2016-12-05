@@ -2,7 +2,6 @@ module PipeSelectionsPrelude exposing (..)
 
 import List as L
 import String as S
-import String exposing (..)
 
 
 enumerate : String -> List String

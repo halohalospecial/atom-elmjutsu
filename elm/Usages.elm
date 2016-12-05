@@ -1,14 +1,13 @@
 port module Usages exposing (..)
 
 import Html exposing (..)
-import Html.App as Html
-import Html.Attributes exposing (class, type', checked)
+import Html.Attributes exposing (class, type_, checked)
 import Html.Events exposing (onClick, onCheck)
 import String
 import Array
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
     Html.program
         { init = init
@@ -265,7 +264,7 @@ usageView projectDirectory selectedIndex willShowRenamePanel index usage =
         maybeRenamePanelView =
             if willShowRenamePanel then
                 [ div []
-                    [ input [ type' "checkbox", checked usage.checked, onCheck (SetUsageChecked index) ] [] ]
+                    [ input [ type_ "checkbox", checked usage.checked, onCheck (SetUsageChecked index) ] [] ]
                 ]
             else
                 []

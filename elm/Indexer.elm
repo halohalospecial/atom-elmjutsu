@@ -1,21 +1,18 @@
 port module Indexer exposing (..)
 
 import Dict
-import Html exposing (..)
-import Html.App as Html
 import Http
-import Json.Decode as Decode exposing ((:=))
+import Json.Decode as Json
 import Set
 import String
 import Task
 import Regex
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
-    Html.program
+    Platform.program
         { init = init
-        , view = (\_ -> text "")
         , update = update
         , subscriptions = subscriptions
         }
@@ -24,7 +21,7 @@ main =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ activeTokenChangedSub ActiveTokenChanged
+        [ activeTokenChangedSub UpdateActiveHints
         , activeFileChangedSub UpdateActiveFile
         , fileContentsChangedSub (\( filePath, projectDirectory, moduleDocs, rawImports ) -> UpdateFileContents filePath projectDirectory (FileContents moduleDocs (toImportDict rawImports)))
         , fileContentsRemovedSub RemoveFileContents
@@ -182,7 +179,6 @@ type alias Version =
 init : ( Model, Cmd Msg )
 init =
     ( emptyModel
-      -- , Task.perform (always DownloadDocsFailed) DocsDownloaded (downloadPackageDocsList defaultPackages)
     , Cmd.none
     )
 
@@ -223,10 +219,9 @@ emptyFileContents =
 
 
 type Msg
-    = DownloadDocsFailed
-    | DocsDownloaded (List ( Dependency, String, List ModuleDocs ))
+    = MaybeDocsDownloaded (Result Http.Error (List ( Dependency, String, List ModuleDocs )))
     | DocsRead (List ( Dependency, String ))
-    | ActiveTokenChanged (Maybe String)
+    | UpdateActiveHints (Maybe String)
     | UpdateActiveFile (Maybe ActiveFile)
     | UpdateFileContents FilePath ProjectDirectory FileContents
     | RemoveFileContents ( FilePath, ProjectDirectory )
@@ -243,12 +238,12 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        DownloadDocsFailed ->
+        MaybeDocsDownloaded (Err _) ->
             ( model
             , downloadDocsFailedCmd ()
             )
 
-        DocsDownloaded result ->
+        MaybeDocsDownloaded (Ok result) ->
             let
                 loadedPackageDocs =
                     List.concatMap (\( _, _, moduleDocsList ) -> moduleDocsList) result
@@ -269,7 +264,7 @@ update msg model =
                 , docsReadCmd ()
                 )
 
-        ActiveTokenChanged maybeToken ->
+        UpdateActiveHints maybeToken ->
             doUpdateActiveHints maybeToken model
 
         UpdateActiveFile maybeActiveFile ->
@@ -392,7 +387,7 @@ doDownloadMissingPackageDocs dependencies model =
     ( model
     , Cmd.batch
         [ downloadingPackageDocsCmd ()
-        , Task.perform (always DownloadDocsFailed) DocsDownloaded (downloadPackageDocsList dependencies)
+        , Task.attempt MaybeDocsDownloaded (downloadPackageDocsList dependencies)
         ]
     )
 
@@ -683,7 +678,7 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
                     getFileContentsOfProject projectDirectory projectFileContentsDict
 
                 exposedNames =
-                    Set.map snd exposedSet
+                    Set.map Tuple.second exposedSet
 
                 activeFileContents =
                     getActiveFileContents maybeActiveFile fileContentsDict
@@ -1065,18 +1060,6 @@ dotToHyphen string =
         string
 
 
-
--- defaultPackages : List String
--- defaultPackages =
---     List.map toPackageUri
---         [ ( "elm-lang/core", "latest" )
---           -- , ("elm-lang/html", "latest" )
---           -- , ("elm-lang/svg", "latest" )
---           -- , ("evancz/elm-markdown", "latest" )
---           -- , ("evancz/elm-http", "latest" )
---         ]
-
-
 toPackageUri : ( String, String ) -> String
 toPackageUri ( packageName, version ) =
     packageDocsPrefix
@@ -1108,11 +1091,12 @@ downloadPackageDocs dependency =
             packageUri ++ "documentation.json"
     in
         Http.getString url
+            |> Http.toTask
             |> Task.map
                 (\jsonString ->
                     ( dependency
                     , jsonString
-                    , Decode.decodeString (Decode.list (moduleDocsDecoder packageUri)) jsonString
+                    , Json.decodeString (Json.list (moduleDocsDecoder packageUri)) jsonString
                         |> Result.toMaybe
                         |> Maybe.withDefault []
                     )
@@ -1121,41 +1105,41 @@ downloadPackageDocs dependency =
 
 toModuleDocs : String -> String -> List ModuleDocs
 toModuleDocs packageUri jsonString =
-    Decode.decodeString (Decode.list (moduleDocsDecoder packageUri)) jsonString
+    Json.decodeString (Json.list (moduleDocsDecoder packageUri)) jsonString
         |> Result.toMaybe
         |> Maybe.withDefault []
 
 
-moduleDocsDecoder : String -> Decode.Decoder ModuleDocs
+moduleDocsDecoder : String -> Json.Decoder ModuleDocs
 moduleDocsDecoder packageUri =
     let
         name =
-            "name" := Decode.string
+            Json.field "name" Json.string
 
         tipe =
-            Decode.object4 Tipe
-                ("name" := Decode.string)
-                ("comment" := Decode.string)
-                ("name" := Decode.string)
+            Json.map4 Tipe
+                (Json.field "name" Json.string)
+                (Json.field "comment" Json.string)
                 -- type
-                ("cases" := Decode.list (Decode.tuple2 always Decode.string Decode.value))
+                (Json.field "name" Json.string)
+                (Json.field "cases" (Json.list (Json.index 0 Json.string)))
 
         value =
-            Decode.object3 Value
-                ("name" := Decode.string)
-                ("comment" := Decode.string)
-                ("type" := Decode.string)
+            Json.map3 Value
+                (Json.field "name" Json.string)
+                (Json.field "comment" Json.string)
+                (Json.field "type" Json.string)
 
         values =
-            Decode.object3 Values
-                ("aliases" := Decode.list value)
-                ("types" := Decode.list tipe)
-                ("values" := Decode.list value)
+            Json.map3 Values
+                (Json.field "aliases" (Json.list value))
+                (Json.field "types" (Json.list tipe))
+                (Json.field "values" (Json.list value))
     in
-        Decode.object3 (ModuleDocs packageUri)
+        Json.map3 (ModuleDocs packageUri)
             name
             values
-            ("comment" := Decode.string)
+            (Json.field "comment" Json.string)
 
 
 type alias TokenDict =
@@ -1456,12 +1440,14 @@ defaultImports : ImportDict
 defaultImports =
     Dict.fromList
         [ "Basics" => All
-        , "Debug" => None
         , "List" => Some (Set.fromList [ "List", "::" ])
         , "Maybe" => Some (Set.singleton "Maybe")
           -- Just, Nothing
         , "Result" => Some (Set.singleton "Result")
           -- Ok, Err
+        , "String" => None
+        , "Tuple" => None
+        , "Debug" => None
         , "Platform" => Some (Set.singleton "Program")
         , ( "Platform.Cmd", Import (Just "Cmd") (Some (Set.fromList [ "Cmd", "!" ])) )
         , ( "Platform.Sub", Import (Just "Sub") (Some (Set.singleton "Sub")) )

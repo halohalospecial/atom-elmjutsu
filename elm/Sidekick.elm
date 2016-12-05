@@ -1,7 +1,6 @@
 port module Sidekick exposing (..)
 
 import Html exposing (..)
-import Html.App as Html
 import Html.Attributes exposing (href, title, style, src, class)
 import Html.Events exposing (onClick)
 import String
@@ -9,7 +8,7 @@ import Markdown
 import Regex
 
 
-main : Program Never
+main : Program Never Model Msg
 main =
     Html.program
         { init = init
