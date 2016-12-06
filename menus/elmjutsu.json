@@ -33,6 +33,10 @@
             "command": "elmjutsu:rename-symbol"
           },
           {
+            "label": "Add Import",
+            "command": "elmjutsu:add-import"
+          },
+          {
             "label": "Toggle Sidekick",
             "command": "elmjutsu:toggle-sidekick"
           }
@@ -74,6 +78,10 @@
             {
               "label": "Rename Symbol",
               "command": "elmjutsu:rename-symbol"
+            },
+            {
+              "label": "Add Import",
+              "command": "elmjutsu:add-import"
             },
             {
               "label": "Toggle Sidekick",

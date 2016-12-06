@@ -4,7 +4,6 @@ import Dict
 import Http
 import Json.Decode as Json
 import Set
-import String
 import Task
 import Regex
 
@@ -34,6 +33,7 @@ subscriptions model =
         , getSuggestionsForImportSub GetSuggestionsForImport
         , askCanGoToDefinitionSub AskCanGoToDefinition
         , getImportersForTokenSub GetImporterSourcePathsForToken
+        , addImportSub AddImport
         ]
 
 
@@ -78,6 +78,9 @@ port askCanGoToDefinitionSub : (String -> msg) -> Sub msg
 
 
 port getImportersForTokenSub : (( Maybe String, Maybe String, Maybe Bool ) -> msg) -> Sub msg
+
+
+port addImportSub : (Maybe String -> msg) -> Sub msg
 
 
 
@@ -126,6 +129,9 @@ port canGoToDefinitionRepliedCmd : ( String, Bool ) -> Cmd msg
 port importersForTokenReceivedCmd : ( String, String, Bool, Bool, List ( String, Bool, Bool, List String ) ) -> Cmd msg
 
 
+port addImportCmd : ( Maybe String, Maybe ActiveFile, List EncodedSymbol ) -> Cmd msg
+
+
 
 -- MODEL
 
@@ -136,7 +142,7 @@ type alias Model =
     , activeTokens : TokenDict
     , activeHints : List Hint
     , activeFile : Maybe ActiveFile
-    , projectDependencies : Dict.Dict String (List Dependency)
+    , projectDependencies : ProjectDependencies
     }
 
 
@@ -162,6 +168,10 @@ type alias FileContents =
 
 type alias Dependency =
     ( ProjectDirectory, Version )
+
+
+type alias ProjectDependencies =
+    Dict.Dict String (List Dependency)
 
 
 type alias FilePath =
@@ -233,6 +243,7 @@ type Msg
     | AskCanGoToDefinition String
     | GetImporterSourcePathsForToken ( Maybe String, Maybe String, Maybe Bool )
     | DownloadMissingPackageDocs (List Dependency)
+    | AddImport (Maybe String)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -299,6 +310,9 @@ update msg model =
 
         GetImporterSourcePathsForToken ( maybeProjectDirectory, maybeToken, maybeIsCursorAtLastPartOfToken ) ->
             doGetImporterSourcePathsForToken maybeProjectDirectory maybeToken maybeIsCursorAtLastPartOfToken model
+
+        AddImport maybeToken ->
+            doAddImport maybeToken model
 
 
 doUpdateActiveHints : Maybe String -> Model -> ( Model, Cmd Msg )
@@ -448,7 +462,7 @@ doGoToSymbol maybeProjectDirectory maybeToken model =
                                         Just hint.name
             in
                 ( model
-                , ( defaultSymbolName, model.activeFile, List.map encodeSymbol (getProjectSymbols projectDirectory model.projectFileContentsDict) )
+                , ( defaultSymbolName, model.activeFile, List.map encodeSymbol (getProjectFileSymbols projectDirectory model.projectFileContentsDict) )
                     |> goToSymbolCmd
                 )
 
@@ -578,79 +592,99 @@ getProjectPackageDocs maybeActiveFile projectDependencies packageDocs =
                             packageDocs
 
 
-getProjectSymbols : ProjectDirectory -> ProjectFileContentsDict -> List Symbol
-getProjectSymbols projectDirectory projectFileContentsDict =
+getProjectSymbols : Maybe ActiveFile -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> List Symbol
+getProjectSymbols maybeActiveFile projectFileContentsDict projectDependencies packageDocs =
+    case maybeActiveFile of
+        Nothing ->
+            []
+
+        Just { projectDirectory } ->
+            List.append
+                (getProjectFileSymbols projectDirectory projectFileContentsDict)
+                (getProjectDependencySymbols maybeActiveFile projectDependencies packageDocs)
+
+
+getProjectFileSymbols : ProjectDirectory -> ProjectFileContentsDict -> List Symbol
+getProjectFileSymbols projectDirectory projectFileContentsDict =
     let
         fileContentsDict =
             getFileContentsOfProject projectDirectory projectFileContentsDict
 
         allFileSymbols =
             Dict.values fileContentsDict
-                |> List.concatMap
-                    (\{ moduleDocs } ->
-                        let
-                            { sourcePath, values } =
-                                moduleDocs
-
-                            moduleDocsSymbol =
-                                { fullName = moduleDocs.name
-                                , sourcePath = sourcePath
-                                , caseTipe = Nothing
-                                , kind = KindModule
-                                }
-
-                            valueSymbols =
-                                List.map
-                                    (\value ->
-                                        let
-                                            kind =
-                                                if Regex.contains capitalizedRegex value.name then
-                                                    KindTypeAlias
-                                                else
-                                                    KindDefault
-                                        in
-                                            { fullName = (moduleDocs.name ++ "." ++ value.name)
-                                            , sourcePath = (formatSourcePath moduleDocs value.name)
-                                            , caseTipe = Nothing
-                                            , kind = kind
-                                            }
-                                    )
-                                    values.values
-
-                            tipeSymbols =
-                                List.map
-                                    (\tipe ->
-                                        { fullName = (moduleDocs.name ++ "." ++ tipe.name)
-                                        , sourcePath = (formatSourcePath moduleDocs tipe.name)
-                                        , caseTipe = Nothing
-                                        , kind = KindType
-                                        }
-                                    )
-                                    values.tipes
-
-                            tipeCaseSymbols =
-                                List.concatMap
-                                    (\tipe ->
-                                        List.map
-                                            (\caseName ->
-                                                { fullName = (moduleDocs.name ++ "." ++ caseName)
-                                                , sourcePath = (formatSourcePath moduleDocs caseName)
-                                                , caseTipe = (Just tipe.name)
-                                                , kind = KindTypeCase
-                                                }
-                                            )
-                                            tipe.cases
-                                    )
-                                    values.tipes
-                        in
-                            valueSymbols ++ tipeSymbols ++ tipeCaseSymbols ++ [ moduleDocsSymbol ]
-                    )
+                |> List.concatMap (\{ moduleDocs } -> getModuleSymbols moduleDocs)
     in
         allFileSymbols
             |> List.filter
                 (\{ sourcePath } ->
                     not (String.startsWith packageDocsPrefix sourcePath)
                 )
+
+
+getProjectDependencySymbols : Maybe ActiveFile -> ProjectDependencies -> List ModuleDocs -> List Symbol
+getProjectDependencySymbols maybeActiveFile projectDependencies packageDocs =
+    getProjectPackageDocs maybeActiveFile projectDependencies packageDocs
+        |> List.concatMap getModuleSymbols
+
+
+getModuleSymbols : ModuleDocs -> List Symbol
+getModuleSymbols moduleDocs =
+    let
+        { sourcePath, values } =
+            moduleDocs
+
+        moduleDocsSymbol =
+            { fullName = moduleDocs.name
+            , sourcePath = sourcePath
+            , caseTipe = Nothing
+            , kind = KindModule
+            }
+
+        valueSymbols =
+            List.map
+                (\value ->
+                    let
+                        kind =
+                            if Regex.contains capitalizedRegex value.name then
+                                KindTypeAlias
+                            else
+                                KindDefault
+                    in
+                        { fullName = (moduleDocs.name ++ "." ++ value.name)
+                        , sourcePath = (formatSourcePath moduleDocs value.name)
+                        , caseTipe = Nothing
+                        , kind = kind
+                        }
+                )
+                values.values
+
+        tipeSymbols =
+            List.map
+                (\tipe ->
+                    { fullName = (moduleDocs.name ++ "." ++ tipe.name)
+                    , sourcePath = (formatSourcePath moduleDocs tipe.name)
+                    , caseTipe = Nothing
+                    , kind = KindType
+                    }
+                )
+                values.tipes
+
+        tipeCaseSymbols =
+            List.concatMap
+                (\tipe ->
+                    List.map
+                        (\caseName ->
+                            { fullName = (moduleDocs.name ++ "." ++ caseName)
+                            , sourcePath = (formatSourcePath moduleDocs caseName)
+                            , caseTipe = (Just tipe.name)
+                            , kind = KindTypeCase
+                            }
+                        )
+                        tipe.cases
+                )
+                values.tipes
+    in
+        valueSymbols ++ tipeSymbols ++ tipeCaseSymbols ++ [ moduleDocsSymbol ]
 
 
 getHintsForToken : Maybe String -> TokenDict -> List Hint
@@ -886,6 +920,28 @@ getImportersForToken token isCursorAtLastPartOfToken maybeActiveFile tokens acti
 
         _ ->
             []
+
+
+doAddImport : Maybe String -> Model -> ( Model, Cmd Msg )
+doAddImport maybeToken model =
+    case model.activeFile of
+        Nothing ->
+            ( model
+            , Cmd.none
+            )
+
+        Just { filePath } ->
+            let
+                symbols =
+                    getProjectSymbols model.activeFile model.projectFileContentsDict model.projectDependencies model.packageDocs
+                        |> List.sortBy .fullName
+                        |> -- Do not include symbols in active file.
+                           List.filter (\{ sourcePath } -> sourcePath /= filePath)
+            in
+                ( model
+                , ( maybeToken, model.activeFile, List.map encodeSymbol symbols )
+                    |> addImportCmd
+                )
 
 
 getHintFullName : Hint -> String
