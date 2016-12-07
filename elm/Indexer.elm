@@ -3,9 +3,9 @@ port module Indexer exposing (..)
 import Dict
 import Http
 import Json.Decode as Json
+import Regex
 import Set
 import Task
-import Regex
 
 
 main : Program Never Model Msg
@@ -28,11 +28,12 @@ subscriptions model =
         , downloadMissingPackageDocsSub DownloadMissingPackageDocs
         , docsReadSub DocsRead
         , goToDefinitionSub GoToDefinition
-        , goToSymbolSub GoToSymbol
+        , showGoToSymbolViewSub ShowGoToSymbolView
         , getHintsForPartialSub GetHintsForPartial
         , getSuggestionsForImportSub GetSuggestionsForImport
         , askCanGoToDefinitionSub AskCanGoToDefinition
         , getImportersForTokenSub GetImporterSourcePathsForToken
+        , showAddImportViewSub ShowAddImportView
         , addImportSub AddImport
         ]
 
@@ -41,7 +42,7 @@ subscriptions model =
 -- INCOMING PORTS
 
 
-port activeTokenChangedSub : (Maybe String -> msg) -> Sub msg
+port activeTokenChangedSub : (Maybe Token -> msg) -> Sub msg
 
 
 port activeFileChangedSub : (Maybe ActiveFile -> msg) -> Sub msg
@@ -65,7 +66,7 @@ port docsReadSub : (List ( Dependency, String ) -> msg) -> Sub msg
 port goToDefinitionSub : (Maybe String -> msg) -> Sub msg
 
 
-port goToSymbolSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
+port showGoToSymbolViewSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
 
 
 port getHintsForPartialSub : (String -> msg) -> Sub msg
@@ -74,13 +75,16 @@ port getHintsForPartialSub : (String -> msg) -> Sub msg
 port getSuggestionsForImportSub : (String -> msg) -> Sub msg
 
 
-port askCanGoToDefinitionSub : (String -> msg) -> Sub msg
+port askCanGoToDefinitionSub : (Token -> msg) -> Sub msg
 
 
-port getImportersForTokenSub : (( Maybe String, Maybe String, Maybe Bool ) -> msg) -> Sub msg
+port getImportersForTokenSub : (( Maybe ProjectDirectory, Maybe Token, Maybe Bool ) -> msg) -> Sub msg
 
 
-port addImportSub : (Maybe String -> msg) -> Sub msg
+port showAddImportViewSub : (( FilePath, Maybe Token ) -> msg) -> Sub msg
+
+
+port addImportSub : (( FilePath, ProjectDirectory, String, Maybe String ) -> msg) -> Sub msg
 
 
 
@@ -99,7 +103,7 @@ port downloadDocsFailedCmd : () -> Cmd msg
 port goToDefinitionCmd : ( Maybe ActiveFile, EncodedSymbol ) -> Cmd msg
 
 
-port goToSymbolCmd : ( Maybe String, Maybe ActiveFile, List EncodedSymbol ) -> Cmd msg
+port showGoToSymbolViewCmd : ( Maybe String, Maybe ActiveFile, List EncodedSymbol ) -> Cmd msg
 
 
 port activeFileChangedCmd : Maybe ActiveFile -> Cmd msg
@@ -123,13 +127,16 @@ port hintsForPartialReceivedCmd : ( String, List EncodedHint ) -> Cmd msg
 port suggestionsForImportReceivedCmd : ( String, List ImportSuggestion ) -> Cmd msg
 
 
-port canGoToDefinitionRepliedCmd : ( String, Bool ) -> Cmd msg
+port canGoToDefinitionRepliedCmd : ( Token, Bool ) -> Cmd msg
 
 
-port importersForTokenReceivedCmd : ( String, String, Bool, Bool, List ( String, Bool, Bool, List String ) ) -> Cmd msg
+port importersForTokenReceivedCmd : ( ProjectDirectory, Token, Bool, Bool, List ( String, Bool, Bool, List String ) ) -> Cmd msg
 
 
-port addImportCmd : ( Maybe String, Maybe ActiveFile, List EncodedSymbol ) -> Cmd msg
+port showAddImportViewCmd : ( Maybe Token, Maybe ActiveFile, List EncodedSymbol ) -> Cmd msg
+
+
+port updateImportsCmd : ( FilePath, String ) -> Cmd msg
 
 
 
@@ -175,6 +182,10 @@ type alias ProjectDependencies =
 
 
 type alias FilePath =
+    String
+
+
+type alias Token =
     String
 
 
@@ -231,19 +242,20 @@ emptyFileContents =
 type Msg
     = MaybeDocsDownloaded (Result Http.Error (List ( Dependency, String, List ModuleDocs )))
     | DocsRead (List ( Dependency, String ))
-    | UpdateActiveHints (Maybe String)
+    | UpdateActiveHints (Maybe Token)
     | UpdateActiveFile (Maybe ActiveFile)
     | UpdateFileContents FilePath ProjectDirectory FileContents
     | RemoveFileContents ( FilePath, ProjectDirectory )
     | UpdateProjectDependencies ( String, List Dependency )
-    | GoToDefinition (Maybe String)
-    | GoToSymbol ( Maybe ProjectDirectory, Maybe String )
+    | GoToDefinition (Maybe Token)
+    | ShowGoToSymbolView ( Maybe ProjectDirectory, Maybe String )
     | GetHintsForPartial String
     | GetSuggestionsForImport String
-    | AskCanGoToDefinition String
-    | GetImporterSourcePathsForToken ( Maybe String, Maybe String, Maybe Bool )
+    | AskCanGoToDefinition Token
+    | GetImporterSourcePathsForToken ( Maybe ProjectDirectory, Maybe Token, Maybe Bool )
     | DownloadMissingPackageDocs (List Dependency)
-    | AddImport (Maybe String)
+    | ShowAddImportView ( FilePath, Maybe Token )
+    | AddImport ( FilePath, ProjectDirectory, String, Maybe String )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -296,8 +308,8 @@ update msg model =
         GoToDefinition maybeToken ->
             doGoToDefinition maybeToken model
 
-        GoToSymbol ( maybeProjectDirectory, maybeToken ) ->
-            doGoToSymbol maybeProjectDirectory maybeToken model
+        ShowGoToSymbolView ( maybeProjectDirectory, maybeToken ) ->
+            doShowGoToSymbolView maybeProjectDirectory maybeToken model
 
         GetHintsForPartial partial ->
             doGetHintsForPartial partial model
@@ -311,11 +323,14 @@ update msg model =
         GetImporterSourcePathsForToken ( maybeProjectDirectory, maybeToken, maybeIsCursorAtLastPartOfToken ) ->
             doGetImporterSourcePathsForToken maybeProjectDirectory maybeToken maybeIsCursorAtLastPartOfToken model
 
-        AddImport maybeToken ->
-            doAddImport maybeToken model
+        ShowAddImportView ( filePath, maybeToken ) ->
+            doShowAddImportView filePath maybeToken model
+
+        AddImport ( filePath, projectDirectory, moduleName, maybeSymbolName ) ->
+            doAddImport filePath projectDirectory moduleName maybeSymbolName model
 
 
-doUpdateActiveHints : Maybe String -> Model -> ( Model, Cmd Msg )
+doUpdateActiveHints : Maybe Token -> Model -> ( Model, Cmd Msg )
 doUpdateActiveHints maybeToken model =
     let
         updatedActiveHints =
@@ -341,14 +356,7 @@ doUpdateFileContents : FilePath -> ProjectDirectory -> FileContents -> Model -> 
 doUpdateFileContents filePath projectDirectory fileContents model =
     let
         updatedProjectFileContentsDict =
-            let
-                fileContentsDict =
-                    getFileContentsOfProject projectDirectory model.projectFileContentsDict
-
-                updatedFileContentsDict =
-                    Dict.update filePath (always <| Just fileContents) fileContentsDict
-            in
-                Dict.update projectDirectory (always <| Just updatedFileContentsDict) model.projectFileContentsDict
+            updateFileContents filePath projectDirectory fileContents model.projectFileContentsDict
     in
         ( { model
             | projectFileContentsDict = updatedProjectFileContentsDict
@@ -356,6 +364,18 @@ doUpdateFileContents filePath projectDirectory fileContents model =
           }
         , activeFileChangedCmd model.activeFile
         )
+
+
+updateFileContents : FilePath -> ProjectDirectory -> FileContents -> ProjectFileContentsDict -> ProjectFileContentsDict
+updateFileContents filePath projectDirectory fileContents projectFileContentsDict =
+    let
+        fileContentsDict =
+            getFileContentsOfProject projectDirectory projectFileContentsDict
+
+        updatedFileContentsDict =
+            Dict.update filePath (always <| Just fileContents) fileContentsDict
+    in
+        Dict.update projectDirectory (always <| Just updatedFileContentsDict) projectFileContentsDict
 
 
 doRemoveFileContents : FilePath -> ProjectDirectory -> Model -> ( Model, Cmd Msg )
@@ -406,7 +426,7 @@ doDownloadMissingPackageDocs dependencies model =
     )
 
 
-doGoToDefinition : Maybe String -> Model -> ( Model, Cmd Msg )
+doGoToDefinition : Maybe Token -> Model -> ( Model, Cmd Msg )
 doGoToDefinition maybeToken model =
     let
         requests =
@@ -432,8 +452,8 @@ doGoToDefinition maybeToken model =
         )
 
 
-doGoToSymbol : Maybe ProjectDirectory -> Maybe String -> Model -> ( Model, Cmd Msg )
-doGoToSymbol maybeProjectDirectory maybeToken model =
+doShowGoToSymbolView : Maybe ProjectDirectory -> Maybe String -> Model -> ( Model, Cmd Msg )
+doShowGoToSymbolView maybeProjectDirectory maybeToken model =
     case maybeProjectDirectory of
         Nothing ->
             ( model
@@ -463,7 +483,7 @@ doGoToSymbol maybeProjectDirectory maybeToken model =
             in
                 ( model
                 , ( defaultSymbolName, model.activeFile, List.map encodeSymbol (getProjectFileSymbols projectDirectory model.projectFileContentsDict) )
-                    |> goToSymbolCmd
+                    |> showGoToSymbolViewCmd
                 )
 
 
@@ -488,7 +508,7 @@ doGetSuggestionsForImport partial model =
     )
 
 
-doAskCanGoToDefinition : String -> Model -> ( Model, Cmd Msg )
+doAskCanGoToDefinition : Token -> Model -> ( Model, Cmd Msg )
 doAskCanGoToDefinition token model =
     ( model
     , ( token
@@ -498,7 +518,7 @@ doAskCanGoToDefinition token model =
     )
 
 
-doGetImporterSourcePathsForToken : Maybe ProjectDirectory -> Maybe String -> Maybe Bool -> Model -> ( Model, Cmd Msg )
+doGetImporterSourcePathsForToken : Maybe ProjectDirectory -> Maybe Token -> Maybe Bool -> Model -> ( Model, Cmd Msg )
 doGetImporterSourcePathsForToken maybeProjectDirectory maybeToken maybeIsCursorAtLastPartOfToken model =
     case ( maybeProjectDirectory, maybeToken, maybeIsCursorAtLastPartOfToken ) of
         ( Just projectDirectory, Just rawToken, Just isCursorAtLastPartOfToken ) ->
@@ -922,26 +942,129 @@ getImportersForToken token isCursorAtLastPartOfToken maybeActiveFile tokens acti
             []
 
 
-doAddImport : Maybe String -> Model -> ( Model, Cmd Msg )
-doAddImport maybeToken model =
-    case model.activeFile of
-        Nothing ->
-            ( model
-            , Cmd.none
-            )
+doShowAddImportView : FilePath -> Maybe Token -> Model -> ( Model, Cmd Msg )
+doShowAddImportView filePath maybeToken model =
+    let
+        symbols =
+            getProjectSymbols model.activeFile model.projectFileContentsDict model.projectDependencies model.packageDocs
+                |> List.sortBy .fullName
+                |> -- Do not include symbols in active file.
+                   List.filter (\{ sourcePath } -> sourcePath /= filePath)
+    in
+        ( model
+        , ( maybeToken, model.activeFile, List.map encodeSymbol symbols )
+            |> showAddImportViewCmd
+        )
 
-        Just { filePath } ->
+
+doAddImport : FilePath -> ProjectDirectory -> String -> Maybe String -> Model -> ( Model, Cmd Msg )
+doAddImport filePath projectDirectory moduleName maybeSymbolName model =
+    let
+        fileContents =
+            getFileContentsOfProject projectDirectory model.projectFileContentsDict
+                |> getActiveFileContents (Just { filePath = filePath, projectDirectory = projectDirectory })
+
+        imports =
             let
-                symbols =
-                    getProjectSymbols model.activeFile model.projectFileContentsDict model.projectDependencies model.packageDocs
-                        |> List.sortBy .fullName
-                        |> -- Do not include symbols in active file.
-                           List.filter (\{ sourcePath } -> sourcePath /= filePath)
+                defaultImportsList =
+                    Dict.toList defaultImports
             in
-                ( model
-                , ( maybeToken, model.activeFile, List.map encodeSymbol symbols )
-                    |> addImportCmd
-                )
+                fileContents.imports
+                    |> Dict.filter
+                        (\moduleName moduleImport ->
+                            not (List.member ( moduleName, moduleImport ) defaultImportsList)
+                        )
+
+        updatedImports =
+            case Dict.get moduleName imports of
+                Nothing ->
+                    let
+                        importToAdd =
+                            case maybeSymbolName of
+                                Nothing ->
+                                    { alias = Nothing, exposed = None }
+
+                                Just symbolName ->
+                                    { alias = Nothing, exposed = Some (Set.singleton symbolName) }
+                    in
+                        Dict.insert moduleName importToAdd imports
+
+                Just moduleImport ->
+                    case maybeSymbolName of
+                        Nothing ->
+                            imports
+
+                        Just symbolName ->
+                            case moduleImport.exposed of
+                                All ->
+                                    imports
+
+                                Some exposed ->
+                                    Dict.update moduleName (always <| Just { moduleImport | exposed = Some (Set.insert symbolName exposed) }) imports
+
+                                None ->
+                                    Dict.update moduleName (always <| Just { moduleImport | exposed = Some (Set.singleton symbolName) }) imports
+
+        updatedFileContents =
+            { fileContents | imports = updatedImports }
+    in
+        ( { model | projectFileContentsDict = updateFileContents filePath projectDirectory updatedFileContents model.projectFileContentsDict }
+        , ( filePath, importsToString updatedImports model.activeTokens )
+            |> updateImportsCmd
+        )
+
+
+importsToString : ImportDict -> TokenDict -> String
+importsToString imports tokenDict =
+    Dict.toList imports
+        |> List.map
+            (\( moduleName, { alias, exposed } ) ->
+                let
+                    importPart =
+                        case alias of
+                            Nothing ->
+                                "import " ++ moduleName
+
+                            Just alias ->
+                                "import " ++ moduleName ++ " as " ++ alias
+
+                    formatExposedSymbol token =
+                        let
+                            formatSymbol token =
+                                if Regex.contains alphanumericRegex token then
+                                    token
+                                else
+                                    "(" ++ token ++ ")"
+
+                            hints =
+                                getHintsForToken (Just token) tokenDict
+                        in
+                            case List.head hints of
+                                Nothing ->
+                                    formatSymbol token
+
+                                Just { caseTipe } ->
+                                    case caseTipe of
+                                        Nothing ->
+                                            formatSymbol token
+
+                                        Just caseTipeString ->
+                                            caseTipeString ++ "(" ++ formatSymbol token ++ ")"
+
+                    exposingPart =
+                        case exposed of
+                            None ->
+                                ""
+
+                            All ->
+                                " exposing (..)"
+
+                            Some exposedSymbol ->
+                                " exposing (" ++ (Set.toList exposedSymbol |> List.map formatExposedSymbol |> String.join ", ") ++ ")"
+                in
+                    importPart ++ exposingPart
+            )
+        |> String.join "\n"
 
 
 getHintFullName : Hint -> String
@@ -1579,6 +1702,11 @@ getModuleName fullName =
 capitalizedRegex : Regex.Regex
 capitalizedRegex =
     Regex.regex "^[A-Z]"
+
+
+alphanumericRegex : Regex.Regex
+alphanumericRegex =
+    Regex.regex "[a-zA-Z0-9]"
 
 
 
