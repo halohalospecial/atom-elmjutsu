@@ -133,7 +133,7 @@ port canGoToDefinitionRepliedCmd : ( Token, Bool ) -> Cmd msg
 port importersForTokenReceivedCmd : ( ProjectDirectory, Token, Bool, Bool, List ( String, Bool, Bool, List String ) ) -> Cmd msg
 
 
-port showAddImportViewCmd : ( Maybe Token, Maybe ActiveFile, List EncodedSymbol ) -> Cmd msg
+port showAddImportViewCmd : ( Maybe Token, Maybe ActiveFile, List ( String, Maybe String ) ) -> Cmd msg
 
 
 port updateImportsCmd : ( FilePath, String ) -> Cmd msg
@@ -945,14 +945,46 @@ getImportersForToken token isCursorAtLastPartOfToken maybeActiveFile tokens acti
 doShowAddImportView : FilePath -> Maybe Token -> Model -> ( Model, Cmd Msg )
 doShowAddImportView filePath maybeToken model =
     let
-        symbols =
+        moduleAndSymbols =
             getProjectSymbols model.activeFile model.projectFileContentsDict model.projectDependencies model.packageDocs
                 |> -- Do not include symbols in active file and those not inside a module.
                    List.filter
                     (\{ sourcePath, fullName } ->
                         sourcePath /= filePath && getLastName fullName /= ""
                     )
-                |> List.sortBy .fullName
+                |> List.map getModuleAndSymbolName
+
+        justModules =
+            moduleAndSymbols
+                |> List.filter
+                    (\( _, symbolName ) ->
+                        case symbolName of
+                            Nothing ->
+                                True
+
+                            _ ->
+                                False
+                    )
+
+        moduleAndSymbolsAndAllExposed =
+            List.append
+                moduleAndSymbols
+                (justModules |> List.map (\( moduleName, _ ) -> ( moduleName, Just ".." )))
+                |> List.sortWith
+                    (\( moduleA, symbolA ) ( moduleB, symbolB ) ->
+                        let
+                            filterKey moduleName symbolName =
+                                moduleName
+                                    ++ (case symbolName of
+                                            Nothing ->
+                                                ""
+
+                                            Just symbolName ->
+                                                " " ++ symbolName
+                                       )
+                        in
+                            compare (filterKey moduleA symbolA) (filterKey moduleB symbolB)
+                    )
 
         defaultSymbolName =
             case maybeToken of
@@ -968,7 +1000,7 @@ doShowAddImportView filePath maybeToken model =
                             Just (getModuleName token)
     in
         ( model
-        , ( defaultSymbolName, model.activeFile, List.map encodeSymbol symbols )
+        , ( defaultSymbolName, model.activeFile, moduleAndSymbolsAndAllExposed )
             |> showAddImportViewCmd
         )
 
@@ -1005,7 +1037,10 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
                                     fileContents.imports
 
                                 Some exposed ->
-                                    Dict.update moduleName (always <| Just { moduleImport | exposed = Some (Set.insert symbolName exposed) }) fileContents.imports
+                                    if symbolName == ".." then
+                                        Dict.update moduleName (always <| Just { moduleImport | exposed = All }) fileContents.imports
+                                    else
+                                        Dict.update moduleName (always <| Just { moduleImport | exposed = Some (Set.insert symbolName exposed) }) fileContents.imports
 
                                 None ->
                                     Dict.update moduleName (always <| Just { moduleImport | exposed = Some (Set.singleton symbolName) }) fileContents.imports
@@ -1043,7 +1078,7 @@ importsToString imports tokenDict =
                     formatExposedSymbol token =
                         let
                             formatSymbol token =
-                                if Regex.contains alphanumericRegex token then
+                                if token == ".." || Regex.contains alphanumericRegex token then
                                     token
                                 else
                                     "(" ++ token ++ ")"
@@ -1729,6 +1764,35 @@ getModuleName fullName =
         |> Maybe.withDefault []
         |> List.reverse
         |> String.join "."
+
+
+getModuleAndSymbolName : Symbol -> ( String, Maybe String )
+getModuleAndSymbolName { fullName, caseTipe } =
+    let
+        parts =
+            String.split "." fullName |> List.reverse
+
+        symbolName =
+            List.head parts |> Maybe.withDefault ""
+
+        moduleName =
+            List.tail parts |> Maybe.withDefault [] |> List.reverse |> String.join "."
+    in
+        ( if moduleName /= "" then
+            moduleName
+          else
+            symbolName
+        , if moduleName /= "" then
+            (case caseTipe of
+                Nothing ->
+                    Just symbolName
+
+                Just caseTipe ->
+                    Just ("(" ++ symbolName ++ ")")
+            )
+          else
+            Nothing
+        )
 
 
 capitalizedRegex : Regex.Regex

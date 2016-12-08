@@ -1,3 +1,6 @@
+## 2.10.1
+* Add Import: Add `exposing (..)`.
+
 ## 2.10.0
 * Add `Add Import`.
 
