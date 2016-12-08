@@ -22,6 +22,8 @@ https://atom.io/packages/elmjutsu
 
 * [Rename Symbol](#elmjutsu-rename-symbol)
 
+* [Add Import](#elmjutsu-add-import)
+
 * [Toggle Sidekick](#elmjutsu-toggle-sidekick)
   * Show type hints and documentation for the symbol at cursor position.
 
@@ -98,6 +100,12 @@ Renames the symbol across the whole project.  Take note that this is *not* an un
 
 Closes the `Usages` panel (the panel is shown after invoking `Find Usages` or `Rename Symbol`).
 
+### `Elmjutsu: Add Import`
+
+Quickly adds an import without scrolling to the top of the file.  Also sorts the imports, and removes [defaults](http://package.elm-lang.org/packages/elm-lang/core/latest/) and duplicates automatically.
+
+![add-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/add-import.gif?raw=true)
+
 ### `Elmjutsu: Toggle Sidekick`
 Shows the type hints and documentation for the symbol at cursor position.  The size and position of the panel can be modified in the package settings.
 
@@ -125,6 +133,7 @@ Here is an example:
   'shift-f8': 'elmjutsu:go-to-previous-usage'
   'ctrl-f12': 'elmjutsu:go-back'
   'f2': 'elmjutsu:rename-symbol'
+  'alt-insert': 'elmjutsu:add-import'
 
 'atom-workspace':
   'f1': 'elmjutsu:toggle-sidekick'

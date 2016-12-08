@@ -947,12 +947,28 @@ doShowAddImportView filePath maybeToken model =
     let
         symbols =
             getProjectSymbols model.activeFile model.projectFileContentsDict model.projectDependencies model.packageDocs
+                |> -- Do not include symbols in active file and those not inside a module.
+                   List.filter
+                    (\{ sourcePath, fullName } ->
+                        sourcePath /= filePath && getLastName fullName /= ""
+                    )
                 |> List.sortBy .fullName
-                |> -- Do not include symbols in active file.
-                   List.filter (\{ sourcePath } -> sourcePath /= filePath)
+
+        defaultSymbolName =
+            case maybeToken of
+                Nothing ->
+                    Nothing
+
+                Just token ->
+                    case getModuleName token of
+                        "" ->
+                            Just (getLastName token)
+
+                        moduleName ->
+                            Just (getModuleName token)
     in
         ( model
-        , ( maybeToken, model.activeFile, List.map encodeSymbol symbols )
+        , ( defaultSymbolName, model.activeFile, List.map encodeSymbol symbols )
             |> showAddImportViewCmd
         )
 
@@ -964,19 +980,8 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
             getFileContentsOfProject projectDirectory model.projectFileContentsDict
                 |> getActiveFileContents (Just { filePath = filePath, projectDirectory = projectDirectory })
 
-        imports =
-            let
-                defaultImportsList =
-                    Dict.toList defaultImports
-            in
-                fileContents.imports
-                    |> Dict.filter
-                        (\moduleName moduleImport ->
-                            not (List.member ( moduleName, moduleImport ) defaultImportsList)
-                        )
-
         updatedImports =
-            case Dict.get moduleName imports of
+            (case Dict.get moduleName fileContents.imports of
                 Nothing ->
                     let
                         importToAdd =
@@ -987,23 +992,30 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
                                 Just symbolName ->
                                     { alias = Nothing, exposed = Some (Set.singleton symbolName) }
                     in
-                        Dict.insert moduleName importToAdd imports
+                        Dict.insert moduleName importToAdd fileContents.imports
 
                 Just moduleImport ->
                     case maybeSymbolName of
                         Nothing ->
-                            imports
+                            fileContents.imports
 
                         Just symbolName ->
                             case moduleImport.exposed of
                                 All ->
-                                    imports
+                                    fileContents.imports
 
                                 Some exposed ->
-                                    Dict.update moduleName (always <| Just { moduleImport | exposed = Some (Set.insert symbolName exposed) }) imports
+                                    Dict.update moduleName (always <| Just { moduleImport | exposed = Some (Set.insert symbolName exposed) }) fileContents.imports
 
                                 None ->
-                                    Dict.update moduleName (always <| Just { moduleImport | exposed = Some (Set.singleton symbolName) }) imports
+                                    Dict.update moduleName (always <| Just { moduleImport | exposed = Some (Set.singleton symbolName) }) fileContents.imports
+            )
+                -- Remove default imports.
+                |>
+                    Dict.filter
+                        (\moduleName moduleImport ->
+                            not (List.member ( moduleName, moduleImport ) (Dict.toList defaultImports))
+                        )
 
         updatedFileContents =
             { fileContents | imports = updatedImports }

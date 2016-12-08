@@ -1,3 +1,6 @@
+## 2.10.0
+* Add `Add Import`.
+
 ## 2.9.0
 * Upgrade to Elm 0.18.  Add `String` and `Tuple` to default imports.
 
