@@ -1071,8 +1071,28 @@ importsToString imports tokenDict =
                             All ->
                                 " exposing (..)"
 
-                            Some exposedSymbol ->
-                                " exposing (" ++ (Set.toList exposedSymbol |> List.map formatExposedSymbol |> String.join ", ") ++ ")"
+                            Some exposedSymbols ->
+                                let
+                                    -- Do not include symbols exposed by default.
+                                    -- If importing `map`, for example, the result should be `import List exposing (map)` and not `import List exposing ((::), List, map)`.
+                                    nonDefaultExposedSymbols =
+                                        exposedSymbols
+                                            |> Set.filter
+                                                (\exposedSymbolName ->
+                                                    case Dict.get moduleName defaultImports of
+                                                        Nothing ->
+                                                            True
+
+                                                        Just { exposed } ->
+                                                            case exposed of
+                                                                Some defaultExposedSymbols ->
+                                                                    not (Set.member exposedSymbolName defaultExposedSymbols)
+
+                                                                _ ->
+                                                                    True
+                                                )
+                                in
+                                    " exposing (" ++ (Set.toList nonDefaultExposedSymbols |> List.map formatExposedSymbol |> String.join ", ") ++ ")"
                 in
                     importPart ++ exposingPart
             )

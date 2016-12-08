@@ -102,7 +102,7 @@ Closes the `Usages` panel (the panel is shown after invoking `Find Usages` or `R
 
 ### `Elmjutsu: Add Import`
 
-Quickly adds an import without scrolling to the top of the file.  Also sorts the imports, and removes [defaults](http://package.elm-lang.org/packages/elm-lang/core/latest/) and duplicates automatically.
+Quickly adds an import without scrolling to the top of the file.  Also sorts the imports, removes duplicates, and removes [defaults](http://package.elm-lang.org/packages/elm-lang/core/latest/) automatically.
 
 ![add-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/add-import.gif?raw=true)
 
