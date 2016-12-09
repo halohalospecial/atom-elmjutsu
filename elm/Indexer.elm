@@ -1078,10 +1078,10 @@ importsToString imports tokenDict =
                     formatExposedSymbol token =
                         let
                             formatSymbol token =
-                                if token == ".." || Regex.contains alphanumericRegex token then
-                                    token
-                                else
+                                if token /= ".." && isInfix token then
                                     "(" ++ token ++ ")"
+                                else
+                                    token
 
                             hints =
                                 getHintsForToken (Just token) tokenDict
@@ -1767,32 +1767,41 @@ getModuleName fullName =
 
 
 getModuleAndSymbolName : Symbol -> ( String, Maybe String )
-getModuleAndSymbolName { fullName, caseTipe } =
-    let
-        parts =
-            String.split "." fullName |> List.reverse
+getModuleAndSymbolName { fullName, caseTipe, kind } =
+    case kind of
+        KindModule ->
+            ( fullName, Nothing )
 
-        symbolName =
-            List.head parts |> Maybe.withDefault ""
+        _ ->
+            let
+                parts =
+                    String.split "." fullName |> List.reverse
 
-        moduleName =
-            List.tail parts |> Maybe.withDefault [] |> List.reverse |> String.join "."
-    in
-        ( if moduleName /= "" then
-            moduleName
-          else
-            symbolName
-        , if moduleName /= "" then
-            (case caseTipe of
-                Nothing ->
-                    Just symbolName
+                symbolName =
+                    List.head parts |> Maybe.withDefault ""
 
-                Just caseTipe ->
-                    Just ("(" ++ symbolName ++ ")")
-            )
-          else
-            Nothing
-        )
+                moduleName =
+                    List.tail parts |> Maybe.withDefault [] |> List.reverse |> String.join "."
+            in
+                ( if moduleName /= "" then
+                    moduleName
+                  else
+                    symbolName
+                , if moduleName /= "" then
+                    (case caseTipe of
+                        Nothing ->
+                            Just symbolName
+
+                        Just caseTipe ->
+                            Just (caseTipe ++ "(" ++ symbolName ++ ")")
+                    )
+                  else
+                    Nothing
+                )
+
+
+
+{- TODO: Allow unicode. -}
 
 
 capitalizedRegex : Regex.Regex
@@ -1800,9 +1809,14 @@ capitalizedRegex =
     Regex.regex "^[A-Z]"
 
 
-alphanumericRegex : Regex.Regex
-alphanumericRegex =
-    Regex.regex "[a-zA-Z0-9]"
+isInfix : String -> Bool
+isInfix token =
+    Regex.contains infixRegex token
+
+
+infixRegex : Regex.Regex
+infixRegex =
+    Regex.regex "^[~!@#$%^&*-+=:|<>.?/]+$"
 
 
 

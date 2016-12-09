@@ -1,3 +1,6 @@
+## 2.10.2
+* Add Import: Fix bugs related to dotted module names and infixes.
+
 ## 2.10.1
 * Add Import: Add `exposing (..)`.
 
