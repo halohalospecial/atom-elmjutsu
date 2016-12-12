@@ -1,11 +1,16 @@
+## 2.10.3
+* Add Import: Fix bugs regarding union types.
+* Autocomplete: Allow ` as <alias> ` before `exposing`.
+* Fix import regex bug.
+
 ## 2.10.2
-* Add Import: Fix bugs related to dotted module names and infixes.
+* Add Import: Fix bugs regarding dotted module names and infixes.
 
 ## 2.10.1
 * Add Import: Add `exposing (..)`.
 
 ## 2.10.0
-* Add `Add Import`.
+* Add `Add Import`.  Thanks to @splodingsocks for the concept and proof of concept! :tada:
 
 ## 2.9.0
 * Upgrade to Elm 0.18.  Add `String` and `Tuple` to default imports.
@@ -17,7 +22,7 @@
 * Remove unneccessary addition of `SymbolFinderView` emitter events to `CompositeDisposable` (causes an error when disabling the package).
 
 ## 2.8.2
-* Fix #20.  Thanks @chalmagean!
+* Fix #20.  Thanks to @chalmagean for reporting!
 
 ## 2.8.1
 * Fix regex bug where a usage is not included in the results.
@@ -31,13 +36,13 @@
 * Reorganized menu and context menu items.
 
 ## 2.6.0
-* Go To Definition: Now works for 3rd-party packages (Fix #15).  Thanks @abhinavzspace!
+* Go To Definition: Now works for 3rd-party packages (Fix #15).  Thanks to @abhinavzspace for suggesting!
 
 ## 2.5.6
-* Check if source directory exists first before parsing (Fix #13).  Thanks @note89!
+* Check if source directory exists first before parsing (Fix #13).  Thanks to @note89 for reporting!
 
 ## 2.5.5
-* Do not use `@text-color-added` and `@text-color-removed` because not all themes support them.  Thanks @otijhuis!
+* Do not use `@text-color-added` and `@text-color-removed` because not all themes support them.  Thanks to @otijhuis for reporting!
 
 ## 2.5.4
 * Parse docs of project files.
@@ -54,7 +59,7 @@
 * Sidekick: Fix loading messages.
 
 ## 2.5.1
-* Add additional check for `getWorkDirectory` (Fix #11).  Thanks @Ryan1729!
+* Add additional check for `getWorkDirectory` (Fix #11).  Thanks to @Ryan1729 for reporting!
 * Remove extra log messages.
 
 ## 2.5.0
@@ -116,7 +121,7 @@
 * Rename package from `elm-fu` to `elmjutsu` :-)
 
 ## 0.1.2
-* Exclude `elm-stuff` from the watched directories.  Thanks @smerchek!
+* Exclude `elm-stuff` from the watched directories.  Thanks to @smerchek for reporting!
 
 ## 0.1.1
 * Tweak file watcher config to lessen CPU load.

@@ -969,7 +969,10 @@ doShowAddImportView filePath maybeToken model =
         moduleAndSymbolsAndAllExposed =
             List.append
                 moduleAndSymbols
-                (justModules |> List.map (\( moduleName, _ ) -> ( moduleName, Just ".." )))
+                -- TODO: Add imports like `import Regex exposing (HowMany(..))`
+                (justModules
+                    |> List.map (\( moduleName, _ ) -> ( moduleName, Just ".." ))
+                )
                 |> List.sortWith
                     (\( moduleA, symbolA ) ( moduleB, symbolB ) ->
                         let
