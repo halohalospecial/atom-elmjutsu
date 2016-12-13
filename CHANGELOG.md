@@ -1,3 +1,6 @@
+## 2.10.4
+* Autocomplete Snippets: Fix tab stops bug.
+
 ## 2.10.3
 * Add Import: Fix bugs regarding union types.
 * Autocomplete: Allow ` as <alias> ` before `exposing`.

@@ -153,4 +153,3 @@ Add them to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
 ## Credits
 
 * The initial code was based on the [source](https://github.com/elm-lang/elm-lang.org) of [Try Elm](http://elm-lang.org/try).
-* The [code](https://github.com/edubkendo/atom-elm) for computing snippet tab stops was from [language-elm](https://atom.io/packages/language-elm).
