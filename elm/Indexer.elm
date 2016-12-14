@@ -149,6 +149,7 @@ type alias Model =
     , activeTokens : TokenDict
     , activeHints : List Hint
     , activeFile : Maybe ActiveFile
+    , activeTopLevel : Maybe String
     , projectDependencies : ProjectDependencies
     }
 
@@ -211,6 +212,7 @@ emptyModel =
     , activeTokens = Dict.empty
     , activeHints = []
     , activeFile = Nothing
+    , activeTopLevel = Nothing
     , projectDependencies = Dict.empty
     }
 
@@ -346,7 +348,7 @@ doUpdateActiveFile : Maybe ActiveFile -> Model -> ( Model, Cmd Msg )
 doUpdateActiveFile maybeActiveFile model =
     ( { model
         | activeFile = maybeActiveFile
-        , activeTokens = toTokenDict maybeActiveFile model.projectFileContentsDict (getProjectPackageDocs maybeActiveFile model.projectDependencies model.packageDocs)
+        , activeTokens = getActiveTokens maybeActiveFile model.projectFileContentsDict (getProjectPackageDocs maybeActiveFile model.projectDependencies model.packageDocs)
       }
     , activeFileChangedCmd maybeActiveFile
     )
@@ -360,7 +362,7 @@ doUpdateFileContents filePath projectDirectory fileContents model =
     in
         ( { model
             | projectFileContentsDict = updatedProjectFileContentsDict
-            , activeTokens = toTokenDict model.activeFile updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
+            , activeTokens = getActiveTokens model.activeFile updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
           }
         , activeFileChangedCmd model.activeFile
         )
@@ -393,7 +395,7 @@ doRemoveFileContents filePath projectDirectory model =
     in
         ( { model
             | projectFileContentsDict = updatedProjectFileContentsDict
-            , activeTokens = toTokenDict model.activeFile updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
+            , activeTokens = getActiveTokens model.activeFile updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
           }
         , activeFileChangedCmd model.activeFile
         )
@@ -571,7 +573,7 @@ addLoadedPackageDocs loadedPackageDocs model =
     in
         { model
             | packageDocs = updatedPackageDocs
-            , activeTokens = toTokenDict model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies updatedPackageDocs)
+            , activeTokens = getActiveTokens model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies updatedPackageDocs)
         }
 
 
@@ -917,13 +919,13 @@ getImportersForToken token isCursorAtLastPartOfToken maybeActiveFile tokens acti
                                                                             [ alias ++ "." ++ hint.name ]
 
                                                                         ( _, All ) ->
-                                                                            [ hint.name, getLocalName hint.moduleName alias hint.name ]
+                                                                            [ hint.name, getModuleLocalName hint.moduleName alias hint.name ]
 
                                                                         ( _, Some exposedSet ) ->
                                                                             if Set.member hint.name exposedSet then
-                                                                                [ hint.name, getLocalName hint.moduleName alias hint.name ]
+                                                                                [ hint.name, getModuleLocalName hint.moduleName alias hint.name ]
                                                                             else
-                                                                                [ getLocalName hint.moduleName alias hint.name ]
+                                                                                [ getModuleLocalName hint.moduleName alias hint.name ]
 
                                                                 names =
                                                                     localNames |> Set.fromList |> Set.toList
@@ -1500,8 +1502,8 @@ type alias ImportSuggestion =
     }
 
 
-toTokenDict : Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict
-toTokenDict maybeActiveFile projectFileContentsDict projectPackageDocs =
+getActiveTokens : Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict
+getActiveTokens maybeActiveFile projectFileContentsDict projectPackageDocs =
     case maybeActiveFile of
         Nothing ->
             Dict.empty
@@ -1555,13 +1557,13 @@ nameToHints moduleDocs { alias, exposed } kind { name, comment, tipe } =
             , kind = kind
             }
 
-        localName =
-            getLocalName moduleDocs.name alias name
+        moduleLocalName =
+            getModuleLocalName moduleDocs.name alias name
     in
         if isExposed name exposed then
-            [ ( name, hint ), ( localName, hint ) ]
+            [ ( name, hint ), ( moduleLocalName, hint ) ]
         else
-            [ ( localName, hint ) ]
+            [ ( moduleLocalName, hint ) ]
 
 
 unionTagsToHints : ModuleDocs -> Import -> Tipe -> List ( String, Hint )
@@ -1582,13 +1584,13 @@ unionTagsToHints moduleDocs { alias, exposed } { name, cases, comment, tipe } =
                     , kind = KindTypeCase
                     }
 
-                localName =
-                    getLocalName moduleDocs.name alias tag
+                moduleLocalName =
+                    getModuleLocalName moduleDocs.name alias tag
             in
                 if Set.member name defaultTypes || isExposed tag exposed then
-                    ( tag, hint ) :: ( localName, hint ) :: ( fullName, hint ) :: hints
+                    ( tag, hint ) :: ( moduleLocalName, hint ) :: ( fullName, hint ) :: hints
                 else
-                    ( localName, hint ) :: ( fullName, hint ) :: hints
+                    ( moduleLocalName, hint ) :: ( fullName, hint ) :: hints
     in
         List.foldl addHints [] cases
 
@@ -1640,8 +1642,8 @@ type Exposed
     | All
 
 
-getLocalName : String -> Maybe String -> String -> String
-getLocalName moduleName alias name =
+getModuleLocalName : String -> Maybe String -> String -> String
+getModuleLocalName moduleName alias name =
     (Maybe.withDefault moduleName alias) ++ "." ++ name
 
 
@@ -1819,7 +1821,7 @@ isInfix token =
 
 infixRegex : Regex.Regex
 infixRegex =
-    Regex.regex "^[~!@#$%^&*-+=:|<>.?/]+$"
+    Regex.regex "^[~!@#$%^&*\\-+=:|<>.?/]+$"
 
 
 
