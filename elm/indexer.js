@@ -6794,7 +6794,7 @@ var _elm_lang$http$Http$StringPart = F2(
 	});
 var _elm_lang$http$Http$stringPart = _elm_lang$http$Http$StringPart;
 
-var _user$project$Indexer$infixRegex = _elm_lang$core$Regex$regex('^[~!@#$%^&*-+=:|<>.?/]+$');
+var _user$project$Indexer$infixRegex = _elm_lang$core$Regex$regex('^[~!@#$%^&*\\-+=:|<>.?/]+$');
 var _user$project$Indexer$isInfix = function (token) {
 	return A2(_elm_lang$core$Regex$contains, _user$project$Indexer$infixRegex, token);
 };
@@ -6886,7 +6886,7 @@ var _user$project$Indexer$isExposed = F2(
 				return true;
 		}
 	});
-var _user$project$Indexer$getLocalName = F3(
+var _user$project$Indexer$getModuleLocalName = F3(
 	function (moduleName, alias, name) {
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
@@ -6973,7 +6973,7 @@ var _user$project$Indexer$nameToHints = F4(
 		var _p16 = _p15;
 		var _p17 = _p14;
 		var _p18 = _p17.name;
-		var localName = A3(_user$project$Indexer$getLocalName, moduleDocs.name, _p16.alias, _p18);
+		var moduleLocalName = A3(_user$project$Indexer$getModuleLocalName, moduleDocs.name, _p16.alias, _p18);
 		var hint = {
 			name: _p18,
 			moduleName: moduleDocs.name,
@@ -6988,12 +6988,12 @@ var _user$project$Indexer$nameToHints = F4(
 			_0: {ctor: '_Tuple2', _0: _p18, _1: hint},
 			_1: {
 				ctor: '::',
-				_0: {ctor: '_Tuple2', _0: localName, _1: hint},
+				_0: {ctor: '_Tuple2', _0: moduleLocalName, _1: hint},
 				_1: {ctor: '[]'}
 			}
 		} : {
 			ctor: '::',
-			_0: {ctor: '_Tuple2', _0: localName, _1: hint},
+			_0: {ctor: '_Tuple2', _0: moduleLocalName, _1: hint},
 			_1: {ctor: '[]'}
 		};
 	});
@@ -7199,7 +7199,7 @@ var _user$project$Indexer$getImportersForToken = F6(
 														_0: hint.name,
 														_1: {
 															ctor: '::',
-															_0: A3(_user$project$Indexer$getLocalName, hint.moduleName, _p34, hint.name),
+															_0: A3(_user$project$Indexer$getModuleLocalName, hint.moduleName, _p34, hint.name),
 															_1: {ctor: '[]'}
 														}
 													};
@@ -7209,12 +7209,12 @@ var _user$project$Indexer$getImportersForToken = F6(
 														_0: hint.name,
 														_1: {
 															ctor: '::',
-															_0: A3(_user$project$Indexer$getLocalName, hint.moduleName, _p34, hint.name),
+															_0: A3(_user$project$Indexer$getModuleLocalName, hint.moduleName, _p34, hint.name),
 															_1: {ctor: '[]'}
 														}
 													} : {
 														ctor: '::',
-														_0: A3(_user$project$Indexer$getLocalName, hint.moduleName, _p34, hint.name),
+														_0: A3(_user$project$Indexer$getModuleLocalName, hint.moduleName, _p34, hint.name),
 														_1: {ctor: '[]'}
 													};
 											}
@@ -8325,7 +8325,7 @@ var _user$project$Indexer$unionTagsToHints = F3(
 		var _p48 = _p47.name;
 		var addHints = F2(
 			function (tag, hints) {
-				var localName = A3(_user$project$Indexer$getLocalName, moduleDocs.name, _p46.alias, tag);
+				var moduleLocalName = A3(_user$project$Indexer$getModuleLocalName, moduleDocs.name, _p46.alias, tag);
 				var hint = {
 					name: tag,
 					moduleName: moduleDocs.name,
@@ -8344,7 +8344,7 @@ var _user$project$Indexer$unionTagsToHints = F3(
 					_0: {ctor: '_Tuple2', _0: tag, _1: hint},
 					_1: {
 						ctor: '::',
-						_0: {ctor: '_Tuple2', _0: localName, _1: hint},
+						_0: {ctor: '_Tuple2', _0: moduleLocalName, _1: hint},
 						_1: {
 							ctor: '::',
 							_0: {ctor: '_Tuple2', _0: fullName, _1: hint},
@@ -8353,7 +8353,7 @@ var _user$project$Indexer$unionTagsToHints = F3(
 					}
 				} : {
 					ctor: '::',
-					_0: {ctor: '_Tuple2', _0: localName, _1: hint},
+					_0: {ctor: '_Tuple2', _0: moduleLocalName, _1: hint},
 					_1: {
 						ctor: '::',
 						_0: {ctor: '_Tuple2', _0: fullName, _1: hint},

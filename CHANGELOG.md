@@ -1,3 +1,6 @@
+## 2.11.0
+* Add Import: Copy syntax highlighting of import statements.
+
 ## 2.10.4
 * Autocomplete Snippets: Fix tab stops bug.
 
