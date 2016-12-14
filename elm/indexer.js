@@ -9103,7 +9103,7 @@ var _user$project$Indexer$topLevelArgToHints = F2(
 		var _p102 = _p97._1;
 		var _p101 = _p97._0;
 		var isTuple = function (str) {
-			return A2(_elm_lang$core$String$startsWith, '(', str) && A2(_elm_lang$core$String$endsWith, ')', str);
+			return A2(_elm_lang$core$String$startsWith, '(', str);
 		};
 		var tipes = (isTuple(_p101) && isTuple(_p102)) ? A3(
 			_elm_lang$core$List$map2,
@@ -9519,8 +9519,8 @@ var _user$project$Indexer$doGetHintsForPartial = F2(
 				})
 		};
 	});
-var _user$project$Indexer$getActiveTokens = F5(
-	function (maybeActiveFile, maybeActiveTopLevel, tokens, projectFileContentsDict, projectPackageDocs) {
+var _user$project$Indexer$getActiveTokens = F4(
+	function (maybeActiveFile, maybeActiveTopLevel, projectFileContentsDict, projectPackageDocs) {
 		var _p129 = maybeActiveFile;
 		if (_p129.ctor === 'Nothing') {
 			return _elm_lang$core$Dict$empty;
@@ -9545,6 +9545,28 @@ var _user$project$Indexer$getActiveTokens = F5(
 						},
 						dict);
 				});
+			var fileContentsDict = A2(_user$project$Indexer$getFileContentsOfProject, _p134, projectFileContentsDict);
+			var getHints = function (moduleDocs) {
+				return A2(
+					_elm_lang$core$Maybe$map,
+					A2(_user$project$Indexer$getFilteredHints, moduleDocs, maybeActiveTopLevel),
+					A2(
+						_elm_lang$core$Dict$get,
+						moduleDocs.name,
+						A2(_user$project$Indexer$getImportsPlusActiveModuleForActiveFile, maybeActiveFile, fileContentsDict)));
+			};
+			var topLevelTokens = A3(
+				_elm_lang$core$List$foldl,
+				insert,
+				_elm_lang$core$Dict$empty,
+				_elm_lang$core$List$concat(
+					A2(
+						_elm_lang$core$List$filterMap,
+						getHints,
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							projectPackageDocs,
+							A2(_user$project$Indexer$getProjectModuleDocs, _p134, projectFileContentsDict)))));
 			var topLevelArgTipePairs = A2(
 				_elm_lang$core$List$concatMap,
 				function (_p132) {
@@ -9558,50 +9580,20 @@ var _user$project$Indexer$getActiveTokens = F5(
 						_p133.args,
 						_user$project$Indexer$getTipeParts(_p133.tipe));
 				},
-				A2(_user$project$Indexer$getHintsForToken, maybeActiveTopLevel, tokens));
-			var fileContentsDict = A2(_user$project$Indexer$getFileContentsOfProject, _p134, projectFileContentsDict);
-			var getHints = function (moduleDocs) {
-				return A2(
-					_elm_lang$core$Maybe$map,
-					A2(_user$project$Indexer$getFilteredHints, moduleDocs, maybeActiveTopLevel),
-					A2(
-						_elm_lang$core$Dict$get,
-						moduleDocs.name,
-						A2(_user$project$Indexer$getImportsPlusActiveModuleForActiveFile, maybeActiveFile, fileContentsDict)));
-			};
-			return A3(
-				_elm_lang$core$List$foldl,
-				insert,
-				_elm_lang$core$Dict$empty,
-				_elm_lang$core$List$concat(
-					{
-						ctor: '::',
-						_0: A2(
-							_elm_lang$core$List$concatMap,
-							_user$project$Indexer$topLevelArgToHints(maybeActiveTopLevel),
-							topLevelArgTipePairs),
-						_1: {
-							ctor: '::',
-							_0: _elm_lang$core$List$concat(
-								A2(
-									_elm_lang$core$List$filterMap,
-									getHints,
-									A2(
-										_elm_lang$core$Basics_ops['++'],
-										projectPackageDocs,
-										A2(_user$project$Indexer$getProjectModuleDocs, _p134, projectFileContentsDict)))),
-							_1: {ctor: '[]'}
-						}
-					}));
+				A2(_user$project$Indexer$getHintsForToken, maybeActiveTopLevel, topLevelTokens));
+			var argHints = A2(
+				_elm_lang$core$List$concatMap,
+				_user$project$Indexer$topLevelArgToHints(maybeActiveTopLevel),
+				topLevelArgTipePairs);
+			return A3(_elm_lang$core$List$foldl, insert, topLevelTokens, argHints);
 		}
 	});
 var _user$project$Indexer$doUpdateActiveHints = F3(
 	function (maybeActiveTopLevel, maybeToken, model) {
-		var updatedActiveTokens = A5(
+		var updatedActiveTokens = A4(
 			_user$project$Indexer$getActiveTokens,
 			model.activeFile,
 			maybeActiveTopLevel,
-			model.activeTokens,
 			model.projectFileContentsDict,
 			A3(_user$project$Indexer$getProjectPackageDocs, model.activeFile, model.projectDependencies, model.packageDocs));
 		var updatedActiveHints = A2(_user$project$Indexer$getHintsForToken, maybeToken, updatedActiveTokens);
@@ -9616,11 +9608,10 @@ var _user$project$Indexer$doUpdateActiveHints = F3(
 	});
 var _user$project$Indexer$doUpdateActiveFile = F4(
 	function (maybeActiveFile, maybeActiveTopLevel, maybeToken, model) {
-		var updatedActiveTokens = A5(
+		var updatedActiveTokens = A4(
 			_user$project$Indexer$getActiveTokens,
 			maybeActiveFile,
 			maybeActiveTopLevel,
-			model.activeTokens,
 			model.projectFileContentsDict,
 			A3(_user$project$Indexer$getProjectPackageDocs, maybeActiveFile, model.projectDependencies, model.packageDocs));
 		var updatedActiveHints = A2(_user$project$Indexer$getHintsForToken, maybeToken, updatedActiveTokens);
@@ -9635,11 +9626,10 @@ var _user$project$Indexer$doUpdateActiveFile = F4(
 var _user$project$Indexer$doUpdateFileContents = F4(
 	function (filePath, projectDirectory, fileContents, model) {
 		var updatedProjectFileContentsDict = A4(_user$project$Indexer$updateFileContents, filePath, projectDirectory, fileContents, model.projectFileContentsDict);
-		var updatedActiveTokens = A5(
+		var updatedActiveTokens = A4(
 			_user$project$Indexer$getActiveTokens,
 			model.activeFile,
 			model.activeTopLevel,
-			model.activeTokens,
 			updatedProjectFileContentsDict,
 			A3(_user$project$Indexer$getProjectPackageDocs, model.activeFile, model.projectDependencies, model.packageDocs));
 		return {
@@ -9662,11 +9652,10 @@ var _user$project$Indexer$doRemoveFileContents = F3(
 					_elm_lang$core$Maybe$Just(updatedFileContentsDict)),
 				model.projectFileContentsDict);
 		}();
-		var updatedActiveTokens = A5(
+		var updatedActiveTokens = A4(
 			_user$project$Indexer$getActiveTokens,
 			model.activeFile,
 			model.activeTopLevel,
-			model.activeTokens,
 			updatedProjectFileContentsDict,
 			A3(_user$project$Indexer$getProjectPackageDocs, model.activeFile, model.projectDependencies, model.packageDocs));
 		return {
@@ -9696,11 +9685,10 @@ var _user$project$Indexer$addLoadedPackageDocs = F2(
 			_elm_lang$core$Basics_ops['++'],
 			A2(_elm_lang$core$List$map, _user$project$Indexer$truncateModuleComment, missingPackageDocs),
 			model.packageDocs);
-		var updatedActiveTokens = A5(
+		var updatedActiveTokens = A4(
 			_user$project$Indexer$getActiveTokens,
 			model.activeFile,
 			model.activeTopLevel,
-			model.activeTokens,
 			model.projectFileContentsDict,
 			A3(_user$project$Indexer$getProjectPackageDocs, model.activeFile, model.projectDependencies, updatedPackageDocs));
 		return _elm_lang$core$Native_Utils.update(

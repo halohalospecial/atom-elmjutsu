@@ -340,7 +340,7 @@ doUpdateActiveHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, C
 doUpdateActiveHints maybeActiveTopLevel maybeToken model =
     let
         updatedActiveTokens =
-            getActiveTokens model.activeFile maybeActiveTopLevel model.activeTokens model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
+            getActiveTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
 
         updatedActiveHints =
             getHintsForToken maybeToken updatedActiveTokens
@@ -358,7 +358,7 @@ doUpdateActiveFile : Maybe ActiveFile -> Maybe ActiveTopLevel -> Maybe Token -> 
 doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model =
     let
         updatedActiveTokens =
-            getActiveTokens maybeActiveFile maybeActiveTopLevel model.activeTokens model.projectFileContentsDict (getProjectPackageDocs maybeActiveFile model.projectDependencies model.packageDocs)
+            getActiveTokens maybeActiveFile maybeActiveTopLevel model.projectFileContentsDict (getProjectPackageDocs maybeActiveFile model.projectDependencies model.packageDocs)
 
         updatedActiveHints =
             getHintsForToken maybeToken updatedActiveTokens
@@ -380,7 +380,7 @@ doUpdateFileContents filePath projectDirectory fileContents model =
             updateFileContents filePath projectDirectory fileContents model.projectFileContentsDict
 
         updatedActiveTokens =
-            getActiveTokens model.activeFile model.activeTopLevel model.activeTokens updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
+            getActiveTokens model.activeFile model.activeTopLevel updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
     in
         ( { model
             | projectFileContentsDict = updatedProjectFileContentsDict
@@ -416,7 +416,7 @@ doRemoveFileContents filePath projectDirectory model =
                 Dict.update projectDirectory (always <| Just updatedFileContentsDict) model.projectFileContentsDict
 
         updatedActiveTokens =
-            getActiveTokens model.activeFile model.activeTopLevel model.activeTokens updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
+            getActiveTokens model.activeFile model.activeTopLevel updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
     in
         ( { model
             | projectFileContentsDict = updatedProjectFileContentsDict
@@ -597,7 +597,7 @@ addLoadedPackageDocs loadedPackageDocs model =
             List.map truncateModuleComment missingPackageDocs ++ model.packageDocs
 
         updatedActiveTokens =
-            getActiveTokens model.activeFile model.activeTopLevel model.activeTokens model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies updatedPackageDocs)
+            getActiveTokens model.activeFile model.activeTopLevel model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies updatedPackageDocs)
     in
         { model
             | packageDocs = updatedPackageDocs
@@ -1542,8 +1542,8 @@ type alias ImportSuggestion =
     }
 
 
-getActiveTokens : Maybe ActiveFile -> Maybe ActiveTopLevel -> TokenDict -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict
-getActiveTokens maybeActiveFile maybeActiveTopLevel tokens projectFileContentsDict projectPackageDocs =
+getActiveTokens : Maybe ActiveFile -> Maybe ActiveTopLevel -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict
+getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict projectPackageDocs =
     case maybeActiveFile of
         Nothing ->
             Dict.empty
@@ -1553,13 +1553,6 @@ getActiveTokens maybeActiveFile maybeActiveTopLevel tokens projectFileContentsDi
                 fileContentsDict =
                     getFileContentsOfProject projectDirectory projectFileContentsDict
 
-                topLevelArgTipePairs =
-                    getHintsForToken maybeActiveTopLevel tokens
-                        |> List.concatMap
-                            (\{ args, tipe } ->
-                                List.map2 (,) args (getTipeParts tipe)
-                            )
-
                 getHints moduleDocs =
                     Maybe.map
                         (getFilteredHints moduleDocs maybeActiveTopLevel)
@@ -1567,15 +1560,25 @@ getActiveTokens maybeActiveFile maybeActiveTopLevel tokens projectFileContentsDi
 
                 insert ( token, hint ) dict =
                     Dict.update token (\value -> Just (hint :: Maybe.withDefault [] value)) dict
-            in
-                List.concat
-                    [ List.concatMap (topLevelArgToHints maybeActiveTopLevel) topLevelArgTipePairs
-                    , projectPackageDocs
+
+                topLevelTokens =
+                    projectPackageDocs
                         ++ getProjectModuleDocs projectDirectory projectFileContentsDict
                         |> List.filterMap getHints
                         |> List.concat
-                    ]
-                    |> List.foldl insert Dict.empty
+                        |> List.foldl insert Dict.empty
+
+                topLevelArgTipePairs =
+                    getHintsForToken maybeActiveTopLevel topLevelTokens
+                        |> List.concatMap
+                            (\{ args, tipe } ->
+                                List.map2 (,) args (getTipeParts tipe)
+                            )
+
+                argHints =
+                    List.concatMap (topLevelArgToHints maybeActiveTopLevel) topLevelArgTipePairs
+            in
+                List.foldl insert topLevelTokens argHints
 
 
 getTipeParts : String -> List String
@@ -1723,10 +1726,10 @@ topLevelArgToHints maybeActiveTopLevel ( name, tipe ) =
                 [ ( name, hint ) ]
 
         isTuple str =
-            String.startsWith "(" str && String.endsWith ")" str
+            String.startsWith "(" str
 
         -- isRecord str =
-        --     String.startsWith "{" str && String.endsWith "}" str
+        --     String.startsWith "{" str
         tipes =
             if isTuple name && isTuple tipe then
                 List.map2 (,) (getTupleParts name) (getTupleParts tipe)
