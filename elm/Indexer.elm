@@ -149,6 +149,7 @@ type alias Model =
     , activeTokens : TokenDict
     , activeHints : List Hint
     , activeFile : Maybe ActiveFile
+    , activeTopLevel : Maybe String
     , projectDependencies : ProjectDependencies
     }
 
@@ -211,6 +212,7 @@ emptyModel =
     , activeTokens = Dict.empty
     , activeHints = []
     , activeFile = Nothing
+    , activeTopLevel = Nothing
     , projectDependencies = Dict.empty
     }
 
@@ -346,7 +348,7 @@ doUpdateActiveFile : Maybe ActiveFile -> Model -> ( Model, Cmd Msg )
 doUpdateActiveFile maybeActiveFile model =
     ( { model
         | activeFile = maybeActiveFile
-        , activeTokens = toTokenDict maybeActiveFile model.projectFileContentsDict (getProjectPackageDocs maybeActiveFile model.projectDependencies model.packageDocs)
+        , activeTokens = getActiveTokens maybeActiveFile model.projectFileContentsDict (getProjectPackageDocs maybeActiveFile model.projectDependencies model.packageDocs)
       }
     , activeFileChangedCmd maybeActiveFile
     )
@@ -360,7 +362,7 @@ doUpdateFileContents filePath projectDirectory fileContents model =
     in
         ( { model
             | projectFileContentsDict = updatedProjectFileContentsDict
-            , activeTokens = toTokenDict model.activeFile updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
+            , activeTokens = getActiveTokens model.activeFile updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
           }
         , activeFileChangedCmd model.activeFile
         )
@@ -393,7 +395,7 @@ doRemoveFileContents filePath projectDirectory model =
     in
         ( { model
             | projectFileContentsDict = updatedProjectFileContentsDict
-            , activeTokens = toTokenDict model.activeFile updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
+            , activeTokens = getActiveTokens model.activeFile updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
           }
         , activeFileChangedCmd model.activeFile
         )
@@ -571,7 +573,7 @@ addLoadedPackageDocs loadedPackageDocs model =
     in
         { model
             | packageDocs = updatedPackageDocs
-            , activeTokens = toTokenDict model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies updatedPackageDocs)
+            , activeTokens = getActiveTokens model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies updatedPackageDocs)
         }
 
 
@@ -1500,8 +1502,8 @@ type alias ImportSuggestion =
     }
 
 
-toTokenDict : Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict
-toTokenDict maybeActiveFile projectFileContentsDict projectPackageDocs =
+getActiveTokens : Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict
+getActiveTokens maybeActiveFile projectFileContentsDict projectPackageDocs =
     case maybeActiveFile of
         Nothing ->
             Dict.empty

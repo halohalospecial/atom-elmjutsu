@@ -1,5 +1,6 @@
-## 2.11.0
+## 2.10.5
 * Add Import: Copy syntax highlighting of import statements.
+* Fix `Rename Symbol` error.
 
 ## 2.10.4
 * Autocomplete Snippets: Fix tab stops bug.
