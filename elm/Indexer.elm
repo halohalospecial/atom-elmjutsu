@@ -1576,19 +1576,19 @@ getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict proj
                             )
 
                 argHints =
-                    List.concatMap (topLevelArgToHints maybeActiveTopLevel) topLevelArgTipePairs
+                    List.concatMap (topLevelArgToHints maybeActiveTopLevel topLevelTokens) topLevelArgTipePairs
             in
                 List.foldl insert topLevelTokens argHints
 
 
 getTipeParts : String -> List String
-getTipeParts tipeSignature =
-    case tipeSignature of
+getTipeParts tipeString =
+    case tipeString of
         "" ->
             []
 
-        tipeSignature ->
-            getTipePartsRecur tipeSignature "" [] ( 0, 0 )
+        tipeString ->
+            getTipePartsRecur tipeString "" [] ( 0, 0 )
 
 
 getTipePartsRecur : String -> String -> List String -> ( Int, Int ) -> List String
@@ -1688,6 +1688,17 @@ getTuplePartsRecur str acc parts ( openParentheses, openBraces ) =
                         getTuplePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
+getRecordParts : String -> List String
+getRecordParts recordString =
+    case recordString of
+        "" ->
+            []
+
+        recordString ->
+            String.split "," recordString
+                |> List.map String.trim
+
+
 tipeToValue : Tipe -> Value
 tipeToValue { name, comment, tipe, args } =
     -- Exclude `cases`.
@@ -1707,8 +1718,8 @@ getFilteredHints moduleDocs maybeActiveTopLevel importData =
         ++ moduleToHints moduleDocs importData
 
 
-topLevelArgToHints : Maybe ActiveTopLevel -> ( String, String ) -> List ( String, Hint )
-topLevelArgToHints maybeActiveTopLevel ( name, tipe ) =
+topLevelArgToHints : Maybe ActiveTopLevel -> TokenDict -> ( String, String ) -> List ( String, Hint )
+topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipe ) =
     let
         getHint ( name, tipe ) =
             let
@@ -1725,16 +1736,30 @@ topLevelArgToHints maybeActiveTopLevel ( name, tipe ) =
             in
                 [ ( name, hint ) ]
 
-        isTuple str =
+        isTupleString str =
             String.startsWith "(" str
 
-        -- isRecord str =
-        --     String.startsWith "{" str
+        isRecordString str =
+            String.startsWith "{" str
+
         tipes =
-            if isTuple name && isTuple tipe then
+            if isTupleString name && isTupleString tipe then
                 List.map2 (,) (getTupleParts name) (getTupleParts tipe)
             else
-                [ ( name, tipe ) ]
+                case ( isRecordString name, isRecordString tipe ) of
+                    ( True, True ) ->
+                        List.map2 (,) (getRecordParts name) (getRecordParts tipe)
+
+                    ( True, False ) ->
+                        -- -- -- TODO Get `tipe` from topLevelTokens
+                        []
+
+                    ( False, True ) ->
+                        -- -- -- TODO
+                        []
+
+                    ( False, False ) ->
+                        [ ( name, tipe ) ]
     in
         tipes
             |> List.concatMap getHint
