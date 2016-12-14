@@ -1690,13 +1690,73 @@ getTuplePartsRecur str acc parts ( openParentheses, openBraces ) =
 
 getRecordParts : String -> List String
 getRecordParts recordString =
-    case recordString of
+    -- Remove open and close braces.
+    case String.slice 1 -1 recordString of
         "" ->
             []
 
         recordString ->
             String.split "," recordString
                 |> List.map String.trim
+
+
+getRecordTipeParts : String -> Dict.Dict String String
+getRecordTipeParts tipeString =
+    -- Remove open and close braces.
+    case String.slice 1 -1 tipeString of
+        "" ->
+            Dict.empty
+
+        tipeString ->
+            getRecordTipePartsRecur tipeString ( "", "" ) False Dict.empty ( 0, 0 )
+
+
+getRecordTipePartsRecur : String -> ( String, String ) -> Bool -> Dict.Dict String String -> ( Int, Int ) -> Dict.Dict String String
+getRecordTipePartsRecur str ( fieldAcc, tipeAcc ) lookingForTipe parts ( openParentheses, openBraces ) =
+    case str of
+        "" ->
+            Dict.insert (String.trim fieldAcc) (String.trim tipeAcc) parts
+
+        _ ->
+            let
+                ( thisChar, thisRest ) =
+                    case String.uncons str of
+                        Nothing ->
+                            ( "", str )
+
+                        Just ( ch, rest ) ->
+                            ( String.fromChar ch, rest )
+            in
+                if openParentheses == 0 && openBraces == 0 && thisChar == "," then
+                    getRecordTipePartsRecur thisRest ( "", "" ) False (Dict.insert (String.trim fieldAcc) (String.trim tipeAcc) parts) ( 0, 0 )
+                else if openParentheses == 0 && openBraces == 0 && thisChar == ":" then
+                    getRecordTipePartsRecur thisRest ( fieldAcc, "" ) True parts ( 0, 0 )
+                else
+                    let
+                        ( updatedOpenParentheses, updatedOpenBraces ) =
+                            case thisChar of
+                                "(" ->
+                                    ( openParentheses + 1, openBraces )
+
+                                ")" ->
+                                    ( openParentheses - 1, openBraces )
+
+                                "{" ->
+                                    ( openParentheses, openBraces + 1 )
+
+                                "}" ->
+                                    ( openParentheses, openBraces - 1 )
+
+                                _ ->
+                                    ( openParentheses, openBraces )
+
+                        ( updatedFieldAcc, updatedTipeAcc ) =
+                            if lookingForTipe then
+                                ( fieldAcc, tipeAcc ++ thisChar )
+                            else
+                                ( fieldAcc ++ thisChar, tipeAcc )
+                    in
+                        getRecordTipePartsRecur thisRest ( updatedFieldAcc, updatedTipeAcc ) lookingForTipe parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
 tipeToValue : Tipe -> Value
@@ -1719,16 +1779,16 @@ getFilteredHints moduleDocs maybeActiveTopLevel importData =
 
 
 topLevelArgToHints : Maybe ActiveTopLevel -> TokenDict -> ( String, String ) -> List ( String, Hint )
-topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipe ) =
+topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
     let
-        getHint ( name, tipe ) =
+        getHint ( name, tipeString ) =
             let
                 hint =
                     { name = name
                     , moduleName = ""
                     , sourcePath = ""
                     , comment = ""
-                    , tipe = tipe
+                    , tipe = tipeString
                     , args = []
                     , caseTipe = Nothing
                     , kind = KindDefault
@@ -1743,23 +1803,57 @@ topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipe ) =
             String.startsWith "{" str
 
         tipes =
-            if isTupleString name && isTupleString tipe then
-                List.map2 (,) (getTupleParts name) (getTupleParts tipe)
+            if isTupleString name && isTupleString tipeString then
+                List.map2 (,) (getTupleParts name) (getTupleParts tipeString)
             else
-                case ( isRecordString name, isRecordString tipe ) of
-                    ( True, True ) ->
-                        List.map2 (,) (getRecordParts name) (getRecordParts tipe)
+                let
+                    getRecordFields tipeString =
+                        let
+                            recordTipeParts =
+                                getRecordTipeParts tipeString
+                        in
+                            getRecordParts name
+                                |> List.filterMap
+                                    (\field ->
+                                        Dict.get field recordTipeParts
+                                            |> Maybe.map
+                                                (\tipeString ->
+                                                    ( field, tipeString )
+                                                )
+                                    )
 
-                    ( True, False ) ->
-                        -- -- -- TODO Get `tipe` from topLevelTokens
-                        []
+                    getRecordFieldTokens tipeString =
+                        getRecordTipeParts tipeString
+                            |> Dict.toList
+                            |> List.map
+                                (\( field, tipeString ) ->
+                                    ( name ++ "." ++ field, tipeString )
+                                )
+                in
+                    case ( isRecordString name, isRecordString tipeString ) of
+                        ( True, True ) ->
+                            getRecordFields tipeString
 
-                    ( False, True ) ->
-                        -- -- -- TODO
-                        []
+                        ( True, False ) ->
+                            case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
+                                Nothing ->
+                                    []
 
-                    ( False, False ) ->
-                        [ ( name, tipe ) ]
+                                Just { tipe } ->
+                                    getRecordFields tipe
+
+                        ( False, True ) ->
+                            [ ( name, tipeString ) ]
+                                |> List.append (getRecordFieldTokens tipeString)
+
+                        ( False, False ) ->
+                            case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
+                                Nothing ->
+                                    [ ( name, tipeString ) ]
+
+                                Just { tipe } ->
+                                    [ ( name, tipeString ) ]
+                                        |> List.append (getRecordFieldTokens tipe)
     in
         tipes
             |> List.concatMap getHint
