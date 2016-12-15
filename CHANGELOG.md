@@ -1,6 +1,10 @@
+## 2.11.0
+* Autocomplete & Sidekick: Handle function args (even nested tuples and records).
+* Sidekick: Hide when active pane item is not an Elm editor.
+
 ## 2.10.5
 * Add Import: Copy syntax highlighting of import statements.
-* Fix `Rename Symbol` error.
+* Rename Symbol: Fix error.
 
 ## 2.10.4
 * Autocomplete Snippets: Fix tab stops bug.
