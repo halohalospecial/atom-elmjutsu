@@ -369,7 +369,10 @@ doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model =
             , activeTokens = updatedActiveTokens
             , activeHints = updatedActiveHints
           }
-        , activeFileChangedCmd maybeActiveFile
+        , Cmd.batch
+            [ activeFileChangedCmd maybeActiveFile
+            , List.map encodeHint updatedActiveHints |> activeHintsChangedCmd
+            ]
         )
 
 
@@ -1095,7 +1098,7 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
 
 
 importsToString : ImportDict -> TokenDict -> String
-importsToString imports tokenDict =
+importsToString imports tokens =
     Dict.toList imports
         |> List.map
             (\( moduleName, { alias, exposed } ) ->
@@ -1117,7 +1120,7 @@ importsToString imports tokenDict =
                                     token
 
                             hints =
-                                getHintsForToken (Just token) tokenDict
+                                getHintsForToken (Just token) tokens
                         in
                             case List.head hints of
                                 Nothing ->
@@ -1190,8 +1193,8 @@ getFileContentsOfProject projectDirectory projectFileContentsDict =
 
 
 getExposedHints : Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> Set.Set ( String, String )
-getExposedHints activeFile projectFileContentsDict projectPackageDocs =
-    case activeFile of
+getExposedHints maybeActiveFile projectFileContentsDict projectPackageDocs =
+    case maybeActiveFile of
         Nothing ->
             Set.empty
 
@@ -1201,7 +1204,7 @@ getExposedHints activeFile projectFileContentsDict projectPackageDocs =
                     getFileContentsOfProject projectDirectory projectFileContentsDict
 
                 importsPlusActiveModule =
-                    getImportsPlusActiveModuleForActiveFile activeFile fileContentsDict
+                    getImportsPlusActiveModuleForActiveFile maybeActiveFile fileContentsDict
 
                 importedModuleNames =
                     Dict.keys importsPlusActiveModule
@@ -1797,45 +1800,33 @@ topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
                 [ ( name, hint ) ]
 
         tipes =
-            if isTupleString name && isTupleString tipeString then
-                List.map2 (,) (getTupleArgParts name) (getTupleArgParts tipeString)
-                    |> List.map
-                        (\( name, tipeString ) ->
-                            getRecordFieldTokens name tipeString topLevelTokens
-                        )
-                    |> List.concat
-            else
-                let
-                    getRecordFields tipeString =
-                        let
-                            recordTipeParts =
-                                getRecordTipeParts tipeString
-                        in
-                            getRecordArgParts name
-                                |> List.filterMap
-                                    (\field ->
-                                        Dict.get field recordTipeParts
-                                            |> Maybe.map
-                                                (\tipeString ->
-                                                    getRecordFieldTokens field tipeString topLevelTokens
-                                                )
-                                    )
-                                |> List.concat
-                in
-                    case ( isRecordString name, isRecordString tipeString ) of
-                        ( True, True ) ->
-                            getRecordFields tipeString
+            let
+                getRecordFields tipeString =
+                    getRecordArgParts name
+                        |> List.filterMap
+                            (\field ->
+                                Dict.get field (getRecordTipeParts tipeString)
+                                    |> Maybe.map
+                                        (\tipeString ->
+                                            getRecordFieldTokens field tipeString topLevelTokens True
+                                        )
+                            )
+                        |> List.concat
+            in
+                case ( isRecordString name, isRecordString tipeString ) of
+                    ( True, True ) ->
+                        getRecordFields tipeString
 
-                        ( True, False ) ->
-                            case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
-                                Nothing ->
-                                    []
+                    ( True, False ) ->
+                        case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
+                            Nothing ->
+                                []
 
-                                Just { tipe } ->
-                                    getRecordFields tipe
+                            Just { tipe } ->
+                                getRecordFields tipe
 
-                        ( False, _ ) ->
-                            getRecordFieldTokens name tipeString topLevelTokens
+                    ( False, _ ) ->
+                        getRecordFieldTokens name tipeString topLevelTokens True
     in
         tipes
             |> List.concatMap getHint
@@ -1851,32 +1842,62 @@ isRecordString str =
     String.startsWith "{" str
 
 
-getRecordFieldTokens : String -> String -> TokenDict -> List ( String, String )
-getRecordFieldTokens name tipeString topLevelTokens =
-    let
-        _ =
-            Debug.log "" ( name, tipeString )
-    in
+getRecordFieldTokens : String -> String -> TokenDict -> Bool -> List ( String, String )
+getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf =
+    (if shouldAddSelf then
         [ ( name, tipeString ) ]
-            |> List.append
-                (if isRecordString tipeString then
-                    getRecordTipeParts tipeString
-                        |> Dict.toList
-                        |> List.concatMap
-                            (\( field, tipeString ) ->
-                                getRecordFieldTokens (name ++ "." ++ field) tipeString topLevelTokens
-                            )
-                 else
-                    case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
-                        Nothing ->
-                            []
-
-                        Just { tipe } ->
-                            if tipe /= tipeString then
-                                getRecordFieldTokens name tipe topLevelTokens
-                            else
+     else
+        []
+    )
+        |> List.append
+            (if isRecordString name then
+                let
+                    getRecordFields tipeString1 =
+                        getRecordArgParts name
+                            |> List.filterMap
+                                (\field ->
+                                    Dict.get field (getRecordTipeParts tipeString1)
+                                        |> Maybe.map
+                                            (\tipeString ->
+                                                getRecordFieldTokens field tipeString topLevelTokens True
+                                            )
+                                )
+                            |> List.concat
+                in
+                    if isRecordString tipeString then
+                        getRecordFields tipeString
+                    else
+                        case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
+                            Nothing ->
                                 []
-                )
+
+                            Just { tipe } ->
+                                getRecordFields tipe
+             else if isRecordString tipeString then
+                getRecordTipeParts tipeString
+                    |> Dict.toList
+                    |> List.concatMap
+                        (\( field, tipeString ) ->
+                            getRecordFieldTokens (name ++ "." ++ field) tipeString topLevelTokens True
+                        )
+             else if isTupleString name && isTupleString tipeString then
+                List.map2 (,) (getTupleArgParts name) (getTupleArgParts tipeString)
+                    |> List.map
+                        (\( name, tipeString ) ->
+                            getRecordFieldTokens name tipeString topLevelTokens True
+                        )
+                    |> List.concat
+             else
+                case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
+                    Nothing ->
+                        []
+
+                    Just { tipe } ->
+                        if tipe /= tipeString then
+                            getRecordFieldTokens name tipe topLevelTokens False
+                        else
+                            []
+            )
 
 
 unionTagsToHints : ModuleDocs -> Import -> Tipe -> List ( String, Hint )
