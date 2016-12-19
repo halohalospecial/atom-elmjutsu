@@ -1362,7 +1362,20 @@ downloadPackageDocsList : List Dependency -> Task.Task Http.Error (List ( Depend
 downloadPackageDocsList dependencies =
     dependencies
         |> List.map downloadPackageDocs
-        |> Task.sequence
+        |> optionalTaskSequence
+
+
+optionalTaskSequence : List (Task.Task a value) -> Task.Task b (List value)
+optionalTaskSequence list =
+    -- Modified from `TheSeamau5/elm-task-extra`'s `optional`.
+    case list of
+        [] ->
+            Task.succeed []
+
+        task :: tasks ->
+            task
+                |> Task.andThen (\value -> Task.map ((::) value) (optionalTaskSequence tasks))
+                |> Task.onError (\_ -> optionalTaskSequence tasks)
 
 
 downloadPackageDocs : Dependency -> Task.Task Http.Error ( Dependency, String, List ModuleDocs )

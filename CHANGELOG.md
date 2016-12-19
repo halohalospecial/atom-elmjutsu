@@ -1,3 +1,6 @@
+## 2.11.1
+* Failing to download a package's documentation should not cause others to fail (Fix #29).
+
 ## 2.11.0
 * Autocomplete & Sidekick: Handle function args (even nested tuples and records).
 * Sidekick: Hide when active pane item is not an Elm editor.
