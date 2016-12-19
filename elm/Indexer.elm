@@ -2,7 +2,7 @@ port module Indexer exposing (..)
 
 import Dict
 import Http
-import Json.Decode as Json
+import Json.Decode as Decode
 import Regex
 import Set
 import Task
@@ -1393,7 +1393,7 @@ downloadPackageDocs dependency =
                 (\jsonString ->
                     ( dependency
                     , jsonString
-                    , Json.decodeString (Json.list (moduleDocsDecoder packageUri)) jsonString
+                    , Decode.decodeString (Decode.list (decodeModuleDocs packageUri)) jsonString
                         |> Result.toMaybe
                         |> Maybe.withDefault []
                     )
@@ -1402,46 +1402,46 @@ downloadPackageDocs dependency =
 
 toModuleDocs : String -> String -> List ModuleDocs
 toModuleDocs packageUri jsonString =
-    Json.decodeString (Json.list (moduleDocsDecoder packageUri)) jsonString
+    Decode.decodeString (Decode.list (decodeModuleDocs packageUri)) jsonString
         |> Result.toMaybe
         |> Maybe.withDefault []
 
 
-moduleDocsDecoder : String -> Json.Decoder ModuleDocs
-moduleDocsDecoder packageUri =
+decodeModuleDocs : String -> Decode.Decoder ModuleDocs
+decodeModuleDocs packageUri =
     let
         name =
-            Json.field "name" Json.string
+            Decode.field "name" Decode.string
 
         comment =
-            Json.field "comment" Json.string
+            Decode.field "comment" Decode.string
 
         args =
-            Json.field "args" (Json.list Json.string)
+            Decode.field "args" (Decode.list Decode.string)
 
         tipe =
-            Json.map5 Tipe
+            Decode.map5 Tipe
                 name
                 comment
                 name
                 -- ^ type
                 args
-                (Json.field "cases" (Json.list (Json.index 0 Json.string)))
+                (Decode.field "cases" (Decode.list (Decode.index 0 Decode.string)))
 
         value =
-            Json.map4 Value
+            Decode.map4 Value
                 name
                 comment
-                (Json.field "type" Json.string)
-                (Json.maybe args)
+                (Decode.field "type" Decode.string)
+                (Decode.maybe args)
 
         values =
-            Json.map3 Values
-                (Json.field "aliases" (Json.list value))
-                (Json.field "types" (Json.list tipe))
-                (Json.field "values" (Json.list value))
+            Decode.map3 Values
+                (Decode.field "aliases" (Decode.list value))
+                (Decode.field "types" (Decode.list tipe))
+                (Decode.field "values" (Decode.list value))
     in
-        Json.map3 (ModuleDocs packageUri)
+        Decode.map3 (ModuleDocs packageUri)
             name
             values
             comment

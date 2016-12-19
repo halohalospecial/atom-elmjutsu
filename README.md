@@ -27,6 +27,10 @@ https://atom.io/packages/elmjutsu
 * [Toggle Sidekick](#elmjutsu-toggle-sidekick)
   * Show type hints and documentation for the symbol at cursor position.
 
+* [Install Package](#elmjutsu-install-package)
+
+* [Uninstall Package](#elmjutsu-uninstall-package)
+
 ## Requirements
 
 * [Elm](http://elm-lang.org/install)
@@ -120,6 +124,14 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 * Example #3: `Sidekick Position` = "right", `Sidekick Size` = 300
 
 ![sidekick3](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick3.gif?raw=true)
+
+### `Elmjutsu: Install Package`
+
+Quickly installs a package.  This runs `elm-package install` under the hood.  Make sure that `Elm Package Path` is properly configured in the package settings.
+
+### `Elmjutsu: Uninstall Package`
+
+Removes an installed package.  This modifies `elm-package.json`, then runs `elm-package install --yes` to clean up.
 
 ## Keybindings
 

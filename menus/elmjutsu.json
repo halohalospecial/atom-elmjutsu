@@ -39,6 +39,14 @@
           {
             "label": "Toggle Sidekick",
             "command": "elmjutsu:toggle-sidekick"
+          },
+          {
+            "label": "Install Package",
+            "command": "elmjutsu:install-package"
+          },
+          {
+            "label": "Uninstall Package",
+            "command": "elmjutsu:uninstall-package"
           }
         ]
       }
@@ -86,6 +94,14 @@
             {
               "label": "Toggle Sidekick",
               "command": "elmjutsu:toggle-sidekick"
+            },
+            {
+              "label": "Install Package",
+              "command": "elmjutsu:install-package"
+            },
+            {
+              "label": "Uninstall Package",
+              "command": "elmjutsu:uninstall-package"
             }
           ]
         }

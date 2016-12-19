@@ -1,9 +1,8 @@
 port module Sidekick exposing (..)
 
 import Html exposing (..)
-import Html.Attributes exposing (href, title, style, src, class)
+import Html.Attributes exposing (class, href, src, style, title)
 import Html.Events exposing (onClick)
-import String
 import Markdown
 import Regex
 
