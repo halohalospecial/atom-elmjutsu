@@ -711,6 +711,17 @@ getModuleSymbols moduleDocs =
                 )
                 values.values
 
+        aliasSymbols =
+            List.map
+                (\alias ->
+                    { fullName = (moduleDocs.name ++ "." ++ alias.name)
+                    , sourcePath = (formatSourcePath moduleDocs alias.name)
+                    , caseTipe = Nothing
+                    , kind = KindTypeAlias
+                    }
+                )
+                values.aliases
+
         tipeSymbols =
             List.map
                 (\tipe ->
@@ -737,7 +748,7 @@ getModuleSymbols moduleDocs =
                 )
                 values.tipes
     in
-        valueSymbols ++ tipeSymbols ++ tipeCaseSymbols ++ [ moduleDocsSymbol ]
+        valueSymbols ++ aliasSymbols ++ tipeSymbols ++ tipeCaseSymbols ++ [ moduleDocsSymbol ]
 
 
 getHintsForToken : Maybe String -> TokenDict -> List Hint
@@ -987,7 +998,7 @@ doShowAddImportView filePath maybeToken model =
                     )
                 |> List.map getModuleAndSymbolName
 
-        justModules =
+        modulesOnly =
             moduleAndSymbols
                 |> List.filter
                     (\( _, symbolName ) ->
@@ -1003,7 +1014,7 @@ doShowAddImportView filePath maybeToken model =
             List.append
                 moduleAndSymbols
                 -- TODO: Add imports like `import Regex exposing (HowMany(..))`
-                (justModules
+                (modulesOnly
                     |> List.map (\( moduleName, _ ) -> ( moduleName, Just ".." ))
                 )
                 |> List.sortWith
@@ -1905,9 +1916,9 @@ getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf =
                     Nothing ->
                         []
 
-                    Just { tipe } ->
-                        if tipe /= tipeString then
-                            getRecordFieldTokens name tipe topLevelTokens False
+                    Just hint ->
+                        if hint.kind /= KindType && hint.tipe /= tipeString then
+                            getRecordFieldTokens name hint.tipe topLevelTokens False
                         else
                             []
             )

@@ -1,3 +1,7 @@
+## 2.12.0
+* Add `Install Package` and `Uninstall Package`.
+* Fix #31.
+
 ## 2.11.1
 * Failing to download a package's documentation should not cause others to fail (Fix #29).
 
