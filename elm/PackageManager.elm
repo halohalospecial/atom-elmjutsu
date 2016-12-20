@@ -34,6 +34,9 @@ port getPackageListSub : (ProjectDirectory -> msg) -> Sub msg
 port showPackageListCmd : ( ProjectDirectory, List Package ) -> Cmd msg
 
 
+port getPackageListFailedCmd : () -> Cmd msg
+
+
 
 -- MODEL
 
@@ -96,8 +99,7 @@ update msg model =
 
         PackageListReceived (Err _) ->
             ( model
-            , Cmd.none
-              -- -- -- TODO
+            , getPackageListFailedCmd ()
             )
 
 

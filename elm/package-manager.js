@@ -6547,6 +6547,11 @@ var _user$project$PackageManager$showPackageListCmd = _elm_lang$core$Native_Plat
 			})
 		];
 	});
+var _user$project$PackageManager$getPackageListFailedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'getPackageListFailedCmd',
+	function (v) {
+		return null;
+	});
 var _user$project$PackageManager$Model = function (a) {
 	return {projectDirectory: a};
 };
@@ -6591,7 +6596,12 @@ var _user$project$PackageManager$update = F2(
 						{ctor: '_Tuple2', _0: model.projectDirectory, _1: _p0._0._0})
 				};
 			} else {
-				return {ctor: '_Tuple2', _0: model, _1: _elm_lang$core$Platform_Cmd$none};
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: _user$project$PackageManager$getPackageListFailedCmd(
+						{ctor: '_Tuple0'})
+				};
 			}
 		}
 	});
