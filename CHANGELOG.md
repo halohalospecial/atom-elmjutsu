@@ -1,3 +1,7 @@
+## 2.13.0
+* Add autocomplete function head from type annotation (Resolve #2).
+* Remove `Debug.log`s.
+
 ## 2.12.1
 * Prevent "Maximum call stack size exceeded" for recursive type alias (infinite type).
 * Install Package: Add "Auto" version, which is equivalent to `elm-package install --yes <name>`.

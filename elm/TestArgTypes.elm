@@ -1,4 +1,4 @@
-module ArgTypesTest exposing (..)
+module TestArgTypes exposing (..)
 
 
 type alias Position =
