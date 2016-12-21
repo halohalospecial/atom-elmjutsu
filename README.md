@@ -127,11 +127,16 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ### `Elmjutsu: Install Package`
 
-Quickly installs a package.  This runs `elm-package install` under the hood.  Make sure that `Elm Package Path` is properly configured in the package settings.
+Quickly installs a package.
+
+- This runs `elm-package install --yes <name> <version>` (or `elm-package install --yes <name>` if the selected version is "Auto").
+- Make sure that `Elm Package Path` is properly configured in the package settings.
 
 ### `Elmjutsu: Uninstall Package`
 
-Removes an installed package.  This modifies `elm-package.json`, then runs `elm-package install --yes` to clean up.
+Removes an installed package.
+
+- This removes the dependency from `elm-package.json`, then runs `elm-package install --yes` to clean up.
 
 ## Keybindings
 

@@ -71,3 +71,13 @@ f11 ( a, bc ) =
 f12 : ( Int, { a : Int, b : Int } ) -> Int
 f12 ( i, { a, b } ) =
     i + a * b
+
+
+type alias RecursiveTypeAlias =
+    { recursive : RecursiveTypeAlias
+    }
+
+
+noMaxCallStackSizeExceeded : RecursiveTypeAlias -> Int
+noMaxCallStackSizeExceeded recursive =
+    recursive.recursive

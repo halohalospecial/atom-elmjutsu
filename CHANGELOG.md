@@ -1,3 +1,7 @@
+## 2.12.1
+* Prevent "Maximum call stack size exceeded" for recursive type alias (infinite type).
+* Install Package: Add "Auto" version, which is equivalent to `elm-package install --yes <name>`.
+
 ## 2.12.0
 * Add `Install Package` and `Uninstall Package`.
 * Fix #31.

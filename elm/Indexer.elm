@@ -1832,7 +1832,7 @@ topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
                                 Dict.get field (getRecordTipeParts tipeString)
                                     |> Maybe.map
                                         (\tipeString ->
-                                            getRecordFieldTokens field tipeString topLevelTokens True
+                                            getRecordFieldTokens field tipeString topLevelTokens True Nothing
                                         )
                             )
                         |> List.concat
@@ -1850,7 +1850,7 @@ topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
                                 getRecordFields tipe
 
                     ( False, _ ) ->
-                        getRecordFieldTokens name tipeString topLevelTokens True
+                        getRecordFieldTokens name tipeString topLevelTokens True Nothing
     in
         tipes
             |> List.concatMap getHint
@@ -1866,8 +1866,8 @@ isRecordString str =
     String.startsWith "{" str
 
 
-getRecordFieldTokens : String -> String -> TokenDict -> Bool -> List ( String, String )
-getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf =
+getRecordFieldTokens : String -> String -> TokenDict -> Bool -> Maybe String -> List ( String, String )
+getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf maybeRootTipeString =
     (if shouldAddSelf then
         [ ( name, tipeString ) ]
      else
@@ -1883,7 +1883,7 @@ getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf =
                                     Dict.get field (getRecordTipeParts tipeString1)
                                         |> Maybe.map
                                             (\tipeString ->
-                                                getRecordFieldTokens field tipeString topLevelTokens True
+                                                getRecordFieldTokens field tipeString topLevelTokens True maybeRootTipeString
                                             )
                                 )
                             |> List.concat
@@ -1902,13 +1902,13 @@ getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf =
                     |> Dict.toList
                     |> List.concatMap
                         (\( field, tipeString ) ->
-                            getRecordFieldTokens (name ++ "." ++ field) tipeString topLevelTokens True
+                            getRecordFieldTokens (name ++ "." ++ field) tipeString topLevelTokens True maybeRootTipeString
                         )
              else if isTupleString name && isTupleString tipeString then
                 List.map2 (,) (getTupleArgParts name) (getTupleArgParts tipeString)
                     |> List.map
                         (\( name, tipeString ) ->
-                            getRecordFieldTokens name tipeString topLevelTokens True
+                            getRecordFieldTokens name tipeString topLevelTokens True maybeRootTipeString
                         )
                     |> List.concat
              else
@@ -1917,10 +1917,22 @@ getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf =
                         []
 
                     Just hint ->
-                        if hint.kind /= KindType && hint.tipe /= tipeString then
-                            getRecordFieldTokens name hint.tipe topLevelTokens False
-                        else
-                            []
+                        let
+                            _ =
+                                Debug.log "maybeRootTipeString" ( hint, tipeString, maybeRootTipeString )
+                        in
+                            if hint.kind /= KindType && hint.tipe /= tipeString then
+                                case maybeRootTipeString of
+                                    Nothing ->
+                                        getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
+
+                                    Just rootTipeString ->
+                                        if hint.name /= rootTipeString then
+                                            getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
+                                        else
+                                            []
+                            else
+                                []
             )
 
 
