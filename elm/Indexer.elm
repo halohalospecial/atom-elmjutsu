@@ -1230,7 +1230,14 @@ getFunctionHeadFromTypeAnnotation typeAnnotation =
                     )
                     ( [], Dict.empty )
     in
-        name ++ " " ++ (String.join " " args) ++ " =\n    "
+        name
+            ++ (if List.length args > 0 then
+                    " "
+                else
+                    ""
+               )
+            ++ (String.join " " args)
+            ++ " =\n    "
 
 
 getFunctionArgName : String -> Dict.Dict String Int -> ( String, Dict.Dict String Int )

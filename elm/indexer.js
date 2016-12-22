@@ -7537,7 +7537,9 @@ var _user$project$Indexer$getFunctionHeadFromTypeAnnotation = function (typeAnno
 		name,
 		A2(
 			_elm_lang$core$Basics_ops['++'],
-			' ',
+			(_elm_lang$core$Native_Utils.cmp(
+				_elm_lang$core$List$length(args),
+				0) > 0) ? ' ' : '',
 			A2(
 				_elm_lang$core$Basics_ops['++'],
 				A2(_elm_lang$core$String$join, ' ', args),

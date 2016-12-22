@@ -1,5 +1,8 @@
+## 2.13.1
+* When autocompleting function head from type annotation, remove space after function name when there are no arguments.
+
 ## 2.13.0
-* Add autocomplete function head from type annotation (Resolve #2).
+* Add autocomplete function head from type annotation (Resolve #2).  Thanks to @brasilikum for the suggestion!
 * Remove `Debug.log`s.
 
 ## 2.12.1
@@ -62,7 +65,7 @@
 * Reorganized menu and context menu items.
 
 ## 2.6.0
-* Go To Definition: Now works for 3rd-party packages (Fix #15).  Thanks to @abhinavzspace for suggesting!
+* Go To Definition: Now works for 3rd-party packages (Fix #15).  Thanks to @abhinavzspace for suggestion!
 
 ## 2.5.6
 * Check if source directory exists first before parsing (Fix #13).  Thanks to @note89 for reporting!
