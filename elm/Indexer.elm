@@ -35,6 +35,7 @@ subscriptions model =
         , getImportersForTokenSub GetImporterSourcePathsForToken
         , showAddImportViewSub ShowAddImportView
         , addImportSub AddImport
+        , getFunctionHeadFromTypeAnnotationSub GetFunctionHeadFromTypeAnnotation
         ]
 
 
@@ -87,6 +88,9 @@ port showAddImportViewSub : (( FilePath, Maybe Token ) -> msg) -> Sub msg
 port addImportSub : (( FilePath, ProjectDirectory, String, Maybe String ) -> msg) -> Sub msg
 
 
+port getFunctionHeadFromTypeAnnotationSub : (String -> msg) -> Sub msg
+
+
 
 -- OUTGOING PORTS
 
@@ -137,6 +141,9 @@ port showAddImportViewCmd : ( Maybe Token, Maybe ActiveFile, List ( String, Mayb
 
 
 port updateImportsCmd : ( FilePath, String ) -> Cmd msg
+
+
+port functionHeadFromTypeAnnotationReceivedCmd : String -> Cmd msg
 
 
 
@@ -262,6 +269,7 @@ type Msg
     | DownloadMissingPackageDocs (List Dependency)
     | ShowAddImportView ( FilePath, Maybe Token )
     | AddImport ( FilePath, ProjectDirectory, String, Maybe String )
+    | GetFunctionHeadFromTypeAnnotation String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -334,6 +342,9 @@ update msg model =
 
         AddImport ( filePath, projectDirectory, moduleName, maybeSymbolName ) ->
             doAddImport filePath projectDirectory moduleName maybeSymbolName model
+
+        GetFunctionHeadFromTypeAnnotation typeAnnotation ->
+            doGetFunctionHeadFromTypeAnnotation typeAnnotation model
 
 
 doUpdateActiveHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
@@ -1181,6 +1192,94 @@ importsToString imports tokens =
         |> String.join "\n"
 
 
+doGetFunctionHeadFromTypeAnnotation : String -> Model -> ( Model, Cmd Msg )
+doGetFunctionHeadFromTypeAnnotation typeAnnotation model =
+    ( model
+    , getFunctionHeadFromTypeAnnotation typeAnnotation
+        |> functionHeadFromTypeAnnotationReceivedCmd
+    )
+
+
+getFunctionHeadFromTypeAnnotation : String -> String
+getFunctionHeadFromTypeAnnotation typeAnnotation =
+    let
+        parts =
+            String.split " :" typeAnnotation
+
+        name =
+            List.head parts
+                |> Maybe.withDefault typeAnnotation
+
+        argsString =
+            List.tail parts
+                |> Maybe.withDefault []
+                |> String.join " :"
+
+        ( args, _ ) =
+            getTipeParts argsString
+                |> dropLast
+                |> List.foldl
+                    (\part ( args, argNameCounters ) ->
+                        let
+                            ( partName, updatedArgNameCounters ) =
+                                getFunctionArgName part argNameCounters
+                        in
+                            ( args ++ [ partName ]
+                            , updatedArgNameCounters
+                            )
+                    )
+                    ( [], Dict.empty )
+    in
+        name ++ " " ++ (String.join " " args) ++ " =\n    "
+
+
+getFunctionArgName : String -> Dict.Dict String Int -> ( String, Dict.Dict String Int )
+getFunctionArgName argString argNameCounters =
+    let
+        updatePartNameAndArgNameCounters partName1 argNameCounters1 =
+            case Dict.get partName1 argNameCounters1 of
+                Nothing ->
+                    ( partName1
+                    , Dict.insert partName1 1 argNameCounters1
+                    )
+
+                Just count ->
+                    ( partName1 ++ (toString (count + 1))
+                    , Dict.update partName1 (always <| Just (count + 1)) argNameCounters1
+                    )
+    in
+        if isRecordString argString then
+            updatePartNameAndArgNameCounters "record" argNameCounters
+        else if isTupleString argString then
+            let
+                ( partNames, updateArgNameCounters ) =
+                    getTupleArgParts argString
+                        |> List.foldl
+                            (\part ( partNames, argNameCounters1 ) ->
+                                let
+                                    ( partName, updateArgNameCounters1 ) =
+                                        getFunctionArgName part argNameCounters1
+                                in
+                                    ( partNames ++ [ partName ]
+                                    , updateArgNameCounters1
+                                    )
+                            )
+                            ( [], argNameCounters )
+            in
+                ( "( " ++ (String.join ", " partNames) ++ " )"
+                , updateArgNameCounters
+                )
+        else
+            let
+                partName =
+                    Regex.split Regex.All argSeparatorRegex argString
+                        |> List.reverse
+                        |> String.join ""
+                        |> decapitalize
+            in
+                updatePartNameAndArgNameCounters partName argNameCounters
+
+
 getHintFullName : Hint -> String
 getHintFullName hint =
     case hint.moduleName of
@@ -1608,6 +1707,8 @@ getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict proj
                 List.foldl insert topLevelTokens argHints
 
 
+{-| Example: "Int -> Int -> Int" = ["Int", "Int"]
+-}
 getTipeParts : String -> List String
 getTipeParts tipeString =
     case tipeString of
@@ -1664,6 +1765,8 @@ getTipePartsRecur str acc parts ( openParentheses, openBraces ) =
                         getTipePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
+{-| Example: "( Int, String )" = ["Int", "String"]
+-}
 getTupleArgParts : String -> List String
 getTupleArgParts tupleString =
     -- Remove open and close parentheses.
@@ -1715,6 +1818,8 @@ getTuplePartsRecur str acc parts ( openParentheses, openBraces ) =
                         getTuplePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
+{-| Example: "{ a, b }" = ["a", "b"]
+-}
 getRecordArgParts : String -> List String
 getRecordArgParts recordString =
     -- Remove open and close braces.
@@ -1727,6 +1832,8 @@ getRecordArgParts recordString =
                 |> List.map String.trim
 
 
+{-| Example: "{ a : Int, b : String }" = Dict [("a", "Int"), ("b", "String")]
+-}
 getRecordTipeParts : String -> Dict.Dict String String
 getRecordTipeParts tipeString =
     -- Remove open and close braces.
@@ -1917,22 +2024,18 @@ getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf maybeRootTipeS
                         []
 
                     Just hint ->
-                        let
-                            _ =
-                                Debug.log "maybeRootTipeString" ( hint, tipeString, maybeRootTipeString )
-                        in
-                            if hint.kind /= KindType && hint.tipe /= tipeString then
-                                case maybeRootTipeString of
-                                    Nothing ->
-                                        getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
+                        if hint.kind /= KindType && hint.tipe /= tipeString then
+                            case maybeRootTipeString of
+                                Nothing ->
+                                    getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
 
-                                    Just rootTipeString ->
-                                        if hint.name /= rootTipeString then
-                                            getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
-                                        else
-                                            []
-                            else
-                                []
+                                Just rootTipeString ->
+                                    if hint.name /= rootTipeString then
+                                        getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
+                                    else
+                                        []
+                        else
+                            []
             )
 
 
@@ -2165,10 +2268,7 @@ getModuleName : String -> String
 getModuleName fullName =
     fullName
         |> String.split "."
-        |> List.reverse
-        |> List.tail
-        |> Maybe.withDefault []
-        |> List.reverse
+        |> dropLast
         |> String.join "."
 
 
@@ -2223,6 +2323,30 @@ isInfix token =
 infixRegex : Regex.Regex
 infixRegex =
     Regex.regex "^[~!@#$%^&*\\-+=:|<>.?/]+$"
+
+
+argSeparatorRegex : Regex.Regex
+argSeparatorRegex =
+    Regex.regex "\\s+|\\(|\\)|\\."
+
+
+dropLast : List a -> List a
+dropLast list =
+    list
+        |> List.reverse
+        |> List.tail
+        |> Maybe.withDefault []
+        |> List.reverse
+
+
+decapitalize : String -> String
+decapitalize str =
+    case String.uncons str of
+        Nothing ->
+            ""
+
+        Just ( ch, rest ) ->
+            (String.toLower <| String.fromChar ch) ++ rest
 
 
 
