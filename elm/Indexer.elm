@@ -36,6 +36,7 @@ subscriptions model =
         , showAddImportViewSub ShowAddImportView
         , addImportSub AddImport
         , constructFromTypeAnnotationSub ConstructFromTypeAnnotation
+        , constructCaseOfSub ConstructCaseOf
         ]
 
 
@@ -91,6 +92,9 @@ port addImportSub : (( FilePath, ProjectDirectory, String, Maybe String ) -> msg
 port constructFromTypeAnnotationSub : (String -> msg) -> Sub msg
 
 
+port constructCaseOfSub : (String -> msg) -> Sub msg
+
+
 
 -- OUTGOING PORTS
 
@@ -144,6 +148,9 @@ port updateImportsCmd : ( FilePath, String ) -> Cmd msg
 
 
 port fromTypeAnnotationConstructedCmd : String -> Cmd msg
+
+
+port caseOfConstructedCmd : Maybe String -> Cmd msg
 
 
 
@@ -270,6 +277,7 @@ type Msg
     | ShowAddImportView ( FilePath, Maybe Token )
     | AddImport ( FilePath, ProjectDirectory, String, Maybe String )
     | ConstructFromTypeAnnotation String
+    | ConstructCaseOf String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -345,6 +353,9 @@ update msg model =
 
         ConstructFromTypeAnnotation typeAnnotation ->
             doConstructFromTypeAnnotation typeAnnotation model
+
+        ConstructCaseOf tipe ->
+            doConstructCaseOf tipe model
 
 
 doUpdateActiveHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
@@ -1328,17 +1339,47 @@ getDefaultValueForType tipeString activeTokens maybeRootTipeString =
                                 if hint.kind /= KindType && hint.tipe /= tipeString then
                                     case maybeRootTipeString of
                                         Nothing ->
-                                            -- getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
                                             getDefaultValueForType hint.tipe activeTokens (Just hint.name)
 
                                         Just rootTipeString ->
                                             if hint.name /= rootTipeString then
-                                                -- getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
                                                 getDefaultValueForType hint.tipe activeTokens (Just hint.name)
                                             else
                                                 ""
                                 else
                                     ""
+
+
+doConstructCaseOf : String -> Model -> ( Model, Cmd Msg )
+doConstructCaseOf tipe model =
+    ( model
+    , constructCaseOf tipe model.activeTokens
+        |> caseOfConstructedCmd
+    )
+
+
+constructCaseOf : String -> TokenDict -> Maybe String
+constructCaseOf tipe activeTokens =
+    let
+        cases =
+            case getHintsForToken (Just tipe) activeTokens |> List.head of
+                Nothing ->
+                    []
+
+                Just tipeHint ->
+                    -- -- -- TODO: Store `cases` in Hint for types.
+                    -- tipeHint.cases
+                    [ "" ]
+                        |> List.filterMap
+                            (\kase ->
+                                getHintsForToken (Just kase) activeTokens |> List.head
+                            )
+                        |> List.map .name
+    in
+        if List.length cases > 0 then
+            Just (String.join " ->\n    \n\n" cases)
+        else
+            Nothing
 
 
 getFunctionArgName : String -> Dict.Dict String Int -> ( String, Dict.Dict String Int )
@@ -2372,6 +2413,9 @@ defaultSuggestions =
         , "foreign"
         , "perform"
         , "deriving"
+        , "type alias"
+        , "comparable"
+        , "appendable"
         ]
 
 
