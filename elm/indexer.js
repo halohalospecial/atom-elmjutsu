@@ -8392,7 +8392,7 @@ var _user$project$Indexer$addImportSub = _elm_lang$core$Native_Platform.incoming
 				A2(_elm_lang$core$Json_Decode$index, 1, _elm_lang$core$Json_Decode$string));
 		},
 		A2(_elm_lang$core$Json_Decode$index, 0, _elm_lang$core$Json_Decode$string)));
-var _user$project$Indexer$getFunctionHeadFromTypeAnnotationSub = _elm_lang$core$Native_Platform.incomingPort('getFunctionHeadFromTypeAnnotationSub', _elm_lang$core$Json_Decode$string);
+var _user$project$Indexer$constructFromTypeAnnotationSub = _elm_lang$core$Native_Platform.incomingPort('constructFromTypeAnnotationSub', _elm_lang$core$Json_Decode$string);
 var _user$project$Indexer$docsReadCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'docsReadCmd',
 	function (v) {
@@ -8660,8 +8660,8 @@ var _user$project$Indexer$updateImportsCmd = _elm_lang$core$Native_Platform.outg
 	function (v) {
 		return [v._0, v._1];
 	});
-var _user$project$Indexer$functionHeadFromTypeAnnotationReceivedCmd = _elm_lang$core$Native_Platform.outgoingPort(
-	'functionHeadFromTypeAnnotationReceivedCmd',
+var _user$project$Indexer$fromTypeAnnotationConstructedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'fromTypeAnnotationConstructedCmd',
 	function (v) {
 		return v;
 	});
@@ -8818,8 +8818,8 @@ _user$project$Indexer_ops['=>'] = F2(
 			_1: A2(_user$project$Indexer$Import, _elm_lang$core$Maybe$Nothing, exposed)
 		};
 	});
-var _user$project$Indexer$GetFunctionHeadFromTypeAnnotation = function (a) {
-	return {ctor: 'GetFunctionHeadFromTypeAnnotation', _0: a};
+var _user$project$Indexer$ConstructFromTypeAnnotation = function (a) {
+	return {ctor: 'ConstructFromTypeAnnotation', _0: a};
 };
 var _user$project$Indexer$AddImport = function (a) {
 	return {ctor: 'AddImport', _0: a};
@@ -9092,7 +9092,7 @@ var _user$project$Indexer$getDefaultValueForType = F3(
 			}
 		}
 	});
-var _user$project$Indexer$getFunctionHeadFromTypeAnnotation = F2(
+var _user$project$Indexer$constructFromTypeAnnotation = F2(
 	function (typeAnnotation, activeTokens) {
 		var parts = A2(_elm_lang$core$String$split, ' :', typeAnnotation);
 		var name = A2(
@@ -9155,13 +9155,13 @@ var _user$project$Indexer$getFunctionHeadFromTypeAnnotation = F2(
 						' =\n    ',
 						A3(_user$project$Indexer$getDefaultValueForType, returnTipe, activeTokens, _elm_lang$core$Maybe$Nothing)))));
 	});
-var _user$project$Indexer$doGetFunctionHeadFromTypeAnnotation = F2(
+var _user$project$Indexer$doConstructFromTypeAnnotation = F2(
 	function (typeAnnotation, model) {
 		return {
 			ctor: '_Tuple2',
 			_0: model,
-			_1: _user$project$Indexer$functionHeadFromTypeAnnotationReceivedCmd(
-				A2(_user$project$Indexer$getFunctionHeadFromTypeAnnotation, typeAnnotation, model.activeTokens))
+			_1: _user$project$Indexer$fromTypeAnnotationConstructedCmd(
+				A2(_user$project$Indexer$constructFromTypeAnnotation, typeAnnotation, model.activeTokens))
 		};
 	});
 var _user$project$Indexer$getRecordFieldTokens = F5(
@@ -10622,7 +10622,7 @@ var _user$project$Indexer$update = F2(
 			case 'AddImport':
 				return A5(_user$project$Indexer$doAddImport, _p200._0._0, _p200._0._1, _p200._0._2, _p200._0._3, model);
 			default:
-				return A2(_user$project$Indexer$doGetFunctionHeadFromTypeAnnotation, _p200._0, model);
+				return A2(_user$project$Indexer$doConstructFromTypeAnnotation, _p200._0, model);
 		}
 	});
 var _user$project$Indexer$toImportDict = function (rawImports) {
@@ -10692,7 +10692,7 @@ var _user$project$Indexer$subscriptions = function (model) {
 																	_0: _user$project$Indexer$addImportSub(_user$project$Indexer$AddImport),
 																	_1: {
 																		ctor: '::',
-																		_0: _user$project$Indexer$getFunctionHeadFromTypeAnnotationSub(_user$project$Indexer$GetFunctionHeadFromTypeAnnotation),
+																		_0: _user$project$Indexer$constructFromTypeAnnotationSub(_user$project$Indexer$ConstructFromTypeAnnotation),
 																		_1: {ctor: '[]'}
 																	}
 																}

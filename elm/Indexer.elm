@@ -35,7 +35,7 @@ subscriptions model =
         , getImportersForTokenSub GetImporterSourcePathsForToken
         , showAddImportViewSub ShowAddImportView
         , addImportSub AddImport
-        , getFunctionHeadFromTypeAnnotationSub GetFunctionHeadFromTypeAnnotation
+        , constructFromTypeAnnotationSub ConstructFromTypeAnnotation
         ]
 
 
@@ -88,7 +88,7 @@ port showAddImportViewSub : (( FilePath, Maybe Token ) -> msg) -> Sub msg
 port addImportSub : (( FilePath, ProjectDirectory, String, Maybe String ) -> msg) -> Sub msg
 
 
-port getFunctionHeadFromTypeAnnotationSub : (String -> msg) -> Sub msg
+port constructFromTypeAnnotationSub : (String -> msg) -> Sub msg
 
 
 
@@ -143,7 +143,7 @@ port showAddImportViewCmd : ( Maybe Token, Maybe ActiveFile, List ( String, Mayb
 port updateImportsCmd : ( FilePath, String ) -> Cmd msg
 
 
-port functionHeadFromTypeAnnotationReceivedCmd : String -> Cmd msg
+port fromTypeAnnotationConstructedCmd : String -> Cmd msg
 
 
 
@@ -269,7 +269,7 @@ type Msg
     | DownloadMissingPackageDocs (List Dependency)
     | ShowAddImportView ( FilePath, Maybe Token )
     | AddImport ( FilePath, ProjectDirectory, String, Maybe String )
-    | GetFunctionHeadFromTypeAnnotation String
+    | ConstructFromTypeAnnotation String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -343,8 +343,8 @@ update msg model =
         AddImport ( filePath, projectDirectory, moduleName, maybeSymbolName ) ->
             doAddImport filePath projectDirectory moduleName maybeSymbolName model
 
-        GetFunctionHeadFromTypeAnnotation typeAnnotation ->
-            doGetFunctionHeadFromTypeAnnotation typeAnnotation model
+        ConstructFromTypeAnnotation typeAnnotation ->
+            doConstructFromTypeAnnotation typeAnnotation model
 
 
 doUpdateActiveHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
@@ -1192,16 +1192,16 @@ importsToString imports tokens =
         |> String.join "\n"
 
 
-doGetFunctionHeadFromTypeAnnotation : String -> Model -> ( Model, Cmd Msg )
-doGetFunctionHeadFromTypeAnnotation typeAnnotation model =
+doConstructFromTypeAnnotation : String -> Model -> ( Model, Cmd Msg )
+doConstructFromTypeAnnotation typeAnnotation model =
     ( model
-    , getFunctionHeadFromTypeAnnotation typeAnnotation model.activeTokens
-        |> functionHeadFromTypeAnnotationReceivedCmd
+    , constructFromTypeAnnotation typeAnnotation model.activeTokens
+        |> fromTypeAnnotationConstructedCmd
     )
 
 
-getFunctionHeadFromTypeAnnotation : String -> TokenDict -> String
-getFunctionHeadFromTypeAnnotation typeAnnotation activeTokens =
+constructFromTypeAnnotation : String -> TokenDict -> String
+constructFromTypeAnnotation typeAnnotation activeTokens =
     let
         parts =
             String.split " :" typeAnnotation
