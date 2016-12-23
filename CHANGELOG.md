@@ -1,5 +1,5 @@
 ## 2.13.2
-* When autocompleting function head from type annotation and there are no arguments, also provide default function body.
+* When autocompleting from type annotation, also provide default function body.
 
 ## 2.13.1
 * When autocompleting function head from type annotation, remove space after function name when there are no arguments.
