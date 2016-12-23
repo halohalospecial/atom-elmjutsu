@@ -1195,13 +1195,13 @@ importsToString imports tokens =
 doGetFunctionHeadFromTypeAnnotation : String -> Model -> ( Model, Cmd Msg )
 doGetFunctionHeadFromTypeAnnotation typeAnnotation model =
     ( model
-    , getFunctionHeadFromTypeAnnotation typeAnnotation
+    , getFunctionHeadFromTypeAnnotation typeAnnotation model.activeTokens
         |> functionHeadFromTypeAnnotationReceivedCmd
     )
 
 
-getFunctionHeadFromTypeAnnotation : String -> String
-getFunctionHeadFromTypeAnnotation typeAnnotation =
+getFunctionHeadFromTypeAnnotation : String -> TokenDict -> String
+getFunctionHeadFromTypeAnnotation typeAnnotation activeTokens =
     let
         parts =
             String.split " :" typeAnnotation
@@ -1215,9 +1215,15 @@ getFunctionHeadFromTypeAnnotation typeAnnotation =
                 |> Maybe.withDefault []
                 |> String.join " :"
 
-        ( args, _ ) =
+        tipeParts =
             getTipeParts argsString
-                |> dropLast
+
+        returnTipe =
+            last tipeParts
+                |> Maybe.withDefault ""
+
+        ( args, _ ) =
+            dropLast tipeParts
                 |> List.foldl
                     (\part ( args, argNameCounters ) ->
                         let
@@ -1238,6 +1244,101 @@ getFunctionHeadFromTypeAnnotation typeAnnotation =
                )
             ++ (String.join " " args)
             ++ " =\n    "
+            ++ getDefaultValueForType returnTipe activeTokens Nothing
+
+
+getDefaultValueForType : String -> TokenDict -> Maybe String -> String
+getDefaultValueForType tipeString activeTokens maybeRootTipeString =
+    if isRecordString tipeString then
+        let
+            fieldAndValues =
+                getRecordTipeParts tipeString
+                    |> List.map
+                        (\( field, tipe ) ->
+                            field ++ " = " ++ getDefaultValueForType tipe activeTokens maybeRootTipeString
+                        )
+                    |> String.join ", "
+        in
+            "{ " ++ fieldAndValues ++ " }"
+    else if isTupleString tipeString then
+        let
+            parts =
+                getTupleParts tipeString
+                    |> List.map
+                        (\part ->
+                            getDefaultValueForType part activeTokens maybeRootTipeString
+                        )
+        in
+            getTupleStringFromParts parts
+    else
+        case List.head (String.split " " tipeString) of
+            Nothing ->
+                ""
+
+            Just tipeString ->
+                case tipeString of
+                    -- Primitives
+                    "Bool" ->
+                        "False"
+
+                    "number" ->
+                        "0"
+
+                    "Int" ->
+                        "0"
+
+                    "Float" ->
+                        "0.0"
+
+                    "String" ->
+                        "\"\""
+
+                    -- Core
+                    "List" ->
+                        "[]"
+
+                    "Array.Array" ->
+                        "Array.empty"
+
+                    "Cmd" ->
+                        "Cmd.none"
+
+                    "Color.Color" ->
+                        "Color.black"
+
+                    "Dict.Dict" ->
+                        "Dict.empty"
+
+                    "Maybe" ->
+                        "Nothing"
+
+                    "Set.Set" ->
+                        "Set.empty"
+
+                    "Sub" ->
+                        "Sub.none"
+
+                    _ ->
+                        case getHintsForToken (Just tipeString) activeTokens |> List.head of
+                            Nothing ->
+                                ""
+
+                            Just hint ->
+                                -- Avoid infinite recursion.
+                                if hint.kind /= KindType && hint.tipe /= tipeString then
+                                    case maybeRootTipeString of
+                                        Nothing ->
+                                            -- getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
+                                            getDefaultValueForType hint.tipe activeTokens (Just hint.name)
+
+                                        Just rootTipeString ->
+                                            if hint.name /= rootTipeString then
+                                                -- getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
+                                                getDefaultValueForType hint.tipe activeTokens (Just hint.name)
+                                            else
+                                                ""
+                                else
+                                    ""
 
 
 getFunctionArgName : String -> Dict.Dict String Int -> ( String, Dict.Dict String Int )
@@ -1260,7 +1361,7 @@ getFunctionArgName argString argNameCounters =
         else if isTupleString argString then
             let
                 ( partNames, updateArgNameCounters ) =
-                    getTupleArgParts argString
+                    getTupleParts argString
                         |> List.foldl
                             (\part ( partNames, argNameCounters1 ) ->
                                 let
@@ -1273,7 +1374,7 @@ getFunctionArgName argString argNameCounters =
                             )
                             ( [], argNameCounters )
             in
-                ( "( " ++ (String.join ", " partNames) ++ " )"
+                ( getTupleStringFromParts partNames
                 , updateArgNameCounters
                 )
         else
@@ -1285,6 +1386,14 @@ getFunctionArgName argString argNameCounters =
                         |> decapitalize
             in
                 updatePartNameAndArgNameCounters partName argNameCounters
+
+
+getTupleStringFromParts : List String -> String
+getTupleStringFromParts parts =
+    if List.length parts > 0 then
+        "( " ++ (String.join ", " parts) ++ " )"
+    else
+        "()"
 
 
 getHintFullName : Hint -> String
@@ -1688,7 +1797,7 @@ getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict proj
 
                 getHints moduleDocs =
                     Maybe.map
-                        (getFilteredHints moduleDocs maybeActiveTopLevel)
+                        (getFilteredHints moduleDocs)
                         (Dict.get moduleDocs.name (getImportsPlusActiveModuleForActiveFile maybeActiveFile fileContentsDict))
 
                 insert ( token, hint ) dict =
@@ -1774,8 +1883,8 @@ getTipePartsRecur str acc parts ( openParentheses, openBraces ) =
 
 {-| Example: "( Int, String )" = ["Int", "String"]
 -}
-getTupleArgParts : String -> List String
-getTupleArgParts tupleString =
+getTupleParts : String -> List String
+getTupleParts tupleString =
     -- Remove open and close parentheses.
     case String.slice 1 -1 tupleString of
         "" ->
@@ -1839,24 +1948,24 @@ getRecordArgParts recordString =
                 |> List.map String.trim
 
 
-{-| Example: "{ a : Int, b : String }" = Dict [("a", "Int"), ("b", "String")]
+{-| Example: "{ a : Int, b : String }" = [("a", "Int"), ("b", "String")]
 -}
-getRecordTipeParts : String -> Dict.Dict String String
+getRecordTipeParts : String -> List ( String, String )
 getRecordTipeParts tipeString =
     -- Remove open and close braces.
     case String.slice 1 -1 tipeString of
         "" ->
-            Dict.empty
+            []
 
         tipeString ->
-            getRecordTipePartsRecur tipeString ( "", "" ) False Dict.empty ( 0, 0 )
+            getRecordTipePartsRecur tipeString ( "", "" ) False [] ( 0, 0 )
 
 
-getRecordTipePartsRecur : String -> ( String, String ) -> Bool -> Dict.Dict String String -> ( Int, Int ) -> Dict.Dict String String
+getRecordTipePartsRecur : String -> ( String, String ) -> Bool -> List ( String, String ) -> ( Int, Int ) -> List ( String, String )
 getRecordTipePartsRecur str ( fieldAcc, tipeAcc ) lookingForTipe parts ( openParentheses, openBraces ) =
     case str of
         "" ->
-            Dict.insert (String.trim fieldAcc) (String.trim tipeAcc) parts
+            parts ++ [ ( String.trim fieldAcc, String.trim tipeAcc ) ]
 
         _ ->
             let
@@ -1869,7 +1978,7 @@ getRecordTipePartsRecur str ( fieldAcc, tipeAcc ) lookingForTipe parts ( openPar
                             ( String.fromChar ch, rest )
             in
                 if openParentheses == 0 && openBraces == 0 && thisChar == "," then
-                    getRecordTipePartsRecur thisRest ( "", "" ) False (Dict.insert (String.trim fieldAcc) (String.trim tipeAcc) parts) ( 0, 0 )
+                    getRecordTipePartsRecur thisRest ( "", "" ) False (parts ++ [ ( String.trim fieldAcc, String.trim tipeAcc ) ]) ( 0, 0 )
                 else if openParentheses == 0 && openBraces == 0 && thisChar == ":" then
                     getRecordTipePartsRecur thisRest ( fieldAcc, "" ) True parts ( 0, 0 )
                 else
@@ -1910,8 +2019,8 @@ tipeToValue { name, comment, tipe, args } =
     }
 
 
-getFilteredHints : ModuleDocs -> Maybe ActiveTopLevel -> Import -> List ( String, Hint )
-getFilteredHints moduleDocs maybeActiveTopLevel importData =
+getFilteredHints : ModuleDocs -> Import -> List ( String, Hint )
+getFilteredHints moduleDocs importData =
     List.concatMap (unionTagsToHints moduleDocs importData) moduleDocs.values.tipes
         ++ List.concatMap (nameToHints moduleDocs importData KindTypeAlias) moduleDocs.values.aliases
         ++ List.concatMap (nameToHints moduleDocs importData KindType) (List.map tipeToValue moduleDocs.values.tipes)
@@ -1943,7 +2052,7 @@ topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
                     getRecordArgParts name
                         |> List.filterMap
                             (\field ->
-                                Dict.get field (getRecordTipeParts tipeString)
+                                Dict.get field (getRecordTipeParts tipeString |> Dict.fromList)
                                     |> Maybe.map
                                         (\tipeString ->
                                             getRecordFieldTokens field tipeString topLevelTokens True Nothing
@@ -1994,7 +2103,7 @@ getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf maybeRootTipeS
                         getRecordArgParts name
                             |> List.filterMap
                                 (\field ->
-                                    Dict.get field (getRecordTipeParts tipeString1)
+                                    Dict.get field (getRecordTipeParts tipeString1 |> Dict.fromList)
                                         |> Maybe.map
                                             (\tipeString ->
                                                 getRecordFieldTokens field tipeString topLevelTokens True maybeRootTipeString
@@ -2013,13 +2122,12 @@ getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf maybeRootTipeS
                                 getRecordFields tipe
              else if isRecordString tipeString then
                 getRecordTipeParts tipeString
-                    |> Dict.toList
                     |> List.concatMap
                         (\( field, tipeString ) ->
                             getRecordFieldTokens (name ++ "." ++ field) tipeString topLevelTokens True maybeRootTipeString
                         )
              else if isTupleString name && isTupleString tipeString then
-                List.map2 (,) (getTupleArgParts name) (getTupleArgParts tipeString)
+                List.map2 (,) (getTupleParts name) (getTupleParts tipeString)
                     |> List.map
                         (\( name, tipeString ) ->
                             getRecordFieldTokens name tipeString topLevelTokens True maybeRootTipeString
@@ -2031,6 +2139,7 @@ getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf maybeRootTipeS
                         []
 
                     Just hint ->
+                        -- Avoid infinite recursion.
                         if hint.kind /= KindType && hint.tipe /= tipeString then
                             case maybeRootTipeString of
                                 Nothing ->
@@ -2344,6 +2453,13 @@ dropLast list =
         |> List.tail
         |> Maybe.withDefault []
         |> List.reverse
+
+
+last : List a -> Maybe a
+last list =
+    list
+        |> List.reverse
+        |> List.head
 
 
 decapitalize : String -> String
