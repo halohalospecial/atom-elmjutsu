@@ -173,34 +173,40 @@ mixedPositions2 =
 
 ta1 : Int -> Int -> Int -> Int
 ta1 int int2 int3 =
-    1
+    0
 
 
 ta2 : List String -> Int
 ta2 stringList =
-    1
+    0
 
 
 ta3 : Position2D -> ( Int, Int ) -> Int -> Int
 ta3 position2D ( int, int2 ) int3 =
-    1
+    0
 
 
 ta4 : Position2D -> { a : Int, b : Int } -> { a : Int, b : Int } -> Int
 ta4 position2D record record2 =
-    1
+    0
 
 
 ta5 : Position2D -> ( Int, { a : Int, b : Int } ) -> Int -> Int
 ta5 position2D ( int, { a, b } ) int2 =
-    1
+    0
 
 
 ta6 : List (Dict.Dict String Int) -> Int
 ta6 intStringDictDictList =
-    1
+    0
 
 
-ta7 : ( Int, Int ) -> ( Int, Int ) -> Int -> Int
-ta7 ( int, int2 ) ( int3, int4 ) int5 =
-    1
+ta7 : List ( String, Int ) -> Int
+ta7 intStringList =
+    {- Should be `stringIntTupleList`? -}
+    0
+
+
+ta8 : ( Int, Int ) -> ( Int, Int ) -> Int -> Int
+ta8 ( int, int2 ) ( int3, int4 ) int5 =
+    0

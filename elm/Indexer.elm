@@ -759,10 +759,10 @@ getModuleSymbols moduleDocs =
             List.concatMap
                 (\tipe ->
                     List.map
-                        (\caseName ->
-                            { fullName = (moduleDocs.name ++ "." ++ caseName)
-                            , sourcePath = (formatSourcePath moduleDocs caseName)
-                            , caseTipe = (Just tipe.name)
+                        (\tipeCase ->
+                            { fullName = moduleDocs.name ++ "." ++ tipeCase.name
+                            , sourcePath = formatSourcePath moduleDocs tipeCase.name
+                            , caseTipe = Just tipe.name
                             , kind = KindTypeCase
                             }
                         )
@@ -1351,35 +1351,54 @@ getDefaultValueForType tipeString activeTokens maybeRootTipeString =
 
 
 doConstructCaseOf : String -> Model -> ( Model, Cmd Msg )
-doConstructCaseOf tipe model =
+doConstructCaseOf token model =
     ( model
-    , constructCaseOf tipe model.activeTokens
+    , constructCaseOf token model.activeTokens
         |> caseOfConstructedCmd
     )
 
 
 constructCaseOf : String -> TokenDict -> Maybe String
-constructCaseOf tipe activeTokens =
-    let
-        cases =
-            case getHintsForToken (Just tipe) activeTokens |> List.head of
-                Nothing ->
-                    []
-
-                Just tipeHint ->
-                    -- -- -- TODO: Store `cases` in Hint for types.
-                    -- tipeHint.cases
-                    [ "" ]
-                        |> List.filterMap
-                            (\kase ->
-                                getHintsForToken (Just kase) activeTokens |> List.head
-                            )
-                        |> List.map .name
-    in
-        if List.length cases > 0 then
-            Just (String.join " ->\n    \n\n" cases)
-        else
+constructCaseOf token activeTokens =
+    case getHintsForToken (Just token) activeTokens |> List.head of
+        Nothing ->
             Nothing
+
+        Just tokenHint ->
+            let
+                tipe =
+                    tokenHint.tipe
+                        |> String.split " "
+                        |> List.head
+                        |> Maybe.withDefault ""
+            in
+                case
+                    getHintsForToken (Just tipe) activeTokens
+                        |> List.filter (\hint -> List.length hint.cases > 0)
+                        |> List.head
+                of
+                    Nothing ->
+                        Nothing
+
+                    Just tipeHint ->
+                        if List.length tipeHint.cases > 0 then
+                            tipeHint.cases
+                                |> List.map
+                                    (\{ name, args } ->
+                                        name
+                                            ++ (if List.length args > 0 then
+                                                    " "
+                                                else
+                                                    ""
+                                               )
+                                            ++ String.join " " (List.map tipeToVar args)
+                                            ++ " ->\n    |"
+                                     -- Vertical bars are placeholders for the tab stops.
+                                    )
+                                |> String.join "\n\n"
+                                |> Just
+                        else
+                            Nothing
 
 
 getFunctionArgName : String -> Dict.Dict String Int -> ( String, Dict.Dict String Int )
@@ -1419,14 +1438,15 @@ getFunctionArgName argString argNameCounters =
                 , updateArgNameCounters
                 )
         else
-            let
-                partName =
-                    Regex.split Regex.All argSeparatorRegex argString
-                        |> List.reverse
-                        |> String.join ""
-                        |> decapitalize
-            in
-                updatePartNameAndArgNameCounters partName argNameCounters
+            updatePartNameAndArgNameCounters (tipeToVar argString) argNameCounters
+
+
+tipeToVar : String -> String
+tipeToVar tipeString =
+    Regex.split Regex.All argSeparatorRegex tipeString
+        |> List.reverse
+        |> String.concat
+        |> decapitalize
 
 
 getTupleStringFromParts : List String -> String
@@ -1511,10 +1531,11 @@ getExposedHints maybeActiveFile projectFileContentsDict projectPackageDocs =
                                     ++ (List.concatMap
                                             (\{ name, cases } ->
                                                 List.filter
-                                                    (\kase ->
-                                                        Set.member name defaultTypes || isExposed kase exposed
+                                                    (\tipeCase ->
+                                                        Set.member name defaultTypes || isExposed tipeCase.name exposed
                                                     )
                                                     cases
+                                                    |> List.map .name
                                             )
                                             moduleDocs.values.tipes
                                        )
@@ -1572,7 +1593,13 @@ type alias Tipe =
     , comment : String
     , tipe : String
     , args : List String
-    , cases : List String
+    , cases : List TipeCase
+    }
+
+
+type alias TipeCase =
+    { name : String
+    , args : List String
     }
 
 
@@ -1693,7 +1720,11 @@ decodeModuleDocs packageUri =
                 name
                 -- ^ type
                 args
-                (Decode.field "cases" (Decode.list (Decode.index 0 Decode.string)))
+                (Decode.field "cases"
+                    (Decode.list
+                        (Decode.map2 TipeCase (Decode.index 0 Decode.string) (Decode.index 1 (Decode.list Decode.string)))
+                    )
+                )
 
         value =
             Decode.map4 Value
@@ -1759,6 +1790,7 @@ type alias Hint =
     , tipe : String
     , args : List String
     , caseTipe : Maybe String
+    , cases : List TipeCase
     , kind : SymbolKind
     }
 
@@ -1772,6 +1804,7 @@ emptyHint =
     , tipe = ""
     , args = []
     , caseTipe = Nothing
+    , cases = []
     , kind = KindDefault
     }
 
@@ -2052,7 +2085,6 @@ getRecordTipePartsRecur str ( fieldAcc, tipeAcc ) lookingForTipe parts ( openPar
 
 tipeToValue : Tipe -> Value
 tipeToValue { name, comment, tipe, args } =
-    -- Exclude `cases`.
     { name = name
     , comment = comment
     , tipe = tipe
@@ -2060,12 +2092,24 @@ tipeToValue { name, comment, tipe, args } =
     }
 
 
+valueToHintable : Value -> ( Value, List TipeCase )
+valueToHintable value =
+    ( value, [] )
+
+
+tipeToHintable : Tipe -> ( Value, List TipeCase )
+tipeToHintable tipe =
+    ( tipeToValue tipe
+    , tipe.cases
+    )
+
+
 getFilteredHints : ModuleDocs -> Import -> List ( String, Hint )
 getFilteredHints moduleDocs importData =
     List.concatMap (unionTagsToHints moduleDocs importData) moduleDocs.values.tipes
-        ++ List.concatMap (nameToHints moduleDocs importData KindTypeAlias) moduleDocs.values.aliases
-        ++ List.concatMap (nameToHints moduleDocs importData KindType) (List.map tipeToValue moduleDocs.values.tipes)
-        ++ List.concatMap (nameToHints moduleDocs importData KindDefault) moduleDocs.values.values
+        ++ List.concatMap (nameToHints moduleDocs importData KindTypeAlias) (List.map valueToHintable moduleDocs.values.aliases)
+        ++ List.concatMap (nameToHints moduleDocs importData KindType) (List.map tipeToHintable moduleDocs.values.tipes)
+        ++ List.concatMap (nameToHints moduleDocs importData KindDefault) (List.map valueToHintable moduleDocs.values.values)
         ++ moduleToHints moduleDocs importData
 
 
@@ -2082,6 +2126,7 @@ topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
                     , tipe = tipeString
                     , args = []
                     , caseTipe = Nothing
+                    , cases = [] {- TODO -}
                     , kind = KindDefault
                     }
             in
@@ -2199,19 +2244,23 @@ getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf maybeRootTipeS
 unionTagsToHints : ModuleDocs -> Import -> Tipe -> List ( String, Hint )
 unionTagsToHints moduleDocs { alias, exposed } { name, comment, tipe, args, cases } =
     let
-        addHints tag hints =
+        addHints tipeCase hints =
             let
+                tag =
+                    tipeCase.name
+
                 fullName =
                     moduleDocs.name ++ "." ++ tag
 
                 hint =
                     { name = tag
                     , moduleName = moduleDocs.name
-                    , sourcePath = (formatSourcePath moduleDocs name)
+                    , sourcePath = formatSourcePath moduleDocs name
                     , comment = comment
-                    , tipe = tipe
+                    , tipe = tipeCase.args ++ [ tipe ] |> String.join " -> "
                     , args = args
-                    , caseTipe = (Just name)
+                    , caseTipe = Just name
+                    , cases = []
                     , kind = KindTypeCase
                     }
 
@@ -2226,13 +2275,13 @@ unionTagsToHints moduleDocs { alias, exposed } { name, comment, tipe, args, case
         List.foldl addHints [] cases
 
 
-nameToHints : ModuleDocs -> Import -> SymbolKind -> Value -> List ( String, Hint )
-nameToHints moduleDocs { alias, exposed } kind { name, comment, tipe, args } =
+nameToHints : ModuleDocs -> Import -> SymbolKind -> ( Value, List TipeCase ) -> List ( String, Hint )
+nameToHints moduleDocs { alias, exposed } kind ( { name, comment, tipe, args }, tipeCases ) =
     let
         hint =
             { name = name
             , moduleName = moduleDocs.name
-            , sourcePath = (formatSourcePath moduleDocs name)
+            , sourcePath = formatSourcePath moduleDocs name
             , comment = comment
             , tipe = tipe
             , args =
@@ -2243,6 +2292,7 @@ nameToHints moduleDocs { alias, exposed } kind { name, comment, tipe, args } =
                     Just args ->
                         args
             , caseTipe = Nothing
+            , cases = tipeCases
             , kind = kind
             }
 
@@ -2269,6 +2319,7 @@ moduleToHints moduleDocs { alias, exposed } =
             , tipe = ""
             , args = []
             , caseTipe = Nothing
+            , cases = []
             , kind = KindModule
             }
     in
@@ -2487,7 +2538,7 @@ infixRegex =
 
 argSeparatorRegex : Regex.Regex
 argSeparatorRegex =
-    Regex.regex "\\s+|\\(|\\)|\\."
+    Regex.regex "\\s+|\\(|\\)|\\.|,"
 
 
 dropLast : List a -> List a
