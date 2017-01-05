@@ -55,6 +55,10 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 * Special completions:
 
+Press <kbd>tab</kbd> to go to the next tab stop (similar to snippets).
+
+![construct-case-of](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-case-of.gif?raw=true)
+
 ![construct-from-type-annotation-1](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-from-type-annotation-1.gif?raw=true)
 
 ![construct-from-type-annotation-2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-from-type-annotation-2.gif?raw=true)
