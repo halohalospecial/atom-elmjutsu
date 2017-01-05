@@ -92,7 +92,7 @@ port addImportSub : (( FilePath, ProjectDirectory, String, Maybe String ) -> msg
 port constructFromTypeAnnotationSub : (String -> msg) -> Sub msg
 
 
-port constructCaseOfSub : (String -> msg) -> Sub msg
+port constructCaseOfSub : (Token -> msg) -> Sub msg
 
 
 
@@ -150,7 +150,7 @@ port updateImportsCmd : ( FilePath, String ) -> Cmd msg
 port fromTypeAnnotationConstructedCmd : String -> Cmd msg
 
 
-port caseOfConstructedCmd : Maybe String -> Cmd msg
+port caseOfConstructedCmd : Maybe Token -> Cmd msg
 
 
 
@@ -277,7 +277,7 @@ type Msg
     | ShowAddImportView ( FilePath, Maybe Token )
     | AddImport ( FilePath, ProjectDirectory, String, Maybe String )
     | ConstructFromTypeAnnotation String
-    | ConstructCaseOf String
+    | ConstructCaseOf Token
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -720,7 +720,7 @@ getModuleSymbols moduleDocs =
                 (\value ->
                     let
                         kind =
-                            if Regex.contains capitalizedRegex value.name then
+                            if isCapitalized value.name then
                                 KindTypeAlias
                             else
                                 KindDefault
@@ -948,7 +948,7 @@ getImportersForToken token isCursorAtLastPartOfToken maybeActiveFile tokens acti
                                         getSourcePathAndLocalNames hint =
                                             let
                                                 isHintAModule hint =
-                                                    hint.moduleName == "" && Regex.contains capitalizedRegex hint.name
+                                                    hint.moduleName == "" && isCapitalized hint.name
 
                                                 isHintThisModule =
                                                     isHintAModule hint && hint.name == moduleDocs.name
@@ -1233,8 +1233,25 @@ constructFromTypeAnnotation typeAnnotation activeTokens =
             last tipeParts
                 |> Maybe.withDefault ""
 
-        ( args, _ ) =
-            dropLast tipeParts
+        argNames =
+            getDefaultArgNames (dropLast tipeParts)
+    in
+        name
+            ++ (if List.length argNames > 0 then
+                    " "
+                else
+                    ""
+               )
+            ++ (String.join " " argNames)
+            ++ " =\n    "
+            ++ getDefaultValueForType returnTipe activeTokens Nothing
+
+
+getDefaultArgNames : List String -> List String
+getDefaultArgNames args =
+    let
+        ( argNames, _ ) =
+            args
                 |> List.foldl
                     (\part ( args, argNameCounters ) ->
                         let
@@ -1247,15 +1264,7 @@ constructFromTypeAnnotation typeAnnotation activeTokens =
                     )
                     ( [], Dict.empty )
     in
-        name
-            ++ (if List.length args > 0 then
-                    " "
-                else
-                    ""
-               )
-            ++ (String.join " " args)
-            ++ " =\n    "
-            ++ getDefaultValueForType returnTipe activeTokens Nothing
+        argNames
 
 
 getDefaultValueForType : String -> TokenDict -> Maybe String -> String
@@ -1350,7 +1359,7 @@ getDefaultValueForType tipeString activeTokens maybeRootTipeString =
                                     ""
 
 
-doConstructCaseOf : String -> Model -> ( Model, Cmd Msg )
+doConstructCaseOf : Token -> Model -> ( Model, Cmd Msg )
 doConstructCaseOf token model =
     ( model
     , constructCaseOf token model.activeTokens
@@ -1358,7 +1367,7 @@ doConstructCaseOf token model =
     )
 
 
-constructCaseOf : String -> TokenDict -> Maybe String
+constructCaseOf : Token -> TokenDict -> Maybe String
 constructCaseOf token activeTokens =
     case getHintsForToken (Just token) activeTokens |> List.head of
         Nothing ->
@@ -1366,39 +1375,75 @@ constructCaseOf token activeTokens =
 
         Just tokenHint ->
             let
-                tipe =
-                    tokenHint.tipe
-                        |> String.split " "
+                tokenTipeParts =
+                    getArgsParts tokenHint.tipe
+
+                tokenTipeName =
+                    tokenTipeParts
                         |> List.head
                         |> Maybe.withDefault ""
-            in
-                case
-                    getHintsForToken (Just tipe) activeTokens
-                        |> List.filter (\hint -> List.length hint.cases > 0)
-                        |> List.head
-                of
-                    Nothing ->
-                        Nothing
 
-                    Just tipeHint ->
-                        if List.length tipeHint.cases > 0 then
-                            tipeHint.cases
-                                |> List.map
-                                    (\{ name, args } ->
-                                        name
-                                            ++ (if List.length args > 0 then
-                                                    " "
-                                                else
-                                                    ""
-                                               )
-                                            ++ String.join " " (List.map tipeToVar args)
-                                            ++ " ->\n    |"
-                                     -- Vertical bars are placeholders for the tab stops.
-                                    )
-                                |> String.join "\n\n"
-                                |> Just
-                        else
-                            Nothing
+                tokenTipeArgs =
+                    tokenTipeParts
+                        |> List.tail
+                        |> Maybe.withDefault []
+
+                ( tipeCases, tipeArgs ) =
+                    case tokenTipeName of
+                        "Bool" ->
+                            ( [ { name = "True", args = [] }
+                              , { name = "False", args = [] }
+                              ]
+                            , []
+                            )
+
+                        _ ->
+                            case
+                                getHintsForToken (Just tokenTipeName) activeTokens
+                                    |> List.filter (\hint -> List.length hint.cases > 0)
+                                    |> List.head
+                            of
+                                Nothing ->
+                                    ( [], [] )
+
+                                Just tipeHint ->
+                                    ( tipeHint.cases, tipeHint.args )
+
+                tipeArgsDict =
+                    List.map2 (,) tipeArgs tokenTipeArgs
+                        |> Dict.fromList
+            in
+                if List.length tipeCases > 0 then
+                    tipeCases
+                        |> List.map
+                            (\tipeCase ->
+                                let
+                                    alignedArgs =
+                                        tipeCase.args
+                                            |> List.map
+                                                (\arg ->
+                                                    case Dict.get arg tipeArgsDict of
+                                                        Nothing ->
+                                                            arg
+
+                                                        Just a ->
+                                                            a
+                                                )
+                                in
+                                    tipeCase.name
+                                        ++ (if List.length alignedArgs > 0 then
+                                                " "
+                                            else
+                                                ""
+                                           )
+                                        ++ String.join " " (getDefaultArgNames alignedArgs)
+                                        ++ " ->\n    |"
+                             -- Vertical bars are placeholders for the tab stops.
+                            )
+                        |> String.join "\n\n"
+                        |> Just
+                else
+                    Nothing
 
 
 getFunctionArgName : String -> Dict.Dict String Int -> ( String, Dict.Dict String Int )
@@ -1451,10 +1496,15 @@ tipeToVar tipeString =
 
 getTupleStringFromParts : List String -> String
 getTupleStringFromParts parts =
-    if List.length parts > 0 then
-        "( " ++ (String.join ", " parts) ++ " )"
-    else
-        "()"
+    case List.length parts of
+        0 ->
+            "()"
+
+        1 ->
+            String.concat parts
+
+        _ ->
+            "( " ++ (String.join ", " parts) ++ " )"
 
 
 getHintFullName : Hint -> String
@@ -1897,6 +1947,58 @@ getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict proj
                 List.foldl insert topLevelTokens argHints
 
 
+{-| Example: "a b c" = ["a", "b", "c"]
+-}
+getArgsParts : String -> List String
+getArgsParts argsString =
+    case argsString of
+        "" ->
+            []
+
+        argsString ->
+            getArgsPartsRecur argsString "" [] ( 0, 0 )
+
+
+getArgsPartsRecur : String -> String -> List String -> ( Int, Int ) -> List String
+getArgsPartsRecur str acc parts ( openParentheses, openBraces ) =
+    case str of
+        "" ->
+            parts ++ [ String.trim acc ]
+
+        _ ->
+            let
+                ( thisChar, thisRest ) =
+                    case String.uncons str of
+                        Nothing ->
+                            ( "", str )
+
+                        Just ( ch, rest ) ->
+                            ( String.fromChar ch, rest )
+            in
+                if openParentheses == 0 && openBraces == 0 && thisChar == " " then
+                    getArgsPartsRecur thisRest "" (parts ++ [ String.trim acc ]) ( 0, 0 )
+                else
+                    let
+                        ( updatedOpenParentheses, updatedOpenBraces ) =
+                            case thisChar of
+                                "(" ->
+                                    ( openParentheses + 1, openBraces )
+
+                                ")" ->
+                                    ( openParentheses - 1, openBraces )
+
+                                "{" ->
+                                    ( openParentheses, openBraces + 1 )
+
+                                "}" ->
+                                    ( openParentheses, openBraces - 1 )
+
+                                _ ->
+                                    ( openParentheses, openBraces )
+                    in
+                        getArgsPartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
+
+
 {-| Example: "Int -> Int -> Int" = ["Int", "Int"]
 -}
 getTipeParts : String -> List String
@@ -2126,7 +2228,7 @@ topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
                     , tipe = tipeString
                     , args = []
                     , caseTipe = Nothing
-                    , cases = [] {- TODO -}
+                    , cases = []
                     , kind = KindDefault
                     }
             in
@@ -2517,18 +2619,21 @@ getModuleAndSymbolName { fullName, caseTipe, kind } =
                 )
 
 
-
-{- TODO: Allow unicode. -}
-
-
+{-| TODO: Allow unicode.
+-}
 capitalizedRegex : Regex.Regex
 capitalizedRegex =
     Regex.regex "^[A-Z]"
 
 
+isCapitalized : String -> Bool
+isCapitalized =
+    Regex.contains capitalizedRegex
+
+
 isInfix : String -> Bool
-isInfix token =
-    Regex.contains infixRegex token
+isInfix =
+    Regex.contains infixRegex
 
 
 infixRegex : Regex.Regex

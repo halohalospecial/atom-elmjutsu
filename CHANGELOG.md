@@ -1,3 +1,7 @@
+## 2.14.0
+* Add autocomplete for case-of.
+* Fix type info display. (#27).  Thanks to @refried for reporting!
+
 ## 2.13.2
 * When autocompleting from type annotation, also provide default function body.
 

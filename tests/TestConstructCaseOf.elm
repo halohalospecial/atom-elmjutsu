@@ -1,26 +1,76 @@
 module TestConstructCaseOf exposing (..)
 
 
-caseMaybe : Maybe a -> Int
+caseMaybe : Maybe String -> Int
 caseMaybe aMaybe =
     case aMaybe of
-        Just a ->
+        Just string ->
             1
 
         Nothing ->
             0
 
 
-type MyType
-    = TypeA
-    | TypeB (List Int)
-
-
-caseMyType : MyType -> Int
-caseMyType myType =
-    case myType of
-        TypeA ->
+caseBool : Bool -> Int
+caseBool aBool =
+    case aBool of
+        True ->
             1
 
-        TypeB intList ->
+        False ->
             0
+
+
+type alias Record =
+    { aMaybe : Maybe String
+    }
+
+
+caseRecord : Record -> Int
+caseRecord record =
+    case record.aMaybe of
+        Just string ->
+            1
+
+        Nothing ->
+            0
+
+
+type MyType a
+    = MyTypeA a
+    | MyTypeB (List Int)
+    | MyTypeC ( Int, String )
+    | MyTypeD
+
+
+caseMyType : MyType String -> Int
+caseMyType myType =
+    case myType of
+        MyTypeA string ->
+            1
+
+        MyTypeB intList ->
+            2
+
+        MyTypeC ( int, string ) ->
+            3
+
+        MyTypeD ->
+            4
+
+
+caseTuple : Bool -> Bool -> Int
+caseTuple bool bool2 =
+    {- Not yet implemented. -}
+    case ( bool, bool2 ) of
+        ( True, True ) ->
+            1
+
+        ( True, False ) ->
+            2
+
+        ( False, True ) ->
+            3
+
+        ( False, False ) ->
+            4
