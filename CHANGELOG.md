@@ -1,5 +1,8 @@
+## 2.15.0
+* Add autocompletions for if/then, let/in, and module.
+
 ## 2.14.0
-* Add autocomplete for case-of.
+* Add autocompletion for case/of.
 * Fix type info display. (#27).  Thanks to @refried for reporting!
 
 ## 2.13.2
