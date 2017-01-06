@@ -53,19 +53,21 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 ![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
 
+* You can also check `Enable Autocomplete Snippets` if you prefer.
+
+![autocomplete-snippet](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-snippet.gif?raw=true)
+
 * Special completions:
 
-Press <kbd>tab</kbd> to go to the next tab stop (similar to snippets).
+Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).
+
+![construct-basic](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-basic.gif?raw=true)
 
 ![construct-case-of](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-case-of.gif?raw=true)
 
 ![construct-from-type-annotation-1](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-from-type-annotation-1.gif?raw=true)
 
 ![construct-from-type-annotation-2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-from-type-annotation-2.gif?raw=true)
-
-* You can also check `Enable Autocomplete Snippets` if you prefer.
-
-![autocomplete-snippet](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-snippet.gif?raw=true)
 
 ### `Elmjutsu: Go To Definition`
 
