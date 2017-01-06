@@ -34,7 +34,7 @@ https://atom.io/packages/elmjutsu
 ## Requirements
 
 * [Elm](http://elm-lang.org/install)
-* [language-elm](https://atom.io/packages/language-elm)
+* [language-elm](https://atom.io/packages/language-elm) (no need to install elm-oracle)
 * For `Go To Definition`:
   * [hyperclick](https://atom.io/packages/hyperclick) (optional)
 * For `Autocomplete`:

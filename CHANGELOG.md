@@ -1,5 +1,8 @@
+## 2.15.1
+* Allow nested if/then/else autocompletion.
+
 ## 2.15.0
-* Add autocompletions for if/then, let/in, and module.
+* Add autocompletions for if/then/else, let/in, and module.
 
 ## 2.14.0
 * Add autocompletion for case/of.
