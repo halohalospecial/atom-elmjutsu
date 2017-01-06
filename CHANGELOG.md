@@ -1,5 +1,8 @@
-## 2.15.1
+## 2.15.2
 * Allow nested if/then/else autocompletion.
+
+## 2.15.1
+* Failed publish.
 
 ## 2.15.0
 * Add autocompletions for if/then/else, let/in, and module.
