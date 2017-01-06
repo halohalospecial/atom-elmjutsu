@@ -7913,27 +7913,93 @@ var _user$project$Indexer$constructCaseOf = F2(
 						_1: {ctor: '[]'}
 					};
 				} else {
-					var _p103 = _elm_lang$core$List$head(
-						A2(
-							_elm_lang$core$List$filter,
-							function (hint) {
-								return _elm_lang$core$Native_Utils.cmp(
-									_elm_lang$core$List$length(hint.cases),
-									0) > 0;
-							},
-							A2(
-								_user$project$Indexer$getHintsForToken,
-								_elm_lang$core$Maybe$Just(tokenTipeName),
-								activeTokens)));
-					if (_p103.ctor === 'Nothing') {
+					if (A2(
+						_elm_lang$core$List$member,
+						tokenTipeName,
+						{
+							ctor: '::',
+							_0: 'Int',
+							_1: {
+								ctor: '::',
+								_0: 'Float',
+								_1: {
+									ctor: '::',
+									_0: 'number',
+									_1: {ctor: '[]'}
+								}
+							}
+						})) {
 						return {
 							ctor: '_Tuple2',
-							_0: {ctor: '[]'},
+							_0: {
+								ctor: '::',
+								_0: {
+									name: '|',
+									args: {ctor: '[]'}
+								},
+								_1: {
+									ctor: '::',
+									_0: {
+										name: '_',
+										args: {ctor: '[]'}
+									},
+									_1: {ctor: '[]'}
+								}
+							},
 							_1: {ctor: '[]'}
 						};
 					} else {
-						var _p104 = _p103._0;
-						return {ctor: '_Tuple2', _0: _p104.cases, _1: _p104.args};
+						if (A2(
+							_elm_lang$core$List$member,
+							tokenTipeName,
+							{
+								ctor: '::',
+								_0: 'String',
+								_1: {ctor: '[]'}
+							})) {
+							return {
+								ctor: '_Tuple2',
+								_0: {
+									ctor: '::',
+									_0: {
+										name: '\"|\"',
+										args: {ctor: '[]'}
+									},
+									_1: {
+										ctor: '::',
+										_0: {
+											name: '_',
+											args: {ctor: '[]'}
+										},
+										_1: {ctor: '[]'}
+									}
+								},
+								_1: {ctor: '[]'}
+							};
+						} else {
+							var _p103 = _elm_lang$core$List$head(
+								A2(
+									_elm_lang$core$List$filter,
+									function (hint) {
+										return _elm_lang$core$Native_Utils.cmp(
+											_elm_lang$core$List$length(hint.cases),
+											0) > 0;
+									},
+									A2(
+										_user$project$Indexer$getHintsForToken,
+										_elm_lang$core$Maybe$Just(tokenTipeName),
+										activeTokens)));
+							if (_p103.ctor === 'Nothing') {
+								return {
+									ctor: '_Tuple2',
+									_0: {ctor: '[]'},
+									_1: {ctor: '[]'}
+								};
+							} else {
+								var _p104 = _p103._0;
+								return {ctor: '_Tuple2', _0: _p104.cases, _1: _p104.args};
+							}
+						}
 					}
 				}
 			}();

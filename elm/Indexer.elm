@@ -1398,16 +1398,29 @@ constructCaseOf token activeTokens =
                             )
 
                         _ ->
-                            case
-                                getHintsForToken (Just tokenTipeName) activeTokens
-                                    |> List.filter (\hint -> List.length hint.cases > 0)
-                                    |> List.head
-                            of
-                                Nothing ->
-                                    ( [], [] )
+                            if List.member tokenTipeName [ "Int", "Float", "number" ] then
+                                ( [ { name = "|", args = [] }
+                                  , { name = "_", args = [] }
+                                  ]
+                                , []
+                                )
+                            else if List.member tokenTipeName [ "String" ] then
+                                ( [ { name = "\"|\"", args = [] }
+                                  , { name = "_", args = [] }
+                                  ]
+                                , []
+                                )
+                            else
+                                case
+                                    getHintsForToken (Just tokenTipeName) activeTokens
+                                        |> List.filter (\hint -> List.length hint.cases > 0)
+                                        |> List.head
+                                of
+                                    Nothing ->
+                                        ( [], [] )
 
-                                Just tipeHint ->
-                                    ( tipeHint.cases, tipeHint.args )
+                                    Just tipeHint ->
+                                        ( tipeHint.cases, tipeHint.args )
 
                 tipeArgsDict =
                     List.map2 (,) tipeArgs tokenTipeArgs
