@@ -8558,7 +8558,9 @@ var _user$project$Sidekick$viewHint = F2(
 				return A2(_elm_lang$core$Basics_ops['++'], '\n<br>', hint.comment);
 			}
 		}();
-		var formattedTipe = A2(_elm_lang$core$String$startsWith, '*', hint.tipe) ? hint.tipe : (_elm_lang$core$Native_Utils.eq(hint.tipe, '') ? '' : A2(_elm_lang$core$Basics_ops['++'], ': ', hint.tipe));
+		var formattedTipe = _elm_lang$core$Native_Utils.eq(hint.tipe, '') ? ((_elm_lang$core$Native_Utils.cmp(
+			_elm_lang$core$List$length(hint.args),
+			0) > 0) ? A2(_elm_lang$core$String$join, ' ', hint.args) : '') : A2(_elm_lang$core$Basics_ops['++'], ': ', hint.tipe);
 		var formattedModuleName = (_elm_lang$core$Native_Utils.eq(hint.moduleName, '') || _elm_lang$core$Native_Utils.eq(activeFilePath, hint.sourcePath)) ? '' : A2(_elm_lang$core$Basics_ops['++'], hint.moduleName, '.');
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
@@ -8603,23 +8605,31 @@ var _user$project$Sidekick$activeHintsChangedSub = _elm_lang$core$Native_Platfor
 											function (tipe) {
 												return A2(
 													_elm_lang$core$Json_Decode$andThen,
-													function (caseTipe) {
-														return _elm_lang$core$Json_Decode$succeed(
-															{name: name, moduleName: moduleName, sourcePath: sourcePath, comment: comment, tipe: tipe, caseTipe: caseTipe});
+													function (args) {
+														return A2(
+															_elm_lang$core$Json_Decode$andThen,
+															function (caseTipe) {
+																return _elm_lang$core$Json_Decode$succeed(
+																	{name: name, moduleName: moduleName, sourcePath: sourcePath, comment: comment, tipe: tipe, args: args, caseTipe: caseTipe});
+															},
+															A2(
+																_elm_lang$core$Json_Decode$field,
+																'caseTipe',
+																_elm_lang$core$Json_Decode$oneOf(
+																	{
+																		ctor: '::',
+																		_0: _elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+																		_1: {
+																			ctor: '::',
+																			_0: A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string),
+																			_1: {ctor: '[]'}
+																		}
+																	})));
 													},
 													A2(
 														_elm_lang$core$Json_Decode$field,
-														'caseTipe',
-														_elm_lang$core$Json_Decode$oneOf(
-															{
-																ctor: '::',
-																_0: _elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
-																_1: {
-																	ctor: '::',
-																	_0: A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string),
-																	_1: {ctor: '[]'}
-																}
-															})));
+														'args',
+														_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string)));
 											},
 											A2(_elm_lang$core$Json_Decode$field, 'tipe', _elm_lang$core$Json_Decode$string));
 									},
@@ -8753,17 +8763,13 @@ var _user$project$Sidekick$Model = F3(
 	function (a, b, c) {
 		return {note: a, activeHints: b, activeFile: c};
 	});
-var _user$project$Sidekick$ActiveHint = F6(
-	function (a, b, c, d, e, f) {
-		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, caseTipe: f};
-	});
 var _user$project$Sidekick$ActiveFile = F2(
 	function (a, b) {
 		return {filePath: a, projectDirectory: b};
 	});
-var _user$project$Sidekick$Hint = F6(
-	function (a, b, c, d, e, f) {
-		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, caseTipe: f};
+var _user$project$Sidekick$Hint = F7(
+	function (a, b, c, d, e, f, g) {
+		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, args: f, caseTipe: g};
 	});
 var _user$project$Sidekick$GoToDefinition = function (a) {
 	return {ctor: 'GoToDefinition', _0: a};

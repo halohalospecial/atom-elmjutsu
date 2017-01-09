@@ -111,6 +111,7 @@ Renames the symbol across the whole project.  Take note that this is *not* an un
 * Uncheck usages to exclude.
 * Modified modules with open editors will *not* be saved automatically.
 * Renaming a module will *not* rename the associated file.
+* Currently, this also modifies the symbol name inside comments.
 
 ![rename-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/rename-symbol.gif?raw=true)
 

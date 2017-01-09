@@ -1943,6 +1943,7 @@ type alias EncodedHint =
     , sourcePath : String
     , comment : String
     , tipe : String
+    , args : List String
     , caseTipe : Maybe String
     , kind : String
     }
@@ -1955,6 +1956,7 @@ encodeHint hint =
     , sourcePath = hint.sourcePath
     , comment = hint.comment
     , tipe = hint.tipe
+    , args = hint.args
     , caseTipe = hint.caseTipe
     , kind = (symbolKindToString hint.kind)
     }
@@ -2723,7 +2725,8 @@ isInfix =
 
 infixRegex : Regex.Regex
 infixRegex =
-    Regex.regex "^[~!@#$%^&*\\-+=:|<>.?/]+$"
+    -- Backtick (`), underscore (_), and semicolon (;) are not allowed in infixes.
+    Regex.regex "^[~!@#\\$%\\^&\\*\\-\\+=:\\|\\\\<>\\.\\?\\/]+$"
 
 
 argSeparatorRegex : Regex.Regex

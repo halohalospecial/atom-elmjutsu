@@ -34,7 +34,7 @@ subscriptions model =
 -- INCOMING PORTS
 
 
-port activeHintsChangedSub : (List ActiveHint -> msg) -> Sub msg
+port activeHintsChangedSub : (List Hint -> msg) -> Sub msg
 
 
 port activeFileChangedSub : (Maybe ActiveFile -> msg) -> Sub msg
@@ -68,18 +68,8 @@ port goToDefinitionCmd : String -> Cmd msg
 
 type alias Model =
     { note : String
-    , activeHints : List ActiveHint
+    , activeHints : List Hint
     , activeFile : Maybe ActiveFile
-    }
-
-
-type alias ActiveHint =
-    { name : String
-    , moduleName : String
-    , sourcePath : String
-    , comment : String
-    , tipe : String
-    , caseTipe : Maybe String
     }
 
 
@@ -109,7 +99,7 @@ emptyModel =
 
 
 type Msg
-    = ActiveHintsChanged (List ActiveHint)
+    = ActiveHintsChanged (List Hint)
     | ActiveFileChanged (Maybe ActiveFile)
     | DocsRead
     | DocsDownloaded
@@ -214,10 +204,11 @@ viewHint activeFilePath hint =
                 hint.moduleName ++ "."
 
         formattedTipe =
-            if String.startsWith "*" hint.tipe then
-                hint.tipe
-            else if hint.tipe == "" then
-                ""
+            if hint.tipe == "" then
+                if List.length hint.args > 0 then
+                    String.join " " hint.args
+                else
+                    ""
             else
                 ": " ++ hint.tipe
 
@@ -244,6 +235,7 @@ type alias Hint =
     , sourcePath : String
     , comment : String
     , tipe : String
+    , args : List String
     , caseTipe : Maybe String
     }
 

@@ -1,3 +1,6 @@
+<!-- ## 2.16.2
+* Fix token regex bug which causes symbols like `*` to be ignored. -->
+
 ## 2.16.1
 * Add screen capture for "Replace type with default" autocompletion.
 

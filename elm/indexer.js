@@ -6819,7 +6819,7 @@ var _user$project$Indexer$dropLast = function (list) {
 				_elm_lang$core$List$reverse(list))));
 };
 var _user$project$Indexer$argSeparatorRegex = _elm_lang$core$Regex$regex('\\s+|\\(|\\)|\\.|,|-|>');
-var _user$project$Indexer$infixRegex = _elm_lang$core$Regex$regex('^[~!@#$%^&*\\-+=:|<>.?/]+$');
+var _user$project$Indexer$infixRegex = _elm_lang$core$Regex$regex('^[~!@#\\$%\\^&\\*\\-\\+=:\\|\\\\<>\\.\\?\\/]+$');
 var _user$project$Indexer$isInfix = _elm_lang$core$Regex$contains(_user$project$Indexer$infixRegex);
 var _user$project$Indexer$capitalizedRegex = _elm_lang$core$Regex$regex('^[A-Z]');
 var _user$project$Indexer$isCapitalized = _elm_lang$core$Regex$contains(_user$project$Indexer$capitalizedRegex);
@@ -7391,6 +7391,7 @@ var _user$project$Indexer$encodeHint = function (hint) {
 		sourcePath: hint.sourcePath,
 		comment: hint.comment,
 		tipe: hint.tipe,
+		args: hint.args,
 		caseTipe: hint.caseTipe,
 		kind: _user$project$Indexer$symbolKindToString(hint.kind)
 	};
@@ -8843,6 +8844,10 @@ var _user$project$Indexer$activeHintsChangedCmd = _elm_lang$core$Native_Platform
 					sourcePath: v.sourcePath,
 					comment: v.comment,
 					tipe: v.tipe,
+					args: _elm_lang$core$Native_List.toArray(v.args).map(
+						function (v) {
+							return v;
+						}),
 					caseTipe: (v.caseTipe.ctor === 'Nothing') ? null : v.caseTipe._0,
 					kind: v.kind
 				};
@@ -8921,6 +8926,10 @@ var _user$project$Indexer$hintsForPartialReceivedCmd = _elm_lang$core$Native_Pla
 					sourcePath: v.sourcePath,
 					comment: v.comment,
 					tipe: v.tipe,
+					args: _elm_lang$core$Native_List.toArray(v.args).map(
+						function (v) {
+							return v;
+						}),
 					caseTipe: (v.caseTipe.ctor === 'Nothing') ? null : v.caseTipe._0,
 					kind: v.kind
 				};
@@ -9179,9 +9188,9 @@ var _user$project$Indexer$Hint = F9(
 	function (a, b, c, d, e, f, g, h, i) {
 		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, args: f, caseTipe: g, cases: h, kind: i};
 	});
-var _user$project$Indexer$EncodedHint = F7(
-	function (a, b, c, d, e, f, g) {
-		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, caseTipe: f, kind: g};
+var _user$project$Indexer$EncodedHint = F8(
+	function (a, b, c, d, e, f, g, h) {
+		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, args: f, caseTipe: g, kind: h};
 	});
 var _user$project$Indexer$ImportSuggestion = F3(
 	function (a, b, c) {
@@ -9582,14 +9591,11 @@ var _user$project$Indexer$doConstructFromTypeAnnotation = F2(
 	});
 var _user$project$Indexer$constructDefaultValueForType = F2(
 	function (token, activeTokens) {
-		var _p132 = A2(
-			_elm_lang$core$Debug$log,
-			'xxx',
-			_elm_lang$core$List$head(
-				A2(
-					_user$project$Indexer$getHintsForToken,
-					_elm_lang$core$Maybe$Just(token),
-					activeTokens)));
+		var _p132 = _elm_lang$core$List$head(
+			A2(
+				_user$project$Indexer$getHintsForToken,
+				_elm_lang$core$Maybe$Just(token),
+				activeTokens));
 		if (_p132.ctor === 'Just') {
 			return _elm_lang$core$Maybe$Just(
 				A3(_user$project$Indexer$getDefaultValueForType, activeTokens, _elm_lang$core$Maybe$Nothing, _p132._0.tipe));
