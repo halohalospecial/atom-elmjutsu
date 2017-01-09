@@ -507,11 +507,6 @@ doGoToDefinition maybeToken model =
 doShowGoToSymbolView : Maybe ProjectDirectory -> Maybe String -> Model -> ( Model, Cmd Msg )
 doShowGoToSymbolView maybeProjectDirectory maybeToken model =
     case maybeProjectDirectory of
-        Nothing ->
-            ( model
-            , Cmd.none
-            )
-
         Just projectDirectory ->
             let
                 hints =
@@ -519,24 +514,29 @@ doShowGoToSymbolView maybeProjectDirectory maybeToken model =
 
                 defaultSymbolName =
                     case List.head hints of
-                        Nothing ->
-                            maybeToken
-
                         Just hint ->
                             case model.activeFile of
-                                Nothing ->
-                                    Just hint.name
-
                                 Just activeFile ->
                                     if activeFile.filePath == hint.sourcePath then
                                         Just (getLastName hint.name)
                                     else
                                         Just hint.name
+
+                                Nothing ->
+                                    Just hint.name
+
+                        Nothing ->
+                            maybeToken
             in
                 ( model
                 , ( defaultSymbolName, model.activeFile, List.map encodeSymbol (getProjectFileSymbols projectDirectory model.projectFileContentsDict) )
                     |> showGoToSymbolViewCmd
                 )
+
+        Nothing ->
+            ( model
+            , Cmd.none
+            )
 
 
 doGetHintsForPartial : String -> Model -> ( Model, Cmd Msg )
@@ -635,11 +635,11 @@ truncateModuleComment moduleDocs =
     let
         truncatedComment =
             case List.head (String.split "\n\n" moduleDocs.comment) of
-                Nothing ->
-                    ""
-
                 Just comment ->
                     comment
+
+                Nothing ->
+                    ""
     in
         { moduleDocs | comment = truncatedComment }
 
@@ -647,14 +647,8 @@ truncateModuleComment moduleDocs =
 getProjectPackageDocs : Maybe ActiveFile -> Dict.Dict String (List Dependency) -> List ModuleDocs -> List ModuleDocs
 getProjectPackageDocs maybeActiveFile projectDependencies packageDocs =
     case maybeActiveFile of
-        Nothing ->
-            []
-
         Just activeFile ->
             case Dict.get activeFile.projectDirectory projectDependencies of
-                Nothing ->
-                    []
-
                 Just dependencies ->
                     let
                         packageUris =
@@ -666,17 +660,23 @@ getProjectPackageDocs maybeActiveFile projectDependencies packageDocs =
                             )
                             packageDocs
 
+                Nothing ->
+                    []
+
+        Nothing ->
+            []
+
 
 getProjectSymbols : Maybe ActiveFile -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> List Symbol
 getProjectSymbols maybeActiveFile projectFileContentsDict projectDependencies packageDocs =
     case maybeActiveFile of
-        Nothing ->
-            []
-
         Just { projectDirectory } ->
             List.append
                 (getProjectFileSymbols projectDirectory projectFileContentsDict)
                 (getProjectDependencySymbols maybeActiveFile projectDependencies packageDocs)
+
+        Nothing ->
+            []
 
 
 getProjectFileSymbols : ProjectDirectory -> ProjectFileContentsDict -> List Symbol
@@ -776,19 +776,16 @@ getModuleSymbols moduleDocs =
 getHintsForToken : Maybe String -> TokenDict -> List Hint
 getHintsForToken maybeToken tokens =
     case maybeToken of
-        Nothing ->
-            []
-
         Just token ->
             Maybe.withDefault [] (Dict.get token tokens)
+
+        Nothing ->
+            []
 
 
 getHintsForPartial : String -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
 getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackageDocs tokens =
     case maybeActiveFile of
-        Nothing ->
-            []
-
         Just { projectDirectory } ->
             let
                 exposedSet =
@@ -808,14 +805,14 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
                         |> List.filterMap
                             (\{ alias } ->
                                 case alias of
-                                    Nothing ->
-                                        Nothing
-
                                     Just alias ->
                                         if String.startsWith partial alias then
                                             Just { emptyHint | name = alias }
                                         else
                                             Nothing
+
+                                    Nothing ->
+                                        Nothing
                             )
 
                 maybeIncludeHint hint =
@@ -845,16 +842,16 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
                                         let
                                             moduleNamePrefix =
                                                 case Dict.get hint.moduleName activeFileContents.imports of
-                                                    Nothing ->
-                                                        ""
-
                                                     Just { alias } ->
                                                         case alias of
+                                                            Just moduleAlias ->
+                                                                moduleAlias ++ "."
+
                                                             Nothing ->
                                                                 hint.moduleName ++ "."
 
-                                                            Just moduleAlias ->
-                                                                moduleAlias ++ "."
+                                                    Nothing ->
+                                                        ""
                                         in
                                             moduleNamePrefix ++ hint.name
                             in
@@ -892,13 +889,13 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
                     ++ defaultHints
                     |> List.sortBy .name
 
+        Nothing ->
+            []
+
 
 getSuggestionsForImport : String -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> List ImportSuggestion
 getSuggestionsForImport partial maybeActiveFile projectFileContentsDict projectPackageDocs =
     case maybeActiveFile of
-        Nothing ->
-            []
-
         Just { projectDirectory } ->
             let
                 suggestions =
@@ -921,6 +918,9 @@ getSuggestionsForImport partial maybeActiveFile projectFileContentsDict projectP
                     )
                     suggestions
                     |> List.sortBy .name
+
+        Nothing ->
+            []
 
 
 getImportersForToken : String -> Bool -> Maybe ActiveFile -> TokenDict -> FileContents -> ProjectFileContentsDict -> List ( String, Bool, Bool, List String )
@@ -962,16 +962,6 @@ getImportersForToken token isCursorAtLastPartOfToken maybeActiveFile tokens acti
                                                     Just ( moduleDocs.sourcePath, True, False, [ hint.name ] )
                                                 else
                                                     case Dict.get hint.moduleName imports of
-                                                        Nothing ->
-                                                            let
-                                                                isHintInThisModule =
-                                                                    hint.moduleName == moduleDocs.name
-                                                            in
-                                                                if isHintInThisModule then
-                                                                    Just ( moduleDocs.sourcePath, False, False, [ hint.name ] )
-                                                                else
-                                                                    Nothing
-
                                                         Just { alias, exposed } ->
                                                             let
                                                                 localNames =
@@ -1000,6 +990,16 @@ getImportersForToken token isCursorAtLastPartOfToken maybeActiveFile tokens acti
 
                                                                     _ ->
                                                                         Just ( moduleDocs.sourcePath, False, False, names )
+
+                                                        Nothing ->
+                                                            let
+                                                                isHintInThisModule =
+                                                                    hint.moduleName == moduleDocs.name
+                                                            in
+                                                                if isHintInThisModule then
+                                                                    Just ( moduleDocs.sourcePath, False, False, [ hint.name ] )
+                                                                else
+                                                                    Nothing
                                     in
                                         List.filterMap getSourcePathAndLocalNames hints
                                 )
@@ -1025,11 +1025,11 @@ doShowAddImportView filePath maybeToken model =
                 |> List.filter
                     (\( _, symbolName ) ->
                         case symbolName of
+                            Just _ ->
+                                False
+
                             Nothing ->
                                 True
-
-                            _ ->
-                                False
                     )
 
         moduleAndSymbolsAndAllExposed =
@@ -1045,11 +1045,11 @@ doShowAddImportView filePath maybeToken model =
                             filterKey moduleName symbolName =
                                 moduleName
                                     ++ (case symbolName of
-                                            Nothing ->
-                                                ""
-
                                             Just symbolName ->
                                                 " " ++ symbolName
+
+                                            Nothing ->
+                                                ""
                                        )
                         in
                             compare (filterKey moduleA symbolA) (filterKey moduleB symbolB)
@@ -1057,9 +1057,6 @@ doShowAddImportView filePath maybeToken model =
 
         defaultSymbolName =
             case maybeToken of
-                Nothing ->
-                    Nothing
-
                 Just token ->
                     case getModuleName token of
                         "" ->
@@ -1067,6 +1064,9 @@ doShowAddImportView filePath maybeToken model =
 
                         moduleName ->
                             Just (getModuleName token)
+
+                Nothing ->
+                    Nothing
     in
         ( model
         , ( defaultSymbolName, model.activeFile, moduleAndSymbolsAndAllExposed )
@@ -1083,23 +1083,8 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
 
         updatedImports =
             (case Dict.get moduleName fileContents.imports of
-                Nothing ->
-                    let
-                        importToAdd =
-                            case maybeSymbolName of
-                                Nothing ->
-                                    { alias = Nothing, exposed = None }
-
-                                Just symbolName ->
-                                    { alias = Nothing, exposed = Some (Set.singleton symbolName) }
-                    in
-                        Dict.insert moduleName importToAdd fileContents.imports
-
                 Just moduleImport ->
                     case maybeSymbolName of
-                        Nothing ->
-                            fileContents.imports
-
                         Just symbolName ->
                             case moduleImport.exposed of
                                 All ->
@@ -1113,6 +1098,21 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
 
                                 None ->
                                     Dict.update moduleName (always <| Just { moduleImport | exposed = Some (Set.singleton symbolName) }) fileContents.imports
+
+                        Nothing ->
+                            fileContents.imports
+
+                Nothing ->
+                    let
+                        importToAdd =
+                            case maybeSymbolName of
+                                Just symbolName ->
+                                    { alias = Nothing, exposed = Some (Set.singleton symbolName) }
+
+                                Nothing ->
+                                    { alias = Nothing, exposed = None }
+                    in
+                        Dict.insert moduleName importToAdd fileContents.imports
             )
                 -- Remove default imports.
                 |>
@@ -1138,11 +1138,11 @@ importsToString imports tokens =
                 let
                     importPart =
                         case alias of
-                            Nothing ->
-                                "import " ++ moduleName
-
                             Just alias ->
                                 "import " ++ moduleName ++ " as " ++ alias
+
+                            Nothing ->
+                                "import " ++ moduleName
 
                     formatExposedSymbol token =
                         let
@@ -1156,16 +1156,16 @@ importsToString imports tokens =
                                 getHintsForToken (Just token) tokens
                         in
                             case List.head hints of
-                                Nothing ->
-                                    formatSymbol token
-
                                 Just { caseTipe } ->
                                     case caseTipe of
+                                        Just caseTipeString ->
+                                            caseTipeString ++ "(" ++ formatSymbol token ++ ")"
+
                                         Nothing ->
                                             formatSymbol token
 
-                                        Just caseTipeString ->
-                                            caseTipeString ++ "(" ++ formatSymbol token ++ ")"
+                                Nothing ->
+                                    formatSymbol token
 
                     exposingPart =
                         case exposed of
@@ -1184,9 +1184,6 @@ importsToString imports tokens =
                                             |> Set.filter
                                                 (\exposedSymbolName ->
                                                     case Dict.get moduleName defaultImports of
-                                                        Nothing ->
-                                                            True
-
                                                         Just { exposed } ->
                                                             case exposed of
                                                                 Some defaultExposedSymbols ->
@@ -1194,6 +1191,9 @@ importsToString imports tokens =
 
                                                                 _ ->
                                                                     True
+
+                                                        Nothing ->
+                                                            True
                                                 )
                                 in
                                     " exposing (" ++ (Set.toList nonDefaultExposedSymbols |> List.map formatExposedSymbol |> String.join ", ") ++ ")"
@@ -1292,9 +1292,6 @@ getDefaultValueForType tipeString activeTokens maybeRootTipeString =
             getTupleStringFromParts parts
     else
         case List.head (String.split " " tipeString) of
-            Nothing ->
-                ""
-
             Just tipeString ->
                 case tipeString of
                     -- Primitives
@@ -1340,23 +1337,33 @@ getDefaultValueForType tipeString activeTokens maybeRootTipeString =
 
                     _ ->
                         case getHintsForToken (Just tipeString) activeTokens |> List.head of
-                            Nothing ->
-                                ""
-
                             Just hint ->
                                 -- Avoid infinite recursion.
                                 if hint.kind /= KindType && hint.tipe /= tipeString then
                                     case maybeRootTipeString of
-                                        Nothing ->
-                                            getDefaultValueForType hint.tipe activeTokens (Just hint.name)
-
                                         Just rootTipeString ->
                                             if hint.name /= rootTipeString then
                                                 getDefaultValueForType hint.tipe activeTokens (Just hint.name)
                                             else
                                                 ""
+
+                                        Nothing ->
+                                            getDefaultValueForType hint.tipe activeTokens (Just hint.name)
+                                else if hint.kind == KindType then
+                                    case List.head hint.cases of
+                                        Just tipeCase ->
+                                            tipeCase.name
+
+                                        Nothing ->
+                                            ""
                                 else
                                     ""
+
+                            Nothing ->
+                                ""
+
+            Nothing ->
+                ""
 
 
 doConstructCaseOf : Token -> Model -> ( Model, Cmd Msg )
@@ -1370,9 +1377,6 @@ doConstructCaseOf token model =
 constructCaseOf : Token -> TokenDict -> Maybe String
 constructCaseOf token activeTokens =
     case getHintsForToken (Just token) activeTokens |> List.head of
-        Nothing ->
-            Nothing
-
         Just tokenHint ->
             let
                 tokenTipeParts =
@@ -1416,11 +1420,11 @@ constructCaseOf token activeTokens =
                                         |> List.filter (\hint -> List.length hint.cases > 0)
                                         |> List.head
                                 of
-                                    Nothing ->
-                                        ( [], [] )
-
                                     Just tipeHint ->
                                         ( tipeHint.cases, tipeHint.args )
+
+                                    Nothing ->
+                                        ( [], [] )
 
                 tipeArgsDict =
                     List.map2 (,) tipeArgs tokenTipeArgs
@@ -1436,11 +1440,11 @@ constructCaseOf token activeTokens =
                                             |> List.map
                                                 (\arg ->
                                                     case Dict.get arg tipeArgsDict of
-                                                        Nothing ->
-                                                            arg
-
                                                         Just a ->
                                                             a
+
+                                                        Nothing ->
+                                                            arg
                                                 )
                                 in
                                     tipeCase.name
@@ -1458,20 +1462,23 @@ constructCaseOf token activeTokens =
                 else
                     Nothing
 
+        Nothing ->
+            Nothing
+
 
 getFunctionArgName : String -> Dict.Dict String Int -> ( String, Dict.Dict String Int )
 getFunctionArgName argString argNameCounters =
     let
         updatePartNameAndArgNameCounters partName1 argNameCounters1 =
             case Dict.get partName1 argNameCounters1 of
-                Nothing ->
-                    ( partName1
-                    , Dict.insert partName1 1 argNameCounters1
-                    )
-
                 Just count ->
                     ( partName1 ++ (toString (count + 1))
                     , Dict.update partName1 (always <| Just (count + 1)) argNameCounters1
+                    )
+
+                Nothing ->
+                    ( partName1
+                    , Dict.insert partName1 1 argNameCounters1
                     )
     in
         if isRecordString argString then
@@ -1545,9 +1552,6 @@ getFileContentsOfProject projectDirectory projectFileContentsDict =
 getExposedHints : Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> Set.Set ( String, String )
 getExposedHints maybeActiveFile projectFileContentsDict projectPackageDocs =
     case maybeActiveFile of
-        Nothing ->
-            Set.empty
-
         Just { projectDirectory } ->
             let
                 fileContentsDict =
@@ -1575,11 +1579,11 @@ getExposedHints maybeActiveFile projectFileContentsDict projectPackageDocs =
                             let
                                 exposed =
                                     case Dict.get moduleDocs.name importsPlusActiveModule of
-                                        Nothing ->
-                                            None
-
                                         Just { exposed } ->
                                             exposed
+
+                                        Nothing ->
+                                            None
                             in
                                 (((moduleDocs.values.aliases
                                     ++ (List.map tipeToValue moduleDocs.values.tipes)
@@ -1610,6 +1614,9 @@ getExposedHints maybeActiveFile projectFileContentsDict projectPackageDocs =
                         )
                     |> Set.fromList
 
+        Nothing ->
+            Set.empty
+
 
 getImportsPlusActiveModuleForActiveFile : Maybe ActiveFile -> FileContentsDict -> ImportDict
 getImportsPlusActiveModuleForActiveFile maybeActiveFile fileContentsDict =
@@ -1624,9 +1631,6 @@ getImportsPlusActiveModule fileContents =
 getActiveFileContents : Maybe ActiveFile -> FileContentsDict -> FileContents
 getActiveFileContents maybeActiveFile fileContentsDict =
     case maybeActiveFile of
-        Nothing ->
-            emptyFileContents
-
         Just { filePath } ->
             case Dict.get filePath fileContentsDict of
                 Just fileContents ->
@@ -1634,6 +1638,9 @@ getActiveFileContents maybeActiveFile fileContentsDict =
 
                 Nothing ->
                     emptyFileContents
+
+        Nothing ->
+            emptyFileContents
 
 
 type alias ModuleDocs =
@@ -1924,9 +1931,6 @@ type alias ImportSuggestion =
 getActiveTokens : Maybe ActiveFile -> Maybe ActiveTopLevel -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict
 getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict projectPackageDocs =
     case maybeActiveFile of
-        Nothing ->
-            Dict.empty
-
         Just { projectDirectory } ->
             let
                 fileContentsDict =
@@ -1959,6 +1963,9 @@ getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict proj
             in
                 List.foldl insert topLevelTokens argHints
 
+        Nothing ->
+            Dict.empty
+
 
 {-| Example: "a b c" = ["a", "b", "c"]
 -}
@@ -1982,11 +1989,11 @@ getArgsPartsRecur str acc parts ( openParentheses, openBraces ) =
             let
                 ( thisChar, thisRest ) =
                     case String.uncons str of
-                        Nothing ->
-                            ( "", str )
-
                         Just ( ch, rest ) ->
                             ( String.fromChar ch, rest )
+
+                        Nothing ->
+                            ( "", str )
             in
                 if openParentheses == 0 && openBraces == 0 && thisChar == " " then
                     getArgsPartsRecur thisRest "" (parts ++ [ String.trim acc ]) ( 0, 0 )
@@ -2034,11 +2041,11 @@ getTipePartsRecur str acc parts ( openParentheses, openBraces ) =
             let
                 getCharAndRest s =
                     case String.uncons s of
-                        Nothing ->
-                            ( "", s )
-
                         Just ( ch, rest ) ->
                             ( String.fromChar ch, rest )
+
+                        Nothing ->
+                            ( "", s )
 
                 ( thisChar, thisRest ) =
                     getCharAndRest str
@@ -2093,11 +2100,11 @@ getTuplePartsRecur str acc parts ( openParentheses, openBraces ) =
             let
                 ( thisChar, thisRest ) =
                     case String.uncons str of
-                        Nothing ->
-                            ( "", str )
-
                         Just ( ch, rest ) ->
                             ( String.fromChar ch, rest )
+
+                        Nothing ->
+                            ( "", str )
             in
                 if openParentheses == 0 && openBraces == 0 && thisChar == "," then
                     getTuplePartsRecur thisRest "" (parts ++ [ String.trim acc ]) ( 0, 0 )
@@ -2160,11 +2167,11 @@ getRecordTipePartsRecur str ( fieldAcc, tipeAcc ) lookingForTipe parts ( openPar
             let
                 ( thisChar, thisRest ) =
                     case String.uncons str of
-                        Nothing ->
-                            ( "", str )
-
                         Just ( ch, rest ) ->
                             ( String.fromChar ch, rest )
+
+                        Nothing ->
+                            ( "", str )
             in
                 if openParentheses == 0 && openBraces == 0 && thisChar == "," then
                     getRecordTipePartsRecur thisRest ( "", "" ) False (parts ++ [ ( String.trim fieldAcc, String.trim tipeAcc ) ]) ( 0, 0 )
@@ -2267,11 +2274,11 @@ topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
 
                     ( True, False ) ->
                         case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
-                            Nothing ->
-                                []
-
                             Just { tipe } ->
                                 getRecordFields tipe
+
+                            Nothing ->
+                                []
 
                     ( False, _ ) ->
                         getRecordFieldTokens name tipeString topLevelTokens True Nothing
@@ -2316,11 +2323,11 @@ getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf maybeRootTipeS
                         getRecordFields tipeString
                     else
                         case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
-                            Nothing ->
-                                []
-
                             Just { tipe } ->
                                 getRecordFields tipe
+
+                            Nothing ->
+                                []
              else if isRecordString tipeString then
                 getRecordTipeParts tipeString
                     |> List.concatMap
@@ -2336,23 +2343,23 @@ getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf maybeRootTipeS
                     |> List.concat
              else
                 case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
-                    Nothing ->
-                        []
-
                     Just hint ->
                         -- Avoid infinite recursion.
                         if hint.kind /= KindType && hint.tipe /= tipeString then
                             case maybeRootTipeString of
-                                Nothing ->
-                                    getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
-
                                 Just rootTipeString ->
                                     if hint.name /= rootTipeString then
                                         getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
                                     else
                                         []
+
+                                Nothing ->
+                                    getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
                         else
                             []
+
+                    Nothing ->
+                        []
             )
 
 
@@ -2408,11 +2415,11 @@ nameToHints moduleDocs { alias, exposed } kind ( { name, comment, tipe, args }, 
             , tipe = tipe
             , args =
                 case args of
-                    Nothing ->
-                        []
-
                     Just args ->
                         args
+
+                    Nothing ->
+                        []
             , caseTipe = Nothing
             , cases = tipeCases
             , kind = kind
@@ -2446,11 +2453,11 @@ moduleToHints moduleDocs { alias, exposed } =
             }
     in
         case alias of
-            Nothing ->
-                [ ( name, hint ) ]
-
             Just alias ->
                 [ ( name, hint ), ( alias, hint ) ]
+
+            Nothing ->
+                [ ( name, hint ) ]
 
 
 type alias RawImport =
@@ -2504,14 +2511,14 @@ toImport { name, alias, exposed } =
     let
         exposedSet =
             case exposed of
-                Nothing ->
-                    None
-
                 Just [ ".." ] ->
                     All
 
                 Just vars ->
                     Some (Set.fromList vars)
+
+                Nothing ->
+                    None
     in
         ( name, Import alias exposedSet )
 
@@ -2628,11 +2635,11 @@ getModuleAndSymbolName { fullName, caseTipe, kind } =
                     symbolName
                 , if moduleName /= "" then
                     (case caseTipe of
-                        Nothing ->
-                            Just symbolName
-
                         Just caseTipe ->
                             Just (caseTipe ++ "(" ++ symbolName ++ ")")
+
+                        Nothing ->
+                            Just symbolName
                     )
                   else
                     Nothing
@@ -2685,11 +2692,11 @@ last list =
 decapitalize : String -> String
 decapitalize str =
     case String.uncons str of
-        Nothing ->
-            ""
-
         Just ( ch, rest ) ->
             (String.toLower <| String.fromChar ch) ++ rest
+
+        Nothing ->
+            ""
 
 
 
