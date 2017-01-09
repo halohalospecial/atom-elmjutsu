@@ -1,3 +1,6 @@
+## 2.15.4
+* Fix "Cannot find module 'underscore'" error (#36).  Thanks to @brian-carroll for reporting!
+
 ## 2.15.3
 * Allow nested if/then/else autocompletion.
 
