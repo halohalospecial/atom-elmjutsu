@@ -1,3 +1,6 @@
+## 2.16.1
+* Add screen capture for "Replace type with default" autocompletion.
+
 ## 2.16.0
 * Add autocompletion for "Replace type with default".
 * Fix insertion bugs for case/of and let/in.

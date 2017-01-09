@@ -65,6 +65,8 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).
 
 ![construct-case-of](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-case-of.gif?raw=true)
 
+![construct-default-value-for-type](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-default-value-for-type.gif?raw=true)
+
 ![construct-from-type-annotation-1](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-from-type-annotation-1.gif?raw=true)
 
 ![construct-from-type-annotation-2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-from-type-annotation-2.gif?raw=true)
