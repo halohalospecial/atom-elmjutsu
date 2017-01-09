@@ -1,6 +1,8 @@
 ## 2.16.0
+* Add autocompletion for "Replace type with default".
 * Fix insertion bugs for case/of and let/in.
 * Fix type info display.
+* Set default value of union type to first case.
 
 ## 2.15.4
 * Fix "Cannot find module 'underscore'" error (#36).  Thanks to @brian-carroll for reporting!

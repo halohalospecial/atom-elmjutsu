@@ -1,4 +1,4 @@
-module TestArgTypes exposing (..)
+module ArgTypes exposing (..)
 
 
 type alias Position =
@@ -71,6 +71,12 @@ f11 ( a, bc ) =
 f12 : ( Int, { a : Int, b : Int } ) -> Int
 f12 ( i, { a, b } ) =
     i + a * b
+
+
+f13 : Position -> Int
+f13 ({ x, y } as position) =
+    -- Not yet supported.
+    x + y + position.x + position.y
 
 
 type alias RecursiveTypeAlias =

@@ -1,4 +1,4 @@
-module TestConstructCaseOf exposing (..)
+module ConstructCaseOf exposing (..)
 
 
 caseMaybe : Maybe String -> Int
@@ -61,7 +61,7 @@ caseMyType myType =
 
 caseTuple : Bool -> Bool -> Int
 caseTuple bool bool2 =
-    {- Not yet implemented. -}
+    -- Not yet implemented.
     case ( bool, bool2 ) of
         ( True, True ) ->
             1

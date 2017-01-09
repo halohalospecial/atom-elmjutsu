@@ -1,4 +1,4 @@
-module TestConstructFromTypeAnnotation exposing (..)
+module ConstructFromTypeAnnotation exposing (..)
 
 -- import Set as S
 
@@ -63,6 +63,7 @@ aDict =
 
 aDict2 : Dict String String
 aDict2 =
+    -- Not yet supported.
     Dict.empty
 
 
@@ -115,10 +116,7 @@ aListTuple =
 
 a3DPosition : Position3D
 a3DPosition =
-    { x = 0.0
-    , y = 0.0
-    , z = 0.0
-    }
+    { x = 0.0, y = 0.0, z = 0.0 }
 
 
 a3DPosition2 : { x : Float, y : Float, z : Float }
@@ -136,39 +134,12 @@ a3DPosition2 =
 
 mixedPositions : ( ( Float, Float ), Position3D )
 mixedPositions =
-    ( ( 0.0, 0.0 )
-    , { x = 0.0
-      , y = 0.0
-      , z = 0.0
-      }
-    )
+    ( ( 0.0, 0.0 ), { x = 0.0, y = 0.0, z = 0.0 } )
 
 
 mixedPositions2 : ( ( Float, Float ), { x : Float, y : Float, pos : Position2D } )
 mixedPositions2 =
-    ( ( 0.0, 0.0 )
-    , { x = 0.0
-      , y = 0.0
-      , pos = ( 0, 0 )
-      }
-    )
-
-
-
--- type CustomType = TypeA | TypeB
---
--- withType : { a : Int, b : CustomType }
--- withType =
---     { a = 0, b = { a =  } }
---
--- type alias CustomType =
---     { a : CustomType
---     }
---
--- withRecursiveTypeAlias : { a : Int, b : CustomType }
--- withRecursiveTypeAlias =
---     { a = 0, b = { a =  } }
--- ----------
+    ( ( 0.0, 0.0 ), { x = 0.0, y = 0.0, pos = ( 0, 0 ) } )
 
 
 ta1 : Int -> Int -> Int -> Int
@@ -192,7 +163,7 @@ ta4 position2D record record2 =
 
 
 ta5 : Position2D -> ( Int, { a : Int, b : Int } ) -> Int -> Int
-ta5 position2D ( int, { a, b } ) int2 =
+ta5 position2D ( int, record ) int2 =
     0
 
 
@@ -203,10 +174,41 @@ ta6 intStringDictDictList =
 
 ta7 : List ( String, Int ) -> Int
 ta7 intStringList =
-    {- Should be `stringIntTupleList`? -}
+    -- Should be `stringIntTupleList`?
     0
 
 
 ta8 : ( Int, Int ) -> ( Int, Int ) -> Int -> Int
 ta8 ( int, int2 ) ( int3, int4 ) int5 =
     0
+
+
+type MyType a
+    = MyTypeA a
+    | MyTypeB
+
+
+ta9 : MyType String -> MyType String
+ta9 stringMyType =
+    MyTypeA ""
+
+
+ta10 : (a -> b) -> (a -> b) -> List a -> List b
+ta10 function function2 aList =
+    -- Not yet supported.
+    []
+
+
+
+-- withType : { a : Int, b : MyType }
+-- withType =
+--     { a = 0, b = { a =  } }
+--
+-- type alias MyType =
+--     { a : MyType
+--     }
+--
+-- withRecursiveTypeAlias : { a : Int, b : MyType }
+-- withRecursiveTypeAlias =
+--     { a = 0, b = { a =  } }
+-- ----------

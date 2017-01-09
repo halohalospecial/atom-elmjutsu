@@ -37,6 +37,7 @@ subscriptions model =
         , addImportSub AddImport
         , constructFromTypeAnnotationSub ConstructFromTypeAnnotation
         , constructCaseOfSub ConstructCaseOf
+        , constructDefaultValueForTypeSub ConstructDefaultValueForType
         ]
 
 
@@ -95,6 +96,9 @@ port constructFromTypeAnnotationSub : (String -> msg) -> Sub msg
 port constructCaseOfSub : (Token -> msg) -> Sub msg
 
 
+port constructDefaultValueForTypeSub : (Token -> msg) -> Sub msg
+
+
 
 -- OUTGOING PORTS
 
@@ -151,6 +155,9 @@ port fromTypeAnnotationConstructedCmd : String -> Cmd msg
 
 
 port caseOfConstructedCmd : Maybe Token -> Cmd msg
+
+
+port defaultValueForTypeConstructedCmd : Maybe String -> Cmd msg
 
 
 
@@ -278,6 +285,7 @@ type Msg
     | AddImport ( FilePath, ProjectDirectory, String, Maybe String )
     | ConstructFromTypeAnnotation String
     | ConstructCaseOf Token
+    | ConstructDefaultValueForType Token
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -354,8 +362,11 @@ update msg model =
         ConstructFromTypeAnnotation typeAnnotation ->
             doConstructFromTypeAnnotation typeAnnotation model
 
-        ConstructCaseOf tipe ->
-            doConstructCaseOf tipe model
+        ConstructCaseOf token ->
+            doConstructCaseOf token model
+
+        ConstructDefaultValueForType token ->
+            doConstructDefaultValueForType token model
 
 
 doUpdateActiveHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
@@ -1244,7 +1255,7 @@ constructFromTypeAnnotation typeAnnotation activeTokens =
                )
             ++ (String.join " " argNames)
             ++ " =\n    "
-            ++ getDefaultValueForType returnTipe activeTokens Nothing
+            ++ getDefaultValueForType activeTokens Nothing returnTipe
 
 
 getDefaultArgNames : List String -> List String
@@ -1267,15 +1278,15 @@ getDefaultArgNames args =
         argNames
 
 
-getDefaultValueForType : String -> TokenDict -> Maybe String -> String
-getDefaultValueForType tipeString activeTokens maybeRootTipeString =
+getDefaultValueForType : TokenDict -> Maybe String -> String -> String
+getDefaultValueForType activeTokens maybeRootTipeString tipeString =
     if isRecordString tipeString then
         let
             fieldAndValues =
                 getRecordTipeParts tipeString
                     |> List.map
                         (\( field, tipe ) ->
-                            field ++ " = " ++ getDefaultValueForType tipe activeTokens maybeRootTipeString
+                            field ++ " = " ++ getDefaultValueForType activeTokens maybeRootTipeString tipe
                         )
                     |> String.join ", "
         in
@@ -1286,14 +1297,14 @@ getDefaultValueForType tipeString activeTokens maybeRootTipeString =
                 getTupleParts tipeString
                     |> List.map
                         (\part ->
-                            getDefaultValueForType part activeTokens maybeRootTipeString
+                            getDefaultValueForType activeTokens maybeRootTipeString part
                         )
         in
             getTupleStringFromParts parts
     else
         case List.head (String.split " " tipeString) of
-            Just tipeString ->
-                case tipeString of
+            Just headTipeString ->
+                case headTipeString of
                     -- Primitives
                     "Bool" ->
                         "False"
@@ -1336,23 +1347,36 @@ getDefaultValueForType tipeString activeTokens maybeRootTipeString =
                         "Sub.none"
 
                     _ ->
-                        case getHintsForToken (Just tipeString) activeTokens |> List.head of
+                        case getHintsForToken (Just headTipeString) activeTokens |> List.head of
                             Just hint ->
                                 -- Avoid infinite recursion.
-                                if hint.kind /= KindType && hint.tipe /= tipeString then
+                                if hint.kind /= KindType && hint.tipe /= headTipeString then
                                     case maybeRootTipeString of
                                         Just rootTipeString ->
                                             if hint.name /= rootTipeString then
-                                                getDefaultValueForType hint.tipe activeTokens (Just hint.name)
+                                                getDefaultValueForType activeTokens (Just hint.name) hint.tipe
                                             else
                                                 ""
 
                                         Nothing ->
-                                            getDefaultValueForType hint.tipe activeTokens (Just hint.name)
+                                            getDefaultValueForType activeTokens (Just hint.name) hint.tipe
                                 else if hint.kind == KindType then
                                     case List.head hint.cases of
                                         Just tipeCase ->
-                                            tipeCase.name
+                                            let
+                                                ( _, annotatedTipeArgs ) =
+                                                    tipeAnnotationToNameAndArgs tipeString
+
+                                                alignedArgs =
+                                                    getTipeCaseAlignedArgTipes hint.args annotatedTipeArgs tipeCase.args
+                                            in
+                                                tipeCase.name
+                                                    ++ (if List.length alignedArgs > 0 then
+                                                            " "
+                                                        else
+                                                            ""
+                                                       )
+                                                    ++ String.join " " (List.map (getDefaultValueForType activeTokens Nothing) alignedArgs)
 
                                         Nothing ->
                                             ""
@@ -1374,23 +1398,40 @@ doConstructCaseOf token model =
     )
 
 
+doConstructDefaultValueForType : Token -> Model -> ( Model, Cmd Msg )
+doConstructDefaultValueForType token model =
+    ( model
+    , constructDefaultValueForType token model.activeTokens
+        |> defaultValueForTypeConstructedCmd
+    )
+
+
+tipeAnnotationToNameAndArgs : String -> ( String, List String )
+tipeAnnotationToNameAndArgs tipeString =
+    let
+        tipeParts =
+            getArgsParts tipeString
+
+        tipeName =
+            tipeParts
+                |> List.head
+                |> Maybe.withDefault ""
+
+        tipeArgs =
+            tipeParts
+                |> List.tail
+                |> Maybe.withDefault []
+    in
+        ( tipeName, tipeArgs )
+
+
 constructCaseOf : Token -> TokenDict -> Maybe String
 constructCaseOf token activeTokens =
     case getHintsForToken (Just token) activeTokens |> List.head of
         Just tokenHint ->
             let
-                tokenTipeParts =
-                    getArgsParts tokenHint.tipe
-
-                tokenTipeName =
-                    tokenTipeParts
-                        |> List.head
-                        |> Maybe.withDefault ""
-
-                tokenTipeArgs =
-                    tokenTipeParts
-                        |> List.tail
-                        |> Maybe.withDefault []
+                ( tokenTipeName, tokenTipeArgs ) =
+                    tipeAnnotationToNameAndArgs tokenHint.tipe
 
                 ( tipeCases, tipeArgs ) =
                     case tokenTipeName of
@@ -1425,10 +1466,6 @@ constructCaseOf token activeTokens =
 
                                     Nothing ->
                                         ( [], [] )
-
-                tipeArgsDict =
-                    List.map2 (,) tipeArgs tokenTipeArgs
-                        |> Dict.fromList
             in
                 if List.length tipeCases > 0 then
                     tipeCases
@@ -1436,16 +1473,7 @@ constructCaseOf token activeTokens =
                             (\tipeCase ->
                                 let
                                     alignedArgs =
-                                        tipeCase.args
-                                            |> List.map
-                                                (\arg ->
-                                                    case Dict.get arg tipeArgsDict of
-                                                        Just a ->
-                                                            a
-
-                                                        Nothing ->
-                                                            arg
-                                                )
+                                        getTipeCaseAlignedArgTipes tipeArgs tokenTipeArgs tipeCase.args
                                 in
                                     tipeCase.name
                                         ++ (if List.length alignedArgs > 0 then
@@ -1464,6 +1492,36 @@ constructCaseOf token activeTokens =
 
         Nothing ->
             Nothing
+
+
+constructDefaultValueForType : Token -> TokenDict -> Maybe String
+constructDefaultValueForType token activeTokens =
+    case getHintsForToken (Just token) activeTokens |> List.head of
+        Just hint ->
+            getDefaultValueForType activeTokens Nothing hint.tipe
+                |> Just
+
+        Nothing ->
+            Nothing
+
+
+getTipeCaseAlignedArgTipes : List String -> List String -> List String -> List String
+getTipeCaseAlignedArgTipes tipeArgs tipeAnnotationArgs tipeCaseArgs =
+    let
+        tipeArgsDict =
+            List.map2 (,) tipeArgs tipeAnnotationArgs
+                |> Dict.fromList
+    in
+        tipeCaseArgs
+            |> List.map
+                (\argTipe ->
+                    case Dict.get argTipe tipeArgsDict of
+                        Just a ->
+                            a
+
+                        Nothing ->
+                            argTipe
+                )
 
 
 getFunctionArgName : String -> Dict.Dict String Int -> ( String, Dict.Dict String Int )
@@ -2670,7 +2728,7 @@ infixRegex =
 
 argSeparatorRegex : Regex.Regex
 argSeparatorRegex =
-    Regex.regex "\\s+|\\(|\\)|\\.|,"
+    Regex.regex "\\s+|\\(|\\)|\\.|,|-|>"
 
 
 dropLast : List a -> List a
