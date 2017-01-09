@@ -1,3 +1,7 @@
+## 2.16.0
+* Fix insertion bugs for case/of and let/in.
+* Fix type info display.
+
 ## 2.15.4
 * Fix "Cannot find module 'underscore'" error (#36).  Thanks to @brian-carroll for reporting!
 
@@ -12,7 +16,7 @@
 
 ## 2.14.0
 * Add autocompletion for case/of.
-* Fix type info display. (#27).  Thanks to @refried for reporting!
+* Fix type info display (#27).  Thanks to @refried for reporting!
 
 ## 2.13.2
 * When autocompleting from type annotation, also provide default function body.

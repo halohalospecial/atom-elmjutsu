@@ -2372,8 +2372,15 @@ unionTagsToHints moduleDocs { alias, exposed } { name, comment, tipe, args, case
                     , moduleName = moduleDocs.name
                     , sourcePath = formatSourcePath moduleDocs name
                     , comment = comment
-                    , tipe = tipeCase.args ++ [ tipe ] |> String.join " -> "
-                    , args = args
+                    , tipe =
+                        tipeCase.args
+                            ++ [ if List.length args > 0 then
+                                    tipe ++ " " ++ String.join " " args
+                                 else
+                                    tipe
+                               ]
+                            |> String.join " -> "
+                    , args = tipeCase.args
                     , caseTipe = Just name
                     , cases = []
                     , kind = KindTypeCase
