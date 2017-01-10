@@ -109,7 +109,7 @@ port docsReadCmd : () -> Cmd msg
 port docsDownloadedCmd : List ( Dependency, String ) -> Cmd msg
 
 
-port downloadDocsFailedCmd : () -> Cmd msg
+port downloadDocsFailedCmd : String -> Cmd msg
 
 
 port goToDefinitionCmd : ( Maybe ActiveFile, EncodedSymbol ) -> Cmd msg
@@ -267,7 +267,7 @@ emptyFileContents =
 
 
 type Msg
-    = MaybeDocsDownloaded (Result Http.Error (List ( Dependency, String, List ModuleDocs )))
+    = MaybeDocsDownloaded (List Dependency) (Result Http.Error (List (Result Http.Error ( String, List ModuleDocs ))))
     | DocsRead (List ( Dependency, String ))
     | UpdateActiveHints ( Maybe ActiveTopLevel, Maybe Token )
     | UpdateActiveFile ( Maybe ActiveFile, Maybe ActiveTopLevel, Maybe Token )
@@ -291,21 +291,39 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        MaybeDocsDownloaded (Err _) ->
+        MaybeDocsDownloaded dependencies (Err result) ->
             ( model
-            , downloadDocsFailedCmd ()
+            , downloadDocsFailedCmd (toString result)
             )
 
-        MaybeDocsDownloaded (Ok result) ->
+        MaybeDocsDownloaded dependencies (Ok result) ->
             let
+                ( successes, failures ) =
+                    List.foldl
+                        (\( dependency, resultForDependency ) ( successes, failures ) ->
+                            case resultForDependency of
+                                Ok ( jsonString, moduleDocsList ) ->
+                                    ( successes ++ [ ( moduleDocsList, ( dependency, jsonString ) ) ], failures )
+
+                                Err message ->
+                                    ( successes, failures ++ [ toString message ++ " " ++ toPackageUri dependency ++ "documentation.json" ] )
+                        )
+                        ( [], [] )
+                        (List.map2 (,) dependencies result)
+
                 loadedPackageDocs =
-                    List.concatMap (\( _, _, moduleDocsList ) -> moduleDocsList) result
+                    successes
+                        |> List.concatMap Tuple.first
 
                 loadedDependenciesAndJson =
-                    List.map (\( dependency, jsonString, _ ) -> ( dependency, jsonString )) result
+                    successes
+                        |> List.map Tuple.second
             in
                 ( addLoadedPackageDocs loadedPackageDocs model
-                , docsDownloadedCmd loadedDependenciesAndJson
+                , Cmd.batch
+                    [ docsDownloadedCmd loadedDependenciesAndJson
+                    , downloadDocsFailedCmd (String.join "\n" failures)
+                    ]
                 )
 
         DocsRead result ->
@@ -484,7 +502,7 @@ doDownloadMissingPackageDocs dependencies model =
     ( model
     , Cmd.batch
         [ downloadingPackageDocsCmd ()
-        , Task.attempt MaybeDocsDownloaded (downloadPackageDocsList dependencies)
+        , Task.attempt (MaybeDocsDownloaded dependencies) (downloadPackageDocsList dependencies)
         ]
     )
 
@@ -1278,6 +1296,17 @@ getDefaultArgNames args =
         argNames
 
 
+isPrimitiveType : String -> Bool
+isPrimitiveType tipeString =
+    List.member tipeString
+        [ "number"
+        , "Int"
+        , "Float"
+        , "Bool"
+        , "String"
+        ]
+
+
 getDefaultValueForType : TokenDict -> Maybe String -> String -> String
 getDefaultValueForType activeTokens maybeRootTipeString tipeString =
     if isRecordString tipeString then
@@ -1306,9 +1335,6 @@ getDefaultValueForType activeTokens maybeRootTipeString tipeString =
             Just headTipeString ->
                 case headTipeString of
                     -- Primitives
-                    "Bool" ->
-                        "False"
-
                     "number" ->
                         "0"
 
@@ -1317,6 +1343,9 @@ getDefaultValueForType activeTokens maybeRootTipeString tipeString =
 
                     "Float" ->
                         "0.0"
+
+                    "Bool" ->
+                        "False"
 
                     "String" ->
                         "\"\""
@@ -1496,13 +1525,19 @@ constructCaseOf token activeTokens =
 
 constructDefaultValueForType : Token -> TokenDict -> Maybe String
 constructDefaultValueForType token activeTokens =
-    case getHintsForToken (Just token) activeTokens |> List.head of
-        Just hint ->
-            getDefaultValueForType activeTokens Nothing hint.tipe
-                |> Just
-
-        Nothing ->
-            Nothing
+    if
+        -- isPrimitiveType token
+        --     ||
+        (getHintsForToken (Just token) activeTokens
+            |> List.filter (\hint -> hint.kind == KindType || hint.kind == KindTypeAlias)
+            |> List.length
+        )
+            > 0
+    then
+        getDefaultValueForType activeTokens Nothing token
+            |> Just
+    else
+        Nothing
 
 
 getTipeCaseAlignedArgTipes : List String -> List String -> List String -> List String
@@ -1780,14 +1815,14 @@ packageDocsPrefix =
     "http://package.elm-lang.org/packages/"
 
 
-downloadPackageDocsList : List Dependency -> Task.Task Http.Error (List ( Dependency, String, List ModuleDocs ))
+downloadPackageDocsList : List Dependency -> Task.Task Http.Error (List (Result Http.Error ( String, List ModuleDocs )))
 downloadPackageDocsList dependencies =
     dependencies
         |> List.map downloadPackageDocs
         |> optionalTaskSequence
 
 
-optionalTaskSequence : List (Task.Task a value) -> Task.Task b (List value)
+optionalTaskSequence : List (Task.Task error a) -> Task.Task error (List (Result error a))
 optionalTaskSequence list =
     -- Modified from `TheSeamau5/elm-task-extra`'s `optional`.
     case list of
@@ -1796,11 +1831,11 @@ optionalTaskSequence list =
 
         task :: tasks ->
             task
-                |> Task.andThen (\value -> Task.map ((::) value) (optionalTaskSequence tasks))
-                |> Task.onError (\_ -> optionalTaskSequence tasks)
+                |> Task.andThen (\value -> Task.map ((::) (Ok value)) (optionalTaskSequence tasks))
+                |> Task.onError (\value -> Task.map ((::) (Err value)) (optionalTaskSequence tasks))
 
 
-downloadPackageDocs : Dependency -> Task.Task Http.Error ( Dependency, String, List ModuleDocs )
+downloadPackageDocs : Dependency -> Task.Task Http.Error ( String, List ModuleDocs )
 downloadPackageDocs dependency =
     let
         packageUri =
@@ -1813,8 +1848,7 @@ downloadPackageDocs dependency =
             |> Http.toTask
             |> Task.map
                 (\jsonString ->
-                    ( dependency
-                    , jsonString
+                    ( jsonString
                     , Decode.decodeString (Decode.list (decodeModuleDocs packageUri)) jsonString
                         |> Result.toMaybe
                         |> Maybe.withDefault []

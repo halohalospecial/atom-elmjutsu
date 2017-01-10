@@ -8560,7 +8560,13 @@ var _user$project$Sidekick$viewHint = F2(
 		}();
 		var formattedTipe = _elm_lang$core$Native_Utils.eq(hint.tipe, '') ? ((_elm_lang$core$Native_Utils.cmp(
 			_elm_lang$core$List$length(hint.args),
-			0) > 0) ? A2(_elm_lang$core$String$join, ' ', hint.args) : '') : A2(_elm_lang$core$Basics_ops['++'], ': ', hint.tipe);
+			0) > 0) ? A2(
+			_elm_lang$core$Basics_ops['++'],
+			'*',
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				A2(_elm_lang$core$String$join, ' ', hint.args),
+				'*')) : '') : A2(_elm_lang$core$Basics_ops['++'], ': ', hint.tipe);
 		var formattedModuleName = (_elm_lang$core$Native_Utils.eq(hint.moduleName, '') || _elm_lang$core$Native_Utils.eq(activeFilePath, hint.sourcePath)) ? '' : A2(_elm_lang$core$Basics_ops['++'], hint.moduleName, '.');
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
@@ -8674,10 +8680,7 @@ var _user$project$Sidekick$docsDownloadedSub = _elm_lang$core$Native_Platform.in
 	'docsDownloadedSub',
 	_elm_lang$core$Json_Decode$null(
 		{ctor: '_Tuple0'}));
-var _user$project$Sidekick$downloadDocsFailedSub = _elm_lang$core$Native_Platform.incomingPort(
-	'downloadDocsFailedSub',
-	_elm_lang$core$Json_Decode$null(
-		{ctor: '_Tuple0'}));
+var _user$project$Sidekick$downloadDocsFailedSub = _elm_lang$core$Native_Platform.incomingPort('downloadDocsFailedSub', _elm_lang$core$Json_Decode$string);
 var _user$project$Sidekick$readingPackageDocsSub = _elm_lang$core$Native_Platform.incomingPort(
 	'readingPackageDocsSub',
 	_elm_lang$core$Json_Decode$null(
@@ -8732,7 +8735,9 @@ var _user$project$Sidekick$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{note: 'Failed to download package docs.'}),
+						{
+							note: A2(_elm_lang$core$Basics_ops['++'], 'Failed to download package docs:\n', _p2._0)
+						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ReadingPackageDocs':
@@ -8880,14 +8885,27 @@ var _user$project$Sidekick$view = function (_p3) {
 				hintsView,
 				{
 					ctor: '::',
-					_0: _elm_lang$html$Html$text(_p4.note),
+					_0: A2(
+						_elm_lang$html$Html$span,
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html_Attributes$class('note'),
+							_1: {ctor: '[]'}
+						},
+						{
+							ctor: '::',
+							_0: _elm_lang$html$Html$text(_p4.note),
+							_1: {ctor: '[]'}
+						}),
 					_1: {ctor: '[]'}
 				}));
 	}
 };
 var _user$project$Sidekick$DownloadingPackageDocs = {ctor: 'DownloadingPackageDocs'};
 var _user$project$Sidekick$ReadingPackageDocs = {ctor: 'ReadingPackageDocs'};
-var _user$project$Sidekick$DownloadDocsFailed = {ctor: 'DownloadDocsFailed'};
+var _user$project$Sidekick$DownloadDocsFailed = function (a) {
+	return {ctor: 'DownloadDocsFailed', _0: a};
+};
 var _user$project$Sidekick$DocsDownloaded = {ctor: 'DocsDownloaded'};
 var _user$project$Sidekick$DocsRead = {ctor: 'DocsRead'};
 var _user$project$Sidekick$ActiveFileChanged = function (a) {
@@ -8918,20 +8936,17 @@ var _user$project$Sidekick$subscriptions = function (model) {
 							}),
 						_1: {
 							ctor: '::',
-							_0: _user$project$Sidekick$downloadDocsFailedSub(
-								function (_p8) {
-									return _user$project$Sidekick$DownloadDocsFailed;
-								}),
+							_0: _user$project$Sidekick$downloadDocsFailedSub(_user$project$Sidekick$DownloadDocsFailed),
 							_1: {
 								ctor: '::',
 								_0: _user$project$Sidekick$readingPackageDocsSub(
-									function (_p9) {
+									function (_p8) {
 										return _user$project$Sidekick$ReadingPackageDocs;
 									}),
 								_1: {
 									ctor: '::',
 									_0: _user$project$Sidekick$downloadingPackageDocsSub(
-										function (_p10) {
+										function (_p9) {
 											return _user$project$Sidekick$DownloadingPackageDocs;
 										}),
 									_1: {ctor: '[]'}

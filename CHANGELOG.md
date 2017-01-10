@@ -1,3 +1,9 @@
+## 2.17.0
+* Sidekick: Fix display bug for functions without type annotations.
+* Fix bug with Sidekick not displaying download errors.
+* Allow more cases for "Replace type with default" autocompletion.
+* Experimental commands: `Eval` and `Pipe Selections`.
+
 ## 2.16.2
 * Fix token regex bug which causes symbols like `*` to be ignored.
 

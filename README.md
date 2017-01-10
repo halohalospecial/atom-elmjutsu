@@ -43,6 +43,8 @@ https://atom.io/packages/elmjutsu
 
 ## Feature Details
 
+By default, the only thing this package does is parse your project's source files to extract information, and download documentation of 3rd-party Elm packages.  You have to manually enable the features that you need.  The downloaded documentation files will be saved to the path set in `Cache Directory` in the settings view.  If `Cache Directory` is blank, a temporary directory will be used.  Take note that most operating systems delete temporary directories at bootup or at regular intervals.
+
 ### Autocomplete
 
 Autocomplete is turned off by default.  To turn it on, check `Enable Autocomplete` in the package settings.
@@ -170,6 +172,13 @@ Here is an example:
 'atom-workspace':
   'f1': 'elmjutsu:toggle-sidekick'
   'ctrl-shift-f12': 'elmjutsu:hide-usages-panel'
+
+'atom-text-editor':
+  'alt-enter': 'elmjutsu:eval'
+  'ctrl-enter': 'elmjutsu:pipe-selections'
+
+'.elmjutsu-pipe-selections':
+  "ctrl-enter": "elmjutsu:apply-pipe-selections"
 ```
 
 Add them to your `keymap.cson` or bind them from `Settings` > `Keybindings`.

@@ -24,7 +24,7 @@ subscriptions model =
         , activeFileChangedSub ActiveFileChanged
         , docsReadSub (\_ -> DocsRead)
         , docsDownloadedSub (\_ -> DocsDownloaded)
-        , downloadDocsFailedSub (\_ -> DownloadDocsFailed)
+        , downloadDocsFailedSub DownloadDocsFailed
         , readingPackageDocsSub (\_ -> ReadingPackageDocs)
         , downloadingPackageDocsSub (\_ -> DownloadingPackageDocs)
         ]
@@ -46,7 +46,7 @@ port docsReadSub : (() -> msg) -> Sub msg
 port docsDownloadedSub : (() -> msg) -> Sub msg
 
 
-port downloadDocsFailedSub : (() -> msg) -> Sub msg
+port downloadDocsFailedSub : (String -> msg) -> Sub msg
 
 
 port readingPackageDocsSub : (() -> msg) -> Sub msg
@@ -103,7 +103,7 @@ type Msg
     | ActiveFileChanged (Maybe ActiveFile)
     | DocsRead
     | DocsDownloaded
-    | DownloadDocsFailed
+    | DownloadDocsFailed String
     | ReadingPackageDocs
     | DownloadingPackageDocs
     | GoToDefinition String
@@ -132,8 +132,8 @@ update msg model =
             , Cmd.none
             )
 
-        DownloadDocsFailed ->
-            ( { model | note = "Failed to download package docs." }
+        DownloadDocsFailed message ->
+            ( { model | note = "Failed to download package docs:\n" ++ message }
             , Cmd.none
             )
 
@@ -191,7 +191,7 @@ view { note, activeHints, activeFile } =
                         )
                         activeHints
             in
-                div [] <| hintsView ++ [ text note ]
+                div [] <| hintsView ++ [ span [ class "note" ] [ text note ] ]
 
 
 viewHint : String -> Hint -> String
@@ -206,7 +206,7 @@ viewHint activeFilePath hint =
         formattedTipe =
             if hint.tipe == "" then
                 if List.length hint.args > 0 then
-                    String.join " " hint.args
+                    "*" ++ String.join " " hint.args ++ "*"
                 else
                     ""
             else

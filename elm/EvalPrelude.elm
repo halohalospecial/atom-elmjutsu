@@ -1,4 +1,4 @@
-module PipeSelectionsPrelude exposing (..)
+module EvalPrelude exposing (..)
 
 import List as L
 import String as S
@@ -10,7 +10,7 @@ enumerate text =
         |> List.indexedMap (\i a -> toString (i + 1) ++ ". " ++ a)
 
 
-linesMap : (String -> String) -> String -> List String
-linesMap fn text =
+mapLines : (String -> String) -> String -> List String
+mapLines fn text =
     String.lines text
         |> List.map fn
