@@ -1,5 +1,6 @@
 ## 2.17.1
-* 
+* Detect qualified symbols from aliased imports.
+* Properly categorize project type aliases (also fixes broken "Replace type with default" autocompletion case).
 
 ## 2.17.0
 * Sidekick: Fix display bug for functions without type annotations.
