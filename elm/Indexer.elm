@@ -2061,7 +2061,7 @@ getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict proj
             Dict.empty
 
 
-{-| Example: "a b c" = ["a", "b", "c"]
+{-| Example: getArgsParts "a b c" == ["a", "b", "c"]
 -}
 getArgsParts : String -> List String
 getArgsParts argsString =
@@ -2113,7 +2113,7 @@ getArgsPartsRecur str acc parts ( openParentheses, openBraces ) =
                         getArgsPartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
-{-| Example: "Int -> Int -> Int" = ["Int", "Int"]
+{-| Example: getTipeParts "Int -> Int -> Int" == ["Int", "Int"]
 -}
 getTipeParts : String -> List String
 getTipeParts tipeString =
@@ -2171,7 +2171,7 @@ getTipePartsRecur str acc parts ( openParentheses, openBraces ) =
                         getTipePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
-{-| Example: "( Int, String )" = ["Int", "String"]
+{-| Example: getTupleParts "( Int, String )" == ["Int", "String"]
 -}
 getTupleParts : String -> List String
 getTupleParts tupleString =
@@ -2224,7 +2224,7 @@ getTuplePartsRecur str acc parts ( openParentheses, openBraces ) =
                         getTuplePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
-{-| Example: "{ a, b }" = ["a", "b"]
+{-| Example: getRecordArgParts "{ a, b }" == ["a", "b"]
 -}
 getRecordArgParts : String -> List String
 getRecordArgParts recordString =
@@ -2238,7 +2238,7 @@ getRecordArgParts recordString =
                 |> List.map String.trim
 
 
-{-| Example: "{ a : Int, b : String }" = [("a", "Int"), ("b", "String")]
+{-| Example: getRecordTipeParts "{ a : Int, b : String }" == [("a", "Int"), ("b", "String")]
 -}
 getRecordTipeParts : String -> List ( String, String )
 getRecordTipeParts tipeString =
