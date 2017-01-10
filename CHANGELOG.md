@@ -1,3 +1,6 @@
+## 2.17.1
+* 
+
 ## 2.17.0
 * Sidekick: Fix display bug for functions without type annotations.
 * Fix bug with Sidekick not displaying download errors.

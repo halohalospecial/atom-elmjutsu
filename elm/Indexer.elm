@@ -1002,13 +1002,13 @@ getImportersForToken token isCursorAtLastPartOfToken maybeActiveFile tokens acti
                                                                             [ alias ++ "." ++ hint.name ]
 
                                                                         ( _, All ) ->
-                                                                            [ hint.name, getModuleLocalName hint.moduleName alias hint.name ]
+                                                                            [ hint.name ] ++ getModuleLocalNames hint.moduleName alias hint.name
 
                                                                         ( _, Some exposedSet ) ->
                                                                             if Set.member hint.name exposedSet then
-                                                                                [ hint.name, getModuleLocalName hint.moduleName alias hint.name ]
+                                                                                [ hint.name ] ++ getModuleLocalNames hint.moduleName alias hint.name
                                                                             else
-                                                                                [ getModuleLocalName hint.moduleName alias hint.name ]
+                                                                                getModuleLocalNames hint.moduleName alias hint.name
 
                                                                 names =
                                                                     localNames |> Set.fromList |> Set.toList
@@ -2487,13 +2487,17 @@ unionTagsToHints moduleDocs { alias, exposed } { name, comment, tipe, args, case
                     , kind = KindTypeCase
                     }
 
-                moduleLocalName =
-                    getModuleLocalName moduleDocs.name alias tag
+                moduleLocalHints =
+                    getModuleLocalNames moduleDocs.name alias tag
+                        |> List.map
+                            (\moduleLocalName ->
+                                ( moduleLocalName, hint )
+                            )
             in
                 if Set.member name defaultTypes || isExposed tag exposed then
-                    ( tag, hint ) :: ( moduleLocalName, hint ) :: ( fullName, hint ) :: hints
+                    hints ++ [ ( fullName, hint ) ] ++ moduleLocalHints ++ [ ( tag, hint ) ]
                 else
-                    ( moduleLocalName, hint ) :: ( fullName, hint ) :: hints
+                    hints ++ [ ( fullName, hint ) ] ++ moduleLocalHints
     in
         List.foldl addHints [] cases
 
@@ -2519,13 +2523,17 @@ nameToHints moduleDocs { alias, exposed } kind ( { name, comment, tipe, args }, 
             , kind = kind
             }
 
-        moduleLocalName =
-            getModuleLocalName moduleDocs.name alias name
+        moduleLocalHints =
+            getModuleLocalNames moduleDocs.name alias name
+                |> List.map
+                    (\moduleLocalName ->
+                        ( moduleLocalName, hint )
+                    )
     in
         if isExposed name exposed then
-            [ ( name, hint ), ( moduleLocalName, hint ) ]
+            [ ( name, hint ) ] ++ moduleLocalHints
         else
-            [ ( moduleLocalName, hint ) ]
+            moduleLocalHints
 
 
 moduleToHints : ModuleDocs -> Import -> List ( String, Hint )
@@ -2577,9 +2585,14 @@ type Exposed
     | All
 
 
-getModuleLocalName : String -> Maybe String -> String -> String
-getModuleLocalName moduleName alias name =
-    (Maybe.withDefault moduleName alias) ++ "." ++ name
+getModuleLocalNames : String -> Maybe String -> String -> List String
+getModuleLocalNames moduleName alias name =
+    case alias of
+        Just alias ->
+            [ alias ++ "." ++ name, moduleName ++ "." ++ name ]
+
+        Nothing ->
+            [ moduleName ++ "." ++ name ]
 
 
 isExposed : String -> Exposed -> Bool
