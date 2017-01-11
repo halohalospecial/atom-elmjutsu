@@ -1,3 +1,7 @@
+## 2.17.2
+* "Failed to download" message should not be displayed if there are no errors.
+* Fix parsing regex for Windows.  Thanks to @mandrolic for reporting and debugging!
+
 ## 2.17.1
 * Detect qualified symbols from aliased imports.
 * Properly categorize project type aliases (also fixes broken "Replace type with default" autocompletion case).
