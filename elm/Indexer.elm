@@ -321,9 +321,13 @@ update msg model =
             in
                 ( addLoadedPackageDocs loadedPackageDocs model
                 , Cmd.batch
-                    [ docsDownloadedCmd loadedDependenciesAndJson
-                    , downloadDocsFailedCmd (String.join "\n" failures)
-                    ]
+                    ([ docsDownloadedCmd loadedDependenciesAndJson ]
+                        ++ (if List.length failures > 0 then
+                                [ downloadDocsFailedCmd (String.join "\n" failures) ]
+                            else
+                                []
+                           )
+                    )
                 )
 
         DocsRead result ->

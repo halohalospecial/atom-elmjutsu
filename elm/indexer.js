@@ -11159,16 +11159,21 @@ var _user$project$Indexer$update = F2(
 						ctor: '_Tuple2',
 						_0: A2(_user$project$Indexer$addLoadedPackageDocs, loadedPackageDocs, model),
 						_1: _elm_lang$core$Platform_Cmd$batch(
-							{
-								ctor: '::',
-								_0: _user$project$Indexer$docsDownloadedCmd(loadedDependenciesAndJson),
-								_1: {
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								{
+									ctor: '::',
+									_0: _user$project$Indexer$docsDownloadedCmd(loadedDependenciesAndJson),
+									_1: {ctor: '[]'}
+								},
+								(_elm_lang$core$Native_Utils.cmp(
+									_elm_lang$core$List$length(failures),
+									0) > 0) ? {
 									ctor: '::',
 									_0: _user$project$Indexer$downloadDocsFailedCmd(
 										A2(_elm_lang$core$String$join, '\n', failures)),
 									_1: {ctor: '[]'}
-								}
-							})
+								} : {ctor: '[]'}))
 					};
 				}
 			case 'DocsRead':
