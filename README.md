@@ -57,6 +57,8 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 * Check `Enable Global Autocomplete` if you want include unimported project symbols.  This will also enable "Auto import" autocompletion.
 
+![auto-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/auto-import.gif?raw=true)
+
 * You can also check `Enable Autocomplete Snippets` if you prefer.
 
 ![autocomplete-snippet](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-snippet.gif?raw=true)
@@ -64,8 +66,6 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 * Special completions:
 
 Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).
-
-![auto-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/auto-import.gif?raw=true)
 
 ![construct-basic](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-basic.gif?raw=true)
 
