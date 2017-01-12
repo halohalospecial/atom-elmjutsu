@@ -576,7 +576,7 @@ doGetHintsForPartial : String -> Model -> ( Model, Cmd Msg )
 doGetHintsForPartial partial model =
     ( model
     , ( partial
-      , getHintsForPartial partial model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
+      , getHintsForPartial partial model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
             |> List.map encodeHint
       )
         |> hintsForPartialReceivedCmd
@@ -816,8 +816,8 @@ getHintsForToken maybeToken tokens =
             []
 
 
-getHintsForPartial : String -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> List Hint
-getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackageDocs =
+getHintsForPartial : String -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
+getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackageDocs activeTokens =
     case maybeActiveFile of
         Just { projectDirectory, filePath } ->
             let
@@ -831,6 +831,16 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
                 activeFileContents =
                     getFileContentsOfProject projectDirectory projectFileContentsDict
                         |> getActiveFileContents maybeActiveFile
+
+                filterByName =
+                    (\{ name } -> String.startsWith partial name)
+
+                filteredArgs =
+                    activeTokens
+                        |> Dict.values
+                        |> List.concat
+                        |> List.filter (\hint -> hint.moduleName == "")
+                        |> List.filter filterByName
 
                 filteredImportAliases =
                     Dict.values activeFileContents.imports
@@ -848,32 +858,36 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
                             )
 
                 ( exposedHints, unexposedHints ) =
-                    getExposedAndUnexposedHints importsPlusActiveModule allModuleDocs
-
-                filterHint =
-                    (\hint -> String.startsWith partial hint.name)
+                    getExposedAndUnexposedHints filePath importsPlusActiveModule allModuleDocs
 
                 filteredExposedHints =
-                    exposedHints |> List.filter filterHint
+                    exposedHints
+                        |> List.filter filterByName
 
                 filteredDefaultHints =
-                    defaultSuggestions |> List.filter filterHint
+                    defaultSuggestions
+                        |> List.filter filterByName
 
                 filteredUnexposedHints =
-                    unexposedHints |> List.filter filterHint
+                    unexposedHints
+                        |> List.filter filterByName
+
+                sortByName =
+                    List.sortBy .name
             in
-                filteredImportAliases
-                    ++ filteredExposedHints
-                    ++ filteredDefaultHints
-                    ++ filteredUnexposedHints
-                    |> List.sortBy .name
+                -- -- Prioritize by scope.
+                sortByName filteredDefaultHints
+                    ++ sortByName filteredArgs
+                    ++ sortByName filteredExposedHints
+                    ++ sortByName filteredImportAliases
+                    ++ sortByName filteredUnexposedHints
 
         Nothing ->
             []
 
 
-getExposedAndUnexposedHints : ImportDict -> List ModuleDocs -> ( List Hint, List Hint )
-getExposedAndUnexposedHints importsPlusActiveModule allModuleDocs =
+getExposedAndUnexposedHints : FilePath -> ImportDict -> List ModuleDocs -> ( List Hint, List Hint )
+getExposedAndUnexposedHints activeFilePath importsPlusActiveModule allModuleDocs =
     let
         ( exposedLists, unexposedLists ) =
             allModuleDocs
@@ -902,7 +916,14 @@ getExposedAndUnexposedHints importsPlusActiveModule allModuleDocs =
                                                 getFilteredHints moduleDocs importData
                                                     |> List.map
                                                         (\( name, hint ) ->
-                                                            { hint | name = name }
+                                                            let
+                                                                moduleNameToShow =
+                                                                    if hint.moduleName == "" || activeFilePath == hint.sourcePath then
+                                                                        ""
+                                                                    else
+                                                                        hint.moduleName
+                                                            in
+                                                                { hint | moduleName = moduleNameToShow, name = name }
                                                         )
 
                                             exposedNames =
@@ -952,6 +973,7 @@ getHintsForUnexposedNames moduleDocs unexposedNames =
             , caseTipe = Nothing
             , cases = []
             , kind = kind
+            , isImported = False
             }
 
         filter { name } =
@@ -976,6 +998,7 @@ getHintsForUnexposedNames moduleDocs unexposedNames =
                           , caseTipe = Nothing
                           , cases = tipe.cases
                           , kind = KindType
+                          , isImported = False
                           }
                         ]
                             ++ (tipe.cases
@@ -991,6 +1014,7 @@ getHintsForUnexposedNames moduleDocs unexposedNames =
                                             , caseTipe = Just tipe.name
                                             , cases = []
                                             , kind = KindTypeCase
+                                            , isImported = False
                                             }
                                         )
                                )
@@ -1969,6 +1993,7 @@ type alias Hint =
     , caseTipe : Maybe String
     , cases : List TipeCase
     , kind : SymbolKind
+    , isImported : Bool
     }
 
 
@@ -1983,6 +2008,7 @@ emptyHint =
     , caseTipe = Nothing
     , cases = []
     , kind = KindDefault
+    , isImported = True
     }
 
 
@@ -1995,6 +2021,7 @@ type alias EncodedHint =
     , args : List String
     , caseTipe : Maybe String
     , kind : String
+    , isImported : Bool
     }
 
 
@@ -2008,6 +2035,7 @@ encodeHint hint =
     , args = hint.args
     , caseTipe = hint.caseTipe
     , kind = symbolKindToString hint.kind
+    , isImported = hint.isImported
     }
 
 
@@ -2359,6 +2387,7 @@ topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
                     , caseTipe = Nothing
                     , cases = []
                     , kind = KindDefault
+                    , isImported = True
                     }
             in
                 [ ( name, hint ) ]
@@ -2501,6 +2530,7 @@ unionTagsToHints moduleDocs { alias, exposed } tipe =
                     , caseTipe = Just tipe.name
                     , cases = []
                     , kind = KindTypeCase
+                    , isImported = True
                     }
 
                 moduleLocalName =
@@ -2533,6 +2563,7 @@ nameToHints moduleDocs { alias, exposed } kind ( { name, comment, tipe, args }, 
             , caseTipe = Nothing
             , cases = tipeCases
             , kind = kind
+            , isImported = True
             }
 
         moduleLocalName =
@@ -2560,6 +2591,7 @@ moduleToHints moduleDocs { alias, exposed } =
             , caseTipe = Nothing
             , cases = []
             , kind = KindModule
+            , isImported = True
             }
     in
         case alias of

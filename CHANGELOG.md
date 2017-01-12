@@ -1,3 +1,8 @@
+## 2.18.0
+* Add global autocomplete option.
+* Add "Auto import" autocompletion.
+* Sort autocomplete suggestions by scope (primitives first, then args, then imported values, then unimported values).
+
 ## 2.17.2
 * "Failed to download" message should not be displayed if there are no errors.
 * Fix parsing regex for Windows.  Thanks to @mandrolic for reporting and debugging!
