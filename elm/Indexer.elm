@@ -72,7 +72,7 @@ port goToDefinitionSub : (Maybe String -> msg) -> Sub msg
 port showGoToSymbolViewSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
 
 
-port getHintsForPartialSub : (String -> msg) -> Sub msg
+port getHintsForPartialSub : (( String, Bool ) -> msg) -> Sub msg
 
 
 port getSuggestionsForImportSub : (String -> msg) -> Sub msg
@@ -276,7 +276,7 @@ type Msg
     | UpdateProjectDependencies ( String, List Dependency )
     | GoToDefinition (Maybe Token)
     | ShowGoToSymbolView ( Maybe ProjectDirectory, Maybe String )
-    | GetHintsForPartial String
+    | GetHintsForPartial ( String, Bool )
     | GetSuggestionsForImport String
     | AskCanGoToDefinition Token
     | GetImporterSourcePathsForToken ( Maybe ProjectDirectory, Maybe Token, Maybe Bool )
@@ -363,8 +363,8 @@ update msg model =
         ShowGoToSymbolView ( maybeProjectDirectory, maybeToken ) ->
             doShowGoToSymbolView maybeProjectDirectory maybeToken model
 
-        GetHintsForPartial partial ->
-            doGetHintsForPartial partial model
+        GetHintsForPartial ( partial, isGlobal ) ->
+            doGetHintsForPartial partial isGlobal model
 
         GetSuggestionsForImport partial ->
             doGetSuggestionsForImport partial model
@@ -572,11 +572,11 @@ doShowGoToSymbolView maybeProjectDirectory maybeToken model =
             )
 
 
-doGetHintsForPartial : String -> Model -> ( Model, Cmd Msg )
-doGetHintsForPartial partial model =
+doGetHintsForPartial : String -> Bool -> Model -> ( Model, Cmd Msg )
+doGetHintsForPartial partial isGlobal model =
     ( model
     , ( partial
-      , getHintsForPartial partial model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
+      , getHintsForPartial partial isGlobal model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
             |> List.map encodeHint
       )
         |> hintsForPartialReceivedCmd
@@ -816,8 +816,8 @@ getHintsForToken maybeToken tokens =
             []
 
 
-getHintsForPartial : String -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
-getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackageDocs activeTokens =
+getHintsForPartial : String -> Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
+getHintsForPartial partial isGlobal maybeActiveFile projectFileContentsDict projectPackageDocs activeTokens =
     case maybeActiveFile of
         Just { projectDirectory, filePath } ->
             let
@@ -835,14 +835,13 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
                 filterByName =
                     (\{ name } -> String.startsWith partial name)
 
-                filteredArgs =
+                filteredArgHints =
                     activeTokens
                         |> Dict.values
                         |> List.concat
-                        |> List.filter (\hint -> hint.moduleName == "")
-                        |> List.filter filterByName
+                        |> List.filter (\hint -> hint.moduleName == "" && String.startsWith partial hint.name)
 
-                filteredImportAliases =
+                filteredImportAliasHints =
                     Dict.values activeFileContents.imports
                         |> List.filterMap
                             (\anImport ->
@@ -858,39 +857,47 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
                             )
 
                 ( exposedHints, unexposedHints ) =
-                    getExposedAndUnexposedHints filePath importsPlusActiveModule allModuleDocs
-
-                filteredExposedHints =
-                    exposedHints
-                        |> List.filter filterByName
+                    if isGlobal then
+                        getExposedAndUnexposedHints filePath importsPlusActiveModule allModuleDocs True
+                    else
+                        let
+                            importedModuleDocs =
+                                allModuleDocs
+                                    |> List.filter
+                                        (\moduleDocs ->
+                                            List.member moduleDocs.name (Dict.keys importsPlusActiveModule)
+                                        )
+                        in
+                            getExposedAndUnexposedHints filePath importsPlusActiveModule importedModuleDocs False
 
                 filteredDefaultHints =
-                    defaultSuggestions
-                        |> List.filter filterByName
+                    List.filter filterByName defaultSuggestions
+
+                filteredExposedHints =
+                    List.filter filterByName exposedHints
 
                 filteredUnexposedHints =
-                    unexposedHints
-                        |> List.filter filterByName
+                    List.filter filterByName unexposedHints
 
                 sortByName =
                     List.sortBy .name
             in
                 -- -- Prioritize by scope.
                 sortByName filteredDefaultHints
-                    ++ sortByName filteredArgs
+                    ++ sortByName filteredArgHints
                     ++ sortByName filteredExposedHints
-                    ++ sortByName filteredImportAliases
+                    ++ sortByName filteredImportAliasHints
                     ++ sortByName filteredUnexposedHints
 
         Nothing ->
             []
 
 
-getExposedAndUnexposedHints : FilePath -> ImportDict -> List ModuleDocs -> ( List Hint, List Hint )
-getExposedAndUnexposedHints activeFilePath importsPlusActiveModule allModuleDocs =
+getExposedAndUnexposedHints : FilePath -> ImportDict -> List ModuleDocs -> Bool -> ( List Hint, List Hint )
+getExposedAndUnexposedHints activeFilePath importsPlusActiveModule moduleDocs willGetUnexposed =
     let
         ( exposedLists, unexposedLists ) =
-            allModuleDocs
+            moduleDocs
                 |> List.foldl
                     (\moduleDocs ( accExposedHints, accUnexposedHints ) ->
                         let
@@ -938,12 +945,18 @@ getExposedAndUnexposedHints activeFilePath importsPlusActiveModule allModuleDocs
                                                         )
                                         in
                                             ( exposed
-                                            , getHintsForUnexposedNames moduleDocs unexposedNames
+                                            , if willGetUnexposed then
+                                                getHintsForUnexposedNames moduleDocs unexposedNames
+                                              else
+                                                []
                                             )
 
                                     Nothing ->
                                         ( []
-                                        , getHintsForUnexposedNames moduleDocs allNames
+                                        , if willGetUnexposed then
+                                            getHintsForUnexposedNames moduleDocs allNames
+                                          else
+                                            []
                                         )
                         in
                             ( exposedHints :: accExposedHints
