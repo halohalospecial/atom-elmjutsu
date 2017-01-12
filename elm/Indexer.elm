@@ -576,7 +576,8 @@ doGetHintsForPartial : String -> Model -> ( Model, Cmd Msg )
 doGetHintsForPartial partial model =
     ( model
     , ( partial
-      , getHintsForPartial partial model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
+        --   , getHintsForPartial partial model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
+      , getHintsForPartial partial model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
             |> List.map encodeHint
       )
         |> hintsForPartialReceivedCmd
@@ -816,10 +817,10 @@ getHintsForToken maybeToken tokens =
             []
 
 
-getHintsForPartial : String -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
-getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackageDocs activeTokens =
+getHintsForPartial : String -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> List Hint
+getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackageDocs =
     case maybeActiveFile of
-        Just { projectDirectory } ->
+        Just { projectDirectory, filePath } ->
             let
                 allModuleDocs =
                     projectPackageDocs ++ getProjectModuleDocs projectDirectory projectFileContentsDict
@@ -828,57 +829,9 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
                     getFileContentsOfProject projectDirectory projectFileContentsDict
                         |> getImportsPlusActiveModuleForActiveFile maybeActiveFile
 
-                ( exposedSet, unexposedSet ) =
-                    getExposedAndUnexposedNames importsPlusActiveModule allModuleDocs
-
                 activeFileContents =
                     getFileContentsOfProject projectDirectory projectFileContentsDict
                         |> getActiveFileContents maybeActiveFile
-
-                maybeIncludeHint hint =
-                    let
-                        isIncluded =
-                            if hint.moduleName == "" || Set.member ( hint.moduleName, hint.name ) exposedSet then
-                                String.startsWith partial hint.name
-                            else
-                                True
-                    in
-                        if not isIncluded then
-                            Nothing
-                        else
-                            let
-                                moduleNameToShow =
-                                    if hint.moduleName == "" || activeFileContents.moduleDocs.name == hint.moduleName then
-                                        ""
-                                    else
-                                        hint.moduleName
-
-                                nameToShow =
-                                    if hint.moduleName == "" then
-                                        hint.name
-                                    else if Set.member ( hint.moduleName, hint.name ) exposedSet then
-                                        hint.name
-                                    else
-                                        let
-                                            moduleNamePrefix =
-                                                case Dict.get hint.moduleName activeFileContents.imports of
-                                                    Just { alias } ->
-                                                        case alias of
-                                                            Just moduleAlias ->
-                                                                moduleAlias ++ "."
-
-                                                            Nothing ->
-                                                                hint.moduleName ++ "."
-
-                                                    Nothing ->
-                                                        ""
-                                        in
-                                            moduleNamePrefix ++ hint.name
-                            in
-                                Just { hint | name = nameToShow, moduleName = moduleNameToShow }
-
-                exposedNames =
-                    Set.map Tuple.second exposedSet
 
                 filteredImportAliases =
                     Dict.values activeFileContents.imports
@@ -895,22 +848,13 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
                                         Nothing
                             )
 
+                ( exposedHints, unExposedHints ) =
+                    getExposedAndUnexposedHints importsPlusActiveModule allModuleDocs
+
                 filteredExposedHints =
-                    activeTokens
-                        |> Dict.map
-                            (\token hintList ->
-                                if
-                                    String.startsWith partial token
-                                        || (Set.member (getLastName token) exposedNames
-                                                && String.startsWith partial (getLastName token)
-                                           )
-                                then
-                                    List.filterMap maybeIncludeHint hintList
-                                else
-                                    []
-                            )
-                        |> Dict.values
-                        |> List.concat
+                    exposedHints
+                        |> List.filter
+                            (\hint -> String.startsWith partial hint.name)
 
                 filteredDefaultHints =
                     defaultSuggestions
@@ -920,77 +864,80 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
                             )
 
                 filteredUnexposedHints =
-                    allModuleDocs
-                        |> List.concatMap
-                            (\moduleDocs ->
-                                let
-                                    qualify name =
-                                        moduleDocs.name ++ "." ++ name
+                    []
 
-                                    valueToHint kind value =
-                                        { name = qualify value.name
-                                        , moduleName = moduleDocs.name
-                                        , sourcePath = moduleDocs.sourcePath
-                                        , comment = value.comment
-                                        , tipe = value.tipe
-                                        , args = value.args |> Maybe.withDefault []
-                                        , caseTipe = Nothing
-                                        , cases = []
-                                        , kind = kind
-                                        }
-
-                                    filter { name } =
-                                        not (Set.member ( moduleDocs.name, name ) exposedSet)
-                                            && String.startsWith partial (qualify name)
-
-                                    tipeAliasHints =
-                                        moduleDocs.values.aliases
-                                            |> List.filter filter
-                                            |> List.map (valueToHint KindTypeAlias)
-
-                                    tipeAndTipeCaseHints =
-                                        moduleDocs.values.tipes
-                                            |> List.filter filter
-                                            |> List.concatMap
-                                                (\tipe ->
-                                                    [ { name = qualify tipe.name
-                                                      , moduleName = moduleDocs.name
-                                                      , sourcePath = moduleDocs.sourcePath
-                                                      , comment = tipe.comment
-                                                      , tipe = tipe.tipe
-                                                      , args = tipe.args
-                                                      , caseTipe = Nothing
-                                                      , cases = tipe.cases
-                                                      , kind = KindType
-                                                      }
-                                                    ]
-                                                        ++ (tipe.cases
-                                                                |> List.filter filter
-                                                                |> List.map
-                                                                    (\tipeCase ->
-                                                                        { name = qualify tipeCase.name
-                                                                        , moduleName = moduleDocs.name
-                                                                        , sourcePath = moduleDocs.sourcePath
-                                                                        , comment = ""
-                                                                        , tipe = getTipeCaseTypeAnnotation tipeCase tipe
-                                                                        , args = tipeCase.args
-                                                                        , caseTipe = Just tipe.name
-                                                                        , cases = []
-                                                                        , kind = KindTypeCase
-                                                                        }
-                                                                    )
-                                                           )
-                                                )
-
-                                    valueHints =
-                                        moduleDocs.values.values
-                                            |> List.filter filter
-                                            |> List.map (valueToHint KindDefault)
-                                in
-                                    tipeAliasHints
-                                        ++ tipeAndTipeCaseHints
-                                        ++ valueHints
-                            )
+                -- filteredUnexposedHints =
+                --     allModuleDocs
+                --         |> List.concatMap
+                --             (\moduleDocs ->
+                --                 let
+                --                     qualify name =
+                --                         moduleDocs.name ++ "." ++ name
+                --
+                --                     valueToHint kind value =
+                --                         { name = qualify value.name
+                --                         , moduleName = moduleDocs.name
+                --                         , sourcePath = moduleDocs.sourcePath
+                --                         , comment = value.comment
+                --                         , tipe = value.tipe
+                --                         , args = value.args |> Maybe.withDefault []
+                --                         , caseTipe = Nothing
+                --                         , cases = []
+                --                         , kind = kind
+                --                         }
+                --
+                --                     filter { name } =
+                --                         Set.member ( moduleDocs.name, name ) unexposedSet
+                --                             && String.startsWith partial (qualify name)
+                --
+                --                     tipeAliasHints =
+                --                         moduleDocs.values.aliases
+                --                             |> List.filter filter
+                --                             |> List.map (valueToHint KindTypeAlias)
+                --
+                --                     tipeAndTipeCaseHints =
+                --                         moduleDocs.values.tipes
+                --                             |> List.filter filter
+                --                             |> List.concatMap
+                --                                 (\tipe ->
+                --                                     [ { name = qualify tipe.name
+                --                                       , moduleName = moduleDocs.name
+                --                                       , sourcePath = moduleDocs.sourcePath
+                --                                       , comment = tipe.comment
+                --                                       , tipe = tipe.tipe
+                --                                       , args = tipe.args
+                --                                       , caseTipe = Nothing
+                --                                       , cases = tipe.cases
+                --                                       , kind = KindType
+                --                                       }
+                --                                     ]
+                --                                         ++ (tipe.cases
+                --                                                 |> List.filter filter
+                --                                                 |> List.map
+                --                                                     (\tipeCase ->
+                --                                                         { name = qualify tipeCase.name
+                --                                                         , moduleName = moduleDocs.name
+                --                                                         , sourcePath = moduleDocs.sourcePath
+                --                                                         , comment = ""
+                --                                                         , tipe = getTipeCaseTypeAnnotation tipeCase tipe
+                --                                                         , args = tipeCase.args
+                --                                                         , caseTipe = Just tipe.name
+                --                                                         , cases = []
+                --                                                         , kind = KindTypeCase
+                --                                                         }
+                --                                                     )
+                --                                            )
+                --                                 )
+                --
+                --                     valueHints =
+                --                         moduleDocs.values.values
+                --                             |> List.filter filter
+                --                             |> List.map (valueToHint KindDefault)
+                --                 in
+                --                     tipeAliasHints
+                --                         ++ tipeAndTipeCaseHints
+                --                         ++ valueHints
+                --             )
             in
                 (filteredImportAliases
                     ++ filteredExposedHints
@@ -1005,57 +952,500 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
             []
 
 
-getExposedAndUnexposedNames : ImportDict -> List ModuleDocs -> ( Set.Set ( String, String ), Set.Set ( String, String ) )
-getExposedAndUnexposedNames importsPlusActiveModule allModuleDocs =
+getExposedAndUnexposedHints : ImportDict -> List ModuleDocs -> ( List Hint, List Hint )
+getExposedAndUnexposedHints importsPlusActiveModule allModuleDocs =
     let
-        importedModuleNames =
-            Dict.keys importsPlusActiveModule
-
-        ( allExposedList, allUnexposedList ) =
+        ( exposedLists, unexposedLists ) =
             allModuleDocs
                 |> List.foldl
-                    (\moduleDocs ( accExposedNames, accUnexposedNames ) ->
+                    (\moduleDocs ( accExposedHints, accUnexposedHints ) ->
                         let
-                            exposed =
-                                case Dict.get moduleDocs.name importsPlusActiveModule of
-                                    Just anImport ->
-                                        anImport.exposed
-
-                                    Nothing ->
-                                        None
+                            toName { name } =
+                                ( moduleDocs.name, name )
 
                             aliasesTipesAndValues =
                                 (moduleDocs.values.aliases
                                     ++ (List.map tipeToValue moduleDocs.values.tipes)
                                     ++ moduleDocs.values.values
                                 )
-                                    |> List.map (\{ name } -> ( moduleDocs.name, name ))
 
                             tipeCases =
                                 List.concatMap .cases moduleDocs.values.tipes
-                                    |> List.map (\{ name } -> ( moduleDocs.name, name ))
 
-                            allNames =
-                                aliasesTipesAndValues
-                                    ++ tipeCases
-                                    ++ List.map (\name -> ( moduleDocs.name, name )) (Set.toList defaultTypes)
+                            ( exposedHints, unexposedHints ) =
+                                case Dict.get moduleDocs.name importsPlusActiveModule of
+                                    Just importData ->
+                                        let
+                                            exposed =
+                                                getFilteredHints moduleDocs importData
+                                                    |> List.map
+                                                        (\( name, hint ) ->
+                                                            { hint | name = name }
+                                                        )
+                                        in
+                                            ( exposed, [] )
+
+                                    Nothing ->
+                                        ( [], [] )
                         in
-                            if List.member moduleDocs.name importedModuleNames then
-                                let
-                                    ( exposedNames, unexposedNames ) =
-                                        allNames
-                                            |> List.partition
-                                                (\( _, name ) ->
-                                                    Set.member name defaultTypes || isExposed name exposed
-                                                )
-                                in
-                                    ( exposedNames :: accExposedNames, unexposedNames :: accUnexposedNames )
-                            else
-                                ( accExposedNames, allNames :: accUnexposedNames )
+                            ( exposedHints :: accExposedHints, unexposedHints :: accUnexposedHints )
                     )
                     ( [], [] )
     in
-        ( Set.fromList (List.concat allExposedList), Set.fromList (List.concat allUnexposedList) )
+        ( List.concat exposedLists, List.concat unexposedLists )
+
+
+
+-- getHintsForPartial : String -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> List Hint
+-- getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackageDocs =
+--     case maybeActiveFile of
+--         Just { projectDirectory } ->
+--             let
+--                 allModuleDocs =
+--                     projectPackageDocs ++ getProjectModuleDocs projectDirectory projectFileContentsDict
+--
+--                 importsPlusActiveModule =
+--                     getFileContentsOfProject projectDirectory projectFileContentsDict
+--                         |> getImportsPlusActiveModuleForActiveFile maybeActiveFile
+--
+--                 ( exposedSet, unexposedSet ) =
+--                     getExposedAndUnexposedHints importsPlusActiveModule allModuleDocs
+--
+--                 _ =
+--                     Debug.log "exposedSet" exposedSet
+--
+--                 _ =
+--                     Debug.log "unexposedSet" unexposedSet
+--
+--                 activeFileContents =
+--                     getFileContentsOfProject projectDirectory projectFileContentsDict
+--                         |> getActiveFileContents maybeActiveFile
+--
+--                 maybeIncludeHint hint =
+--                     let
+--                         isIncluded =
+--                             if hint.moduleName == "" || Set.member ( hint.moduleName, hint.name ) exposedSet then
+--                                 String.startsWith partial hint.name
+--                             else
+--                                 True
+--                     in
+--                         if not isIncluded then
+--                             Nothing
+--                         else
+--                             let
+--                                 moduleNameToShow =
+--                                     if hint.moduleName == "" || activeFileContents.moduleDocs.name == hint.moduleName then
+--                                         ""
+--                                     else
+--                                         hint.moduleName
+--
+--                                 nameToShow =
+--                                     if hint.moduleName == "" then
+--                                         hint.name
+--                                     else if Set.member ( hint.moduleName, hint.name ) exposedSet then
+--                                         hint.name
+--                                     else
+--                                         let
+--                                             moduleNamePrefix =
+--                                                 case Dict.get hint.moduleName activeFileContents.imports of
+--                                                     Just { alias } ->
+--                                                         case alias of
+--                                                             Just moduleAlias ->
+--                                                                 moduleAlias ++ "."
+--
+--                                                             Nothing ->
+--                                                                 hint.moduleName ++ "."
+--
+--                                                     Nothing ->
+--                                                         ""
+--                                         in
+--                                             moduleNamePrefix ++ hint.name
+--                             in
+--                                 Just { hint | name = nameToShow, moduleName = moduleNameToShow }
+--
+--                 exposedNames =
+--                     Set.map Tuple.second exposedSet
+--
+--                 filteredImportAliases =
+--                     Dict.values activeFileContents.imports
+--                         |> List.filterMap
+--                             (\anImport ->
+--                                 case anImport.alias of
+--                                     Just alias ->
+--                                         if String.startsWith partial alias then
+--                                             Just { emptyHint | name = alias }
+--                                         else
+--                                             Nothing
+--
+--                                     Nothing ->
+--                                         Nothing
+--                             )
+--
+--                 filteredExposedHints =
+--                     activeTokens
+--                         |> Dict.map
+--                             (\token hintList ->
+--                                 if
+--                                     String.startsWith partial token
+--                                         || (Set.member (getLastName token) exposedNames
+--                                                 && String.startsWith partial (getLastName token)
+--                                            )
+--                                 then
+--                                     List.filterMap maybeIncludeHint hintList
+--                                 else
+--                                     []
+--                             )
+--                         |> Dict.values
+--                         |> List.concat
+--
+--                 filteredDefaultHints =
+--                     defaultSuggestions
+--                         |> List.filter
+--                             (\{ name } ->
+--                                 String.startsWith partial name
+--                             )
+--
+--                 filteredUnexposedHints =
+--                     allModuleDocs
+--                         |> List.concatMap
+--                             (\moduleDocs ->
+--                                 let
+--                                     qualify name =
+--                                         moduleDocs.name ++ "." ++ name
+--
+--                                     valueToHint kind value =
+--                                         { name = qualify value.name
+--                                         , moduleName = moduleDocs.name
+--                                         , sourcePath = moduleDocs.sourcePath
+--                                         , comment = value.comment
+--                                         , tipe = value.tipe
+--                                         , args = value.args |> Maybe.withDefault []
+--                                         , caseTipe = Nothing
+--                                         , cases = []
+--                                         , kind = kind
+--                                         }
+--
+--                                     filter { name } =
+--                                         Set.member ( moduleDocs.name, name ) unexposedSet
+--                                             && String.startsWith partial (qualify name)
+--
+--                                     tipeAliasHints =
+--                                         moduleDocs.values.aliases
+--                                             |> List.filter filter
+--                                             |> List.map (valueToHint KindTypeAlias)
+--
+--                                     tipeAndTipeCaseHints =
+--                                         moduleDocs.values.tipes
+--                                             |> List.filter filter
+--                                             |> List.concatMap
+--                                                 (\tipe ->
+--                                                     [ { name = qualify tipe.name
+--                                                       , moduleName = moduleDocs.name
+--                                                       , sourcePath = moduleDocs.sourcePath
+--                                                       , comment = tipe.comment
+--                                                       , tipe = tipe.tipe
+--                                                       , args = tipe.args
+--                                                       , caseTipe = Nothing
+--                                                       , cases = tipe.cases
+--                                                       , kind = KindType
+--                                                       }
+--                                                     ]
+--                                                         ++ (tipe.cases
+--                                                                 |> List.filter filter
+--                                                                 |> List.map
+--                                                                     (\tipeCase ->
+--                                                                         { name = qualify tipeCase.name
+--                                                                         , moduleName = moduleDocs.name
+--                                                                         , sourcePath = moduleDocs.sourcePath
+--                                                                         , comment = ""
+--                                                                         , tipe = getTipeCaseTypeAnnotation tipeCase tipe
+--                                                                         , args = tipeCase.args
+--                                                                         , caseTipe = Just tipe.name
+--                                                                         , cases = []
+--                                                                         , kind = KindTypeCase
+--                                                                         }
+--                                                                     )
+--                                                            )
+--                                                 )
+--
+--                                     valueHints =
+--                                         moduleDocs.values.values
+--                                             |> List.filter filter
+--                                             |> List.map (valueToHint KindDefault)
+--                                 in
+--                                     tipeAliasHints
+--                                         ++ tipeAndTipeCaseHints
+--                                         ++ valueHints
+--                             )
+--             in
+--                 (filteredImportAliases
+--                     ++ filteredExposedHints
+--                     ++ filteredDefaultHints
+--                     |> List.sortBy .name
+--                 )
+--
+--         --     ++ (filteredUnexposedHints
+--         --             |> List.sortBy .name
+--         --        )
+--         Nothing ->
+--             []
+-- getExposedAndUnexposedNames : ImportDict -> List ModuleDocs -> ( Set.Set ( String, String ), Set.Set ( String, String ) )
+-- getExposedAndUnexposedNames importsPlusActiveModule allModuleDocs =
+--     let
+--         importedModuleNames =
+--             Dict.keys importsPlusActiveModule
+--
+--         ( allExposedList, allUnexposedList ) =
+--             allModuleDocs
+--                 |> List.foldl
+--                     (\moduleDocs ( accExposedNames, accUnexposedNames ) ->
+--                         let
+--                             exposedInModule =
+--                                 case Dict.get moduleDocs.name importsPlusActiveModule of
+--                                     Just anImport ->
+--                                         anImport.exposed
+--
+--                                     Nothing ->
+--                                         None
+--
+--                             toName { name } =
+--                                 ( moduleDocs.name, name )
+--
+--                             aliasesTipesAndValues =
+--                                 (moduleDocs.values.aliases
+--                                     ++ (List.map tipeToValue moduleDocs.values.tipes)
+--                                     ++ moduleDocs.values.values
+--                                 )
+--
+--                             tipeCases =
+--                                 List.concatMap .cases moduleDocs.values.tipes
+--                         in
+--                             if List.member moduleDocs.name importedModuleNames then
+--                                 let
+--                                     ( exposedAliasesTipesAndValues, unexposedAliasesTipesAndValues ) =
+--                                         aliasesTipesAndValues
+--                                             |> List.partition
+--                                                 (\{ name } ->
+--                                                     isExposed name exposedInModule
+--                                                 )
+--
+--                                     ( exposedTipeCases, unexposedTipeCases ) =
+--                                         moduleDocs.values.tipes
+--                                             |> List.foldl
+--                                                 (\tipe ( accExposed, accUnexposed ) ->
+--                                                     let
+--                                                         ( exposedCases, unexposedCases ) =
+--                                                             if isExposed tipe.name exposedInModule then
+--                                                                 ( tipe.cases, [] )
+--                                                             else
+--                                                                 tipe.cases
+--                                                                     |> List.partition
+--                                                                         (\tipeCase ->
+--                                                                             isExposed tipeCase.name exposedInModule
+--                                                                         )
+--                                                     in
+--                                                         ( exposedCases ++ accExposed, unexposedCases ++ accUnexposed )
+--                                                 )
+--                                                 ( [], [] )
+--
+--                                     _ =
+--                                         Debug.log "exposedTipeCases" ( moduleDocs.name, List.map .name exposedTipeCases )
+--
+--                                     _ =
+--                                         Debug.log "exposedAliasesTipesAndValues" ( moduleDocs.name, List.map .name exposedAliasesTipesAndValues )
+--                                 in
+--                                     ( List.map toName exposedAliasesTipesAndValues
+--                                         :: List.map toName exposedTipeCases
+--                                         :: accExposedNames
+--                                     , List.map toName unexposedAliasesTipesAndValues
+--                                         :: List.map toName unexposedTipeCases
+--                                         :: accUnexposedNames
+--                                     )
+--                             else
+--                                 ( accExposedNames
+--                                 , List.map toName aliasesTipesAndValues
+--                                     :: List.map toName tipeCases
+--                                     :: accUnexposedNames
+--                                 )
+--                     )
+--                     ( [], [] )
+--     in
+--         ( Set.fromList (List.concat allExposedList), Set.fromList (List.concat allUnexposedList) )
+-- getHintsForPartial : String -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
+-- getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackageDocs tokens =
+--     case maybeActiveFile of
+--         Just { projectDirectory } ->
+--             let
+--                 exposedSet =
+--                     getExposedHints maybeActiveFile projectFileContentsDict projectPackageDocs
+--
+--                 fileContentsDict =
+--                     getFileContentsOfProject projectDirectory projectFileContentsDict
+--
+--                 exposedNames =
+--                     Set.map Tuple.second exposedSet
+--
+--                 activeFileContents =
+--                     getActiveFileContents maybeActiveFile fileContentsDict
+--
+--                 importAliases =
+--                     Dict.values activeFileContents.imports
+--                         |> List.filterMap
+--                             (\{ alias } ->
+--                                 case alias of
+--                                     Just alias ->
+--                                         if String.startsWith partial alias then
+--                                             Just { emptyHint | name = alias }
+--                                         else
+--                                             Nothing
+--
+--                                     Nothing ->
+--                                         Nothing
+--                             )
+--
+--                 maybeIncludeHint hint =
+--                     let
+--                         isIncluded =
+--                             if hint.moduleName == "" || Set.member ( hint.moduleName, hint.name ) exposedSet then
+--                                 String.startsWith partial hint.name
+--                             else
+--                                 True
+--                     in
+--                         if not isIncluded then
+--                             Nothing
+--                         else
+--                             let
+--                                 moduleNameToShow =
+--                                     if hint.moduleName == "" || activeFileContents.moduleDocs.name == hint.moduleName then
+--                                         ""
+--                                     else
+--                                         hint.moduleName
+--
+--                                 nameToShow =
+--                                     if hint.moduleName == "" then
+--                                         hint.name
+--                                     else if Set.member ( hint.moduleName, hint.name ) exposedSet then
+--                                         hint.name
+--                                     else
+--                                         let
+--                                             moduleNamePrefix =
+--                                                 case Dict.get hint.moduleName activeFileContents.imports of
+--                                                     Just { alias } ->
+--                                                         case alias of
+--                                                             Just moduleAlias ->
+--                                                                 moduleAlias ++ "."
+--
+--                                                             Nothing ->
+--                                                                 hint.moduleName ++ "."
+--
+--                                                     Nothing ->
+--                                                         ""
+--                                         in
+--                                             moduleNamePrefix ++ hint.name
+--                             in
+--                                 Just { hint | name = nameToShow, moduleName = moduleNameToShow }
+--
+--                 hints =
+--                     tokens
+--                         |> Dict.map
+--                             (\token hints ->
+--                                 let
+--                                     isIncluded =
+--                                         if Set.member (getLastName token) exposedNames then
+--                                             String.startsWith partial (getLastName token)
+--                                                 || String.startsWith partial token
+--                                         else
+--                                             String.startsWith partial token
+--                                 in
+--                                     if isIncluded then
+--                                         List.filterMap maybeIncludeHint hints
+--                                     else
+--                                         []
+--                             )
+--                         |> Dict.values
+--                         |> List.concatMap identity
+--
+--                 defaultHints =
+--                     List.filter
+--                         (\{ name } ->
+--                             String.startsWith partial name
+--                         )
+--                         defaultSuggestions
+--             in
+--                 importAliases
+--                     ++ hints
+--                     ++ defaultHints
+--                     |> List.sortBy .name
+--
+--         Nothing ->
+--             []
+-- getExposedHints : Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> Set.Set ( String, String )
+-- getExposedHints maybeActiveFile projectFileContentsDict projectPackageDocs =
+--     case maybeActiveFile of
+--         Just { projectDirectory } ->
+--             let
+--                 fileContentsDict =
+--                     getFileContentsOfProject projectDirectory projectFileContentsDict
+--
+--                 importsPlusActiveModule =
+--                     getImportsPlusActiveModuleForActiveFile maybeActiveFile fileContentsDict
+--
+--                 importedModuleNames =
+--                     Dict.keys importsPlusActiveModule
+--
+--                 importedModuleDocs =
+--                     (projectPackageDocs ++ getProjectModuleDocs projectDirectory projectFileContentsDict)
+--                         |> List.filter
+--                             (\moduleDocs ->
+--                                 List.member moduleDocs.name importedModuleNames
+--                             )
+--
+--                 imports =
+--                     Dict.values importsPlusActiveModule
+--             in
+--                 importedModuleDocs
+--                     |> List.concatMap
+--                         (\moduleDocs ->
+--                             let
+--                                 exposed =
+--                                     case Dict.get moduleDocs.name importsPlusActiveModule of
+--                                         Just { exposed } ->
+--                                             exposed
+--
+--                                         Nothing ->
+--                                             None
+--                             in
+--                                 (((moduleDocs.values.aliases
+--                                     ++ (List.map tipeToValue moduleDocs.values.tipes)
+--                                     ++ moduleDocs.values.values
+--                                   )
+--                                     |> List.filter
+--                                         (\{ name } ->
+--                                             isExposed name exposed
+--                                         )
+--                                     |> List.map .name
+--                                  )
+--                                     ++ (moduleDocs.values.tipes
+--                                             |> List.concatMap
+--                                                 (\tipe ->
+--                                                     tipe.cases
+--                                                         |> List.filter
+--                                                             (\tipeCase ->
+--                                                                 isExposed tipeCase.name exposed || isExposed tipe.name exposed
+--                                                             )
+--                                                         |> List.map .name
+--                                                 )
+--                                        )
+--                                 )
+--                                     |> List.map
+--                                         (\name ->
+--                                             ( moduleDocs.name, name )
+--                                         )
+--                         )
+--                     |> Set.fromList
+--
+--         Nothing ->
+--             Set.empty
 
 
 getSuggestionsForImport : String -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> List ImportSuggestion
@@ -1138,13 +1528,13 @@ getImportersForToken token isCursorAtLastPartOfToken maybeActiveFile tokens acti
                                                                             [ alias ++ "." ++ hint.name ]
 
                                                                         ( _, All ) ->
-                                                                            [ hint.name ] ++ getModuleLocalNames hint.moduleName alias hint.name
+                                                                            [ hint.name, getModuleLocalName hint.moduleName alias hint.name ]
 
                                                                         ( _, Some exposedSet ) ->
                                                                             if Set.member hint.name exposedSet then
-                                                                                [ hint.name ] ++ getModuleLocalNames hint.moduleName alias hint.name
+                                                                                [ hint.name, getModuleLocalName hint.moduleName alias hint.name ]
                                                                             else
-                                                                                getModuleLocalNames hint.moduleName alias hint.name
+                                                                                [ getModuleLocalName hint.moduleName alias hint.name ]
 
                                                                 names =
                                                                     localNames |> Set.fromList |> Set.toList
@@ -2543,9 +2933,6 @@ unionTagsToHints moduleDocs { alias, exposed } tipe =
                 tag =
                     tipeCase.name
 
-                fullName =
-                    moduleDocs.name ++ "." ++ tag
-
                 hint =
                     { name = tag
                     , moduleName = moduleDocs.name
@@ -2558,17 +2945,13 @@ unionTagsToHints moduleDocs { alias, exposed } tipe =
                     , kind = KindTypeCase
                     }
 
-                moduleLocalHints =
-                    getModuleLocalNames moduleDocs.name alias tag
-                        |> List.map
-                            (\moduleLocalName ->
-                                ( moduleLocalName, hint )
-                            )
+                moduleLocalName =
+                    getModuleLocalName moduleDocs.name alias tag
             in
-                if Set.member tipe.name defaultTypes || isExposed tag exposed then
-                    hints ++ [ ( fullName, hint ) ] ++ moduleLocalHints ++ [ ( tag, hint ) ]
+                if isExposed tag exposed || isExposed tipe.name exposed then
+                    hints ++ [ ( moduleLocalName, hint ), ( tag, hint ) ]
                 else
-                    hints ++ [ ( fullName, hint ) ] ++ moduleLocalHints
+                    hints ++ [ ( moduleLocalName, hint ) ]
     in
         List.foldl addHints [] tipe.cases
 
@@ -2594,17 +2977,13 @@ nameToHints moduleDocs { alias, exposed } kind ( { name, comment, tipe, args }, 
             , kind = kind
             }
 
-        moduleLocalHints =
-            getModuleLocalNames moduleDocs.name alias name
-                |> List.map
-                    (\moduleLocalName ->
-                        ( moduleLocalName, hint )
-                    )
+        moduleLocalName =
+            getModuleLocalName moduleDocs.name alias name
     in
         if isExposed name exposed then
-            [ ( name, hint ) ] ++ moduleLocalHints
+            [ ( name, hint ), ( moduleLocalName, hint ) ]
         else
-            moduleLocalHints
+            [ ( moduleLocalName, hint ) ]
 
 
 moduleToHints : ModuleDocs -> Import -> List ( String, Hint )
@@ -2656,14 +3035,14 @@ type Exposed
     | All
 
 
-getModuleLocalNames : String -> Maybe String -> String -> List String
-getModuleLocalNames moduleName alias name =
+getModuleLocalName : String -> Maybe String -> String -> String
+getModuleLocalName moduleName alias name =
     case alias of
         Just alias ->
-            [ alias ++ "." ++ name, moduleName ++ "." ++ name ]
+            alias ++ "." ++ name
 
         Nothing ->
-            [ moduleName ++ "." ++ name ]
+            moduleName ++ "." ++ name
 
 
 isExposed : String -> Exposed -> Bool
@@ -2710,26 +3089,16 @@ defaultImports : ImportDict
 defaultImports =
     Dict.fromList
         [ "Basics" => All
+        , "Debug" => None
         , "List" => Some (Set.fromList [ "List", "::" ])
         , "Maybe" => Some (Set.singleton "Maybe")
-          -- Just, Nothing
         , "Result" => Some (Set.singleton "Result")
-          -- Ok, Err
-        , "String" => None
-        , "Tuple" => None
-        , "Debug" => None
         , "Platform" => Some (Set.singleton "Program")
         , ( "Platform.Cmd", Import (Just "Cmd") (Some (Set.fromList [ "Cmd", "!" ])) )
         , ( "Platform.Sub", Import (Just "Sub") (Some (Set.singleton "Sub")) )
+        , "String" => None
+        , "Tuple" => None
         ]
-
-
-defaultTypes : Set.Set String
-defaultTypes =
-    [ "Maybe"
-    , "Result"
-    ]
-        |> Set.fromList
 
 
 defaultSuggestions : List Hint
