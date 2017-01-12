@@ -8683,7 +8683,20 @@ var _user$project$Indexer$showGoToSymbolViewSub = _elm_lang$core$Native_Platform
 						_1: {ctor: '[]'}
 					}
 				}))));
-var _user$project$Indexer$getHintsForPartialSub = _elm_lang$core$Native_Platform.incomingPort('getHintsForPartialSub', _elm_lang$core$Json_Decode$string);
+var _user$project$Indexer$getHintsForPartialSub = _elm_lang$core$Native_Platform.incomingPort(
+	'getHintsForPartialSub',
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (x0) {
+			return A2(
+				_elm_lang$core$Json_Decode$andThen,
+				function (x1) {
+					return _elm_lang$core$Json_Decode$succeed(
+						{ctor: '_Tuple2', _0: x0, _1: x1});
+				},
+				A2(_elm_lang$core$Json_Decode$index, 1, _elm_lang$core$Json_Decode$bool));
+		},
+		A2(_elm_lang$core$Json_Decode$index, 0, _elm_lang$core$Json_Decode$string)));
 var _user$project$Indexer$getSuggestionsForImportSub = _elm_lang$core$Native_Platform.incomingPort('getSuggestionsForImportSub', _elm_lang$core$Json_Decode$string);
 var _user$project$Indexer$askCanGoToDefinitionSub = _elm_lang$core$Native_Platform.incomingPort('askCanGoToDefinitionSub', _elm_lang$core$Json_Decode$string);
 var _user$project$Indexer$getImportersForTokenSub = _elm_lang$core$Native_Platform.incomingPort(
@@ -10655,8 +10668,8 @@ var _user$project$Indexer$getImportsPlusActiveModuleForActiveFile = F2(
 		return _user$project$Indexer$getImportsPlusActiveModule(
 			A2(_user$project$Indexer$getActiveFileContents, maybeActiveFile, fileContentsDict));
 	});
-var _user$project$Indexer$getHintsForPartial = F5(
-	function (partial, maybeActiveFile, projectFileContentsDict, projectPackageDocs, activeTokens) {
+var _user$project$Indexer$getHintsForPartial = F6(
+	function (partial, isGlobal, maybeActiveFile, projectFileContentsDict, projectPackageDocs, activeTokens) {
 		var _p190 = maybeActiveFile;
 		if (_p190.ctor === 'Just') {
 			var _p196 = _p190._0.projectDirectory;
@@ -10668,7 +10681,7 @@ var _user$project$Indexer$getHintsForPartial = F5(
 				var _p192 = _p191;
 				return A2(_elm_lang$core$String$startsWith, partial, _p192.name);
 			};
-			var filteredArgs = A2(
+			var filteredArgHints = A2(
 				_elm_lang$core$List$filter,
 				filterByName,
 				A2(
@@ -10683,7 +10696,7 @@ var _user$project$Indexer$getHintsForPartial = F5(
 				_user$project$Indexer$getActiveFileContents,
 				maybeActiveFile,
 				A2(_user$project$Indexer$getFileContentsOfProject, _p196, projectFileContentsDict));
-			var filteredImportAliases = A2(
+			var filteredImportAliasHints = A2(
 				_elm_lang$core$List$filterMap,
 				function (anImport) {
 					var _p193 = anImport.alias;
@@ -10716,20 +10729,20 @@ var _user$project$Indexer$getHintsForPartial = F5(
 				sortByName(filteredDefaultHints),
 				A2(
 					_elm_lang$core$Basics_ops['++'],
-					sortByName(filteredArgs),
+					sortByName(filteredArgHints),
 					A2(
 						_elm_lang$core$Basics_ops['++'],
 						sortByName(filteredExposedHints),
 						A2(
 							_elm_lang$core$Basics_ops['++'],
-							sortByName(filteredImportAliases),
-							sortByName(filteredUnexposedHints)))));
+							sortByName(filteredImportAliasHints),
+							isGlobal ? sortByName(filteredUnexposedHints) : {ctor: '[]'}))));
 		} else {
 			return {ctor: '[]'};
 		}
 	});
-var _user$project$Indexer$doGetHintsForPartial = F2(
-	function (partial, model) {
+var _user$project$Indexer$doGetHintsForPartial = F3(
+	function (partial, isGlobal, model) {
 		return {
 			ctor: '_Tuple2',
 			_0: model,
@@ -10740,9 +10753,10 @@ var _user$project$Indexer$doGetHintsForPartial = F2(
 					_1: A2(
 						_elm_lang$core$List$map,
 						_user$project$Indexer$encodeHint,
-						A5(
+						A6(
 							_user$project$Indexer$getHintsForPartial,
 							partial,
+							isGlobal,
 							model.activeFile,
 							model.projectFileContentsDict,
 							A3(_user$project$Indexer$getProjectPackageDocs, model.activeFile, model.projectDependencies, model.packageDocs),
@@ -11270,7 +11284,7 @@ var _user$project$Indexer$update = F2(
 			case 'ShowGoToSymbolView':
 				return A3(_user$project$Indexer$doShowGoToSymbolView, _p220._0._0, _p220._0._1, model);
 			case 'GetHintsForPartial':
-				return A2(_user$project$Indexer$doGetHintsForPartial, _p220._0, model);
+				return A3(_user$project$Indexer$doGetHintsForPartial, _p220._0._0, _p220._0._1, model);
 			case 'GetSuggestionsForImport':
 				return A2(_user$project$Indexer$doGetSuggestionsForImport, _p220._0, model);
 			case 'AskCanGoToDefinition':

@@ -72,7 +72,7 @@ port goToDefinitionSub : (Maybe String -> msg) -> Sub msg
 port showGoToSymbolViewSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
 
 
-port getHintsForPartialSub : (String -> msg) -> Sub msg
+port getHintsForPartialSub : (( String, Bool ) -> msg) -> Sub msg
 
 
 port getSuggestionsForImportSub : (String -> msg) -> Sub msg
@@ -276,7 +276,7 @@ type Msg
     | UpdateProjectDependencies ( String, List Dependency )
     | GoToDefinition (Maybe Token)
     | ShowGoToSymbolView ( Maybe ProjectDirectory, Maybe String )
-    | GetHintsForPartial String
+    | GetHintsForPartial ( String, Bool )
     | GetSuggestionsForImport String
     | AskCanGoToDefinition Token
     | GetImporterSourcePathsForToken ( Maybe ProjectDirectory, Maybe Token, Maybe Bool )
@@ -363,8 +363,8 @@ update msg model =
         ShowGoToSymbolView ( maybeProjectDirectory, maybeToken ) ->
             doShowGoToSymbolView maybeProjectDirectory maybeToken model
 
-        GetHintsForPartial partial ->
-            doGetHintsForPartial partial model
+        GetHintsForPartial ( partial, isGlobal ) ->
+            doGetHintsForPartial partial isGlobal model
 
         GetSuggestionsForImport partial ->
             doGetSuggestionsForImport partial model
@@ -572,11 +572,11 @@ doShowGoToSymbolView maybeProjectDirectory maybeToken model =
             )
 
 
-doGetHintsForPartial : String -> Model -> ( Model, Cmd Msg )
-doGetHintsForPartial partial model =
+doGetHintsForPartial : String -> Bool -> Model -> ( Model, Cmd Msg )
+doGetHintsForPartial partial isGlobal model =
     ( model
     , ( partial
-      , getHintsForPartial partial model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
+      , getHintsForPartial partial isGlobal model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
             |> List.map encodeHint
       )
         |> hintsForPartialReceivedCmd
@@ -816,8 +816,8 @@ getHintsForToken maybeToken tokens =
             []
 
 
-getHintsForPartial : String -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
-getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackageDocs activeTokens =
+getHintsForPartial : String -> Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
+getHintsForPartial partial isGlobal maybeActiveFile projectFileContentsDict projectPackageDocs activeTokens =
     case maybeActiveFile of
         Just { projectDirectory, filePath } ->
             let
@@ -835,14 +835,14 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
                 filterByName =
                     (\{ name } -> String.startsWith partial name)
 
-                filteredArgs =
+                filteredArgHints =
                     activeTokens
                         |> Dict.values
                         |> List.concat
                         |> List.filter (\hint -> hint.moduleName == "")
                         |> List.filter filterByName
 
-                filteredImportAliases =
+                filteredImportAliasHints =
                     Dict.values activeFileContents.imports
                         |> List.filterMap
                             (\anImport ->
@@ -877,10 +877,14 @@ getHintsForPartial partial maybeActiveFile projectFileContentsDict projectPackag
             in
                 -- -- Prioritize by scope.
                 sortByName filteredDefaultHints
-                    ++ sortByName filteredArgs
+                    ++ sortByName filteredArgHints
                     ++ sortByName filteredExposedHints
-                    ++ sortByName filteredImportAliases
-                    ++ sortByName filteredUnexposedHints
+                    ++ sortByName filteredImportAliasHints
+                    ++ (if isGlobal then
+                            sortByName filteredUnexposedHints
+                        else
+                            []
+                       )
 
         Nothing ->
             []
