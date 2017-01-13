@@ -1,5 +1,8 @@
+## 2.18.1
+* Include unqualified name in global autocomplete.
+
 ## 2.18.0
-* Add global autocomplete option.
+* Add `Enable Global Autocomplete` option.
 * Add "Auto import" autocompletion.
 * Sort autocomplete suggestions by scope (primitives first, then args, then imported values, then unimported values).
 

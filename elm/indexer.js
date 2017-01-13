@@ -10049,74 +10049,74 @@ var _user$project$Indexer$getHintsForUnexposedNames = F2(
 			var _p162 = _p161;
 			return A2(_elm_lang$core$Set$member, _p162.name, unexposedNames);
 		};
-		var qualify = function (name) {
-			return A2(
-				_elm_lang$core$Basics_ops['++'],
-				moduleDocs.name,
-				A2(_elm_lang$core$Basics_ops['++'], '.', name));
+		var qualifiedAndUnqualified = function (hint) {
+			return {
+				ctor: '::',
+				_0: _elm_lang$core$Native_Utils.update(
+					hint,
+					{
+						name: A2(
+							_elm_lang$core$Basics_ops['++'],
+							moduleDocs.name,
+							A2(_elm_lang$core$Basics_ops['++'], '.', hint.name))
+					}),
+				_1: {
+					ctor: '::',
+					_0: hint,
+					_1: {ctor: '[]'}
+				}
+			};
 		};
-		var valueToHint = F2(
+		var valueToHints = F2(
 			function (kind, value) {
-				return {
-					name: qualify(value.name),
-					moduleName: moduleDocs.name,
-					sourcePath: moduleDocs.sourcePath,
-					comment: value.comment,
-					tipe: value.tipe,
-					args: A2(
-						_elm_lang$core$Maybe$withDefault,
-						{ctor: '[]'},
-						value.args),
-					caseTipe: _elm_lang$core$Maybe$Nothing,
-					cases: {ctor: '[]'},
-					kind: kind,
-					isImported: false
-				};
+				return qualifiedAndUnqualified(
+					{
+						name: value.name,
+						moduleName: moduleDocs.name,
+						sourcePath: moduleDocs.sourcePath,
+						comment: value.comment,
+						tipe: value.tipe,
+						args: A2(
+							_elm_lang$core$Maybe$withDefault,
+							{ctor: '[]'},
+							value.args),
+						caseTipe: _elm_lang$core$Maybe$Nothing,
+						cases: {ctor: '[]'},
+						kind: kind,
+						isImported: false
+					});
 			});
 		var tipeAliasHints = A2(
-			_elm_lang$core$List$map,
-			valueToHint(_user$project$Indexer$KindTypeAlias),
+			_elm_lang$core$List$concatMap,
+			valueToHints(_user$project$Indexer$KindTypeAlias),
 			A2(_elm_lang$core$List$filter, filter, moduleDocs.values.aliases));
 		var valueHints = A2(
-			_elm_lang$core$List$map,
-			valueToHint(_user$project$Indexer$KindDefault),
+			_elm_lang$core$List$concatMap,
+			valueToHints(_user$project$Indexer$KindDefault),
 			A2(_elm_lang$core$List$filter, filter, moduleDocs.values.values));
 		var tipeAndTipeCaseHints = A2(
 			_elm_lang$core$List$concatMap,
 			function (tipe) {
 				return A2(
 					_elm_lang$core$Basics_ops['++'],
-					{
-						ctor: '::',
-						_0: {
-							name: qualify(tipe.name),
-							moduleName: moduleDocs.name,
-							sourcePath: moduleDocs.sourcePath,
-							comment: tipe.comment,
-							tipe: tipe.tipe,
-							args: tipe.args,
-							caseTipe: _elm_lang$core$Maybe$Nothing,
-							cases: tipe.cases,
-							kind: _user$project$Indexer$KindType,
-							isImported: false
-						},
-						_1: {ctor: '[]'}
-					},
+					qualifiedAndUnqualified(
+						{name: tipe.name, moduleName: moduleDocs.name, sourcePath: moduleDocs.sourcePath, comment: tipe.comment, tipe: tipe.tipe, args: tipe.args, caseTipe: _elm_lang$core$Maybe$Nothing, cases: tipe.cases, kind: _user$project$Indexer$KindType, isImported: false}),
 					A2(
-						_elm_lang$core$List$map,
+						_elm_lang$core$List$concatMap,
 						function (tipeCase) {
-							return {
-								name: qualify(tipeCase.name),
-								moduleName: moduleDocs.name,
-								sourcePath: moduleDocs.sourcePath,
-								comment: '',
-								tipe: A2(_user$project$Indexer$getTipeCaseTypeAnnotation, tipeCase, tipe),
-								args: tipeCase.args,
-								caseTipe: _elm_lang$core$Maybe$Just(tipe.name),
-								cases: {ctor: '[]'},
-								kind: _user$project$Indexer$KindTypeCase,
-								isImported: false
-							};
+							return qualifiedAndUnqualified(
+								{
+									name: tipeCase.name,
+									moduleName: moduleDocs.name,
+									sourcePath: moduleDocs.sourcePath,
+									comment: '',
+									tipe: A2(_user$project$Indexer$getTipeCaseTypeAnnotation, tipeCase, tipe),
+									args: tipeCase.args,
+									caseTipe: _elm_lang$core$Maybe$Just(tipe.name),
+									cases: {ctor: '[]'},
+									kind: _user$project$Indexer$KindTypeCase,
+									isImported: false
+								});
 						},
 						A2(_elm_lang$core$List$filter, filter, tipe.cases)));
 			},

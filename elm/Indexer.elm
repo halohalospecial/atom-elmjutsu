@@ -973,11 +973,11 @@ getExposedAndUnexposedHints activeFilePath importsPlusActiveModule moduleDocs wi
 getHintsForUnexposedNames : ModuleDocs -> Set.Set String -> List Hint
 getHintsForUnexposedNames moduleDocs unexposedNames =
     let
-        qualify name =
-            moduleDocs.name ++ "." ++ name
+        qualifiedAndUnqualified hint =
+            [ { hint | name = moduleDocs.name ++ "." ++ hint.name }, hint ]
 
-        valueToHint kind value =
-            { name = qualify value.name
+        valueToHints kind value =
+            { name = value.name
             , moduleName = moduleDocs.name
             , sourcePath = moduleDocs.sourcePath
             , comment = value.comment
@@ -988,6 +988,7 @@ getHintsForUnexposedNames moduleDocs unexposedNames =
             , kind = kind
             , isImported = False
             }
+                |> qualifiedAndUnqualified
 
         filter { name } =
             Set.member name unexposedNames
@@ -995,30 +996,31 @@ getHintsForUnexposedNames moduleDocs unexposedNames =
         tipeAliasHints =
             moduleDocs.values.aliases
                 |> List.filter filter
-                |> List.map (valueToHint KindTypeAlias)
+                |> List.concatMap (valueToHints KindTypeAlias)
 
         tipeAndTipeCaseHints =
             moduleDocs.values.tipes
                 |> List.filter filter
                 |> List.concatMap
                     (\tipe ->
-                        [ { name = qualify tipe.name
-                          , moduleName = moduleDocs.name
-                          , sourcePath = moduleDocs.sourcePath
-                          , comment = tipe.comment
-                          , tipe = tipe.tipe
-                          , args = tipe.args
-                          , caseTipe = Nothing
-                          , cases = tipe.cases
-                          , kind = KindType
-                          , isImported = False
-                          }
-                        ]
+                        ({ name = tipe.name
+                         , moduleName = moduleDocs.name
+                         , sourcePath = moduleDocs.sourcePath
+                         , comment = tipe.comment
+                         , tipe = tipe.tipe
+                         , args = tipe.args
+                         , caseTipe = Nothing
+                         , cases = tipe.cases
+                         , kind = KindType
+                         , isImported = False
+                         }
+                            |> qualifiedAndUnqualified
+                        )
                             ++ (tipe.cases
                                     |> List.filter filter
-                                    |> List.map
+                                    |> List.concatMap
                                         (\tipeCase ->
-                                            { name = qualify tipeCase.name
+                                            { name = tipeCase.name
                                             , moduleName = moduleDocs.name
                                             , sourcePath = moduleDocs.sourcePath
                                             , comment = ""
@@ -1029,6 +1031,7 @@ getHintsForUnexposedNames moduleDocs unexposedNames =
                                             , kind = KindTypeCase
                                             , isImported = False
                                             }
+                                                |> qualifiedAndUnqualified
                                         )
                                )
                     )
@@ -1036,7 +1039,7 @@ getHintsForUnexposedNames moduleDocs unexposedNames =
         valueHints =
             moduleDocs.values.values
                 |> List.filter filter
-                |> List.map (valueToHint KindDefault)
+                |> List.concatMap (valueToHints KindDefault)
     in
         tipeAliasHints
             ++ tipeAndTipeCaseHints
