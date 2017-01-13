@@ -1,3 +1,6 @@
+## 2.18.2
+* Fix hyperclick provider implementation overriding other packages (#40).  Thanks a lot to @markogresak and @AsaAyers for debugging and providing a fix!
+
 ## 2.18.1
 * Include unqualified name in global autocomplete.
 
