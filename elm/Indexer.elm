@@ -1306,7 +1306,10 @@ importsToString imports tokens =
                                     token
 
                             hints =
+                                -- Get all hints with all hints from target module in the front of the List
                                 getHintsForToken (Just token) tokens
+                                    |> List.partition (.moduleName >> (==) moduleName)
+                                    |> uncurry (++)
                         in
                             case List.head hints of
                                 Just { caseTipe } ->
