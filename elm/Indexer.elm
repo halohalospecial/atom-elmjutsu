@@ -934,9 +934,6 @@ getExposedAndUnexposedHints includeUnexposed activeFilePath importsPlusActiveMod
                                                                 { hint | moduleName = moduleNameToShow, name = name }
                                                         )
 
-                                            _ =
-                                                Debug.log "exposed" ( moduleDocs.name, importData, exposedNames, unexposedNames )
-
                                             exposedNames =
                                                 exposed
                                                     |> List.map .name
