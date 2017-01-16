@@ -868,6 +868,7 @@ getHintsForPartial partial isGlobal maybeActiveFile projectFileContentsDict proj
                                             List.member moduleDocs.name (Dict.keys importsPlusActiveModule)
                                         )
                         in
+                            -- Only check the imported modules.
                             getExposedAndUnexposedHints filePath importsPlusActiveModule importedModuleDocs False
 
                 filteredDefaultHints =
@@ -894,7 +895,7 @@ getHintsForPartial partial isGlobal maybeActiveFile projectFileContentsDict proj
 
 
 getExposedAndUnexposedHints : FilePath -> ImportDict -> List ModuleDocs -> Bool -> ( List Hint, List Hint )
-getExposedAndUnexposedHints activeFilePath importsPlusActiveModule moduleDocs willGetUnexposed =
+getExposedAndUnexposedHints activeFilePath importsPlusActiveModule moduleDocs shouldGetUnexposed =
     let
         ( exposedLists, unexposedLists ) =
             moduleDocs
@@ -945,7 +946,7 @@ getExposedAndUnexposedHints activeFilePath importsPlusActiveModule moduleDocs wi
                                                         )
                                         in
                                             ( exposed
-                                            , if willGetUnexposed then
+                                            , if shouldGetUnexposed then
                                                 getHintsForUnexposedNames moduleDocs unexposedNames
                                               else
                                                 []
@@ -953,7 +954,7 @@ getExposedAndUnexposedHints activeFilePath importsPlusActiveModule moduleDocs wi
 
                                     Nothing ->
                                         ( []
-                                        , if willGetUnexposed then
+                                        , if shouldGetUnexposed then
                                             getHintsForUnexposedNames moduleDocs allNames
                                           else
                                             []
@@ -1306,7 +1307,7 @@ importsToString imports tokens =
                                     token
 
                             hints =
-                                -- Get all hints, with all hints from target module in the front of the List
+                                -- Get all hints, with all hints from target module in the front of the List.
                                 getHintsForToken (Just token) tokens
                                     |> List.partition (.moduleName >> (==) moduleName)
                                     |> uncurry (++)

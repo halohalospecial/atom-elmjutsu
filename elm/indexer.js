@@ -10319,7 +10319,7 @@ var _user$project$Indexer$getFilteredHints = F2(
 						A2(_user$project$Indexer$moduleToHints, moduleDocs, importData)))));
 	});
 var _user$project$Indexer$getExposedAndUnexposedHints = F4(
-	function (activeFilePath, importsPlusActiveModule, moduleDocs, willGetUnexposed) {
+	function (activeFilePath, importsPlusActiveModule, moduleDocs, shouldGetUnexposed) {
 		var _p163 = A3(
 			_elm_lang$core$List$foldl,
 			F2(
@@ -10383,13 +10383,13 @@ var _user$project$Indexer$getExposedAndUnexposedHints = F4(
 							return {
 								ctor: '_Tuple2',
 								_0: exposed,
-								_1: willGetUnexposed ? A2(_user$project$Indexer$getHintsForUnexposedNames, moduleDocs, unexposedNames) : {ctor: '[]'}
+								_1: shouldGetUnexposed ? A2(_user$project$Indexer$getHintsForUnexposedNames, moduleDocs, unexposedNames) : {ctor: '[]'}
 							};
 						} else {
 							return {
 								ctor: '_Tuple2',
 								_0: {ctor: '[]'},
-								_1: willGetUnexposed ? A2(_user$project$Indexer$getHintsForUnexposedNames, moduleDocs, allNames) : {ctor: '[]'}
+								_1: shouldGetUnexposed ? A2(_user$project$Indexer$getHintsForUnexposedNames, moduleDocs, allNames) : {ctor: '[]'}
 							};
 						}
 					}();

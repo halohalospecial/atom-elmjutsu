@@ -1,3 +1,6 @@
+## 2.18.4
+* Add workaround for `autocomplete-plus` limitation where only the first will be shown for suggestions having the same text.
+
 ## 2.18.3
 * Fix `Add Import` bug (#41).  Thanks to @stil4m for the PR!
 
