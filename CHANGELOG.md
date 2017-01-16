@@ -1,3 +1,6 @@
+## 2.19.3
+* Modify `Lift To Let` behavior yet again.
+
 ## 2.19.2
 * More useful behavior for `Lift To Let`.  Thanks to @stil4m for the suggestion!
 
