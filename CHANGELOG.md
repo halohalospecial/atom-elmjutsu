@@ -1,3 +1,7 @@
+## 2.19.0
+* Add `Surround With Let In` command.
+* Add `Lift To Let` command.
+
 ## 2.18.5
 * Fix global autocomplete bug where imported symbols are still included in the list of suggestions.
 

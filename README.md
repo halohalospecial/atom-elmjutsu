@@ -8,28 +8,33 @@ https://atom.io/packages/elmjutsu
 
 * [Autocomplete](#autocomplete)
 
-* [Go To Definition](#elmjutsu-go-to-definition)
+* Navigation
 
-* [Go To Symbol](#elmjutsu-go-to-symbol)
+  * [Go To Definition](#elmjutsu-go-to-definition)
 
-* [Find Usages](#elmjutsu-find-usages)
+  * [Go To Symbol](#elmjutsu-go-to-symbol)
 
-* [Go To Next Usage](#elmjutsu-go-to-next-usage)
+  * [Find Usages](#elmjutsu-find-usages)
 
-* [Go To Previous Usage](#elmjutsu-go-to-previous-usage)
+  * [Go To Next Usage](#elmjutsu-go-to-next-usage)
 
-* [Go Back](#elmjutsu-go-back)
+  * [Go To Previous Usage](#elmjutsu-go-to-previous-usage)
 
-* [Rename Symbol](#elmjutsu-rename-symbol)
+  * [Go Back](#elmjutsu-go-back)
 
 * [Add Import](#elmjutsu-add-import)
 
 * [Toggle Sidekick](#elmjutsu-toggle-sidekick)
   * Show type hints and documentation for the symbol at cursor position.
 
-* [Install Package](#elmjutsu-install-package)
+* Package Management
+  * [Install Package](#elmjutsu-install-package)
+  * [Uninstall Package](#elmjutsu-uninstall-package)
 
-* [Uninstall Package](#elmjutsu-uninstall-package)
+* Refactoring
+  * [Rename Symbol](#elmjutsu-rename-symbol)
+  * [Surround with let/in](#elmjutsu-surround-with-let-in)
+  * [Lift to let](#elmjutsu-lift-to-let)
 
 ## Requirements
 
@@ -77,53 +82,43 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).
 
 ![construct-from-type-annotation-2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-from-type-annotation-2.gif?raw=true)
 
-### `Elmjutsu: Go To Definition`
+### Navigation
 
-![go-to-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-definition.gif?raw=true)
+  * #### `Elmjutsu: Go To Definition`
 
-If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, you can also check `Enable Hyperclick` to jump to definition using `Ctrl` + click / `Cmd` + click (Mac).
+    ![go-to-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-definition.gif?raw=true)
 
-### `Elmjutsu: Go To Symbol`
+    If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, you can also check `Enable Hyperclick` to jump to definition using `Ctrl` + click / `Cmd` + click (Mac).
 
-![go-to-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-symbol.gif?raw=true)
+  * #### `Elmjutsu: Go To Symbol`
 
-### `Elmjutsu: Find Usages`
+    ![go-to-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-symbol.gif?raw=true)
 
-![find-usages](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/find-usages.gif?raw=true)
+  * #### `Elmjutsu: Find Usages`
 
-### `Elmjutsu: Go To Next Usage`
+    ![find-usages](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/find-usages.gif?raw=true)
 
-Moves the cursor to the position of the next usage.
+  * #### `Elmjutsu: Go To Next Usage`
 
-### `Elmjutsu: Go To Previous Usage`
+    Moves the cursor to the position of the next usage.
 
-Moves the cursor to the position of the previous usage.
+  * #### `Elmjutsu: Go To Previous Usage`
 
-### `Elmjutsu: Go Back`
+    Moves the cursor to the position of the previous usage.
 
-The current cursor position is added to a navigation stack before jumping via:
-  * `Go To Definition`
-  * `Go To Symbol`
-  * `Go To Next Usage`
-  * `Go To Previous Usage`
+  * #### `Elmjutsu: Go Back`
 
-Invoke this command to jump back to the previous position.
+    The current cursor position is added to a navigation stack before jumping via:
+      * `Go To Definition`
+      * `Go To Symbol`
+      * `Go To Next Usage`
+      * `Go To Previous Usage`
 
-### `Elmjutsu: Rename Symbol`
+    Invoke this command to jump back to the previous position.
 
-Renames the symbol across the whole project.  Take note that this is *not* an undoable operation.
+  * #### `Elmjutsu: Hide Usages Panel`
 
-* Press <kbd>enter</kbd> to rename or <kbd>escape</kbd> to cancel.
-* Uncheck usages to exclude.
-* Modified modules with open editors will *not* be saved automatically.
-* Renaming a module will *not* rename the associated file.
-* Currently, this also modifies the symbol name inside comments.
-
-![rename-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/rename-symbol.gif?raw=true)
-
-### `Elmjutsu: Hide Usages Panel`
-
-Closes the `Usages` panel (the panel is shown after invoking `Find Usages` or `Rename Symbol`).
+    Closes the `Usages` panel (the panel is shown after invoking `Find Usages` or `Rename Symbol`).
 
 ### `Elmjutsu: Add Import`
 
@@ -146,18 +141,44 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ![sidekick3](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick3.gif?raw=true)
 
-### `Elmjutsu: Install Package`
+### Package Management
 
-Quickly installs a package.
+  * #### `Elmjutsu: Install Package`
 
-- This runs `elm-package install --yes <name> <version>` (or `elm-package install --yes <name>` if the selected version is "Auto").
-- Make sure that `Elm Package Path` is properly configured in the package settings.
+    Quickly installs a package.
 
-### `Elmjutsu: Uninstall Package`
+    - This runs `elm-package install --yes <name> <version>` (or `elm-package install --yes <name>` if the selected version is "Auto").
+    - Make sure that `Elm Package Path` is properly configured in the package settings.
 
-Removes an installed package.
+  * ### `Elmjutsu: Uninstall Package`
 
-- This removes the dependency from `elm-package.json`, then runs `elm-package install --yes` to clean up.
+    Removes an installed package.
+
+    - This removes the dependency from `elm-package.json`, then runs `elm-package install --yes` to clean up.
+
+### Refactoring
+
+  * #### `Elmjutsu: Rename Symbol`
+
+    Renames the symbol across the whole project.  Take note that this is *not* an undoable operation.
+
+    * Press <kbd>enter</kbd> to rename or <kbd>escape</kbd> to cancel.
+    * Uncheck usages to exclude.
+    * Modified modules with open editors will *not* be saved automatically.
+    * Renaming a module will *not* rename the associated file.
+    * Currently, this also modifies the symbol name inside comments.
+
+    ![rename-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/rename-symbol.gif?raw=true)
+
+
+  * #### `Elmjutsu: Surround With Let In`
+
+    ![surround-with-let-in](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/surround-with-let-in.gif?raw=true)
+
+  * #### `Elmjutsu: Lift To Let`
+
+    ![lift-to-let](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/lift-to-let.gif?raw=true)
+
 
 ## Keybindings
 
