@@ -1,3 +1,6 @@
+## 2.18.3
+* Fix `Add Import` bug (#41).  Thanks to @stil4m for the PR!
+
 ## 2.18.2
 * Fix hyperclick provider implementation overriding other packages (#40).  Thanks a lot to @markogresak and @AsaAyers for debugging and providing a fix!
 
