@@ -1,3 +1,6 @@
+## 2.18.5
+* Fix global autocomplete bug where imported symbols are still included in the list of suggestions.
+
 ## 2.18.4
 * Add workaround for `autocomplete-plus` limitation where only the first will be shown for suggestions having the same text.
 

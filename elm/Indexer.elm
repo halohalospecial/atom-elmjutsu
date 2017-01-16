@@ -858,7 +858,7 @@ getHintsForPartial partial isGlobal maybeActiveFile projectFileContentsDict proj
 
                 ( exposedHints, unexposedHints ) =
                     if isGlobal then
-                        getExposedAndUnexposedHints filePath importsPlusActiveModule allModuleDocs True
+                        getExposedAndUnexposedHints True filePath importsPlusActiveModule allModuleDocs
                     else
                         let
                             importedModuleDocs =
@@ -869,7 +869,7 @@ getHintsForPartial partial isGlobal maybeActiveFile projectFileContentsDict proj
                                         )
                         in
                             -- Only check the imported modules.
-                            getExposedAndUnexposedHints filePath importsPlusActiveModule importedModuleDocs False
+                            getExposedAndUnexposedHints False filePath importsPlusActiveModule importedModuleDocs
 
                 filteredDefaultHints =
                     List.filter filterByName defaultSuggestions
@@ -894,8 +894,8 @@ getHintsForPartial partial isGlobal maybeActiveFile projectFileContentsDict proj
             []
 
 
-getExposedAndUnexposedHints : FilePath -> ImportDict -> List ModuleDocs -> Bool -> ( List Hint, List Hint )
-getExposedAndUnexposedHints activeFilePath importsPlusActiveModule moduleDocs shouldGetUnexposed =
+getExposedAndUnexposedHints : Bool -> FilePath -> ImportDict -> List ModuleDocs -> ( List Hint, List Hint )
+getExposedAndUnexposedHints includeUnexposed activeFilePath importsPlusActiveModule moduleDocs =
     let
         ( exposedLists, unexposedLists ) =
             moduleDocs
@@ -934,8 +934,12 @@ getExposedAndUnexposedHints activeFilePath importsPlusActiveModule moduleDocs sh
                                                                 { hint | moduleName = moduleNameToShow, name = name }
                                                         )
 
+                                            _ =
+                                                Debug.log "exposed" ( moduleDocs.name, importData, exposedNames, unexposedNames )
+
                                             exposedNames =
-                                                List.map .name exposed
+                                                exposed
+                                                    |> List.map .name
                                                     |> Set.fromList
 
                                             unexposedNames =
@@ -946,16 +950,16 @@ getExposedAndUnexposedHints activeFilePath importsPlusActiveModule moduleDocs sh
                                                         )
                                         in
                                             ( exposed
-                                            , if shouldGetUnexposed then
-                                                getHintsForUnexposedNames moduleDocs unexposedNames
+                                            , if includeUnexposed then
+                                                getHintsForUnexposedNames False moduleDocs unexposedNames
                                               else
                                                 []
                                             )
 
                                     Nothing ->
                                         ( []
-                                        , if shouldGetUnexposed then
-                                            getHintsForUnexposedNames moduleDocs allNames
+                                        , if includeUnexposed then
+                                            getHintsForUnexposedNames True moduleDocs allNames
                                           else
                                             []
                                         )
@@ -971,11 +975,14 @@ getExposedAndUnexposedHints activeFilePath importsPlusActiveModule moduleDocs sh
         )
 
 
-getHintsForUnexposedNames : ModuleDocs -> Set.Set String -> List Hint
-getHintsForUnexposedNames moduleDocs unexposedNames =
+getHintsForUnexposedNames : Bool -> ModuleDocs -> Set.Set String -> List Hint
+getHintsForUnexposedNames includeQualified moduleDocs unexposedNames =
     let
         qualifiedAndUnqualified hint =
-            [ { hint | name = moduleDocs.name ++ "." ++ hint.name }, hint ]
+            if includeQualified then
+                [ { hint | name = moduleDocs.name ++ "." ++ hint.name }, hint ]
+            else
+                [ hint ]
 
         valueToHints kind value =
             { name = value.name
