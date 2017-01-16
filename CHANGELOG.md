@@ -1,3 +1,6 @@
+## 2.19.2
+* More useful behavior for `Lift To Let`.
+
 ## 2.19.1
 * Better formatting and exit behavior for `Surround With Let In` and `Lift To Let` command.
 

@@ -170,7 +170,6 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
     ![rename-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/rename-symbol.gif?raw=true)
 
-
   * #### `Elmjutsu: Surround With Let In`
 
     ![surround-with-let-in](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/surround-with-let-in.gif?raw=true)
@@ -193,6 +192,8 @@ Here is an example:
   'ctrl-f12': 'elmjutsu:go-back'
   'f2': 'elmjutsu:rename-symbol'
   'alt-insert': 'elmjutsu:add-import'
+  'alt-l': 'elmjutsu:surround-with-let-in'
+  'alt-shift-l': 'elmjutsu:lift-to-let'
 
 'atom-workspace':
   'f1': 'elmjutsu:toggle-sidekick'
