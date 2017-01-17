@@ -35,6 +35,7 @@ https://atom.io/packages/elmjutsu
   * [Rename Symbol](#elmjutsu-rename-symbol)
   * [Surround with let/in](#elmjutsu-surround-with-let-in)
   * [Lift to let](#elmjutsu-lift-to-let)
+  * [Lift to top-level](#elmjutsu-lift-to-top-level)
 
 ## Requirements
 
@@ -158,6 +159,8 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ### Refactoring
 
+  Warning: These are experimental commands that might fail or exhibit weird behavior on some cases.  There will be better and more accurate implementations when a way to get the AST becomes available.  For now, use at your own risk!
+
   * #### `Elmjutsu: Rename Symbol`
 
     Renames the symbol across the whole project.  Take note that this is *not* an undoable operation.
@@ -172,11 +175,23 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
   * #### `Elmjutsu: Surround With Let In`
 
+    * Press <kbd>escape</kbd> when done naming your variable.
+
     ![surround-with-let-in](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/surround-with-let-in.gif?raw=true)
 
   * #### `Elmjutsu: Lift To Let`
 
+    * Press <kbd>escape</kbd> when done naming your variable.
+    * This is currently buggy on nested lets :(
+
     ![lift-to-let](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/lift-to-let.gif?raw=true)
+
+  * #### `Elmjutsu: Lift To Top Level`
+
+    * Press <kbd>escape</kbd> when done naming your function.
+    * This does not automatically determine the free variables yet, so you also have to type in the arguments of the function.
+
+    ![lift-to-top-level](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/lift-to-top-level.gif?raw=true)
 
 
 ## Keybindings
@@ -194,6 +209,7 @@ Here is an example:
   'alt-insert': 'elmjutsu:add-import'
   'alt-l': 'elmjutsu:surround-with-let-in'
   'alt-shift-l': 'elmjutsu:lift-to-let'
+  'alt-t': 'elmjutsu:lift-to-top-level'
 
 'atom-workspace':
   'f1': 'elmjutsu:toggle-sidekick'

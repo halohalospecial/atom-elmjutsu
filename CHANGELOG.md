@@ -1,3 +1,6 @@
+## 2.20.0
+* Add `Lift To Top Level`.
+
 ## 2.19.3
 * Modify `Lift To Let` behavior yet again.
 
