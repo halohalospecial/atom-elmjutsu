@@ -1,3 +1,6 @@
+## 3.0.1
+* Revert autocomplete sorting approach (the unimported symbols will still be last).  Also remove import aliases from suggestions.
+
 ## 3.0.0
 * BREAKING CHANGE: Rename `Surround With Let In` to `Surround With Let` (sorry).
 * Remove "=" in `let/in` autocompletion.
