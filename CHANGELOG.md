@@ -1,5 +1,7 @@
 ## 3.0.0
 * BREAKING CHANGE: Rename `Surround With Let In` to `Surround With Let` (sorry).
+* Remove "=" in `let/in` autocompletion.
+* Update outdated screen caps.
 
 ## 2.20.0
 * Add `Lift To Top Level`.
@@ -34,7 +36,7 @@
 
 ## 2.18.0
 * Add `Enable Global Autocomplete` option.
-* Add "Auto import" autocompletion.
+* Add "Auto import" autocompletion (inspired by [Elm Light](https://github.com/rundis/elm-light)).
 * Sort autocomplete suggestions by scope (primitives first, then args, then imported values, then unimported values).
 
 ## 2.17.2

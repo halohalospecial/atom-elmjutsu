@@ -14,6 +14,10 @@ https://atom.io/packages/elmjutsu
   * [autocomplete-plus](https://atom.io/packages/autocomplete-plus) (installed by default)
   * [snippets](https://atom.io/packages/snippets) (optional, installed by default)
 
+Related Atom packages:
+- [linter-elm-make](https://atom.io/packages/linter-elm-make) for error reporting and quick fixes
+- [elm-format](https://atom.io/packages/elm-format) to format your Elm source code on save
+
 ## Features Overview
 
 * [Autocomplete](#autocomplete)
@@ -186,7 +190,7 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
   * #### `Elmjutsu: Lift To Top Level`
 
     * Press <kbd>escape</kbd> when done naming your function.
-    * This does not automatically calculate the free variables yet, so you also have to type in the arguments of the function.
+    * This does not compute the needed function arguments (yet?), so you also have to type those in with the function name.
 
     ![lift-to-top-level](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/lift-to-top-level.gif?raw=true)
 
