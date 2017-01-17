@@ -4,22 +4,27 @@ A bag of tricks for developing with [Elm](http://elm-lang.org).
 
 https://atom.io/packages/elmjutsu
 
-## Feature Overview
+## Requirements
+
+* [Elm](http://elm-lang.org/install)
+* [language-elm](https://atom.io/packages/language-elm) (no need to install `elm-oracle` or `goto`)
+* For `Go to Definition`:
+  * [hyperclick](https://atom.io/packages/hyperclick) (optional)
+* For `Autocomplete`:
+  * [autocomplete-plus](https://atom.io/packages/autocomplete-plus) (installed by default)
+  * [snippets](https://atom.io/packages/snippets) (optional, installed by default)
+
+## Features Overview
 
 * [Autocomplete](#autocomplete)
 
 * Navigation
 
-  * [Go To Definition](#elmjutsu-go-to-definition)
-
-  * [Go To Symbol](#elmjutsu-go-to-symbol)
-
+  * [Go to Definition](#elmjutsu-go-to-definition)
+  * [Go to Symbol](#elmjutsu-go-to-symbol)
   * [Find Usages](#elmjutsu-find-usages)
-
-  * [Go To Next Usage](#elmjutsu-go-to-next-usage)
-
-  * [Go To Previous Usage](#elmjutsu-go-to-previous-usage)
-
+  * [Go to Next Usage](#elmjutsu-go-to-next-usage)
+  * [Go to Previous Usage](#elmjutsu-go-to-previous-usage)
   * [Go Back](#elmjutsu-go-back)
 
 * [Add Import](#elmjutsu-add-import)
@@ -33,19 +38,9 @@ https://atom.io/packages/elmjutsu
 
 * Refactoring
   * [Rename Symbol](#elmjutsu-rename-symbol)
-  * [Surround with let/in](#elmjutsu-surround-with-let-in)
-  * [Lift to let](#elmjutsu-lift-to-let)
+  * [Surround with `let`](#elmjutsu-surround-with-let)
+  * [Lift to `let`](#elmjutsu-lift-to-let)
   * [Lift to top-level](#elmjutsu-lift-to-top-level)
-
-## Requirements
-
-* [Elm](http://elm-lang.org/install)
-* [language-elm](https://atom.io/packages/language-elm) (no need to install elm-oracle)
-* For `Go To Definition`:
-  * [hyperclick](https://atom.io/packages/hyperclick) (optional)
-* For `Autocomplete`:
-  * [autocomplete-plus](https://atom.io/packages/autocomplete-plus) (installed by default)
-  * [snippets](https://atom.io/packages/snippets) (optional, installed by default)
 
 ## Feature Details
 
@@ -125,6 +120,8 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).
 
 Quickly adds an import without scrolling to the top of the file.  Also sorts the imports, removes duplicates, and removes [defaults](http://package.elm-lang.org/packages/elm-lang/core/latest/) automatically.
 
+* Tip: There's no "Sort Imports" command, but you can achieve the same result by invoking `Add Import` and choosing an already imported symbol (like `+`, for example).
+
 ![add-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/add-import.gif?raw=true)
 
 ### `Elmjutsu: Toggle Sidekick`
@@ -159,7 +156,7 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ### Refactoring
 
-  Warning: These are experimental commands that might fail or exhibit weird behavior on some cases.  There will be better and more accurate implementations when a way to get the AST becomes available.  For now, use at your own risk!
+  Warning: These are experimental commands that might fail or exhibit weird behavior on some cases.  There will be better and more accurate implementations when a way to get the AST becomes available.  For now, use at your own risk! :)
 
   * #### `Elmjutsu: Rename Symbol`
 
@@ -173,11 +170,11 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
     ![rename-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/rename-symbol.gif?raw=true)
 
-  * #### `Elmjutsu: Surround With Let In`
+  * #### `Elmjutsu: Surround With Let`
 
     * Press <kbd>escape</kbd> when done naming your variable.
 
-    ![surround-with-let-in](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/surround-with-let-in.gif?raw=true)
+    ![surround-with-let](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/surround-with-let-in.gif?raw=true)
 
   * #### `Elmjutsu: Lift To Let`
 
@@ -189,7 +186,7 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
   * #### `Elmjutsu: Lift To Top Level`
 
     * Press <kbd>escape</kbd> when done naming your function.
-    * This does not automatically determine the free variables yet, so you also have to type in the arguments of the function.
+    * This does not automatically calculate the free variables yet, so you also have to type in the arguments of the function.
 
     ![lift-to-top-level](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/lift-to-top-level.gif?raw=true)
 
@@ -205,9 +202,9 @@ Here is an example:
   'f8': 'elmjutsu:go-to-next-usage'
   'shift-f8': 'elmjutsu:go-to-previous-usage'
   'ctrl-f12': 'elmjutsu:go-back'
-  'f2': 'elmjutsu:rename-symbol'
   'alt-insert': 'elmjutsu:add-import'
-  'alt-l': 'elmjutsu:surround-with-let-in'
+  'f2': 'elmjutsu:rename-symbol'
+  'alt-l': 'elmjutsu:surround-with-let'
   'alt-shift-l': 'elmjutsu:lift-to-let'
   'alt-t': 'elmjutsu:lift-to-top-level'
 

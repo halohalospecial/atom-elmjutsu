@@ -1,3 +1,6 @@
+## 3.0.0
+* BREAKING CHANGE: Rename `Surround With Let In` to `Surround With Let` (sorry).
+
 ## 2.20.0
 * Add `Lift To Top Level`.
 
