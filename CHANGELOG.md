@@ -1,3 +1,6 @@
+## 3.0.2
+* Eval: Evaluate the whole line if nothing is selected.
+
 ## 3.0.1
 * Revert autocomplete sorting approach (the unimported symbols will still be last).  Also remove import aliases from suggestions.
 

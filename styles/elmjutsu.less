@@ -116,7 +116,13 @@ atom-text-editor {
     border-radius: @component-border-radius;
   }
   .elmjutsu-eval .region {
-    background-color: fadeout(@background-color-warning, 75%);
+    background-color: fadeout(@background-color-warning, 80%);
+  }
+  .elmjutsu-eval-result .region {
+    background-color: fadeout(@background-color-success, 80%);
+  }
+  .elmjutsu-eval-result-error .region {
+    background-color: fadeout(@background-color-error, 80%);
   }
   .elmjutsu-pipe-selection-start .region {
     box-sizing: border-box;

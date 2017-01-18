@@ -15,7 +15,7 @@ https://atom.io/packages/elmjutsu
   * [snippets](https://atom.io/packages/snippets) (optional, installed by default)
 
 Related Atom packages:
-- [linter-elm-make](https://atom.io/packages/linter-elm-make) for error reporting and quick fixes
+- [linter-elm-make](https://atom.io/packages/linter-elm-make) for error highlighting and quick fixes
 - [elm-format](https://atom.io/packages/elm-format) to format your Elm source code on save
 
 ## Features Overview
