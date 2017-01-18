@@ -1,3 +1,6 @@
+## 3.0.4
+* Fix `Lift To Let` bugs.
+
 ## 3.0.3
 * Put a try/catch when checking if a file exists.
 

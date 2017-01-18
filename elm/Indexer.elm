@@ -841,20 +841,6 @@ getHintsForPartial partial isGlobal maybeActiveFile projectFileContentsDict proj
                         |> List.concat
                         |> List.filter (\hint -> hint.moduleName == "" && String.startsWith partial hint.name)
 
-                -- filteredImportAliasHints =
-                --     Dict.values activeFileContents.imports
-                --         |> List.filterMap
-                --             (\anImport ->
-                --                 case anImport.alias of
-                --                     Just alias ->
-                --                         if String.startsWith partial alias then
-                --                             Just { emptyHint | name = alias }
-                --                         else
-                --                             Nothing
-                --
-                --                     Nothing ->
-                --                         Nothing
-                --             )
                 ( exposedHints, unexposedHints ) =
                     if isGlobal then
                         getExposedAndUnexposedHints True filePath importsPlusActiveModule allModuleDocs
@@ -887,9 +873,7 @@ getHintsForPartial partial isGlobal maybeActiveFile projectFileContentsDict proj
                         ++ filteredArgHints
                         ++ filteredExposedHints
                     )
-                    -- ++ sortByName filteredImportAliasHints
-                    ++
-                        sortByName filteredUnexposedHints
+                    ++ sortByName filteredUnexposedHints
 
         Nothing ->
             []

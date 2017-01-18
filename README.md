@@ -161,8 +161,6 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ### Refactoring
 
-  Warning: These are experimental commands that might fail or exhibit weird behavior on some cases.  There will be better and more accurate implementations when a way to get the AST becomes available.  For now, use at your own risk! :)
-
   * #### `Elmjutsu: Rename Symbol`
 
     Renames the symbol across the whole project.  Take note that this is *not* an undoable operation.
@@ -177,20 +175,19 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
   * #### `Elmjutsu: Surround With Let`
 
-    * Press <kbd>escape</kbd> when done naming your variable.
+    * Press <kbd>escape</kbd> when you're done naming your variable.
 
     ![surround-with-let](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/surround-with-let-in.gif?raw=true)
 
   * #### `Elmjutsu: Lift To Let`
 
-    * Press <kbd>escape</kbd> when done naming your variable.
-    * This is currently buggy on nested lets :(
+    * Press <kbd>escape</kbd> when you're done naming your variable.
 
     ![lift-to-let](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/lift-to-let.gif?raw=true)
 
   * #### `Elmjutsu: Lift To Top Level`
 
-    * Press <kbd>escape</kbd> when done naming your function.
+    * Press <kbd>escape</kbd> when you're done naming your function.
     * This does not compute the needed function arguments (yet?), so you also have to type those in with the function name.
 
     ![lift-to-top-level](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/lift-to-top-level.gif?raw=true)
