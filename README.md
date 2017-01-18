@@ -17,6 +17,7 @@ https://atom.io/packages/elmjutsu
 Related Atom packages:
 - [linter-elm-make](https://atom.io/packages/linter-elm-make) for error highlighting and quick fixes
 - [elm-format](https://atom.io/packages/elm-format) to format your Elm source code on save
+- More here: https://atom.io/packages/search?q=elm
 
 ## Features Overview
 

@@ -1,3 +1,6 @@
+## 3.0.3
+* Put a try/catch when checking if a file exists.
+
 ## 3.0.2
 * Eval: Evaluate the whole line if nothing is selected.
 
