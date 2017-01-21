@@ -1,8 +1,9 @@
 ## 3.1.0
 * Add `Insert default arguments` autocompletion.
+* Add `Show Types in Sidekick`, `Show Doc Comments in Sidekick`, and `Show Source Paths in Sidekick` options (#45).  Thanks to @mandrolic for the suggestion!
 * Fix `Define from type annotation` bug when there's a doc comment above the annotation.
 * Fix `Insert case/of` bug with functions.
-* Make autocomplete snippets insert type parts instead of argument names.
+* Make autocomplete snippets insert type parts instead of argument names (regression).
 * Make Sidekick work with `Pipe Selections`.
 * Improve `Eval`.
 

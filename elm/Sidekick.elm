@@ -7,9 +7,9 @@ import Markdown
 import Regex
 
 
-main : Program Never Model Msg
+main : Program Config Model Msg
 main =
-    Html.program
+    Html.programWithFlags
         { init = init
         , view = view
         , update = update
@@ -27,6 +27,7 @@ subscriptions model =
         , downloadDocsFailedSub DownloadDocsFailed
         , readingPackageDocsSub (\_ -> ReadingPackageDocs)
         , downloadingPackageDocsSub (\_ -> DownloadingPackageDocs)
+        , configChangedSub ConfigChanged
         ]
 
 
@@ -55,6 +56,9 @@ port readingPackageDocsSub : (() -> msg) -> Sub msg
 port downloadingPackageDocsSub : (() -> msg) -> Sub msg
 
 
+port configChangedSub : (Config -> msg) -> Sub msg
+
+
 
 -- OUTGOING PORTS
 
@@ -70,6 +74,14 @@ type alias Model =
     { note : String
     , activeHints : List Hint
     , activeFile : Maybe ActiveFile
+    , config : Config
+    }
+
+
+type alias Config =
+    { showTypes : Bool
+    , showDocComments : Bool
+    , showSourcePaths : Bool
     }
 
 
@@ -79,9 +91,9 @@ type alias ActiveFile =
     }
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( emptyModel
+init : Config -> ( Model, Cmd Msg )
+init config =
+    ( { emptyModel | config = config }
     , Cmd.none
     )
 
@@ -91,6 +103,11 @@ emptyModel =
     { note = ""
     , activeHints = []
     , activeFile = Nothing
+    , config =
+        { showTypes = False
+        , showDocComments = False
+        , showSourcePaths = False
+        }
     }
 
 
@@ -107,6 +124,7 @@ type Msg
     | ReadingPackageDocs
     | DownloadingPackageDocs
     | GoToDefinition String
+    | ConfigChanged Config
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -152,13 +170,18 @@ update msg model =
             , goToDefinitionCmd name
             )
 
+        ConfigChanged config ->
+            ( { model | config = config }
+            , Cmd.none
+            )
+
 
 
 -- VIEW
 
 
 view : Model -> Html Msg
-view { note, activeHints, activeFile } =
+view { note, activeHints, activeFile, config } =
     case activeFile of
         Nothing ->
             text ""
@@ -166,7 +189,7 @@ view { note, activeHints, activeFile } =
         Just { filePath, projectDirectory } ->
             let
                 hintMarkdown hint =
-                    Markdown.toHtml [] (viewHint filePath hint)
+                    Markdown.toHtml [] (viewHint config filePath hint)
 
                 sourcePathView hint =
                     if String.startsWith (packageDocsPrefix ++ "/") hint.sourcePath then
@@ -185,17 +208,22 @@ view { note, activeHints, activeFile } =
                     List.map
                         (\hint ->
                             div [ class "hint" ]
-                                [ hintMarkdown hint
-                                , div [ class "source-path" ] (sourcePathView hint)
-                                ]
+                                ([ hintMarkdown hint
+                                 ]
+                                    ++ (if config.showSourcePaths then
+                                            [ div [ class "source-path" ] (sourcePathView hint) ]
+                                        else
+                                            []
+                                       )
+                                )
                         )
                         activeHints
             in
                 div [] <| hintsView ++ [ span [ class "note" ] [ text note ] ]
 
 
-viewHint : String -> Hint -> String
-viewHint activeFilePath hint =
+viewHint : Config -> String -> Hint -> String
+viewHint config activeFilePath hint =
     let
         formattedModuleName =
             if hint.moduleName == "" || activeFilePath == hint.sourcePath then
@@ -212,21 +240,29 @@ viewHint activeFilePath hint =
             else
                 ": " ++ hint.tipe
 
-        formattedComment =
-            case hint.comment of
-                "" ->
-                    ""
+        maybeType =
+            if config.showTypes then
+                "#### "
+                    ++ formattedModuleName
+                    ++ "**"
+                    ++ hint.name
+                    ++ "** "
+                    ++ formattedTipe
+            else
+                ""
 
-                _ ->
-                    "\n<br>" ++ hint.comment
+        maybeComment =
+            if config.showDocComments then
+                case hint.comment of
+                    "" ->
+                        ""
+
+                    _ ->
+                        "\n<br>" ++ hint.comment
+            else
+                ""
     in
-        "#### "
-            ++ formattedModuleName
-            ++ "**"
-            ++ hint.name
-            ++ "** "
-            ++ formattedTipe
-            ++ formattedComment
+        maybeType ++ maybeComment
 
 
 type alias Hint =

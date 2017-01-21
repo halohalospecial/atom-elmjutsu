@@ -69,7 +69,7 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 ![autocomplete-snippet](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-snippet.gif?raw=true)
 
-#### :zap:Special completions
+#### Special completions :zap:
 
 Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).
 
@@ -144,7 +144,7 @@ Quickly adds an import without scrolling to the top of the file.  Also sorts the
 ![add-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/add-import.gif?raw=true)
 
 ### `Elmjutsu: Toggle Sidekick`
-Shows the type hints and documentation for the symbol at cursor position.  The size and position of the panel can be modified in the package settings.
+Shows the type hints and documentation for the symbol at cursor position.  The size, position of the panel, and amount of information to show can be modified in the package settings.
 
 * Example #1 (default): `Sidekick Position` = "bottom", `Sidekick Size` = 0 (Automatically resizes to fit content.)
 

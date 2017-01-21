@@ -6,7 +6,6 @@ import Json.Decode as Decode
 import Regex
 import Set
 import Task
-import Basics
 
 
 main : Program Never Model Msg

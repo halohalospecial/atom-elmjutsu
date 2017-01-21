@@ -8548,14 +8548,18 @@ var _user$project$Sidekick$removePrefix = F2(
 			text);
 	});
 var _user$project$Sidekick$packageDocsPrefix = 'http://package.elm-lang.org/packages';
-var _user$project$Sidekick$viewHint = F2(
-	function (activeFilePath, hint) {
-		var formattedComment = function () {
-			var _p1 = hint.comment;
-			if (_p1 === '') {
-				return '';
+var _user$project$Sidekick$viewHint = F3(
+	function (config, activeFilePath, hint) {
+		var maybeComment = function () {
+			if (config.showDocComments) {
+				var _p1 = hint.comment;
+				if (_p1 === '') {
+					return '';
+				} else {
+					return A2(_elm_lang$core$Basics_ops['++'], '\n<br>', hint.comment);
+				}
 			} else {
-				return A2(_elm_lang$core$Basics_ops['++'], '\n<br>', hint.comment);
+				return '';
 			}
 		}();
 		var formattedTipe = _elm_lang$core$Native_Utils.eq(hint.tipe, '') ? ((_elm_lang$core$Native_Utils.cmp(
@@ -8568,7 +8572,7 @@ var _user$project$Sidekick$viewHint = F2(
 				A2(_elm_lang$core$String$join, ' ', hint.args),
 				'*')) : '') : A2(_elm_lang$core$Basics_ops['++'], ': ', hint.tipe);
 		var formattedModuleName = (_elm_lang$core$Native_Utils.eq(hint.moduleName, '') || _elm_lang$core$Native_Utils.eq(activeFilePath, hint.sourcePath)) ? '' : A2(_elm_lang$core$Basics_ops['++'], hint.moduleName, '.');
-		return A2(
+		var maybeType = config.showTypes ? A2(
 			_elm_lang$core$Basics_ops['++'],
 			'#### ',
 			A2(
@@ -8580,17 +8584,24 @@ var _user$project$Sidekick$viewHint = F2(
 					A2(
 						_elm_lang$core$Basics_ops['++'],
 						hint.name,
-						A2(
-							_elm_lang$core$Basics_ops['++'],
-							'** ',
-							A2(_elm_lang$core$Basics_ops['++'], formattedTipe, formattedComment))))));
+						A2(_elm_lang$core$Basics_ops['++'], '** ', formattedTipe))))) : '';
+		return A2(_elm_lang$core$Basics_ops['++'], maybeType, maybeComment);
 	});
 var _user$project$Sidekick$emptyModel = {
 	note: '',
 	activeHints: {ctor: '[]'},
-	activeFile: _elm_lang$core$Maybe$Nothing
+	activeFile: _elm_lang$core$Maybe$Nothing,
+	config: {showTypes: false, showDocComments: false, showSourcePaths: false}
 };
-var _user$project$Sidekick$init = {ctor: '_Tuple2', _0: _user$project$Sidekick$emptyModel, _1: _elm_lang$core$Platform_Cmd$none};
+var _user$project$Sidekick$init = function (config) {
+	return {
+		ctor: '_Tuple2',
+		_0: _elm_lang$core$Native_Utils.update(
+			_user$project$Sidekick$emptyModel,
+			{config: config}),
+		_1: _elm_lang$core$Platform_Cmd$none
+	};
+};
 var _user$project$Sidekick$activeHintsChangedSub = _elm_lang$core$Native_Platform.incomingPort(
 	'activeHintsChangedSub',
 	_elm_lang$core$Json_Decode$list(
@@ -8689,6 +8700,25 @@ var _user$project$Sidekick$downloadingPackageDocsSub = _elm_lang$core$Native_Pla
 	'downloadingPackageDocsSub',
 	_elm_lang$core$Json_Decode$null(
 		{ctor: '_Tuple0'}));
+var _user$project$Sidekick$configChangedSub = _elm_lang$core$Native_Platform.incomingPort(
+	'configChangedSub',
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (showTypes) {
+			return A2(
+				_elm_lang$core$Json_Decode$andThen,
+				function (showDocComments) {
+					return A2(
+						_elm_lang$core$Json_Decode$andThen,
+						function (showSourcePaths) {
+							return _elm_lang$core$Json_Decode$succeed(
+								{showTypes: showTypes, showDocComments: showDocComments, showSourcePaths: showSourcePaths});
+						},
+						A2(_elm_lang$core$Json_Decode$field, 'showSourcePaths', _elm_lang$core$Json_Decode$bool));
+				},
+				A2(_elm_lang$core$Json_Decode$field, 'showDocComments', _elm_lang$core$Json_Decode$bool));
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'showTypes', _elm_lang$core$Json_Decode$bool)));
 var _user$project$Sidekick$goToDefinitionCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'goToDefinitionCmd',
 	function (v) {
@@ -8756,17 +8786,29 @@ var _user$project$Sidekick$update = F2(
 						{note: 'Downloading package docs...'}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
-			default:
+			case 'GoToDefinition':
 				return {
 					ctor: '_Tuple2',
 					_0: model,
 					_1: _user$project$Sidekick$goToDefinitionCmd(_p2._0)
 				};
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: _elm_lang$core$Native_Utils.update(
+						model,
+						{config: _p2._0}),
+					_1: _elm_lang$core$Platform_Cmd$none
+				};
 		}
 	});
-var _user$project$Sidekick$Model = F3(
+var _user$project$Sidekick$Model = F4(
+	function (a, b, c, d) {
+		return {note: a, activeHints: b, activeFile: c, config: d};
+	});
+var _user$project$Sidekick$Config = F3(
 	function (a, b, c) {
-		return {note: a, activeHints: b, activeFile: c};
+		return {showTypes: a, showDocComments: b, showSourcePaths: c};
 	});
 var _user$project$Sidekick$ActiveFile = F2(
 	function (a, b) {
@@ -8776,11 +8818,15 @@ var _user$project$Sidekick$Hint = F7(
 	function (a, b, c, d, e, f, g) {
 		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, args: f, caseTipe: g};
 	});
+var _user$project$Sidekick$ConfigChanged = function (a) {
+	return {ctor: 'ConfigChanged', _0: a};
+};
 var _user$project$Sidekick$GoToDefinition = function (a) {
 	return {ctor: 'GoToDefinition', _0: a};
 };
 var _user$project$Sidekick$view = function (_p3) {
 	var _p4 = _p3;
+	var _p6 = _p4.config;
 	var _p5 = _p4.activeFile;
 	if (_p5.ctor === 'Nothing') {
 		return _elm_lang$html$Html$text('');
@@ -8847,7 +8893,7 @@ var _user$project$Sidekick$view = function (_p3) {
 			return A2(
 				_evancz$elm_markdown$Markdown$toHtml,
 				{ctor: '[]'},
-				A2(_user$project$Sidekick$viewHint, _p5._0.filePath, hint));
+				A3(_user$project$Sidekick$viewHint, _p6, _p5._0.filePath, hint));
 		};
 		var hintsView = A2(
 			_elm_lang$core$List$map,
@@ -8859,10 +8905,14 @@ var _user$project$Sidekick$view = function (_p3) {
 						_0: _elm_lang$html$Html_Attributes$class('hint'),
 						_1: {ctor: '[]'}
 					},
-					{
-						ctor: '::',
-						_0: hintMarkdown(hint),
-						_1: {
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						{
+							ctor: '::',
+							_0: hintMarkdown(hint),
+							_1: {ctor: '[]'}
+						},
+						_p6.showSourcePaths ? {
 							ctor: '::',
 							_0: A2(
 								_elm_lang$html$Html$div,
@@ -8873,8 +8923,7 @@ var _user$project$Sidekick$view = function (_p3) {
 								},
 								sourcePathView(hint)),
 							_1: {ctor: '[]'}
-						}
-					});
+						} : {ctor: '[]'}));
 			},
 			_p4.activeHints);
 		return A2(
@@ -8925,13 +8974,13 @@ var _user$project$Sidekick$subscriptions = function (model) {
 				_1: {
 					ctor: '::',
 					_0: _user$project$Sidekick$docsReadSub(
-						function (_p6) {
+						function (_p7) {
 							return _user$project$Sidekick$DocsRead;
 						}),
 					_1: {
 						ctor: '::',
 						_0: _user$project$Sidekick$docsDownloadedSub(
-							function (_p7) {
+							function (_p8) {
 								return _user$project$Sidekick$DocsDownloaded;
 							}),
 						_1: {
@@ -8940,16 +8989,20 @@ var _user$project$Sidekick$subscriptions = function (model) {
 							_1: {
 								ctor: '::',
 								_0: _user$project$Sidekick$readingPackageDocsSub(
-									function (_p8) {
+									function (_p9) {
 										return _user$project$Sidekick$ReadingPackageDocs;
 									}),
 								_1: {
 									ctor: '::',
 									_0: _user$project$Sidekick$downloadingPackageDocsSub(
-										function (_p9) {
+										function (_p10) {
 											return _user$project$Sidekick$DownloadingPackageDocs;
 										}),
-									_1: {ctor: '[]'}
+									_1: {
+										ctor: '::',
+										_0: _user$project$Sidekick$configChangedSub(_user$project$Sidekick$ConfigChanged),
+										_1: {ctor: '[]'}
+									}
 								}
 							}
 						}
@@ -8958,8 +9011,25 @@ var _user$project$Sidekick$subscriptions = function (model) {
 			}
 		});
 };
-var _user$project$Sidekick$main = _elm_lang$html$Html$program(
-	{init: _user$project$Sidekick$init, view: _user$project$Sidekick$view, update: _user$project$Sidekick$update, subscriptions: _user$project$Sidekick$subscriptions})();
+var _user$project$Sidekick$main = _elm_lang$html$Html$programWithFlags(
+	{init: _user$project$Sidekick$init, view: _user$project$Sidekick$view, update: _user$project$Sidekick$update, subscriptions: _user$project$Sidekick$subscriptions})(
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (showDocComments) {
+			return A2(
+				_elm_lang$core$Json_Decode$andThen,
+				function (showSourcePaths) {
+					return A2(
+						_elm_lang$core$Json_Decode$andThen,
+						function (showTypes) {
+							return _elm_lang$core$Json_Decode$succeed(
+								{showDocComments: showDocComments, showSourcePaths: showSourcePaths, showTypes: showTypes});
+						},
+						A2(_elm_lang$core$Json_Decode$field, 'showTypes', _elm_lang$core$Json_Decode$bool));
+				},
+				A2(_elm_lang$core$Json_Decode$field, 'showSourcePaths', _elm_lang$core$Json_Decode$bool));
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'showDocComments', _elm_lang$core$Json_Decode$bool)));
 
 var Elm = {};
 Elm['Sidekick'] = Elm['Sidekick'] || {};
