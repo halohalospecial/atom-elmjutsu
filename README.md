@@ -25,33 +25,33 @@ Related Atom packages:
 
 * Navigation
 
-  * [Go to Definition](#elmjutsu-go-to-definition)
-  * [Go to Symbol](#elmjutsu-go-to-symbol)
-  * [Find Usages](#elmjutsu-find-usages)
-  * [Go to Next Usage](#elmjutsu-go-to-next-usage)
-  * [Go to Previous Usage](#elmjutsu-go-to-previous-usage)
-  * [Go Back](#elmjutsu-go-back)
+  * [Go to Definition](#go-to-definition)
+  * [Go to Symbol](#go-to-symbol)
+  * [Find Usages](#find-usages)
+  * [Go to Next Usage](#go-to-next-usage)
+  * [Go to Previous Usage](#go-to-previous-usage)
+  * [Go Back](#go-back)
 
-* [Add Import](#elmjutsu-add-import)
+* [Add Import](#add-import)
 
-* [Toggle Sidekick](#elmjutsu-toggle-sidekick)
+* [Toggle Sidekick](#toggle-sidekick)
   * Show type hints and documentation for the symbol at cursor position.
 
 * Package Management
-  * [Install Package](#elmjutsu-install-package)
-  * [Uninstall Package](#elmjutsu-uninstall-package)
+  * [Install Package](#install-package)
+  * [Uninstall Package](#uninstall-package)
 
 * Refactoring
-  * [Rename Symbol](#elmjutsu-rename-symbol)
-  * [Surround with `let`](#elmjutsu-surround-with-let)
-  * [Lift to `let`](#elmjutsu-lift-to-let)
-  * [Lift to top-level](#elmjutsu-lift-to-top-level)
+  * [Rename Symbol](#rename-symbol)
+  * [Surround with `let`](#surround-with-let)
+  * [Lift to `let`](#lift-to-let)
+  * [Lift to top-level](#lift-to-top-level)
 
 ## Feature Details
 
 By default, the only thing this package does is parse your project's source files to extract information, and download documentation of 3rd-party Elm packages.  You have to manually enable the features that you need.  The downloaded documentation files will be saved to the path set in `Cache Directory` in the settings view.  If `Cache Directory` is blank, a temporary directory will be used.  Take note that most operating systems delete temporary directories at bootup or at regular intervals.
 
-### Autocomplete
+### <a name="autocomplete"></a>Autocomplete
 
 Autocomplete is turned off by default.  To turn it on, check `Enable Autocomplete` in the package settings.
 
@@ -61,7 +61,7 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 ![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
 
-* Check `Enable Global Autocomplete` if you want include unimported project symbols.  This will also enable :zap:`Auto import` completion (which works like [Add Import](#elmjutsu-add-import)).
+* Check `Enable Global Autocomplete` if you want to include unimported project symbols.  This will also enable :zap:`Auto import` completion (which works like [Add Import](#elmjutsu-add-import)).
 
 ![auto-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/auto-import.gif?raw=true)
 
@@ -99,29 +99,29 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).
 
 ### Navigation
 
-  * #### `Elmjutsu: Go To Definition`
+  * #### <a name="go-to-definition"></a>`Elmjutsu: Go To Definition`
 
     ![go-to-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-definition.gif?raw=true)
 
     If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, you can also check `Enable Hyperclick` to jump to definition using `Ctrl` + click / `Cmd` + click (Mac).
 
-  * #### `Elmjutsu: Go To Symbol`
+  * #### <a name="go-to-symbol"></a>`Elmjutsu: Go To Symbol`
 
     ![go-to-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-symbol.gif?raw=true)
 
-  * #### `Elmjutsu: Find Usages`
+  * #### <a name="find-usages"></a>`Elmjutsu: Find Usages`
 
     ![find-usages](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/find-usages.gif?raw=true)
 
-  * #### `Elmjutsu: Go To Next Usage`
+  * #### <a name="go-to-next-usage"></a>`Elmjutsu: Go To Next Usage`
 
     Moves the cursor to the position of the next usage.
 
-  * #### `Elmjutsu: Go To Previous Usage`
+  * #### <a name="go-to-previous-usage"></a>`Elmjutsu: Go To Previous Usage`
 
     Moves the cursor to the position of the previous usage.
 
-  * #### `Elmjutsu: Go Back`
+  * #### <a name="go-back"></a>`Elmjutsu: Go Back`
 
     The current cursor position is added to a navigation stack before jumping via:
       * `Go To Definition`
@@ -131,11 +131,11 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).
 
     Invoke this command to jump back to the previous position.
 
-  * #### `Elmjutsu: Hide Usages Panel`
+  * #### <a name="hide-usages-panel"></a>`Elmjutsu: Hide Usages Panel`
 
     Closes the `Usages` panel (the panel is shown after invoking `Find Usages` or `Rename Symbol`).
 
-### `Elmjutsu: Add Import`
+### <a name="add-import"></a>`Elmjutsu: Add Import`
 
 Quickly adds an import without scrolling to the top of the file.  Also sorts the imports, removes duplicates, and removes [defaults](http://package.elm-lang.org/packages/elm-lang/core/latest/) automatically.
 
@@ -143,7 +143,7 @@ Quickly adds an import without scrolling to the top of the file.  Also sorts the
 
 ![add-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/add-import.gif?raw=true)
 
-### `Elmjutsu: Toggle Sidekick`
+### <a name="toggle-sidekick">`Elmjutsu: Toggle Sidekick`
 Shows the type hints and documentation for the symbol at cursor position.  The size, position of the panel, and amount of information to show can be modified in the package settings.
 
 * Example #1 (default): `Sidekick Position` = "bottom", `Sidekick Size` = 0 (Automatically resizes to fit content.)
@@ -160,14 +160,14 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ### Package Management
 
-  * #### `Elmjutsu: Install Package`
+  * #### <a name="install-package">`Elmjutsu: Install Package`
 
     Quickly installs a package.
 
     - This runs `elm-package install --yes <name> <version>` (or `elm-package install --yes <name>` if the selected version is "Auto").
     - Make sure that `Elm Package Path` is properly configured in the package settings.
 
-  * ### `Elmjutsu: Uninstall Package`
+  * ### <a name="uninstall-package">`Elmjutsu: Uninstall Package`
 
     Removes an installed package.
 
@@ -175,7 +175,7 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ### Refactoring
 
-  * #### `Elmjutsu: Rename Symbol`
+  * #### <a name="rename-symbol">`Elmjutsu: Rename Symbol`
 
     Renames the symbol across the whole project.  Take note that this is *not* an undoable operation.
 
@@ -187,19 +187,19 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
     ![rename-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/rename-symbol.gif?raw=true)
 
-  * #### `Elmjutsu: Surround With Let`
+  * #### <a name="surround-with-let">`Elmjutsu: Surround With Let`
 
     * Press <kbd>escape</kbd> when you're done naming your variable.
 
     ![surround-with-let](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/surround-with-let-in.gif?raw=true)
 
-  * #### `Elmjutsu: Lift To Let`
+  * #### <a name="lift-to-let">`Elmjutsu: Lift To Let`
 
     * Press <kbd>escape</kbd> when you're done naming your variable.
 
     ![lift-to-let](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/lift-to-let.gif?raw=true)
 
-  * #### `Elmjutsu: Lift To Top Level`
+  * #### <a name="lift-to-top-level">`Elmjutsu: Lift To Top Level`
 
     * Press <kbd>escape</kbd> when you're done naming your function.
     * This does not compute the needed function arguments (yet?), so you also have to type those in with the function name.
