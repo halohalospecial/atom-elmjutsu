@@ -4,15 +4,16 @@ A bag of tricks for developing with [Elm](http://elm-lang.org).
 
 https://atom.io/packages/elmjutsu
 
-## Requirements
+## Setup
 
-* [Elm](http://elm-lang.org/install)
-* [language-elm](https://atom.io/packages/language-elm) (no need to install `elm-oracle` or `goto`)
+* Install [Elm](http://elm-lang.org/install).
+* Install [language-elm](https://atom.io/packages/language-elm) (no need to install `elm-oracle` or `goto`).
 * For `Go to Definition`:
-  * [hyperclick](https://atom.io/packages/hyperclick) (optional)
+  * Install [hyperclick](https://atom.io/packages/hyperclick) (optional).
 * For `Autocomplete`:
-  * [autocomplete-plus](https://atom.io/packages/autocomplete-plus) (installed by default)
-  * [snippets](https://atom.io/packages/snippets) (optional, installed by default)
+  * Install [autocomplete-plus](https://atom.io/packages/autocomplete-plus) (installed by default).
+  * Install [snippets](https://atom.io/packages/snippets) (optional, installed by default).
+* Add your [keybindings](#keybindings).
 
 Related Atom packages:
 - [linter-elm-make](https://atom.io/packages/linter-elm-make) for error highlighting and quick fixes
@@ -207,7 +208,7 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
     ![lift-to-top-level](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/lift-to-top-level.gif?raw=true)
 
 
-## Keybindings
+## <a name="keybindings">Keybindings
 
 Here is an example:
 ```
