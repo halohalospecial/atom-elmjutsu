@@ -21,6 +21,21 @@ caseBool aBool =
             0
 
 
+boolFunction : Bool
+boolFunction =
+    True
+
+
+caseBoolFunction : Int
+caseBoolFunction =
+    case boolFunction of
+        True ->
+            1
+
+        False ->
+            0
+
+
 type alias Record =
     { aMaybe : Maybe String
     }

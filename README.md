@@ -61,7 +61,7 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 ![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
 
-* Check `Enable Global Autocomplete` if you want include unimported project symbols.  This will also enable <span class="icon-zap"></span>`Auto import` completion (which works like [Add Import](#elmjutsu-add-import)).
+* Check `Enable Global Autocomplete` if you want include unimported project symbols.  This will also enable :zap:`Auto import` completion (which works like [Add Import](#elmjutsu-add-import)).
 
 ![auto-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/auto-import.gif?raw=true)
 
@@ -69,25 +69,29 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 ![autocomplete-snippet](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-snippet.gif?raw=true)
 
-#### <span class="icon-zap"></span>Special completions
+#### :zap:Special completions
 
 Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).
 
-* <span class="icon-zap"></span>`Insert module`
-* <span class="icon-zap"></span>`Insert let/in`
-* <span class="icon-zap"></span>`Insert if/then/else`
+* :zap:`Insert module`
+* :zap:`Insert let/in`
+* :zap:`Insert if/then/else`
 
 ![construct-basic](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-basic.gif?raw=true)
 
-* <span class="icon-zap"></span>`Insert case/of`
+* :zap:`Insert case/of`
 
 ![construct-case-of](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-case-of.gif?raw=true)
 
-* <span class="icon-zap"></span>`Replace type with default`
+* :zap:`Insert default arguments`
+
+![construct-default-arguments](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-default-arguments.gif?raw=true)
+
+* :zap:`Replace type with default`
 
 ![construct-default-value-for-type](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-default-value-for-type.gif?raw=true)
 
-* <span class="icon-zap"></span>`Define from type annotation`
+* :zap:`Define from type annotation`
 
 ![construct-from-type-annotation-1](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-from-type-annotation-1.gif?raw=true)
 

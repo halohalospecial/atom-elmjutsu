@@ -40,6 +40,13 @@ aString =
     ""
 
 
+{-| A doc comment.
+-}
+withDocComment : String
+withDocComment =
+    ""
+
+
 
 -- aChar : Char
 -- aChar =

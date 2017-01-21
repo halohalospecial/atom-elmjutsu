@@ -1,3 +1,11 @@
+## 3.1.0
+* Add `Insert default arguments` autocompletion.
+* Fix `Define from type annotation` bug when there's a doc comment above the annotation.
+* Fix `Insert case/of` bug with functions.
+* Make autocomplete snippets insert type parts instead of argument names.
+* Make Sidekick work with `Pipe Selections`.
+* Improve `Eval`.
+
 ## 3.0.4
 * Fix `Lift To Let` bugs.
 

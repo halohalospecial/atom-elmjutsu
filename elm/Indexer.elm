@@ -6,6 +6,7 @@ import Json.Decode as Decode
 import Regex
 import Set
 import Task
+import Basics
 
 
 main : Program Never Model Msg
@@ -38,6 +39,7 @@ subscriptions model =
         , constructFromTypeAnnotationSub ConstructFromTypeAnnotation
         , constructCaseOfSub ConstructCaseOf
         , constructDefaultValueForTypeSub ConstructDefaultValueForType
+        , constructDefaultArgumentsSub ConstructDefaultArguments
         ]
 
 
@@ -99,6 +101,9 @@ port constructCaseOfSub : (Token -> msg) -> Sub msg
 port constructDefaultValueForTypeSub : (Token -> msg) -> Sub msg
 
 
+port constructDefaultArgumentsSub : (Token -> msg) -> Sub msg
+
+
 
 -- OUTGOING PORTS
 
@@ -158,6 +163,9 @@ port caseOfConstructedCmd : Maybe Token -> Cmd msg
 
 
 port defaultValueForTypeConstructedCmd : Maybe String -> Cmd msg
+
+
+port defaultArgumentsConstructedCmd : Maybe (List String) -> Cmd msg
 
 
 
@@ -286,6 +294,7 @@ type Msg
     | ConstructFromTypeAnnotation String
     | ConstructCaseOf Token
     | ConstructDefaultValueForType Token
+    | ConstructDefaultArguments Token
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -389,6 +398,9 @@ update msg model =
 
         ConstructDefaultValueForType token ->
             doConstructDefaultValueForType token model
+
+        ConstructDefaultArguments token ->
+            doConstructDefaultArguments token model
 
 
 doUpdateActiveHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
@@ -1367,13 +1379,13 @@ constructFromTypeAnnotation typeAnnotation activeTokens =
             List.head parts
                 |> Maybe.withDefault typeAnnotation
 
-        argsString =
+        tipeString =
             List.tail parts
                 |> Maybe.withDefault []
                 |> String.join " :"
 
         tipeParts =
-            getTipeParts argsString
+            getTipeParts tipeString
 
         returnTipe =
             last tipeParts
@@ -1502,7 +1514,7 @@ getDefaultValueForType activeTokens maybeRootTipeString tipeString =
                                             if hint.name /= rootTipeString then
                                                 getDefaultValueForType activeTokens (Just hint.name) hint.tipe
                                             else
-                                                ""
+                                                "_"
 
                                         Nothing ->
                                             getDefaultValueForType activeTokens (Just hint.name) hint.tipe
@@ -1511,7 +1523,7 @@ getDefaultValueForType activeTokens maybeRootTipeString tipeString =
                                         Just tipeCase ->
                                             let
                                                 ( _, annotatedTipeArgs ) =
-                                                    tipeAnnotationToNameAndArgs tipeString
+                                                    typeConstructorToNameAndArgs tipeString
 
                                                 alignedArgs =
                                                     getTipeCaseAlignedArgTipes hint.args annotatedTipeArgs tipeCase.args
@@ -1525,15 +1537,15 @@ getDefaultValueForType activeTokens maybeRootTipeString tipeString =
                                                     ++ String.join " " (List.map (getDefaultValueForType activeTokens Nothing) alignedArgs)
 
                                         Nothing ->
-                                            ""
+                                            "_"
                                 else
-                                    ""
+                                    "_"
 
                             Nothing ->
-                                ""
+                                "_"
 
             Nothing ->
-                ""
+                "_"
 
 
 doConstructCaseOf : Token -> Model -> ( Model, Cmd Msg )
@@ -1552,8 +1564,16 @@ doConstructDefaultValueForType token model =
     )
 
 
-tipeAnnotationToNameAndArgs : String -> ( String, List String )
-tipeAnnotationToNameAndArgs tipeString =
+doConstructDefaultArguments : Token -> Model -> ( Model, Cmd Msg )
+doConstructDefaultArguments token model =
+    ( model
+    , constructDefaultArguments token model.activeTokens
+        |> defaultArgumentsConstructedCmd
+    )
+
+
+typeConstructorToNameAndArgs : String -> ( String, List String )
+typeConstructorToNameAndArgs tipeString =
     let
         tipeParts =
             getArgsParts tipeString
@@ -1577,7 +1597,27 @@ constructCaseOf token activeTokens =
         Just tokenHint ->
             let
                 ( tokenTipeName, tokenTipeArgs ) =
-                    tipeAnnotationToNameAndArgs tokenHint.tipe
+                    let
+                        ( name, args ) =
+                            typeConstructorToNameAndArgs tokenHint.tipe
+                    in
+                        case List.head args of
+                            Just "->" ->
+                                let
+                                    returnTipe =
+                                        getTipeParts tokenHint.tipe
+                                            |> last
+                                            |> Maybe.withDefault ""
+                                in
+                                    ( returnTipe
+                                    , []
+                                    )
+
+                            Just _ ->
+                                ( name, args )
+
+                            Nothing ->
+                                ( name, args )
 
                 ( tipeCases, tipeArgs ) =
                     case tokenTipeName of
@@ -1655,6 +1695,41 @@ constructDefaultValueForType token activeTokens =
             |> Just
     else
         Nothing
+
+
+constructDefaultArguments : Token -> TokenDict -> Maybe (List String)
+constructDefaultArguments token activeTokens =
+    case getHintsForToken (Just token) activeTokens |> List.head of
+        Just hint ->
+            let
+                parts =
+                    if isRecordString hint.tipe then
+                        getRecordTipeFieldTipes hint.tipe
+                    else
+                        -- Remove return type.
+                        getTipeParts hint.tipe
+                            |> dropLast
+            in
+                parts
+                    |> List.map
+                        (\tipeString ->
+                            let
+                                value =
+                                    getDefaultValueForType activeTokens Nothing tipeString
+                            in
+                                if
+                                    String.contains " " value
+                                        && not (isRecordString value)
+                                        && not (isTupleString value)
+                                then
+                                    "(" ++ value ++ ")"
+                                else
+                                    value
+                        )
+                    |> Just
+
+        Nothing ->
+            Nothing
 
 
 getTipeCaseAlignedArgTipes : List String -> List String -> List String -> List String
@@ -2113,7 +2188,7 @@ getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict proj
             Dict.empty
 
 
-{-| Example: getArgsParts "a b c" == ["a", "b", "c"]
+{-| Example: getArgsParts "a b c" == [ "a", "b", "c" ]
 -}
 getArgsParts : String -> List String
 getArgsParts argsString =
@@ -2165,7 +2240,7 @@ getArgsPartsRecur str acc parts ( openParentheses, openBraces ) =
                         getArgsPartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
-{-| Example: getTipeParts "Int -> Int -> Int" == ["Int", "Int"]
+{-| Example: getTipeParts "Int -> Int -> Int" == [ "Int", "Int" ]
 -}
 getTipeParts : String -> List String
 getTipeParts tipeString =
@@ -2223,7 +2298,7 @@ getTipePartsRecur str acc parts ( openParentheses, openBraces ) =
                         getTipePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
-{-| Example: getTupleParts "( Int, String )" == ["Int", "String"]
+{-| Example: getTupleParts "( Int, String )" == [ "Int", "String" ]
 -}
 getTupleParts : String -> List String
 getTupleParts tupleString =
@@ -2276,7 +2351,7 @@ getTuplePartsRecur str acc parts ( openParentheses, openBraces ) =
                         getTuplePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
-{-| Example: getRecordArgParts "{ a, b }" == ["a", "b"]
+{-| Example: getRecordArgParts "{ a, b }" == [ "a", "b" ]
 -}
 getRecordArgParts : String -> List String
 getRecordArgParts recordString =
@@ -2290,7 +2365,7 @@ getRecordArgParts recordString =
                 |> List.map String.trim
 
 
-{-| Example: getRecordTipeParts "{ a : Int, b : String }" == [("a", "Int"), ("b", "String")]
+{-| Example: getRecordTipeParts "{ a : Int, b : String }" == [ ("a", "Int"), ("b", "String") ]
 -}
 getRecordTipeParts : String -> List ( String, String )
 getRecordTipeParts tipeString =
@@ -2349,6 +2424,22 @@ getRecordTipePartsRecur str ( fieldAcc, tipeAcc ) lookingForTipe parts ( openPar
                                 ( fieldAcc ++ thisChar, tipeAcc )
                     in
                         getRecordTipePartsRecur thisRest ( updatedFieldAcc, updatedTipeAcc ) lookingForTipe parts ( updatedOpenParentheses, updatedOpenBraces )
+
+
+{-| Example: getRecordTipeFieldNames "{ a : Int, b : String }" == [ "a", "b" ]
+-}
+getRecordTipeFieldNames : String -> List String
+getRecordTipeFieldNames tipeString =
+    getRecordTipeParts tipeString
+        |> List.map Tuple.first
+
+
+{-| Example: getRecordTipeFieldTipes "{ a : Int, b : String }" == [ "a", "b" ]
+-}
+getRecordTipeFieldTipes : String -> List String
+getRecordTipeFieldTipes tipeString =
+    getRecordTipeParts tipeString
+        |> List.map Tuple.second
 
 
 tipeToValue : Tipe -> Value
@@ -2727,18 +2818,18 @@ defaultSuggestions =
         , "in"
         , "as"
         , "import"
-        , "open"
         , "port"
         , "exposing"
         , "alias"
         , "infixl"
         , "infixr"
         , "infix"
-        , "hiding"
-        , "export"
-        , "foreign"
-        , "perform"
-        , "deriving"
+          -- , "open"
+          -- , "hiding"
+          -- , "export"
+          -- , "foreign"
+          -- , "perform"
+          -- , "deriving"
         , "type alias"
         , "comparable"
         , "appendable"
