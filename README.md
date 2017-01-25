@@ -151,13 +151,13 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ![sidekick1](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick1.gif?raw=true)
 
-* Example #2: `Sidekick Position` = "bottom", `Sidekick Size` = 30 (Just shows the type hints.)
-
-![sidekick2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick2.gif?raw=true)
-
-* Example #3: `Sidekick Position` = "right", `Sidekick Size` = 300
+* Example #2: `Sidekick Position` = "right", `Sidekick Size` = 300
 
 ![sidekick3](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick3.gif?raw=true)
+
+* Example #3: `Sidekick Position` = "bottom", `Show Types in Sidekick` is checked, `Show Doc Comments in Sidekick` and `Show Source Paths in Sidekick` are unchecked.
+
+![sidekick2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick2.gif?raw=true)
 
 ### Package Management
 
