@@ -1,3 +1,7 @@
+## 3.1.1
+* Fix `Lift To Let` crash (#50).  Thanks to @mandrolic for reporting!
+* Add notification when `Lift To Let` fails.  Thanks to @mandrolic for the suggestion!
+
 ## 3.1.0
 * Add `Insert default arguments` autocompletion.
 * Add `Show Types in Sidekick`, `Show Doc Comments in Sidekick`, and `Show Source Paths in Sidekick` options (#45).  Thanks to @mandrolic for the suggestion!
