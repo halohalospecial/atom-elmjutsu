@@ -1564,8 +1564,7 @@ function toString(v)
 	var type = typeof v;
 	if (type === 'function')
 	{
-		var name = v.func ? v.func.name : v.name;
-		return '<function' + (name === '' ? '' : ':') + name + '>';
+		return '<function>';
 	}
 
 	if (type === 'boolean')
@@ -2072,6 +2071,13 @@ var _elm_lang$core$List$sortWith = _elm_lang$core$Native_List.sortWith;
 var _elm_lang$core$List$sortBy = _elm_lang$core$Native_List.sortBy;
 var _elm_lang$core$List$sort = function (xs) {
 	return A2(_elm_lang$core$List$sortBy, _elm_lang$core$Basics$identity, xs);
+};
+var _elm_lang$core$List$singleton = function (value) {
+	return {
+		ctor: '::',
+		_0: value,
+		_1: {ctor: '[]'}
+	};
 };
 var _elm_lang$core$List$drop = F2(
 	function (n, list) {
@@ -3520,15 +3526,8 @@ function setupIncomingPort(name, callback)
 		sentBeforeInit.push(value);
 	}
 
-	function postInitSend(incomingValue)
+	function postInitSend(value)
 	{
-		var result = A2(_elm_lang$core$Json_Decode$decodeValue, converter, incomingValue);
-		if (result.ctor === 'Err')
-		{
-			throw new Error('Trying to send an unexpected type of value through port `' + name + '`:\n' + result._0);
-		}
-
-		var value = result._0;
 		var temp = subs;
 		while (temp.ctor !== '[]')
 		{
@@ -3539,7 +3538,13 @@ function setupIncomingPort(name, callback)
 
 	function send(incomingValue)
 	{
-		currentSend(incomingValue);
+		var result = A2(_elm_lang$core$Json_Decode$decodeValue, converter, incomingValue);
+		if (result.ctor === 'Err')
+		{
+			throw new Error('Trying to send an unexpected type of value through port `' + name + '`:\n' + result._0);
+		}
+
+		currentSend(result._0);
 	}
 
 	return { send: send };
@@ -3963,7 +3968,7 @@ function endsWith(sub, str)
 function indexes(sub, str)
 {
 	var subLen = sub.length;
-	
+
 	if (subLen < 1)
 	{
 		return _elm_lang$core$Native_List.Nil;
@@ -3976,74 +3981,78 @@ function indexes(sub, str)
 	{
 		is.push(i);
 		i = i + subLen;
-	}	
-	
+	}
+
 	return _elm_lang$core$Native_List.fromArray(is);
 }
+
 
 function toInt(s)
 {
 	var len = s.length;
+
+	// if empty
 	if (len === 0)
 	{
-		return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int" );
+		return intErr(s);
 	}
-	var start = 0;
-	if (s[0] === '-')
+
+	// if hex
+	var c = s[0];
+	if (c === '0' && s[1] === 'x')
 	{
-		if (len === 1)
+		for (var i = 2; i < len; ++i)
 		{
-			return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int" );
+			var c = s[i];
+			if (('0' <= c && c <= '9') || ('A' <= c && c <= 'F') || ('a' <= c && c <= 'f'))
+			{
+				continue;
+			}
+			return intErr(s);
 		}
-		start = 1;
+		return _elm_lang$core$Result$Ok(parseInt(s, 16));
 	}
-	for (var i = start; i < len; ++i)
+
+	// is decimal
+	if (c > '9' || (c < '0' && c !== '-' && c !== '+'))
+	{
+		return intErr(s);
+	}
+	for (var i = 1; i < len; ++i)
 	{
 		var c = s[i];
 		if (c < '0' || '9' < c)
 		{
-			return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int" );
+			return intErr(s);
 		}
 	}
+
 	return _elm_lang$core$Result$Ok(parseInt(s, 10));
 }
 
+function intErr(s)
+{
+	return _elm_lang$core$Result$Err("could not convert string '" + s + "' to an Int");
+}
+
+
 function toFloat(s)
 {
-	var len = s.length;
-	if (len === 0)
+	// check if it is a hex, octal, or binary number
+	if (s.length === 0 || /[\sxbo]/.test(s))
 	{
-		return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float" );
+		return floatErr(s);
 	}
-	var start = 0;
-	if (s[0] === '-')
-	{
-		if (len === 1)
-		{
-			return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float" );
-		}
-		start = 1;
-	}
-	var dotCount = 0;
-	for (var i = start; i < len; ++i)
-	{
-		var c = s[i];
-		if ('0' <= c && c <= '9')
-		{
-			continue;
-		}
-		if (c === '.')
-		{
-			dotCount += 1;
-			if (dotCount <= 1)
-			{
-				continue;
-			}
-		}
-		return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float" );
-	}
-	return _elm_lang$core$Result$Ok(parseFloat(s));
+	var n = +s;
+	// faster isNaN check
+	return n === n ? _elm_lang$core$Result$Ok(n) : floatErr(s);
 }
+
+function floatErr(s)
+{
+	return _elm_lang$core$Result$Err("could not convert string '" + s + "' to a Float");
+}
+
 
 function toList(str)
 {
@@ -5283,11 +5292,6 @@ function badToString(problem)
 				problem = problem.rest;
 				break;
 
-			case 'index':
-				context += '[' + problem.index + ']';
-				problem = problem.rest;
-				break;
-
 			case 'oneOf':
 				var problems = problem.problems;
 				for (var i = 0; i < problems.length; i++)
@@ -6152,9 +6156,9 @@ function on(name, options, decoder)
 
 function equalEvents(a, b)
 {
-	if (!a.options === b.options)
+	if (a.options !== b.options)
 	{
-		if (a.stopPropagation !== b.stopPropagation || a.preventDefault !== b.preventDefault)
+		if (a.options.stopPropagation !== b.options.stopPropagation || a.options.preventDefault !== b.options.preventDefault)
 		{
 			return false;
 		}
@@ -7430,7 +7434,7 @@ function normalRenderer(parentNode, view)
 var rAF =
 	typeof requestAnimationFrame !== 'undefined'
 		? requestAnimationFrame
-		: function(callback) { callback(); };
+		: function(callback) { setTimeout(callback, 1000 / 60); };
 
 function makeStepper(domNode, view, initialVirtualNode, eventNode)
 {
@@ -8532,6 +8536,36 @@ var _evancz$elm_markdown$Markdown$Options = F4(
 		return {githubFlavored: a, defaultHighlighting: b, sanitize: c, smartypants: d};
 	});
 
+var _user$project$Helper$decapitalize = function (str) {
+	var _p0 = _elm_lang$core$String$uncons(str);
+	if (_p0.ctor === 'Just') {
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			_elm_lang$core$String$toLower(
+				_elm_lang$core$String$fromChar(_p0._0._0)),
+			_p0._0._1);
+	} else {
+		return '';
+	}
+};
+var _user$project$Helper$last = function (list) {
+	return _elm_lang$core$List$head(
+		_elm_lang$core$List$reverse(list));
+};
+var _user$project$Helper$dropLast = function (list) {
+	return _elm_lang$core$List$reverse(
+		A2(
+			_elm_lang$core$Maybe$withDefault,
+			{ctor: '[]'},
+			_elm_lang$core$List$tail(
+				_elm_lang$core$List$reverse(list))));
+};
+var _user$project$Helper$argSeparatorRegex = _elm_lang$core$Regex$regex('\\s+|\\(|\\)|\\.|,|-|>');
+var _user$project$Helper$capitalizedRegex = _elm_lang$core$Regex$regex('^[A-Z]');
+var _user$project$Helper$isCapitalized = _elm_lang$core$Regex$contains(_user$project$Helper$capitalizedRegex);
+var _user$project$Helper$infixRegex = _elm_lang$core$Regex$regex('^[~!@#\\$%\\^&\\*\\-\\+=:\\|\\\\<>\\.\\?\\/]+$');
+var _user$project$Helper$isInfix = _elm_lang$core$Regex$contains(_user$project$Helper$infixRegex);
+
 var _user$project$Sidekick$removePrefix = F2(
 	function (prefix, text) {
 		return A4(
@@ -8552,12 +8586,44 @@ var _user$project$Sidekick$viewHint = F3(
 	function (config, activeFilePath, hint) {
 		var maybeComment = function () {
 			if (config.showDocComments) {
-				var _p1 = hint.comment;
-				if (_p1 === '') {
-					return '';
-				} else {
-					return A2(_elm_lang$core$Basics_ops['++'], '\n<br>', hint.comment);
-				}
+				var comment = function () {
+					var _p1 = hint.comment;
+					if (_p1 === '') {
+						return '';
+					} else {
+						return A2(_elm_lang$core$Basics_ops['++'], '\n<br>', hint.comment);
+					}
+				}();
+				return A2(
+					_elm_lang$core$Basics_ops['++'],
+					comment,
+					A2(
+						_elm_lang$core$Basics_ops['++'],
+						function () {
+							var _p2 = hint.associativity;
+							if (_p2.ctor === 'Just') {
+								return A2(
+									_elm_lang$core$Basics_ops['++'],
+									'\n<br>(Associativity: ',
+									A2(_elm_lang$core$Basics_ops['++'], _p2._0, ')'));
+							} else {
+								return '';
+							}
+						}(),
+						function () {
+							var _p3 = hint.precedence;
+							if (_p3.ctor === 'Just') {
+								return A2(
+									_elm_lang$core$Basics_ops['++'],
+									'\n<br>(Precedence: ',
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										_elm_lang$core$Basics$toString(_p3._0),
+										')'));
+							} else {
+								return '';
+							}
+						}()));
 			} else {
 				return '';
 			}
@@ -8571,6 +8637,10 @@ var _user$project$Sidekick$viewHint = F3(
 				_elm_lang$core$Basics_ops['++'],
 				A2(_elm_lang$core$String$join, ' ', hint.args),
 				'*')) : '') : A2(_elm_lang$core$Basics_ops['++'], ': ', hint.tipe);
+		var formattedName = _user$project$Helper$isInfix(hint.name) ? A2(
+			_elm_lang$core$Basics_ops['++'],
+			'(',
+			A2(_elm_lang$core$Basics_ops['++'], hint.name, ')')) : hint.name;
 		var formattedModuleName = (_elm_lang$core$Native_Utils.eq(hint.moduleName, '') || _elm_lang$core$Native_Utils.eq(activeFilePath, hint.sourcePath)) ? '' : A2(_elm_lang$core$Basics_ops['++'], hint.moduleName, '.');
 		var maybeType = config.showTypes ? A2(
 			_elm_lang$core$Basics_ops['++'],
@@ -8583,7 +8653,7 @@ var _user$project$Sidekick$viewHint = F3(
 					'**',
 					A2(
 						_elm_lang$core$Basics_ops['++'],
-						hint.name,
+						formattedName,
 						A2(_elm_lang$core$Basics_ops['++'], '** ', formattedTipe))))) : '';
 		return A2(_elm_lang$core$Basics_ops['++'], maybeType, maybeComment);
 	});
@@ -8626,8 +8696,42 @@ var _user$project$Sidekick$activeHintsChangedSub = _elm_lang$core$Native_Platfor
 														return A2(
 															_elm_lang$core$Json_Decode$andThen,
 															function (caseTipe) {
-																return _elm_lang$core$Json_Decode$succeed(
-																	{name: name, moduleName: moduleName, sourcePath: sourcePath, comment: comment, tipe: tipe, args: args, caseTipe: caseTipe});
+																return A2(
+																	_elm_lang$core$Json_Decode$andThen,
+																	function (associativity) {
+																		return A2(
+																			_elm_lang$core$Json_Decode$andThen,
+																			function (precedence) {
+																				return _elm_lang$core$Json_Decode$succeed(
+																					{name: name, moduleName: moduleName, sourcePath: sourcePath, comment: comment, tipe: tipe, args: args, caseTipe: caseTipe, associativity: associativity, precedence: precedence});
+																			},
+																			A2(
+																				_elm_lang$core$Json_Decode$field,
+																				'precedence',
+																				_elm_lang$core$Json_Decode$oneOf(
+																					{
+																						ctor: '::',
+																						_0: _elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+																						_1: {
+																							ctor: '::',
+																							_0: A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$int),
+																							_1: {ctor: '[]'}
+																						}
+																					})));
+																	},
+																	A2(
+																		_elm_lang$core$Json_Decode$field,
+																		'associativity',
+																		_elm_lang$core$Json_Decode$oneOf(
+																			{
+																				ctor: '::',
+																				_0: _elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+																				_1: {
+																					ctor: '::',
+																					_0: A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string),
+																					_1: {ctor: '[]'}
+																				}
+																			})));
 															},
 															A2(
 																_elm_lang$core$Json_Decode$field,
@@ -8726,14 +8830,14 @@ var _user$project$Sidekick$goToDefinitionCmd = _elm_lang$core$Native_Platform.ou
 	});
 var _user$project$Sidekick$update = F2(
 	function (msg, model) {
-		var _p2 = msg;
-		switch (_p2.ctor) {
+		var _p4 = msg;
+		switch (_p4.ctor) {
 			case 'ActiveHintsChanged':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{activeHints: _p2._0}),
+						{activeHints: _p4._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ActiveFileChanged':
@@ -8741,7 +8845,7 @@ var _user$project$Sidekick$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{activeFile: _p2._0}),
+						{activeFile: _p4._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DocsRead':
@@ -8766,7 +8870,7 @@ var _user$project$Sidekick$update = F2(
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{
-							note: A2(_elm_lang$core$Basics_ops['++'], 'Failed to download package docs:\n', _p2._0)
+							note: A2(_elm_lang$core$Basics_ops['++'], 'Failed to download package docs:\n', _p4._0)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
@@ -8790,14 +8894,14 @@ var _user$project$Sidekick$update = F2(
 				return {
 					ctor: '_Tuple2',
 					_0: model,
-					_1: _user$project$Sidekick$goToDefinitionCmd(_p2._0)
+					_1: _user$project$Sidekick$goToDefinitionCmd(_p4._0)
 				};
 			default:
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{config: _p2._0}),
+						{config: _p4._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 		}
@@ -8814,9 +8918,9 @@ var _user$project$Sidekick$ActiveFile = F2(
 	function (a, b) {
 		return {filePath: a, projectDirectory: b};
 	});
-var _user$project$Sidekick$Hint = F7(
-	function (a, b, c, d, e, f, g) {
-		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, args: f, caseTipe: g};
+var _user$project$Sidekick$Hint = F9(
+	function (a, b, c, d, e, f, g, h, i) {
+		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, args: f, caseTipe: g, associativity: h, precedence: i};
 	});
 var _user$project$Sidekick$ConfigChanged = function (a) {
 	return {ctor: 'ConfigChanged', _0: a};
@@ -8824,11 +8928,11 @@ var _user$project$Sidekick$ConfigChanged = function (a) {
 var _user$project$Sidekick$GoToDefinition = function (a) {
 	return {ctor: 'GoToDefinition', _0: a};
 };
-var _user$project$Sidekick$view = function (_p3) {
-	var _p4 = _p3;
-	var _p6 = _p4.config;
-	var _p5 = _p4.activeFile;
-	if (_p5.ctor === 'Nothing') {
+var _user$project$Sidekick$view = function (_p5) {
+	var _p6 = _p5;
+	var _p8 = _p6.config;
+	var _p7 = _p6.activeFile;
+	if (_p7.ctor === 'Nothing') {
 		return _elm_lang$html$Html$text('');
 	} else {
 		var sourcePathView = function (hint) {
@@ -8883,7 +8987,7 @@ var _user$project$Sidekick$view = function (_p3) {
 					{
 						ctor: '::',
 						_0: _elm_lang$html$Html$text(
-							A2(_user$project$Sidekick$removePrefix, _p5._0.projectDirectory, hint.sourcePath)),
+							A2(_user$project$Sidekick$removePrefix, _p7._0.projectDirectory, hint.sourcePath)),
 						_1: {ctor: '[]'}
 					}),
 				_1: {ctor: '[]'}
@@ -8893,7 +8997,7 @@ var _user$project$Sidekick$view = function (_p3) {
 			return A2(
 				_evancz$elm_markdown$Markdown$toHtml,
 				{ctor: '[]'},
-				A3(_user$project$Sidekick$viewHint, _p6, _p5._0.filePath, hint));
+				A3(_user$project$Sidekick$viewHint, _p8, _p7._0.filePath, hint));
 		};
 		var hintsView = A2(
 			_elm_lang$core$List$map,
@@ -8912,7 +9016,7 @@ var _user$project$Sidekick$view = function (_p3) {
 							_0: hintMarkdown(hint),
 							_1: {ctor: '[]'}
 						},
-						_p6.showSourcePaths ? {
+						_p8.showSourcePaths ? {
 							ctor: '::',
 							_0: A2(
 								_elm_lang$html$Html$div,
@@ -8925,7 +9029,7 @@ var _user$project$Sidekick$view = function (_p3) {
 							_1: {ctor: '[]'}
 						} : {ctor: '[]'}));
 			},
-			_p4.activeHints);
+			_p6.activeHints);
 		return A2(
 			_elm_lang$html$Html$div,
 			{ctor: '[]'},
@@ -8943,7 +9047,7 @@ var _user$project$Sidekick$view = function (_p3) {
 						},
 						{
 							ctor: '::',
-							_0: _elm_lang$html$Html$text(_p4.note),
+							_0: _elm_lang$html$Html$text(_p6.note),
 							_1: {ctor: '[]'}
 						}),
 					_1: {ctor: '[]'}
@@ -8974,13 +9078,13 @@ var _user$project$Sidekick$subscriptions = function (model) {
 				_1: {
 					ctor: '::',
 					_0: _user$project$Sidekick$docsReadSub(
-						function (_p7) {
+						function (_p9) {
 							return _user$project$Sidekick$DocsRead;
 						}),
 					_1: {
 						ctor: '::',
 						_0: _user$project$Sidekick$docsDownloadedSub(
-							function (_p8) {
+							function (_p10) {
 								return _user$project$Sidekick$DocsDownloaded;
 							}),
 						_1: {
@@ -8989,13 +9093,13 @@ var _user$project$Sidekick$subscriptions = function (model) {
 							_1: {
 								ctor: '::',
 								_0: _user$project$Sidekick$readingPackageDocsSub(
-									function (_p9) {
+									function (_p11) {
 										return _user$project$Sidekick$ReadingPackageDocs;
 									}),
 								_1: {
 									ctor: '::',
 									_0: _user$project$Sidekick$downloadingPackageDocsSub(
-										function (_p10) {
+										function (_p12) {
 											return _user$project$Sidekick$DownloadingPackageDocs;
 										}),
 									_1: {

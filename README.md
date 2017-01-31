@@ -197,6 +197,7 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
   * #### <a name="lift-to-let">`Elmjutsu: Lift To Let`
 
     * Press <kbd>escape</kbd> when you're done naming your variable.
+    * There are still cases where this will not work properly.  There will be a better implementation in the future.
 
     ![lift-to-let](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/lift-to-let.gif?raw=true)
 

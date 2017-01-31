@@ -1,7 +1,8 @@
 port module Indexer exposing (..)
 
+import Helper
 import Dict
-import Http
+import Http exposing (encodeUri)
 import Json.Decode as Decode
 import Regex
 import Set
@@ -22,7 +23,26 @@ subscriptions model =
     Sub.batch
         [ activeTokenChangedSub UpdateActiveHints
         , activeFileChangedSub UpdateActiveFile
-        , fileContentsChangedSub (\( filePath, projectDirectory, moduleDocs, rawImports ) -> UpdateFileContents filePath projectDirectory (FileContents moduleDocs (toImportDict rawImports)))
+        , fileContentsChangedSub
+            (\( filePath, projectDirectory, encodedModuleDocs, rawImports ) ->
+                let
+                    decodeValue encoded =
+                        { encoded | associativity = decodeAssociativity encoded.associativity }
+
+                    encodedValues =
+                        encodedModuleDocs.values
+
+                    moduleDocs =
+                        { encodedModuleDocs
+                            | values =
+                                { encodedValues
+                                    | values = List.map decodeValue encodedValues.values
+                                    , aliases = List.map decodeValue encodedValues.aliases
+                                }
+                        }
+                in
+                    UpdateFileContents filePath projectDirectory (FileContents moduleDocs (toImportDict rawImports))
+            )
         , fileContentsRemovedSub RemoveFileContents
         , projectDependenciesChangedSub UpdateProjectDependencies
         , downloadMissingPackageDocsSub DownloadMissingPackageDocs
@@ -52,7 +72,7 @@ port activeTokenChangedSub : (( Maybe ActiveTopLevel, Maybe Token ) -> msg) -> S
 port activeFileChangedSub : (( Maybe ActiveFile, Maybe ActiveTopLevel, Maybe Token ) -> msg) -> Sub msg
 
 
-port fileContentsChangedSub : (( FilePath, ProjectDirectory, ModuleDocs, List RawImport ) -> msg) -> Sub msg
+port fileContentsChangedSub : (( FilePath, ProjectDirectory, EncodedModuleDocs, List RawImport ) -> msg) -> Sub msg
 
 
 port fileContentsRemovedSub : (( FilePath, ProjectDirectory ) -> msg) -> Sub msg
@@ -764,7 +784,7 @@ getModuleSymbols moduleDocs =
                 (\value ->
                     let
                         kind =
-                            if isCapitalized value.name then
+                            if Helper.isCapitalized value.name then
                                 KindTypeAlias
                             else
                                 KindDefault
@@ -986,6 +1006,8 @@ getHintsForUnexposedNames includeQualified moduleDocs unexposedNames =
             , args = value.args |> Maybe.withDefault []
             , caseTipe = Nothing
             , cases = []
+            , associativity = value.associativity
+            , precedence = value.precedence
             , kind = kind
             , isImported = False
             }
@@ -1012,6 +1034,8 @@ getHintsForUnexposedNames includeQualified moduleDocs unexposedNames =
                          , args = tipe.args
                          , caseTipe = Nothing
                          , cases = tipe.cases
+                         , associativity = Nothing
+                         , precedence = Nothing
                          , kind = KindType
                          , isImported = False
                          }
@@ -1029,6 +1053,8 @@ getHintsForUnexposedNames includeQualified moduleDocs unexposedNames =
                                             , args = tipeCase.args
                                             , caseTipe = Just tipe.name
                                             , cases = []
+                                            , associativity = Nothing
+                                            , precedence = Nothing
                                             , kind = KindTypeCase
                                             , isImported = False
                                             }
@@ -1102,7 +1128,7 @@ getImportersForToken token isCursorAtLastPartOfToken maybeActiveFile tokens acti
                                         getSourcePathAndLocalNames hint =
                                             let
                                                 isHintAModule hint =
-                                                    hint.moduleName == "" && isCapitalized hint.name
+                                                    hint.moduleName == "" && Helper.isCapitalized hint.name
 
                                                 isHintThisModule =
                                                     isHintAModule hint && hint.name == moduleDocs.name
@@ -1301,7 +1327,7 @@ importsToString imports tokens =
                     formatExposedSymbol token =
                         let
                             formatSymbol token =
-                                if token /= ".." && isInfix token then
+                                if token /= ".." && Helper.isInfix token then
                                     "(" ++ token ++ ")"
                                 else
                                     token
@@ -1387,11 +1413,11 @@ constructFromTypeAnnotation typeAnnotation activeTokens =
             getTipeParts tipeString
 
         returnTipe =
-            last tipeParts
+            Helper.last tipeParts
                 |> Maybe.withDefault ""
 
         argNames =
-            getDefaultArgNames (dropLast tipeParts)
+            getDefaultArgNames (Helper.dropLast tipeParts)
     in
         name
             ++ (if List.length argNames > 0 then
@@ -1605,7 +1631,7 @@ constructCaseOf token activeTokens =
                                 let
                                     returnTipe =
                                         getTipeParts tokenHint.tipe
-                                            |> last
+                                            |> Helper.last
                                             |> Maybe.withDefault ""
                                 in
                                     ( returnTipe
@@ -1707,7 +1733,7 @@ constructDefaultArguments token activeTokens =
                     else
                         -- Remove return type.
                         getTipeParts hint.tipe
-                            |> dropLast
+                            |> Helper.dropLast
             in
                 parts
                     |> List.map
@@ -1792,10 +1818,10 @@ getFunctionArgName argString argNameCounters =
 
 tipeToVar : String -> String
 tipeToVar tipeString =
-    Regex.split Regex.All argSeparatorRegex tipeString
+    Regex.split Regex.All Helper.argSeparatorRegex tipeString
         |> List.reverse
         |> String.concat
-        |> decapitalize
+        |> Helper.decapitalize
 
 
 getTupleStringFromParts : List String -> String
@@ -1893,6 +1919,39 @@ type alias Value =
     , comment : String
     , tipe : String
     , args : Maybe (List String)
+    , associativity : Maybe Associativity
+    , precedence : Maybe Int
+    }
+
+
+type Associativity
+    = LeftAssociative
+    | RightAssociative
+    | NonAssociative
+
+
+type alias EncodedModuleDocs =
+    { sourcePath : String
+    , name : String
+    , values : EncodedValues
+    , comment : String
+    }
+
+
+type alias EncodedValues =
+    { aliases : List EncodedValue
+    , tipes : List Tipe
+    , values : List EncodedValue
+    }
+
+
+type alias EncodedValue =
+    { name : String
+    , comment : String
+    , tipe : String
+    , args : Maybe (List String)
+    , associativity : Maybe String
+    , precedence : Maybe Int
     }
 
 
@@ -1985,8 +2044,24 @@ toModuleDocs packageUri jsonString =
         |> Maybe.withDefault []
 
 
+decodeAssociativity : Maybe String -> Maybe Associativity
+decodeAssociativity maybeString =
+    case maybeString of
+        Just "left" ->
+            Just LeftAssociative
+
+        Just "right" ->
+            Just RightAssociative
+
+        Just "non" ->
+            Just NonAssociative
+
+        _ ->
+            Nothing
+
+
 decodeModuleDocs : String -> Decode.Decoder ModuleDocs
-decodeModuleDocs packageUri =
+decodeModuleDocs sourcePath =
     let
         name =
             Decode.field "name" Decode.string
@@ -2011,11 +2086,13 @@ decodeModuleDocs packageUri =
                 )
 
         value =
-            Decode.map4 Value
+            Decode.map6 Value
                 name
                 comment
                 (Decode.field "type" Decode.string)
                 (Decode.maybe args)
+                (Decode.field "associativity" Decode.string |> Decode.maybe |> Decode.map decodeAssociativity)
+                (Decode.field "precedence" Decode.int |> Decode.maybe)
 
         values =
             Decode.map3 Values
@@ -2023,7 +2100,7 @@ decodeModuleDocs packageUri =
                 (Decode.field "types" (Decode.list tipe))
                 (Decode.field "values" (Decode.list value))
     in
-        Decode.map3 (ModuleDocs packageUri)
+        Decode.map3 (ModuleDocs sourcePath)
             name
             values
             comment
@@ -2075,6 +2152,8 @@ type alias Hint =
     , args : List String
     , caseTipe : Maybe String
     , cases : List TipeCase
+    , associativity : Maybe Associativity
+    , precedence : Maybe Int
     , kind : SymbolKind
     , isImported : Bool
     }
@@ -2090,6 +2169,8 @@ emptyHint =
     , args = []
     , caseTipe = Nothing
     , cases = []
+    , associativity = Nothing
+    , precedence = Nothing
     , kind = KindDefault
     , isImported = True
     }
@@ -2103,6 +2184,8 @@ type alias EncodedHint =
     , tipe : String
     , args : List String
     , caseTipe : Maybe String
+    , associativity : Maybe String
+    , precedence : Maybe Int
     , kind : String
     , isImported : Bool
     }
@@ -2117,9 +2200,27 @@ encodeHint hint =
     , tipe = hint.tipe
     , args = hint.args
     , caseTipe = hint.caseTipe
+    , associativity = encodeAssociativity hint.associativity
+    , precedence = hint.precedence
     , kind = symbolKindToString hint.kind
     , isImported = hint.isImported
     }
+
+
+encodeAssociativity : Maybe Associativity -> Maybe String
+encodeAssociativity associativity =
+    case associativity of
+        Just LeftAssociative ->
+            Just "left"
+
+        Just RightAssociative ->
+            Just "right"
+
+        Just NonAssociative ->
+            Just "non"
+
+        _ ->
+            Nothing
 
 
 symbolKindToString : SymbolKind -> String
@@ -2447,6 +2548,8 @@ tipeToValue { name, comment, tipe, args } =
     , comment = comment
     , tipe = tipe
     , args = Just args
+    , associativity = Nothing
+    , precedence = Nothing
     }
 
 
@@ -2485,6 +2588,8 @@ topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
                     , args = []
                     , caseTipe = Nothing
                     , cases = []
+                    , associativity = Nothing
+                    , precedence = Nothing
                     , kind = KindDefault
                     , isImported = True
                     }
@@ -2628,6 +2733,8 @@ unionTagsToHints moduleDocs { alias, exposed } tipe =
                     , args = tipeCase.args
                     , caseTipe = Just tipe.name
                     , cases = []
+                    , associativity = Nothing
+                    , precedence = Nothing
                     , kind = KindTypeCase
                     , isImported = True
                     }
@@ -2644,7 +2751,7 @@ unionTagsToHints moduleDocs { alias, exposed } tipe =
 
 
 nameToHints : ModuleDocs -> Import -> SymbolKind -> ( Value, List TipeCase ) -> List ( String, Hint )
-nameToHints moduleDocs { alias, exposed } kind ( { name, comment, tipe, args }, tipeCases ) =
+nameToHints moduleDocs { alias, exposed } kind ( { name, comment, tipe, args, associativity, precedence }, tipeCases ) =
     let
         hint =
             { name = name
@@ -2661,6 +2768,8 @@ nameToHints moduleDocs { alias, exposed } kind ( { name, comment, tipe, args }, 
                         []
             , caseTipe = Nothing
             , cases = tipeCases
+            , associativity = associativity
+            , precedence = precedence
             , kind = kind
             , isImported = True
             }
@@ -2689,6 +2798,8 @@ moduleToHints moduleDocs { alias, exposed } =
             , args = []
             , caseTipe = Nothing
             , cases = []
+            , associativity = Nothing
+            , precedence = Nothing
             , kind = KindModule
             , isImported = True
             }
@@ -2844,7 +2955,7 @@ getModuleName : String -> String
 getModuleName fullName =
     fullName
         |> String.split "."
-        |> dropLast
+        |> Helper.dropLast
         |> String.join "."
 
 
@@ -2880,60 +2991,6 @@ getModuleAndSymbolName { fullName, caseTipe, kind } =
                   else
                     Nothing
                 )
-
-
-{-| TODO: Allow unicode.
--}
-capitalizedRegex : Regex.Regex
-capitalizedRegex =
-    Regex.regex "^[A-Z]"
-
-
-isCapitalized : String -> Bool
-isCapitalized =
-    Regex.contains capitalizedRegex
-
-
-isInfix : String -> Bool
-isInfix =
-    Regex.contains infixRegex
-
-
-infixRegex : Regex.Regex
-infixRegex =
-    -- Backtick (`), underscore (_), and semicolon (;) are not allowed in infixes.
-    Regex.regex "^[~!@#\\$%\\^&\\*\\-\\+=:\\|\\\\<>\\.\\?\\/]+$"
-
-
-argSeparatorRegex : Regex.Regex
-argSeparatorRegex =
-    Regex.regex "\\s+|\\(|\\)|\\.|,|-|>"
-
-
-dropLast : List a -> List a
-dropLast list =
-    list
-        |> List.reverse
-        |> List.tail
-        |> Maybe.withDefault []
-        |> List.reverse
-
-
-last : List a -> Maybe a
-last list =
-    list
-        |> List.reverse
-        |> List.head
-
-
-decapitalize : String -> String
-decapitalize str =
-    case String.uncons str of
-        Just ( ch, rest ) ->
-            (String.toLower <| String.fromChar ch) ++ rest
-
-        Nothing ->
-            ""
 
 
 

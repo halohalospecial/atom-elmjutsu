@@ -1,5 +1,6 @@
 port module Sidekick exposing (..)
 
+import Helper
 import Html exposing (..)
 import Html.Attributes exposing (class, href, src, style, title)
 import Html.Events exposing (onClick)
@@ -231,6 +232,12 @@ viewHint config activeFilePath hint =
             else
                 hint.moduleName ++ "."
 
+        formattedName =
+            if Helper.isInfix hint.name then
+                "(" ++ hint.name ++ ")"
+            else
+                hint.name
+
         formattedTipe =
             if hint.tipe == "" then
                 if List.length hint.args > 0 then
@@ -245,7 +252,7 @@ viewHint config activeFilePath hint =
                 "#### "
                     ++ formattedModuleName
                     ++ "**"
-                    ++ hint.name
+                    ++ formattedName
                     ++ "** "
                     ++ formattedTipe
             else
@@ -253,12 +260,31 @@ viewHint config activeFilePath hint =
 
         maybeComment =
             if config.showDocComments then
-                case hint.comment of
-                    "" ->
-                        ""
+                let
+                    comment =
+                        case hint.comment of
+                            "" ->
+                                ""
 
-                    _ ->
-                        "\n<br>" ++ hint.comment
+                            _ ->
+                                "\n<br>"
+                                    ++ hint.comment
+                in
+                    comment
+                        ++ (case hint.associativity of
+                                Just associativity ->
+                                    "\n<br>(Associativity: " ++ associativity ++ ")"
+
+                                Nothing ->
+                                    ""
+                           )
+                        ++ (case hint.precedence of
+                                Just precedence ->
+                                    "\n<br>(Precedence: " ++ toString precedence ++ ")"
+
+                                Nothing ->
+                                    ""
+                           )
             else
                 ""
     in
@@ -273,6 +299,8 @@ type alias Hint =
     , tipe : String
     , args : List String
     , caseTipe : Maybe String
+    , associativity : Maybe String
+    , precedence : Maybe Int
     }
 
 
