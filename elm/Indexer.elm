@@ -2184,6 +2184,7 @@ type alias EncodedHint =
     , tipe : String
     , args : List String
     , caseTipe : Maybe String
+    , cases : List TipeCase
     , associativity : Maybe String
     , precedence : Maybe Int
     , kind : String
@@ -2200,6 +2201,7 @@ encodeHint hint =
     , tipe = hint.tipe
     , args = hint.args
     , caseTipe = hint.caseTipe
+    , cases = hint.cases
     , associativity = encodeAssociativity hint.associativity
     , precedence = hint.precedence
     , kind = symbolKindToString hint.kind

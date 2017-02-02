@@ -7447,6 +7447,7 @@ var _user$project$Indexer$encodeHint = function (hint) {
 		tipe: hint.tipe,
 		args: hint.args,
 		caseTipe: hint.caseTipe,
+		cases: hint.cases,
 		associativity: _user$project$Indexer$encodeAssociativity(hint.associativity),
 		precedence: hint.precedence,
 		kind: _user$project$Indexer$symbolKindToString(hint.kind),
@@ -9049,6 +9050,16 @@ var _user$project$Indexer$activeHintsChangedCmd = _elm_lang$core$Native_Platform
 							return v;
 						}),
 					caseTipe: (v.caseTipe.ctor === 'Nothing') ? null : v.caseTipe._0,
+					cases: _elm_lang$core$Native_List.toArray(v.cases).map(
+						function (v) {
+							return {
+								name: v.name,
+								args: _elm_lang$core$Native_List.toArray(v.args).map(
+									function (v) {
+										return v;
+									})
+							};
+						}),
 					associativity: (v.associativity.ctor === 'Nothing') ? null : v.associativity._0,
 					precedence: (v.precedence.ctor === 'Nothing') ? null : v.precedence._0,
 					kind: v.kind,
@@ -9134,6 +9145,16 @@ var _user$project$Indexer$hintsForPartialReceivedCmd = _elm_lang$core$Native_Pla
 							return v;
 						}),
 					caseTipe: (v.caseTipe.ctor === 'Nothing') ? null : v.caseTipe._0,
+					cases: _elm_lang$core$Native_List.toArray(v.cases).map(
+						function (v) {
+							return {
+								name: v.name,
+								args: _elm_lang$core$Native_List.toArray(v.args).map(
+									function (v) {
+										return v;
+									})
+							};
+						}),
 					associativity: (v.associativity.ctor === 'Nothing') ? null : v.associativity._0,
 					precedence: (v.precedence.ctor === 'Nothing') ? null : v.precedence._0,
 					kind: v.kind,
@@ -9351,7 +9372,9 @@ var _user$project$Indexer$EncodedHint = function (a) {
 								return function (i) {
 									return function (j) {
 										return function (k) {
-											return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, args: f, caseTipe: g, associativity: h, precedence: i, kind: j, isImported: k};
+											return function (l) {
+												return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, args: f, caseTipe: g, cases: h, associativity: i, precedence: j, kind: k, isImported: l};
+											};
 										};
 									};
 								};

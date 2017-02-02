@@ -81,7 +81,10 @@ type alias Model =
 
 type alias Config =
     { showTypes : Bool
+    , showTypeCases : Bool
     , showDocComments : Bool
+    , showAssociativities : Bool
+    , showPrecedences : Bool
     , showSourcePaths : Bool
     }
 
@@ -106,7 +109,10 @@ emptyModel =
     , activeFile = Nothing
     , config =
         { showTypes = False
+        , showTypeCases = False
         , showDocComments = False
+        , showAssociativities = False
+        , showPrecedences = False
         , showSourcePaths = False
         }
     }
@@ -258,37 +264,75 @@ viewHint config activeFilePath hint =
             else
                 ""
 
-        maybeComment =
-            if config.showDocComments then
+        maybeTypeCases =
+            if config.showTypeCases && List.length hint.cases > 0 then
                 let
-                    comment =
-                        case hint.comment of
-                            "" ->
-                                ""
+                    caseToString : TipeCase -> String
+                    caseToString { name, args } =
+                        if List.length args > 0 then
+                            name ++ " " ++ String.join " " args
+                        else
+                            name
 
-                            _ ->
-                                "\n<br>"
-                                    ++ hint.comment
+                    headCase =
+                        List.head hint.cases |> Maybe.withDefault { name = "", args = [] }
+
+                    tailCases =
+                        List.tail hint.cases |> Maybe.withDefault []
                 in
-                    comment
-                        ++ (case hint.associativity of
-                                Just associativity ->
-                                    "\n<br>(Associativity: " ++ associativity ++ ")"
-
-                                Nothing ->
-                                    ""
+                    "\n<br>= "
+                        ++ caseToString headCase
+                        ++ "\n<br>"
+                        ++ (List.map (\kase -> "| " ++ (caseToString kase)) tailCases
+                                |> String.join "\n<br>"
                            )
-                        ++ (case hint.precedence of
-                                Just precedence ->
-                                    "\n<br>(Precedence: " ++ toString precedence ++ ")"
-
-                                Nothing ->
-                                    ""
+                        ++ (if List.length tailCases > 0 then
+                                "\n<br>"
+                            else
+                                ""
                            )
             else
                 ""
+
+        maybeComment =
+            if config.showDocComments then
+                case hint.comment of
+                    "" ->
+                        ""
+
+                    _ ->
+                        "\n<br>"
+                            ++ hint.comment
+            else
+                ""
+
+        maybeAssociativity =
+            if config.showAssociativities then
+                case hint.associativity of
+                    Just associativity ->
+                        "\n<br>Associativity: " ++ associativity
+
+                    Nothing ->
+                        ""
+            else
+                ""
+
+        maybePrecedence =
+            if config.showPrecedences then
+                case hint.precedence of
+                    Just precedence ->
+                        "\n<br>Precedence: " ++ toString precedence
+
+                    Nothing ->
+                        ""
+            else
+                ""
     in
-        maybeType ++ maybeComment
+        maybeType
+            ++ maybeTypeCases
+            ++ maybeComment
+            ++ maybeAssociativity
+            ++ maybePrecedence
 
 
 type alias Hint =
@@ -299,8 +343,15 @@ type alias Hint =
     , tipe : String
     , args : List String
     , caseTipe : Maybe String
+    , cases : List TipeCase
     , associativity : Maybe String
     , precedence : Maybe Int
+    }
+
+
+type alias TipeCase =
+    { name : String
+    , args : List String
     }
 
 

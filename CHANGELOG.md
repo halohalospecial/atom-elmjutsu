@@ -1,3 +1,8 @@
+## 3.2.0
+* Fix #39.  Thanks to @pauldijou for reporting and @gothy for providing a sample project and tracing the cause!
+* If autocomplete snippets are enabled and the preceeding token is `|>` or the succeeding token is `<|`, remove the last argument from the snippet.  Will also behave this way if the preceeding or succeeding token is `<<` or `>>`.  Thanks to @mandrolic for the suggestion!
+* Add `Show Associativities in Sidekick`, `Show Precedences in Sidekick`, and `Show Tags of Union Types in Sidekick` options.
+
 ## 3.1.1
 * Fix `Lift To Let` crash (#50).  Thanks to @mandrolic for reporting!
 * Add notification when `Lift To Let` fails.  Thanks to @mandrolic for the suggestion!

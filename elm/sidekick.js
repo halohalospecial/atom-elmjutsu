@@ -8584,46 +8584,100 @@ var _user$project$Sidekick$removePrefix = F2(
 var _user$project$Sidekick$packageDocsPrefix = 'http://package.elm-lang.org/packages';
 var _user$project$Sidekick$viewHint = F3(
 	function (config, activeFilePath, hint) {
+		var maybePrecedence = function () {
+			if (config.showPrecedences) {
+				var _p1 = hint.precedence;
+				if (_p1.ctor === 'Just') {
+					return A2(
+						_elm_lang$core$Basics_ops['++'],
+						'\n<br>Precedence: ',
+						_elm_lang$core$Basics$toString(_p1._0));
+				} else {
+					return '';
+				}
+			} else {
+				return '';
+			}
+		}();
+		var maybeAssociativity = function () {
+			if (config.showAssociativities) {
+				var _p2 = hint.associativity;
+				if (_p2.ctor === 'Just') {
+					return A2(_elm_lang$core$Basics_ops['++'], '\n<br>Associativity: ', _p2._0);
+				} else {
+					return '';
+				}
+			} else {
+				return '';
+			}
+		}();
 		var maybeComment = function () {
 			if (config.showDocComments) {
-				var comment = function () {
-					var _p1 = hint.comment;
-					if (_p1 === '') {
-						return '';
-					} else {
-						return A2(_elm_lang$core$Basics_ops['++'], '\n<br>', hint.comment);
-					}
-				}();
+				var _p3 = hint.comment;
+				if (_p3 === '') {
+					return '';
+				} else {
+					return A2(_elm_lang$core$Basics_ops['++'], '\n<br>', hint.comment);
+				}
+			} else {
+				return '';
+			}
+		}();
+		var maybeTypeCases = function () {
+			if (config.showTypeCases && (_elm_lang$core$Native_Utils.cmp(
+				_elm_lang$core$List$length(hint.cases),
+				0) > 0)) {
+				var tailCases = A2(
+					_elm_lang$core$Maybe$withDefault,
+					{ctor: '[]'},
+					_elm_lang$core$List$tail(hint.cases));
+				var headCase = A2(
+					_elm_lang$core$Maybe$withDefault,
+					{
+						name: '',
+						args: {ctor: '[]'}
+					},
+					_elm_lang$core$List$head(hint.cases));
+				var caseToString = function (_p4) {
+					var _p5 = _p4;
+					var _p7 = _p5.name;
+					var _p6 = _p5.args;
+					return (_elm_lang$core$Native_Utils.cmp(
+						_elm_lang$core$List$length(_p6),
+						0) > 0) ? A2(
+						_elm_lang$core$Basics_ops['++'],
+						_p7,
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							' ',
+							A2(_elm_lang$core$String$join, ' ', _p6))) : _p7;
+				};
 				return A2(
 					_elm_lang$core$Basics_ops['++'],
-					comment,
+					'\n<br>= ',
 					A2(
 						_elm_lang$core$Basics_ops['++'],
-						function () {
-							var _p2 = hint.associativity;
-							if (_p2.ctor === 'Just') {
-								return A2(
-									_elm_lang$core$Basics_ops['++'],
-									'\n<br>(Associativity: ',
-									A2(_elm_lang$core$Basics_ops['++'], _p2._0, ')'));
-							} else {
-								return '';
-							}
-						}(),
-						function () {
-							var _p3 = hint.precedence;
-							if (_p3.ctor === 'Just') {
-								return A2(
-									_elm_lang$core$Basics_ops['++'],
-									'\n<br>(Precedence: ',
+						caseToString(headCase),
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							'\n<br>',
+							A2(
+								_elm_lang$core$Basics_ops['++'],
+								A2(
+									_elm_lang$core$String$join,
+									'\n<br>',
 									A2(
-										_elm_lang$core$Basics_ops['++'],
-										_elm_lang$core$Basics$toString(_p3._0),
-										')'));
-							} else {
-								return '';
-							}
-						}()));
+										_elm_lang$core$List$map,
+										function (kase) {
+											return A2(
+												_elm_lang$core$Basics_ops['++'],
+												'| ',
+												caseToString(kase));
+										},
+										tailCases)),
+								(_elm_lang$core$Native_Utils.cmp(
+									_elm_lang$core$List$length(tailCases),
+									0) > 0) ? '\n<br>' : ''))));
 			} else {
 				return '';
 			}
@@ -8655,13 +8709,22 @@ var _user$project$Sidekick$viewHint = F3(
 						_elm_lang$core$Basics_ops['++'],
 						formattedName,
 						A2(_elm_lang$core$Basics_ops['++'], '** ', formattedTipe))))) : '';
-		return A2(_elm_lang$core$Basics_ops['++'], maybeType, maybeComment);
+		return A2(
+			_elm_lang$core$Basics_ops['++'],
+			maybeType,
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				maybeTypeCases,
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					maybeComment,
+					A2(_elm_lang$core$Basics_ops['++'], maybeAssociativity, maybePrecedence))));
 	});
 var _user$project$Sidekick$emptyModel = {
 	note: '',
 	activeHints: {ctor: '[]'},
 	activeFile: _elm_lang$core$Maybe$Nothing,
-	config: {showTypes: false, showDocComments: false, showSourcePaths: false}
+	config: {showTypes: false, showTypeCases: false, showDocComments: false, showAssociativities: false, showPrecedences: false, showSourcePaths: false}
 };
 var _user$project$Sidekick$init = function (config) {
 	return {
@@ -8698,40 +8761,63 @@ var _user$project$Sidekick$activeHintsChangedSub = _elm_lang$core$Native_Platfor
 															function (caseTipe) {
 																return A2(
 																	_elm_lang$core$Json_Decode$andThen,
-																	function (associativity) {
+																	function (cases) {
 																		return A2(
 																			_elm_lang$core$Json_Decode$andThen,
-																			function (precedence) {
-																				return _elm_lang$core$Json_Decode$succeed(
-																					{name: name, moduleName: moduleName, sourcePath: sourcePath, comment: comment, tipe: tipe, args: args, caseTipe: caseTipe, associativity: associativity, precedence: precedence});
+																			function (associativity) {
+																				return A2(
+																					_elm_lang$core$Json_Decode$andThen,
+																					function (precedence) {
+																						return _elm_lang$core$Json_Decode$succeed(
+																							{name: name, moduleName: moduleName, sourcePath: sourcePath, comment: comment, tipe: tipe, args: args, caseTipe: caseTipe, cases: cases, associativity: associativity, precedence: precedence});
+																					},
+																					A2(
+																						_elm_lang$core$Json_Decode$field,
+																						'precedence',
+																						_elm_lang$core$Json_Decode$oneOf(
+																							{
+																								ctor: '::',
+																								_0: _elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+																								_1: {
+																									ctor: '::',
+																									_0: A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$int),
+																									_1: {ctor: '[]'}
+																								}
+																							})));
 																			},
 																			A2(
 																				_elm_lang$core$Json_Decode$field,
-																				'precedence',
+																				'associativity',
 																				_elm_lang$core$Json_Decode$oneOf(
 																					{
 																						ctor: '::',
 																						_0: _elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
 																						_1: {
 																							ctor: '::',
-																							_0: A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$int),
+																							_0: A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string),
 																							_1: {ctor: '[]'}
 																						}
 																					})));
 																	},
 																	A2(
 																		_elm_lang$core$Json_Decode$field,
-																		'associativity',
-																		_elm_lang$core$Json_Decode$oneOf(
-																			{
-																				ctor: '::',
-																				_0: _elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
-																				_1: {
-																					ctor: '::',
-																					_0: A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string),
-																					_1: {ctor: '[]'}
-																				}
-																			})));
+																		'cases',
+																		_elm_lang$core$Json_Decode$list(
+																			A2(
+																				_elm_lang$core$Json_Decode$andThen,
+																				function (name) {
+																					return A2(
+																						_elm_lang$core$Json_Decode$andThen,
+																						function (args) {
+																							return _elm_lang$core$Json_Decode$succeed(
+																								{name: name, args: args});
+																						},
+																						A2(
+																							_elm_lang$core$Json_Decode$field,
+																							'args',
+																							_elm_lang$core$Json_Decode$list(_elm_lang$core$Json_Decode$string)));
+																				},
+																				A2(_elm_lang$core$Json_Decode$field, 'name', _elm_lang$core$Json_Decode$string)))));
 															},
 															A2(
 																_elm_lang$core$Json_Decode$field,
@@ -8811,16 +8897,31 @@ var _user$project$Sidekick$configChangedSub = _elm_lang$core$Native_Platform.inc
 		function (showTypes) {
 			return A2(
 				_elm_lang$core$Json_Decode$andThen,
-				function (showDocComments) {
+				function (showTypeCases) {
 					return A2(
 						_elm_lang$core$Json_Decode$andThen,
-						function (showSourcePaths) {
-							return _elm_lang$core$Json_Decode$succeed(
-								{showTypes: showTypes, showDocComments: showDocComments, showSourcePaths: showSourcePaths});
+						function (showDocComments) {
+							return A2(
+								_elm_lang$core$Json_Decode$andThen,
+								function (showAssociativities) {
+									return A2(
+										_elm_lang$core$Json_Decode$andThen,
+										function (showPrecedences) {
+											return A2(
+												_elm_lang$core$Json_Decode$andThen,
+												function (showSourcePaths) {
+													return _elm_lang$core$Json_Decode$succeed(
+														{showTypes: showTypes, showTypeCases: showTypeCases, showDocComments: showDocComments, showAssociativities: showAssociativities, showPrecedences: showPrecedences, showSourcePaths: showSourcePaths});
+												},
+												A2(_elm_lang$core$Json_Decode$field, 'showSourcePaths', _elm_lang$core$Json_Decode$bool));
+										},
+										A2(_elm_lang$core$Json_Decode$field, 'showPrecedences', _elm_lang$core$Json_Decode$bool));
+								},
+								A2(_elm_lang$core$Json_Decode$field, 'showAssociativities', _elm_lang$core$Json_Decode$bool));
 						},
-						A2(_elm_lang$core$Json_Decode$field, 'showSourcePaths', _elm_lang$core$Json_Decode$bool));
+						A2(_elm_lang$core$Json_Decode$field, 'showDocComments', _elm_lang$core$Json_Decode$bool));
 				},
-				A2(_elm_lang$core$Json_Decode$field, 'showDocComments', _elm_lang$core$Json_Decode$bool));
+				A2(_elm_lang$core$Json_Decode$field, 'showTypeCases', _elm_lang$core$Json_Decode$bool));
 		},
 		A2(_elm_lang$core$Json_Decode$field, 'showTypes', _elm_lang$core$Json_Decode$bool)));
 var _user$project$Sidekick$goToDefinitionCmd = _elm_lang$core$Native_Platform.outgoingPort(
@@ -8830,14 +8931,14 @@ var _user$project$Sidekick$goToDefinitionCmd = _elm_lang$core$Native_Platform.ou
 	});
 var _user$project$Sidekick$update = F2(
 	function (msg, model) {
-		var _p4 = msg;
-		switch (_p4.ctor) {
+		var _p8 = msg;
+		switch (_p8.ctor) {
 			case 'ActiveHintsChanged':
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{activeHints: _p4._0}),
+						{activeHints: _p8._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ActiveFileChanged':
@@ -8845,7 +8946,7 @@ var _user$project$Sidekick$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{activeFile: _p4._0}),
+						{activeFile: _p8._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'DocsRead':
@@ -8870,7 +8971,7 @@ var _user$project$Sidekick$update = F2(
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{
-							note: A2(_elm_lang$core$Basics_ops['++'], 'Failed to download package docs:\n', _p4._0)
+							note: A2(_elm_lang$core$Basics_ops['++'], 'Failed to download package docs:\n', _p8._0)
 						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
@@ -8894,14 +8995,14 @@ var _user$project$Sidekick$update = F2(
 				return {
 					ctor: '_Tuple2',
 					_0: model,
-					_1: _user$project$Sidekick$goToDefinitionCmd(_p4._0)
+					_1: _user$project$Sidekick$goToDefinitionCmd(_p8._0)
 				};
 			default:
 				return {
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{config: _p4._0}),
+						{config: _p8._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 		}
@@ -8910,17 +9011,38 @@ var _user$project$Sidekick$Model = F4(
 	function (a, b, c, d) {
 		return {note: a, activeHints: b, activeFile: c, config: d};
 	});
-var _user$project$Sidekick$Config = F3(
-	function (a, b, c) {
-		return {showTypes: a, showDocComments: b, showSourcePaths: c};
+var _user$project$Sidekick$Config = F6(
+	function (a, b, c, d, e, f) {
+		return {showTypes: a, showTypeCases: b, showDocComments: c, showAssociativities: d, showPrecedences: e, showSourcePaths: f};
 	});
 var _user$project$Sidekick$ActiveFile = F2(
 	function (a, b) {
 		return {filePath: a, projectDirectory: b};
 	});
-var _user$project$Sidekick$Hint = F9(
-	function (a, b, c, d, e, f, g, h, i) {
-		return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, args: f, caseTipe: g, associativity: h, precedence: i};
+var _user$project$Sidekick$Hint = function (a) {
+	return function (b) {
+		return function (c) {
+			return function (d) {
+				return function (e) {
+					return function (f) {
+						return function (g) {
+							return function (h) {
+								return function (i) {
+									return function (j) {
+										return {name: a, moduleName: b, sourcePath: c, comment: d, tipe: e, args: f, caseTipe: g, cases: h, associativity: i, precedence: j};
+									};
+								};
+							};
+						};
+					};
+				};
+			};
+		};
+	};
+};
+var _user$project$Sidekick$TipeCase = F2(
+	function (a, b) {
+		return {name: a, args: b};
 	});
 var _user$project$Sidekick$ConfigChanged = function (a) {
 	return {ctor: 'ConfigChanged', _0: a};
@@ -8928,11 +9050,11 @@ var _user$project$Sidekick$ConfigChanged = function (a) {
 var _user$project$Sidekick$GoToDefinition = function (a) {
 	return {ctor: 'GoToDefinition', _0: a};
 };
-var _user$project$Sidekick$view = function (_p5) {
-	var _p6 = _p5;
-	var _p8 = _p6.config;
-	var _p7 = _p6.activeFile;
-	if (_p7.ctor === 'Nothing') {
+var _user$project$Sidekick$view = function (_p9) {
+	var _p10 = _p9;
+	var _p12 = _p10.config;
+	var _p11 = _p10.activeFile;
+	if (_p11.ctor === 'Nothing') {
 		return _elm_lang$html$Html$text('');
 	} else {
 		var sourcePathView = function (hint) {
@@ -8987,7 +9109,7 @@ var _user$project$Sidekick$view = function (_p5) {
 					{
 						ctor: '::',
 						_0: _elm_lang$html$Html$text(
-							A2(_user$project$Sidekick$removePrefix, _p7._0.projectDirectory, hint.sourcePath)),
+							A2(_user$project$Sidekick$removePrefix, _p11._0.projectDirectory, hint.sourcePath)),
 						_1: {ctor: '[]'}
 					}),
 				_1: {ctor: '[]'}
@@ -8997,7 +9119,7 @@ var _user$project$Sidekick$view = function (_p5) {
 			return A2(
 				_evancz$elm_markdown$Markdown$toHtml,
 				{ctor: '[]'},
-				A3(_user$project$Sidekick$viewHint, _p8, _p7._0.filePath, hint));
+				A3(_user$project$Sidekick$viewHint, _p12, _p11._0.filePath, hint));
 		};
 		var hintsView = A2(
 			_elm_lang$core$List$map,
@@ -9016,7 +9138,7 @@ var _user$project$Sidekick$view = function (_p5) {
 							_0: hintMarkdown(hint),
 							_1: {ctor: '[]'}
 						},
-						_p8.showSourcePaths ? {
+						_p12.showSourcePaths ? {
 							ctor: '::',
 							_0: A2(
 								_elm_lang$html$Html$div,
@@ -9029,7 +9151,7 @@ var _user$project$Sidekick$view = function (_p5) {
 							_1: {ctor: '[]'}
 						} : {ctor: '[]'}));
 			},
-			_p6.activeHints);
+			_p10.activeHints);
 		return A2(
 			_elm_lang$html$Html$div,
 			{ctor: '[]'},
@@ -9047,7 +9169,7 @@ var _user$project$Sidekick$view = function (_p5) {
 						},
 						{
 							ctor: '::',
-							_0: _elm_lang$html$Html$text(_p6.note),
+							_0: _elm_lang$html$Html$text(_p10.note),
 							_1: {ctor: '[]'}
 						}),
 					_1: {ctor: '[]'}
@@ -9078,13 +9200,13 @@ var _user$project$Sidekick$subscriptions = function (model) {
 				_1: {
 					ctor: '::',
 					_0: _user$project$Sidekick$docsReadSub(
-						function (_p9) {
+						function (_p13) {
 							return _user$project$Sidekick$DocsRead;
 						}),
 					_1: {
 						ctor: '::',
 						_0: _user$project$Sidekick$docsDownloadedSub(
-							function (_p10) {
+							function (_p14) {
 								return _user$project$Sidekick$DocsDownloaded;
 							}),
 						_1: {
@@ -9093,13 +9215,13 @@ var _user$project$Sidekick$subscriptions = function (model) {
 							_1: {
 								ctor: '::',
 								_0: _user$project$Sidekick$readingPackageDocsSub(
-									function (_p11) {
+									function (_p15) {
 										return _user$project$Sidekick$ReadingPackageDocs;
 									}),
 								_1: {
 									ctor: '::',
 									_0: _user$project$Sidekick$downloadingPackageDocsSub(
-										function (_p12) {
+										function (_p16) {
 											return _user$project$Sidekick$DownloadingPackageDocs;
 										}),
 									_1: {
@@ -9119,21 +9241,36 @@ var _user$project$Sidekick$main = _elm_lang$html$Html$programWithFlags(
 	{init: _user$project$Sidekick$init, view: _user$project$Sidekick$view, update: _user$project$Sidekick$update, subscriptions: _user$project$Sidekick$subscriptions})(
 	A2(
 		_elm_lang$core$Json_Decode$andThen,
-		function (showDocComments) {
+		function (showAssociativities) {
 			return A2(
 				_elm_lang$core$Json_Decode$andThen,
-				function (showSourcePaths) {
+				function (showDocComments) {
 					return A2(
 						_elm_lang$core$Json_Decode$andThen,
-						function (showTypes) {
-							return _elm_lang$core$Json_Decode$succeed(
-								{showDocComments: showDocComments, showSourcePaths: showSourcePaths, showTypes: showTypes});
+						function (showPrecedences) {
+							return A2(
+								_elm_lang$core$Json_Decode$andThen,
+								function (showSourcePaths) {
+									return A2(
+										_elm_lang$core$Json_Decode$andThen,
+										function (showTypeCases) {
+											return A2(
+												_elm_lang$core$Json_Decode$andThen,
+												function (showTypes) {
+													return _elm_lang$core$Json_Decode$succeed(
+														{showAssociativities: showAssociativities, showDocComments: showDocComments, showPrecedences: showPrecedences, showSourcePaths: showSourcePaths, showTypeCases: showTypeCases, showTypes: showTypes});
+												},
+												A2(_elm_lang$core$Json_Decode$field, 'showTypes', _elm_lang$core$Json_Decode$bool));
+										},
+										A2(_elm_lang$core$Json_Decode$field, 'showTypeCases', _elm_lang$core$Json_Decode$bool));
+								},
+								A2(_elm_lang$core$Json_Decode$field, 'showSourcePaths', _elm_lang$core$Json_Decode$bool));
 						},
-						A2(_elm_lang$core$Json_Decode$field, 'showTypes', _elm_lang$core$Json_Decode$bool));
+						A2(_elm_lang$core$Json_Decode$field, 'showPrecedences', _elm_lang$core$Json_Decode$bool));
 				},
-				A2(_elm_lang$core$Json_Decode$field, 'showSourcePaths', _elm_lang$core$Json_Decode$bool));
+				A2(_elm_lang$core$Json_Decode$field, 'showDocComments', _elm_lang$core$Json_Decode$bool));
 		},
-		A2(_elm_lang$core$Json_Decode$field, 'showDocComments', _elm_lang$core$Json_Decode$bool)));
+		A2(_elm_lang$core$Json_Decode$field, 'showAssociativities', _elm_lang$core$Json_Decode$bool)));
 
 var Elm = {};
 Elm['Sidekick'] = Elm['Sidekick'] || {};
