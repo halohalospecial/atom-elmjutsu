@@ -1,3 +1,6 @@
+## 3.2.1
+* Fix crash that occurs when a function name is the same as that of one of the built-in functions of a JS object (such as `toString` or `hasOwnProperty`) (still related to #39). Thanks again to @gothy for the help in debugging! :+1:
+
 ## 3.2.0
 * Fix #39.  Thanks to @pauldijou for reporting and @gothy for providing a sample project and tracing the cause!
 * If autocomplete snippets are enabled and the preceeding token is `|>` or the succeeding token is `<|`, remove the last argument from the snippet.  Will also behave this way if the preceeding or succeeding token is `<<` or `>>`.  Thanks to @mandrolic for the suggestion!
