@@ -1,4 +1,4 @@
-## 3.3.1
+## 3.3.2
 * Add `Show Types in Tooltip` image.
 
 ## 3.3.0
