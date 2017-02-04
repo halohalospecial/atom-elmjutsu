@@ -1,3 +1,6 @@
+## 3.3.0
+* Add `Show Types in Tooltip` option.
+
 ## 3.2.1
 * Fix crash that occurs when a function name is the same as that of one of the built-in functions of a JS object (such as `toString` or `hasOwnProperty`) (still related to #39). Thanks again to @gothy for the help in debugging! :+1:
 

@@ -25,7 +25,6 @@ Related Atom packages:
 * [Autocomplete](#autocomplete)
 
 * Navigation
-
   * [Go to Definition](#go-to-definition)
   * [Go to Symbol](#go-to-symbol)
   * [Find Usages](#find-usages)
@@ -33,10 +32,13 @@ Related Atom packages:
   * [Go to Previous Usage](#go-to-previous-usage)
   * [Go Back](#go-back)
 
-* [Add Import](#add-import)
+* Information
+  * [Show Types in Tooltip](#show-types-in-tooltip)
+  * [Toggle Sidekick](#toggle-sidekick)
+    * Show the type and documentation for the symbol at cursor position in a panel.
 
-* [Toggle Sidekick](#toggle-sidekick)
-  * Show type hints and documentation for the symbol at cursor position.
+* Imports Management
+  * [Add Import](#add-import)
 
 * Package Management
   * [Install Package](#install-package)
@@ -136,13 +138,10 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).
 
     Closes the `Usages` panel (the panel is shown after invoking `Find Usages` or `Rename Symbol`).
 
-### <a name="add-import"></a>`Elmjutsu: Add Import`
+### <a name="show-types-in-tooltip">Show Types in Tooltip
+This is disabled by default.  To turn it on, check `Show Types in Tooltip` in the package settings.
 
-Quickly adds an import without scrolling to the top of the file.  Also sorts the imports, removes duplicates, and removes [defaults](http://package.elm-lang.org/packages/elm-lang/core/latest/) automatically.
-
-* ProTip: There's no "Sort Imports" command, but you can achieve the same result by invoking `Add Import` and choosing an already imported symbol (like `+`, for example).
-
-![add-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/add-import.gif?raw=true)
+![show-types-in-tooltip](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/show-types-in-tooltip.gif?raw=true)
 
 ### <a name="toggle-sidekick">`Elmjutsu: Toggle Sidekick`
 Shows the type hints and documentation for the symbol at cursor position.  The size, position of the panel, and amount of information to show can be modified in the package settings.
@@ -158,6 +157,14 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 * Example #3: `Sidekick Position` = "bottom", `Show Types in Sidekick` is checked, `Show Doc Comments in Sidekick` and `Show Source Paths in Sidekick` are unchecked.
 
 ![sidekick2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick2.gif?raw=true)
+
+### <a name="add-import"></a>`Elmjutsu: Add Import`
+
+Quickly adds an import without scrolling to the top of the file.  Also sorts the imports, removes duplicates, and removes [defaults](http://package.elm-lang.org/packages/elm-lang/core/latest/) automatically.
+
+* ProTip: There's no "Sort Imports" command, but you can achieve the same result by invoking `Add Import` and choosing an already imported symbol (like `+`, for example).
+
+![add-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/add-import.gif?raw=true)
 
 ### Package Management
 

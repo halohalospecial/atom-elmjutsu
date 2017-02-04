@@ -180,6 +180,20 @@ atom-text-editor.elmjutsu-pipe-selections.processing {
     }
   }
 }
+.elmjutsu-hint-tooltip {
+  margin: 0 !important;
+  .tooltip-inner {
+    padding: 4px !important;
+    background-color: @tool-panel-background-color !important;
+    color: @text-color !important;
+    font-weight: bold;
+    font-size: @font-size;
+    border: 1px solid @tool-panel-border-color;
+  }
+  .tooltip-arrow {
+    border-top-color: @tool-panel-border-color !important;
+  }
+}
 atom-text-editor:not([mini])[data-grammar="source elm"] autocomplete-suggestion-list {
   // font-size: @font-size;
   .word {
