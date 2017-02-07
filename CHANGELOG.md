@@ -1,3 +1,6 @@
+## 3.4.0
+* Add `Infer Hole Types` and `Infer Expression Type` commands.
+
 ## 3.3.2
 * Add `Show Types in Tooltip` image.
 

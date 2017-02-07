@@ -6827,6 +6827,7 @@ var _user$project$Helper$capitalizedRegex = _elm_lang$core$Regex$regex('^[A-Z]')
 var _user$project$Helper$isCapitalized = _elm_lang$core$Regex$contains(_user$project$Helper$capitalizedRegex);
 var _user$project$Helper$infixRegex = _elm_lang$core$Regex$regex('^[~!@#\\$%\\^&\\*\\-\\+=:\\|\\\\<>\\.\\?\\/]+$');
 var _user$project$Helper$isInfix = _elm_lang$core$Regex$contains(_user$project$Helper$infixRegex);
+var _user$project$Helper$holeToken = '?';
 
 var _user$project$Indexer$getModuleAndSymbolName = function (_p0) {
 	var _p1 = _p0;
@@ -8251,7 +8252,7 @@ var _user$project$Indexer$emptyModel = {
 	packageDocs: {ctor: '[]'},
 	projectFileContentsDict: _elm_lang$core$Dict$empty,
 	activeTokens: _elm_lang$core$Dict$empty,
-	activeHints: {ctor: '[]'},
+	activeTokenHints: {ctor: '[]'},
 	activeFile: _elm_lang$core$Maybe$Nothing,
 	activeTopLevel: _elm_lang$core$Maybe$Nothing,
 	projectDependencies: _elm_lang$core$Dict$empty
@@ -8951,6 +8952,20 @@ var _user$project$Indexer$constructFromTypeAnnotationSub = _elm_lang$core$Native
 var _user$project$Indexer$constructCaseOfSub = _elm_lang$core$Native_Platform.incomingPort('constructCaseOfSub', _elm_lang$core$Json_Decode$string);
 var _user$project$Indexer$constructDefaultValueForTypeSub = _elm_lang$core$Native_Platform.incomingPort('constructDefaultValueForTypeSub', _elm_lang$core$Json_Decode$string);
 var _user$project$Indexer$constructDefaultArgumentsSub = _elm_lang$core$Native_Platform.incomingPort('constructDefaultArgumentsSub', _elm_lang$core$Json_Decode$string);
+var _user$project$Indexer$holeEnteredSub = _elm_lang$core$Native_Platform.incomingPort(
+	'holeEnteredSub',
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (name) {
+			return A2(
+				_elm_lang$core$Json_Decode$andThen,
+				function (tipe) {
+					return _elm_lang$core$Json_Decode$succeed(
+						{name: name, tipe: tipe});
+				},
+				A2(_elm_lang$core$Json_Decode$field, 'tipe', _elm_lang$core$Json_Decode$string));
+		},
+		A2(_elm_lang$core$Json_Decode$field, 'name', _elm_lang$core$Json_Decode$string)));
 var _user$project$Indexer$docsReadCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'docsReadCmd',
 	function (v) {
@@ -9034,8 +9049,8 @@ var _user$project$Indexer$activeFileChangedCmd = _elm_lang$core$Native_Platform.
 	function (v) {
 		return (v.ctor === 'Nothing') ? null : {filePath: v._0.filePath, projectDirectory: v._0.projectDirectory};
 	});
-var _user$project$Indexer$activeHintsChangedCmd = _elm_lang$core$Native_Platform.outgoingPort(
-	'activeHintsChangedCmd',
+var _user$project$Indexer$activeTokenHintsChangedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'activeTokenHintsChangedCmd',
 	function (v) {
 		return _elm_lang$core$Native_List.toArray(v).map(
 			function (v) {
@@ -9286,7 +9301,7 @@ var _user$project$Indexer$defaultArgumentsConstructedCmd = _elm_lang$core$Native
 	});
 var _user$project$Indexer$Model = F7(
 	function (a, b, c, d, e, f, g) {
-		return {packageDocs: a, projectFileContentsDict: b, activeTokens: c, activeHints: d, activeFile: e, activeTopLevel: f, projectDependencies: g};
+		return {packageDocs: a, projectFileContentsDict: b, activeTokens: c, activeTokenHints: d, activeFile: e, activeTopLevel: f, projectDependencies: g};
 	});
 var _user$project$Indexer$ActiveFile = F2(
 	function (a, b) {
@@ -9295,6 +9310,10 @@ var _user$project$Indexer$ActiveFile = F2(
 var _user$project$Indexer$FileContents = F2(
 	function (a, b) {
 		return {moduleDocs: a, imports: b};
+	});
+var _user$project$Indexer$Hole = F2(
+	function (a, b) {
+		return {name: a, tipe: b};
 	});
 var _user$project$Indexer$ModuleDocs = F4(
 	function (a, b, c, d) {
@@ -9407,6 +9426,9 @@ _user$project$Indexer_ops['=>'] = F2(
 			_1: A2(_user$project$Indexer$Import, _elm_lang$core$Maybe$Nothing, exposed)
 		};
 	});
+var _user$project$Indexer$HoleEntered = function (a) {
+	return {ctor: 'HoleEntered', _0: a};
+};
 var _user$project$Indexer$ConstructDefaultArguments = function (a) {
 	return {ctor: 'ConstructDefaultArguments', _0: a};
 };
@@ -9459,8 +9481,8 @@ var _user$project$Indexer$UpdateFileContents = F3(
 var _user$project$Indexer$UpdateActiveFile = function (a) {
 	return {ctor: 'UpdateActiveFile', _0: a};
 };
-var _user$project$Indexer$UpdateActiveHints = function (a) {
-	return {ctor: 'UpdateActiveHints', _0: a};
+var _user$project$Indexer$UpdateActiveTokenHints = function (a) {
+	return {ctor: 'UpdateActiveTokenHints', _0: a};
 };
 var _user$project$Indexer$DocsRead = function (a) {
 	return {ctor: 'DocsRead', _0: a};
@@ -10422,6 +10444,15 @@ var _user$project$Indexer$emptyHint = {
 	kind: _user$project$Indexer$KindDefault,
 	isImported: true
 };
+var _user$project$Indexer$holeToHints = function (hole) {
+	return {
+		ctor: '::',
+		_0: _elm_lang$core$Native_Utils.update(
+			_user$project$Indexer$emptyHint,
+			{name: hole.name, tipe: hole.tipe}),
+		_1: {ctor: '[]'}
+	};
+};
 var _user$project$Indexer$defaultSuggestions = A2(
 	_elm_lang$core$List$map,
 	function (suggestion) {
@@ -11088,7 +11119,7 @@ var _user$project$Indexer$getActiveTokens = F4(
 			return _elm_lang$core$Dict$empty;
 		}
 	});
-var _user$project$Indexer$doUpdateActiveHints = F3(
+var _user$project$Indexer$doUpdateActiveTokenHints = F3(
 	function (maybeActiveTopLevel, maybeToken, model) {
 		var updatedActiveTokens = A4(
 			_user$project$Indexer$getActiveTokens,
@@ -11096,14 +11127,14 @@ var _user$project$Indexer$doUpdateActiveHints = F3(
 			maybeActiveTopLevel,
 			model.projectFileContentsDict,
 			A3(_user$project$Indexer$getProjectPackageDocs, model.activeFile, model.projectDependencies, model.packageDocs));
-		var updatedActiveHints = A2(_user$project$Indexer$getHintsForToken, maybeToken, updatedActiveTokens);
+		var updatedActiveTokenHints = A2(_user$project$Indexer$getHintsForToken, maybeToken, updatedActiveTokens);
 		return {
 			ctor: '_Tuple2',
 			_0: _elm_lang$core$Native_Utils.update(
 				model,
-				{activeTopLevel: maybeActiveTopLevel, activeHints: updatedActiveHints}),
-			_1: _user$project$Indexer$activeHintsChangedCmd(
-				A2(_elm_lang$core$List$map, _user$project$Indexer$encodeHint, updatedActiveHints))
+				{activeTopLevel: maybeActiveTopLevel, activeTokenHints: updatedActiveTokenHints}),
+			_1: _user$project$Indexer$activeTokenHintsChangedCmd(
+				A2(_elm_lang$core$List$map, _user$project$Indexer$encodeHint, updatedActiveTokenHints))
 		};
 	});
 var _user$project$Indexer$doUpdateActiveFile = F4(
@@ -11114,20 +11145,20 @@ var _user$project$Indexer$doUpdateActiveFile = F4(
 			maybeActiveTopLevel,
 			model.projectFileContentsDict,
 			A3(_user$project$Indexer$getProjectPackageDocs, maybeActiveFile, model.projectDependencies, model.packageDocs));
-		var updatedActiveHints = A2(_user$project$Indexer$getHintsForToken, maybeToken, updatedActiveTokens);
+		var updatedActiveTokenHints = A2(_user$project$Indexer$getHintsForToken, maybeToken, updatedActiveTokens);
 		return {
 			ctor: '_Tuple2',
 			_0: _elm_lang$core$Native_Utils.update(
 				model,
-				{activeFile: maybeActiveFile, activeTopLevel: maybeActiveTopLevel, activeTokens: updatedActiveTokens, activeHints: updatedActiveHints}),
+				{activeFile: maybeActiveFile, activeTopLevel: maybeActiveTopLevel, activeTokens: updatedActiveTokens, activeTokenHints: updatedActiveTokenHints}),
 			_1: _elm_lang$core$Platform_Cmd$batch(
 				{
 					ctor: '::',
 					_0: _user$project$Indexer$activeFileChangedCmd(maybeActiveFile),
 					_1: {
 						ctor: '::',
-						_0: _user$project$Indexer$activeHintsChangedCmd(
-							A2(_elm_lang$core$List$map, _user$project$Indexer$encodeHint, updatedActiveHints)),
+						_0: _user$project$Indexer$activeTokenHintsChangedCmd(
+							A2(_elm_lang$core$List$map, _user$project$Indexer$encodeHint, updatedActiveTokenHints)),
 						_1: {ctor: '[]'}
 					}
 				})
@@ -11541,8 +11572,8 @@ var _user$project$Indexer$update = F2(
 					_1: _user$project$Indexer$docsReadCmd(
 						{ctor: '_Tuple0'})
 				};
-			case 'UpdateActiveHints':
-				return A3(_user$project$Indexer$doUpdateActiveHints, _p226._0._0, _p226._0._1, model);
+			case 'UpdateActiveTokenHints':
+				return A3(_user$project$Indexer$doUpdateActiveTokenHints, _p226._0._0, _p226._0._1, model);
 			case 'UpdateActiveFile':
 				return A4(_user$project$Indexer$doUpdateActiveFile, _p226._0._0, _p226._0._1, _p226._0._2, model);
 			case 'UpdateFileContents':
@@ -11575,8 +11606,18 @@ var _user$project$Indexer$update = F2(
 				return A2(_user$project$Indexer$doConstructCaseOf, _p226._0, model);
 			case 'ConstructDefaultValueForType':
 				return A2(_user$project$Indexer$doConstructDefaultValueForType, _p226._0, model);
-			default:
+			case 'ConstructDefaultArguments':
 				return A2(_user$project$Indexer$doConstructDefaultArguments, _p226._0, model);
+			default:
+				return {
+					ctor: '_Tuple2',
+					_0: model,
+					_1: _user$project$Indexer$activeTokenHintsChangedCmd(
+						A2(
+							_elm_lang$core$List$map,
+							_user$project$Indexer$encodeHint,
+							_user$project$Indexer$holeToHints(_p226._0)))
+				};
 		}
 	});
 var _user$project$Indexer$toImportDict = function (rawImports) {
@@ -11590,7 +11631,7 @@ var _user$project$Indexer$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$batch(
 		{
 			ctor: '::',
-			_0: _user$project$Indexer$activeTokenChangedSub(_user$project$Indexer$UpdateActiveHints),
+			_0: _user$project$Indexer$activeTokenChangedSub(_user$project$Indexer$UpdateActiveTokenHints),
 			_1: {
 				ctor: '::',
 				_0: _user$project$Indexer$activeFileChangedSub(_user$project$Indexer$UpdateActiveFile),
@@ -11675,7 +11716,11 @@ var _user$project$Indexer$subscriptions = function (model) {
 																				_1: {
 																					ctor: '::',
 																					_0: _user$project$Indexer$constructDefaultArgumentsSub(_user$project$Indexer$ConstructDefaultArguments),
-																					_1: {ctor: '[]'}
+																					_1: {
+																						ctor: '::',
+																						_0: _user$project$Indexer$holeEnteredSub(_user$project$Indexer$HoleEntered),
+																						_1: {ctor: '[]'}
+																					}
 																				}
 																			}
 																		}

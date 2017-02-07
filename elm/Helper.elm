@@ -3,6 +3,11 @@ module Helper exposing (..)
 import Regex
 
 
+holeToken : String
+holeToken =
+    "?"
+
+
 isInfix : String -> Bool
 isInfix =
     Regex.contains infixRegex

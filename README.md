@@ -36,6 +36,8 @@ Related Atom packages:
   * [Show Types in Tooltip](#show-types-in-tooltip)
   * [Toggle Sidekick](#toggle-sidekick)
     * Show the type and documentation for the symbol at cursor position in a panel.
+  * [Infer Hole Types](#infer-hole-types)
+  * [Infer Expression Type](#infer-expression-type)
 
 * Imports Management
   * [Add Import](#add-import)
@@ -158,6 +160,18 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ![sidekick2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick2.gif?raw=true)
 
+### <a name="infer-hole-types">`Elmjutsu: Infer Hole Types`
+This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html). Make sure that `Elm Make Path` is properly configured in the package settings.
+
+![infer-hole-types](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/infer-hole-types.gif?raw=true)
+
+![infer-hole-types-2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/infer-hole-types-2.gif?raw=true)
+
+### <a name="infer-expression-type">`Elmjutsu: Infer Expression Type`
+This uses the same trick as `Elmjutsu: Infer Hole Types`.
+
+![infer-expression-type](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/infer-expression-type.gif?raw=true)
+
 ### <a name="add-import"></a>`Elmjutsu: Add Import`
 
 Quickly adds an import without scrolling to the top of the file.  Also sorts the imports, removes duplicates, and removes [defaults](http://package.elm-lang.org/packages/elm-lang/core/latest/) automatically.
@@ -232,6 +246,8 @@ Here is an example:
   'alt-l': 'elmjutsu:surround-with-let'
   'alt-shift-l': 'elmjutsu:lift-to-let'
   'alt-t': 'elmjutsu:lift-to-top-level'
+  'alt-h': 'elmjutsu:infer-hole-types'
+  'alt-e': 'elmjutsu:infer-expression-type'
 
 'atom-workspace':
   'f1': 'elmjutsu:toggle-sidekick'

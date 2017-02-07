@@ -21,7 +21,7 @@ main =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ activeTokenChangedSub UpdateActiveHints
+        [ activeTokenChangedSub UpdateActiveTokenHints
         , activeFileChangedSub UpdateActiveFile
         , fileContentsChangedSub
             (\( filePath, projectDirectory, encodedModuleDocs, rawImports ) ->
@@ -59,6 +59,7 @@ subscriptions model =
         , constructCaseOfSub ConstructCaseOf
         , constructDefaultValueForTypeSub ConstructDefaultValueForType
         , constructDefaultArgumentsSub ConstructDefaultArguments
+        , holeEnteredSub HoleEntered
         ]
 
 
@@ -123,6 +124,9 @@ port constructDefaultValueForTypeSub : (Token -> msg) -> Sub msg
 port constructDefaultArgumentsSub : (Token -> msg) -> Sub msg
 
 
+port holeEnteredSub : (Hole -> msg) -> Sub msg
+
+
 
 -- OUTGOING PORTS
 
@@ -145,7 +149,7 @@ port showGoToSymbolViewCmd : ( Maybe String, Maybe ActiveFile, List EncodedSymbo
 port activeFileChangedCmd : Maybe ActiveFile -> Cmd msg
 
 
-port activeHintsChangedCmd : List EncodedHint -> Cmd msg
+port activeTokenHintsChangedCmd : List EncodedHint -> Cmd msg
 
 
 port readingPackageDocsCmd : () -> Cmd msg
@@ -195,7 +199,7 @@ type alias Model =
     { packageDocs : List ModuleDocs
     , projectFileContentsDict : ProjectFileContentsDict
     , activeTokens : TokenDict
-    , activeHints : List Hint
+    , activeTokenHints : List Hint
     , activeFile : Maybe ActiveFile
     , activeTopLevel : Maybe ActiveTopLevel
     , projectDependencies : ProjectDependencies
@@ -250,6 +254,12 @@ type alias Version =
     String
 
 
+type alias Hole =
+    { name : String
+    , tipe : String
+    }
+
+
 init : ( Model, Cmd Msg )
 init =
     ( emptyModel
@@ -262,7 +272,7 @@ emptyModel =
     { packageDocs = []
     , projectFileContentsDict = Dict.empty
     , activeTokens = Dict.empty
-    , activeHints = []
+    , activeTokenHints = []
     , activeFile = Nothing
     , activeTopLevel = Nothing
     , projectDependencies = Dict.empty
@@ -296,7 +306,7 @@ emptyFileContents =
 type Msg
     = MaybeDocsDownloaded (List Dependency) (Result Http.Error (List (Result Http.Error ( String, List ModuleDocs ))))
     | DocsRead (List ( Dependency, String ))
-    | UpdateActiveHints ( Maybe ActiveTopLevel, Maybe Token )
+    | UpdateActiveTokenHints ( Maybe ActiveTopLevel, Maybe Token )
     | UpdateActiveFile ( Maybe ActiveFile, Maybe ActiveTopLevel, Maybe Token )
     | UpdateFileContents FilePath ProjectDirectory FileContents
     | RemoveFileContents ( FilePath, ProjectDirectory )
@@ -314,6 +324,7 @@ type Msg
     | ConstructCaseOf Token
     | ConstructDefaultValueForType Token
     | ConstructDefaultArguments Token
+    | HoleEntered Hole
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -367,8 +378,8 @@ update msg model =
                 , docsReadCmd ()
                 )
 
-        UpdateActiveHints ( maybeActiveTopLevel, maybeToken ) ->
-            doUpdateActiveHints maybeActiveTopLevel maybeToken model
+        UpdateActiveTokenHints ( maybeActiveTopLevel, maybeToken ) ->
+            doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model
 
         UpdateActiveFile ( maybeActiveFile, maybeActiveTopLevel, maybeToken ) ->
             doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model
@@ -421,22 +432,37 @@ update msg model =
         ConstructDefaultArguments token ->
             doConstructDefaultArguments token model
 
+        HoleEntered hole ->
+            ( model
+            , List.map encodeHint (holeToHints hole)
+                |> activeTokenHintsChangedCmd
+            )
 
-doUpdateActiveHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
-doUpdateActiveHints maybeActiveTopLevel maybeToken model =
+
+holeToHints : Hole -> List Hint
+holeToHints hole =
+    [ { emptyHint
+        | name = hole.name
+        , tipe = hole.tipe
+      }
+    ]
+
+
+doUpdateActiveTokenHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
+doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
     let
         updatedActiveTokens =
             getActiveTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
 
-        updatedActiveHints =
+        updatedActiveTokenHints =
             getHintsForToken maybeToken updatedActiveTokens
     in
         ( { model
             | activeTopLevel = maybeActiveTopLevel
-            , activeHints = updatedActiveHints
+            , activeTokenHints = updatedActiveTokenHints
           }
-        , List.map encodeHint updatedActiveHints
-            |> activeHintsChangedCmd
+        , List.map encodeHint updatedActiveTokenHints
+            |> activeTokenHintsChangedCmd
         )
 
 
@@ -446,18 +472,19 @@ doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model =
         updatedActiveTokens =
             getActiveTokens maybeActiveFile maybeActiveTopLevel model.projectFileContentsDict (getProjectPackageDocs maybeActiveFile model.projectDependencies model.packageDocs)
 
-        updatedActiveHints =
+        updatedActiveTokenHints =
             getHintsForToken maybeToken updatedActiveTokens
     in
         ( { model
             | activeFile = maybeActiveFile
             , activeTopLevel = maybeActiveTopLevel
             , activeTokens = updatedActiveTokens
-            , activeHints = updatedActiveHints
+            , activeTokenHints = updatedActiveTokenHints
           }
         , Cmd.batch
             [ activeFileChangedCmd maybeActiveFile
-            , List.map encodeHint updatedActiveHints |> activeHintsChangedCmd
+            , List.map encodeHint updatedActiveTokenHints
+                |> activeTokenHintsChangedCmd
             ]
         )
 

@@ -21,7 +21,7 @@ main =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ activeHintsChangedSub ActiveHintsChanged
+        [ activeTokenHintsChangedSub ActiveHintsChanged
         , activeFileChangedSub ActiveFileChanged
         , docsReadSub (\_ -> DocsRead)
         , docsDownloadedSub (\_ -> DocsDownloaded)
@@ -36,7 +36,7 @@ subscriptions model =
 -- INCOMING PORTS
 
 
-port activeHintsChangedSub : (List Hint -> msg) -> Sub msg
+port activeTokenHintsChangedSub : (List Hint -> msg) -> Sub msg
 
 
 port activeFileChangedSub : (Maybe ActiveFile -> msg) -> Sub msg
@@ -73,7 +73,7 @@ port goToDefinitionCmd : String -> Cmd msg
 
 type alias Model =
     { note : String
-    , activeHints : List Hint
+    , activeTokenHints : List Hint
     , activeFile : Maybe ActiveFile
     , config : Config
     }
@@ -105,7 +105,7 @@ init config =
 emptyModel : Model
 emptyModel =
     { note = ""
-    , activeHints = []
+    , activeTokenHints = []
     , activeFile = Nothing
     , config =
         { showTypes = False
@@ -138,7 +138,7 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         ActiveHintsChanged hints ->
-            ( { model | activeHints = hints }
+            ( { model | activeTokenHints = hints }
             , Cmd.none
             )
 
@@ -188,7 +188,7 @@ update msg model =
 
 
 view : Model -> Html Msg
-view { note, activeHints, activeFile, config } =
+view { note, activeTokenHints, activeFile, config } =
     case activeFile of
         Nothing ->
             text ""
@@ -224,7 +224,7 @@ view { note, activeHints, activeFile, config } =
                                        )
                                 )
                         )
-                        activeHints
+                        activeTokenHints
             in
                 div [] <| hintsView ++ [ span [ class "note" ] [ text note ] ]
 
@@ -239,19 +239,27 @@ viewHint config activeFilePath hint =
                 hint.moduleName ++ "."
 
         formattedName =
-            if Helper.isInfix hint.name then
+            if hint.name == Helper.holeToken then
+                hint.name
+            else if Helper.isInfix hint.name then
                 "(" ++ hint.name ++ ")"
             else
                 hint.name
 
         formattedTipe =
             if hint.tipe == "" then
-                if List.length hint.args > 0 then
-                    "*" ++ String.join " " hint.args ++ "*"
-                else
-                    ""
-            else
+                let
+                    hintArgsString =
+                        String.join " " hint.args
+                in
+                    if String.trim hintArgsString /= "" then
+                        "*" ++ hintArgsString ++ "*"
+                    else
+                        ""
+            else if formattedName /= "" then
                 ": " ++ hint.tipe
+            else
+                hint.tipe
 
         maybeType =
             if config.showTypes then

@@ -8565,6 +8565,7 @@ var _user$project$Helper$capitalizedRegex = _elm_lang$core$Regex$regex('^[A-Z]')
 var _user$project$Helper$isCapitalized = _elm_lang$core$Regex$contains(_user$project$Helper$capitalizedRegex);
 var _user$project$Helper$infixRegex = _elm_lang$core$Regex$regex('^[~!@#\\$%\\^&\\*\\-\\+=:\\|\\\\<>\\.\\?\\/]+$');
 var _user$project$Helper$isInfix = _elm_lang$core$Regex$contains(_user$project$Helper$infixRegex);
+var _user$project$Helper$holeToken = '?';
 
 var _user$project$Sidekick$removePrefix = F2(
 	function (prefix, text) {
@@ -8682,19 +8683,27 @@ var _user$project$Sidekick$viewHint = F3(
 				return '';
 			}
 		}();
-		var formattedTipe = _elm_lang$core$Native_Utils.eq(hint.tipe, '') ? ((_elm_lang$core$Native_Utils.cmp(
-			_elm_lang$core$List$length(hint.args),
-			0) > 0) ? A2(
-			_elm_lang$core$Basics_ops['++'],
-			'*',
-			A2(
-				_elm_lang$core$Basics_ops['++'],
-				A2(_elm_lang$core$String$join, ' ', hint.args),
-				'*')) : '') : A2(_elm_lang$core$Basics_ops['++'], ': ', hint.tipe);
-		var formattedName = _user$project$Helper$isInfix(hint.name) ? A2(
+		var formattedName = _elm_lang$core$Native_Utils.eq(hint.name, _user$project$Helper$holeToken) ? hint.name : (_user$project$Helper$isInfix(hint.name) ? A2(
 			_elm_lang$core$Basics_ops['++'],
 			'(',
-			A2(_elm_lang$core$Basics_ops['++'], hint.name, ')')) : hint.name;
+			A2(_elm_lang$core$Basics_ops['++'], hint.name, ')')) : hint.name);
+		var formattedTipe = function () {
+			if (_elm_lang$core$Native_Utils.eq(hint.tipe, '')) {
+				var hintArgsString = A2(_elm_lang$core$String$join, ' ', hint.args);
+				return (!_elm_lang$core$Native_Utils.eq(
+					_elm_lang$core$String$trim(hintArgsString),
+					'')) ? A2(
+					_elm_lang$core$Basics_ops['++'],
+					'*',
+					A2(_elm_lang$core$Basics_ops['++'], hintArgsString, '*')) : '';
+			} else {
+				if (!_elm_lang$core$Native_Utils.eq(formattedName, '')) {
+					return A2(_elm_lang$core$Basics_ops['++'], ': ', hint.tipe);
+				} else {
+					return hint.tipe;
+				}
+			}
+		}();
 		var formattedModuleName = (_elm_lang$core$Native_Utils.eq(hint.moduleName, '') || _elm_lang$core$Native_Utils.eq(activeFilePath, hint.sourcePath)) ? '' : A2(_elm_lang$core$Basics_ops['++'], hint.moduleName, '.');
 		var maybeType = config.showTypes ? A2(
 			_elm_lang$core$Basics_ops['++'],
@@ -8722,7 +8731,7 @@ var _user$project$Sidekick$viewHint = F3(
 	});
 var _user$project$Sidekick$emptyModel = {
 	note: '',
-	activeHints: {ctor: '[]'},
+	activeTokenHints: {ctor: '[]'},
 	activeFile: _elm_lang$core$Maybe$Nothing,
 	config: {showTypes: false, showTypeCases: false, showDocComments: false, showAssociativities: false, showPrecedences: false, showSourcePaths: false}
 };
@@ -8735,8 +8744,8 @@ var _user$project$Sidekick$init = function (config) {
 		_1: _elm_lang$core$Platform_Cmd$none
 	};
 };
-var _user$project$Sidekick$activeHintsChangedSub = _elm_lang$core$Native_Platform.incomingPort(
-	'activeHintsChangedSub',
+var _user$project$Sidekick$activeTokenHintsChangedSub = _elm_lang$core$Native_Platform.incomingPort(
+	'activeTokenHintsChangedSub',
 	_elm_lang$core$Json_Decode$list(
 		A2(
 			_elm_lang$core$Json_Decode$andThen,
@@ -8938,7 +8947,7 @@ var _user$project$Sidekick$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{activeHints: _p8._0}),
+						{activeTokenHints: _p8._0}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ActiveFileChanged':
@@ -9009,7 +9018,7 @@ var _user$project$Sidekick$update = F2(
 	});
 var _user$project$Sidekick$Model = F4(
 	function (a, b, c, d) {
-		return {note: a, activeHints: b, activeFile: c, config: d};
+		return {note: a, activeTokenHints: b, activeFile: c, config: d};
 	});
 var _user$project$Sidekick$Config = F6(
 	function (a, b, c, d, e, f) {
@@ -9151,7 +9160,7 @@ var _user$project$Sidekick$view = function (_p9) {
 							_1: {ctor: '[]'}
 						} : {ctor: '[]'}));
 			},
-			_p10.activeHints);
+			_p10.activeTokenHints);
 		return A2(
 			_elm_lang$html$Html$div,
 			{ctor: '[]'},
@@ -9193,7 +9202,7 @@ var _user$project$Sidekick$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$batch(
 		{
 			ctor: '::',
-			_0: _user$project$Sidekick$activeHintsChangedSub(_user$project$Sidekick$ActiveHintsChanged),
+			_0: _user$project$Sidekick$activeTokenHintsChangedSub(_user$project$Sidekick$ActiveHintsChanged),
 			_1: {
 				ctor: '::',
 				_0: _user$project$Sidekick$activeFileChangedSub(_user$project$Sidekick$ActiveFileChanged),

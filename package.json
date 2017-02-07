@@ -19,7 +19,8 @@
     "atom-space-pen-views": "^0.20.0",
     "chokidar": "1.5.2",
     "tmp": "0.0.28",
-    "untildify": "3.0.2"
+    "untildify": "3.0.2",
+    "atom-linter": "^7.0.0"
   },
   "providedServices": {
     "autocomplete.provider": {
@@ -34,10 +35,15 @@
     }
   },
   "consumedServices": {
+    "status-bar": {
+      "versions": {
+        "^1.0.0": "consumeStatusBar"
+      }
+    },
     "linter-elm-make.getWorkDirectory": {
       "versions": {
         "^1.0.0": "consumeGetWorkDirectory"
       }
-    }
+    }    
   }
 }

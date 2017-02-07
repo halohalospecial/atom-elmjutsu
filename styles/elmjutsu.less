@@ -184,15 +184,20 @@ atom-text-editor.elmjutsu-pipe-selections.processing {
   margin: 0 !important;
   .tooltip-inner {
     padding: 4px !important;
-    background-color: @tool-panel-background-color !important;
+    background-color: fadeout(@tool-panel-background-color, 15%) !important;
+    border: 1px solid fadeout(@text-color-subtle, 30%) !important;
     color: @text-color !important;
-    font-weight: bold;
-    font-size: @font-size;
-    border: 1px solid @tool-panel-border-color;
+    // font-size: @font-size;
+    font-size: 90%;
   }
   .tooltip-arrow {
-    border-top-color: @tool-panel-border-color !important;
+    // border-top-color: fadeout(@tool-panel-background-color, 15%) !important;
+    border-top-color: fadeout(@text-color-subtle, 30%) !important;
   }
+}
+.elmjutsu-inferred-range .region {
+  border: 1px dotted @ui-site-color-4; // purple
+  border-radius: @component-border-radius;
 }
 atom-text-editor:not([mini])[data-grammar="source elm"] autocomplete-suggestion-list {
   // font-size: @font-size;
