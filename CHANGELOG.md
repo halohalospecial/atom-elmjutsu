@@ -1,3 +1,6 @@
+## 3.5.0
+* Add `Infer Hole Types On The Fly` and `Infer Expression Type On The Fly` options.
+
 ## 3.4.0
 * Add `Infer Hole Types` and `Infer Expression Type` commands.
 

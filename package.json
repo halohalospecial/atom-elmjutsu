@@ -20,7 +20,8 @@
     "chokidar": "1.5.2",
     "tmp": "0.0.28",
     "untildify": "3.0.2",
-    "atom-linter": "^7.0.0"
+    "atom-linter": "8.0.0",
+    "promise-queue": "2.2.3"
   },
   "providedServices": {
     "autocomplete.provider": {
