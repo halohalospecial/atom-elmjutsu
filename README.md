@@ -66,7 +66,7 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 ![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
 
-* Check `Enable Global Autocomplete` if you want to include unimported project symbols.  This will also enable :zap:`Auto import` completion (which works like [Add Import](#elmjutsu-add-import)).
+* Check `Enable Global Autocomplete` if you want to include unimported project symbols.  This will also enable :zap:`Auto import` completion (which works like [Add Import](#elmjutsu-add-import)).  Take note that you may encounter some lag if you have a very large project.
 
 ![auto-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/auto-import.gif?raw=true)
 
@@ -161,17 +161,17 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 ![sidekick2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick2.gif?raw=true)
 
 ### <a name="infer-expression-type">`Elmjutsu: Infer Expression Type`
-* Select some text or make sure that the cursor is between spaces or newlines before invoking this command.
-* This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html).
+* Select some text or make sure that the cursor is between whitespaces before invoking this command.
 * You can also check the `Infer Expression Type On The Fly` option in the package settings.
+* This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html) and may sometimes be inaccurate.
 
 ![infer-expression-type-on-the-fly](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/infer-expression-type-on-the-fly.gif?raw=true)
 
 ### <a name="infer-hole-types">`Elmjutsu: Infer Hole Types`
 * Use question marks (`?`) to represent the type holes.
-* This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html).
 * Make sure that `Elm Make Path` is properly configured and `Show Types in Tooltip` is checked in the package settings.
 * You can also check the `Infer Hole Types On The Fly` option in the package settings.
+* This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html) and may sometimes be inaccurate.
 
 ![infer-hole-types](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/infer-hole-types.gif?raw=true)
 
@@ -251,8 +251,6 @@ Here is an example:
   'alt-l': 'elmjutsu:surround-with-let'
   'alt-shift-l': 'elmjutsu:lift-to-let'
   'alt-t': 'elmjutsu:lift-to-top-level'
-  'alt-h': 'elmjutsu:infer-hole-types'
-  'alt-e': 'elmjutsu:infer-expression-type'
 
 'atom-workspace':
   'f1': 'elmjutsu:toggle-sidekick'

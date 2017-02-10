@@ -1490,7 +1490,9 @@ isPrimitiveType tipeString =
 
 getDefaultValueForType : TokenDict -> Maybe String -> String -> String
 getDefaultValueForType activeTokens maybeRootTipeString tipeString =
-    if isRecordString tipeString then
+    if String.trim tipeString == "" then
+        "_"
+    else if isRecordString tipeString then
         let
             fieldAndValues =
                 getRecordTipeParts tipeString

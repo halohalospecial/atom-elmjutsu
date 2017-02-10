@@ -9732,136 +9732,142 @@ var _user$project$Indexer$getDefaultValueForType = F3(
 	function (activeTokens, maybeRootTipeString, tipeString) {
 		getDefaultValueForType:
 		while (true) {
-			if (_user$project$Indexer$isRecordString(tipeString)) {
-				var fieldAndValues = A2(
-					_elm_lang$core$String$join,
-					', ',
-					A2(
-						_elm_lang$core$List$map,
-						function (_p121) {
-							var _p122 = _p121;
-							return A2(
-								_elm_lang$core$Basics_ops['++'],
-								_p122._0,
-								A2(
-									_elm_lang$core$Basics_ops['++'],
-									' = ',
-									A3(_user$project$Indexer$getDefaultValueForType, activeTokens, maybeRootTipeString, _p122._1)));
-						},
-						_user$project$Indexer$getRecordTipeParts(tipeString)));
-				return A2(
-					_elm_lang$core$Basics_ops['++'],
-					'{ ',
-					A2(_elm_lang$core$Basics_ops['++'], fieldAndValues, ' }'));
+			if (_elm_lang$core$Native_Utils.eq(
+				_elm_lang$core$String$trim(tipeString),
+				'')) {
+				return '_';
 			} else {
-				if (_user$project$Indexer$isTupleString(tipeString)) {
-					var parts = A2(
-						_elm_lang$core$List$map,
-						function (part) {
-							return A3(_user$project$Indexer$getDefaultValueForType, activeTokens, maybeRootTipeString, part);
-						},
-						_user$project$Indexer$getTupleParts(tipeString));
-					return _user$project$Indexer$getTupleStringFromParts(parts);
-				} else {
-					var _p123 = _elm_lang$core$List$head(
-						A2(_elm_lang$core$String$split, ' ', tipeString));
-					if (_p123.ctor === 'Just') {
-						var _p131 = _p123._0;
-						var _p124 = _p131;
-						switch (_p124) {
-							case 'number':
-								return '0';
-							case 'Int':
-								return '0';
-							case 'Float':
-								return '0.0';
-							case 'Bool':
-								return 'False';
-							case 'String':
-								return '\"\"';
-							case 'List':
-								return '[]';
-							case 'Array.Array':
-								return 'Array.empty';
-							case 'Cmd':
-								return 'Cmd.none';
-							case 'Color.Color':
-								return 'Color.black';
-							case 'Dict.Dict':
-								return 'Dict.empty';
-							case 'Maybe':
-								return 'Nothing';
-							case 'Set.Set':
-								return 'Set.empty';
-							case 'Sub':
-								return 'Sub.none';
-							default:
-								var _p125 = _elm_lang$core$List$head(
+				if (_user$project$Indexer$isRecordString(tipeString)) {
+					var fieldAndValues = A2(
+						_elm_lang$core$String$join,
+						', ',
+						A2(
+							_elm_lang$core$List$map,
+							function (_p121) {
+								var _p122 = _p121;
+								return A2(
+									_elm_lang$core$Basics_ops['++'],
+									_p122._0,
 									A2(
-										_user$project$Indexer$getHintsForToken,
-										_elm_lang$core$Maybe$Just(_p131),
-										activeTokens));
-								if (_p125.ctor === 'Just') {
-									var _p130 = _p125._0;
-									if ((!_elm_lang$core$Native_Utils.eq(_p130.kind, _user$project$Indexer$KindType)) && (!_elm_lang$core$Native_Utils.eq(_p130.tipe, _p131))) {
-										var _p126 = maybeRootTipeString;
-										if (_p126.ctor === 'Just') {
-											if (!_elm_lang$core$Native_Utils.eq(_p130.name, _p126._0)) {
-												var _v106 = activeTokens,
-													_v107 = _elm_lang$core$Maybe$Just(_p130.name),
-													_v108 = _p130.tipe;
-												activeTokens = _v106;
-												maybeRootTipeString = _v107;
-												tipeString = _v108;
+										_elm_lang$core$Basics_ops['++'],
+										' = ',
+										A3(_user$project$Indexer$getDefaultValueForType, activeTokens, maybeRootTipeString, _p122._1)));
+							},
+							_user$project$Indexer$getRecordTipeParts(tipeString)));
+					return A2(
+						_elm_lang$core$Basics_ops['++'],
+						'{ ',
+						A2(_elm_lang$core$Basics_ops['++'], fieldAndValues, ' }'));
+				} else {
+					if (_user$project$Indexer$isTupleString(tipeString)) {
+						var parts = A2(
+							_elm_lang$core$List$map,
+							function (part) {
+								return A3(_user$project$Indexer$getDefaultValueForType, activeTokens, maybeRootTipeString, part);
+							},
+							_user$project$Indexer$getTupleParts(tipeString));
+						return _user$project$Indexer$getTupleStringFromParts(parts);
+					} else {
+						var _p123 = _elm_lang$core$List$head(
+							A2(_elm_lang$core$String$split, ' ', tipeString));
+						if (_p123.ctor === 'Just') {
+							var _p131 = _p123._0;
+							var _p124 = _p131;
+							switch (_p124) {
+								case 'number':
+									return '0';
+								case 'Int':
+									return '0';
+								case 'Float':
+									return '0.0';
+								case 'Bool':
+									return 'False';
+								case 'String':
+									return '\"\"';
+								case 'List':
+									return '[]';
+								case 'Array.Array':
+									return 'Array.empty';
+								case 'Cmd':
+									return 'Cmd.none';
+								case 'Color.Color':
+									return 'Color.black';
+								case 'Dict.Dict':
+									return 'Dict.empty';
+								case 'Maybe':
+									return 'Nothing';
+								case 'Set.Set':
+									return 'Set.empty';
+								case 'Sub':
+									return 'Sub.none';
+								default:
+									var _p125 = _elm_lang$core$List$head(
+										A2(
+											_user$project$Indexer$getHintsForToken,
+											_elm_lang$core$Maybe$Just(_p131),
+											activeTokens));
+									if (_p125.ctor === 'Just') {
+										var _p130 = _p125._0;
+										if ((!_elm_lang$core$Native_Utils.eq(_p130.kind, _user$project$Indexer$KindType)) && (!_elm_lang$core$Native_Utils.eq(_p130.tipe, _p131))) {
+											var _p126 = maybeRootTipeString;
+											if (_p126.ctor === 'Just') {
+												if (!_elm_lang$core$Native_Utils.eq(_p130.name, _p126._0)) {
+													var _v106 = activeTokens,
+														_v107 = _elm_lang$core$Maybe$Just(_p130.name),
+														_v108 = _p130.tipe;
+													activeTokens = _v106;
+													maybeRootTipeString = _v107;
+													tipeString = _v108;
+													continue getDefaultValueForType;
+												} else {
+													return '_';
+												}
+											} else {
+												var _v109 = activeTokens,
+													_v110 = _elm_lang$core$Maybe$Just(_p130.name),
+													_v111 = _p130.tipe;
+												activeTokens = _v109;
+												maybeRootTipeString = _v110;
+												tipeString = _v111;
 												continue getDefaultValueForType;
+											}
+										} else {
+											if (_elm_lang$core$Native_Utils.eq(_p130.kind, _user$project$Indexer$KindType)) {
+												var _p127 = _elm_lang$core$List$head(_p130.cases);
+												if (_p127.ctor === 'Just') {
+													var _p129 = _p127._0;
+													var _p128 = _user$project$Indexer$typeConstructorToNameAndArgs(tipeString);
+													var annotatedTipeArgs = _p128._1;
+													var alignedArgs = A3(_user$project$Indexer$getTipeCaseAlignedArgTipes, _p130.args, annotatedTipeArgs, _p129.args);
+													return A2(
+														_elm_lang$core$Basics_ops['++'],
+														_p129.name,
+														A2(
+															_elm_lang$core$Basics_ops['++'],
+															(_elm_lang$core$Native_Utils.cmp(
+																_elm_lang$core$List$length(alignedArgs),
+																0) > 0) ? ' ' : '',
+															A2(
+																_elm_lang$core$String$join,
+																' ',
+																A2(
+																	_elm_lang$core$List$map,
+																	A2(_user$project$Indexer$getDefaultValueForType, activeTokens, _elm_lang$core$Maybe$Nothing),
+																	alignedArgs))));
+												} else {
+													return '_';
+												}
 											} else {
 												return '_';
 											}
-										} else {
-											var _v109 = activeTokens,
-												_v110 = _elm_lang$core$Maybe$Just(_p130.name),
-												_v111 = _p130.tipe;
-											activeTokens = _v109;
-											maybeRootTipeString = _v110;
-											tipeString = _v111;
-											continue getDefaultValueForType;
 										}
 									} else {
-										if (_elm_lang$core$Native_Utils.eq(_p130.kind, _user$project$Indexer$KindType)) {
-											var _p127 = _elm_lang$core$List$head(_p130.cases);
-											if (_p127.ctor === 'Just') {
-												var _p129 = _p127._0;
-												var _p128 = _user$project$Indexer$typeConstructorToNameAndArgs(tipeString);
-												var annotatedTipeArgs = _p128._1;
-												var alignedArgs = A3(_user$project$Indexer$getTipeCaseAlignedArgTipes, _p130.args, annotatedTipeArgs, _p129.args);
-												return A2(
-													_elm_lang$core$Basics_ops['++'],
-													_p129.name,
-													A2(
-														_elm_lang$core$Basics_ops['++'],
-														(_elm_lang$core$Native_Utils.cmp(
-															_elm_lang$core$List$length(alignedArgs),
-															0) > 0) ? ' ' : '',
-														A2(
-															_elm_lang$core$String$join,
-															' ',
-															A2(
-																_elm_lang$core$List$map,
-																A2(_user$project$Indexer$getDefaultValueForType, activeTokens, _elm_lang$core$Maybe$Nothing),
-																alignedArgs))));
-											} else {
-												return '_';
-											}
-										} else {
-											return '_';
-										}
+										return '_';
 									}
-								} else {
-									return '_';
-								}
+							}
+						} else {
+							return '_';
 						}
-					} else {
-						return '_';
 					}
 				}
 			}

@@ -1,3 +1,7 @@
+## 3.5.1
+* Fix `Add Import` issue (#51).  Thanks to @mandrolic for reporting!
+* Fix infinite recursion bug (#54).  Thanks to @rubedojr for reporting!
+
 ## 3.5.0
 * Add `Infer Hole Types On The Fly` and `Infer Expression Type On The Fly` options.
 
