@@ -1,3 +1,8 @@
+## 4.0.0
+* BREAKING CHANGE: Remove `Infer Expression Type On The Fly`. Add `Infer Expected Type At Cursor On The Fly` and `Infer Type Of Selection On The Fly`.
+* Add `Enable Type-Aware Autocomplete` option.
+* Fix `Define from type annotation` bug.
+
 ## 3.5.1
 * Fix `Add Import` issue (#51).  Thanks to @mandrolic for reporting!
 * Fix infinite recursion bug (#54).  Thanks to @rubedojr for reporting!

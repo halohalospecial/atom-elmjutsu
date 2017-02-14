@@ -94,7 +94,7 @@ port goToDefinitionSub : (Maybe String -> msg) -> Sub msg
 port showGoToSymbolViewSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
 
 
-port getHintsForPartialSub : (( String, Bool ) -> msg) -> Sub msg
+port getHintsForPartialSub : (( String, Maybe String, Bool ) -> msg) -> Sub msg
 
 
 port getSuggestionsForImportSub : (String -> msg) -> Sub msg
@@ -313,7 +313,7 @@ type Msg
     | UpdateProjectDependencies ( String, List Dependency )
     | GoToDefinition (Maybe Token)
     | ShowGoToSymbolView ( Maybe ProjectDirectory, Maybe String )
-    | GetHintsForPartial ( String, Bool )
+    | GetHintsForPartial ( String, Maybe String, Bool )
     | GetSuggestionsForImport String
     | AskCanGoToDefinition Token
     | GetImporterSourcePathsForToken ( Maybe ProjectDirectory, Maybe Token, Maybe Bool )
@@ -402,8 +402,8 @@ update msg model =
         ShowGoToSymbolView ( maybeProjectDirectory, maybeToken ) ->
             doShowGoToSymbolView maybeProjectDirectory maybeToken model
 
-        GetHintsForPartial ( partial, isGlobal ) ->
-            doGetHintsForPartial partial isGlobal model
+        GetHintsForPartial ( partial, maybeInferredTipe, isGlobal ) ->
+            doGetHintsForPartial partial maybeInferredTipe isGlobal model
 
         GetSuggestionsForImport partial ->
             doGetSuggestionsForImport partial model
@@ -630,11 +630,11 @@ doShowGoToSymbolView maybeProjectDirectory maybeToken model =
             )
 
 
-doGetHintsForPartial : String -> Bool -> Model -> ( Model, Cmd Msg )
-doGetHintsForPartial partial isGlobal model =
+doGetHintsForPartial : String -> Maybe String -> Bool -> Model -> ( Model, Cmd Msg )
+doGetHintsForPartial partial maybeInferredTipe isGlobal model =
     ( model
     , ( partial
-      , getHintsForPartial partial isGlobal model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
+      , getHintsForPartial partial maybeInferredTipe isGlobal model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
             |> List.map encodeHint
       )
         |> hintsForPartialReceivedCmd
@@ -874,8 +874,8 @@ getHintsForToken maybeToken tokens =
             []
 
 
-getHintsForPartial : String -> Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
-getHintsForPartial partial isGlobal maybeActiveFile projectFileContentsDict projectPackageDocs activeTokens =
+getHintsForPartial : String -> Maybe String -> Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
+getHintsForPartial partial maybeInferredTipe isGlobal maybeActiveFile projectFileContentsDict projectPackageDocs activeTokens =
     case maybeActiveFile of
         Just { projectDirectory, filePath } ->
             let
@@ -890,16 +890,33 @@ getHintsForPartial partial isGlobal maybeActiveFile projectFileContentsDict proj
                     getFileContentsOfProject projectDirectory projectFileContentsDict
                         |> getActiveFileContents maybeActiveFile
 
-                filterByName =
-                    (\{ name } -> String.startsWith partial name)
+                filterByName { name } =
+                    case maybeInferredTipe of
+                        Just tipeString ->
+                            partial == "" || String.startsWith partial name
 
-                filteredArgHints =
+                        Nothing ->
+                            String.startsWith partial name
+
+                filterByTipe { tipe } =
+                    case maybeInferredTipe of
+                        Just tipeString ->
+                            getReturnTipe tipeString == getReturnTipe tipe
+
+                        Nothing ->
+                            True
+
+                argHints =
                     activeTokens
                         |> Dict.values
                         |> List.concat
-                        |> List.filter (\hint -> hint.moduleName == "" && String.startsWith partial hint.name)
+                        |> List.filter (\hint -> hint.moduleName == "")
+                        |> List.filter filterByName
 
-                ( exposedHints, unexposedHints ) =
+                defaultHints =
+                    List.filter filterByName defaultSuggestions
+
+                ( rawExposedHints, rawUnexposedHints ) =
                     if isGlobal then
                         getExposedAndUnexposedHints True filePath importsPlusActiveModule allModuleDocs
                     else
@@ -914,24 +931,29 @@ getHintsForPartial partial isGlobal maybeActiveFile projectFileContentsDict proj
                             -- Only check the imported modules.
                             getExposedAndUnexposedHints False filePath importsPlusActiveModule importedModuleDocs
 
-                filteredDefaultHints =
-                    List.filter filterByName defaultSuggestions
+                exposedHints =
+                    List.filter filterByName rawExposedHints
 
-                filteredExposedHints =
-                    List.filter filterByName exposedHints
-
-                filteredUnexposedHints =
-                    List.filter filterByName unexposedHints
+                unexposedHints =
+                    List.filter filterByName rawUnexposedHints
 
                 sortByName =
                     List.sortBy .name
             in
-                sortByName
-                    (filteredDefaultHints
-                        ++ filteredArgHints
-                        ++ filteredExposedHints
-                    )
-                    ++ sortByName filteredUnexposedHints
+                case maybeInferredTipe of
+                    Just tipeString ->
+                        sortByName (List.filter filterByTipe argHints)
+                            ++ sortByName (List.filter filterByTipe defaultHints)
+                            ++ sortByName (List.filter filterByTipe exposedHints)
+                            ++ sortByName (List.filter filterByTipe unexposedHints)
+
+                    Nothing ->
+                        sortByName
+                            (defaultHints
+                                ++ argHints
+                                ++ exposedHints
+                            )
+                            ++ sortByName unexposedHints
 
         Nothing ->
             []
@@ -964,7 +986,7 @@ getExposedAndUnexposedHints includeUnexposed activeFilePath importsPlusActiveMod
                                     Just importData ->
                                         let
                                             exposed =
-                                                getFilteredHints moduleDocs importData
+                                                getFilteredHints activeFilePath moduleDocs importData
                                                     |> List.map
                                                         (\( name, hint ) ->
                                                             let
@@ -1436,15 +1458,15 @@ constructFromTypeAnnotation typeAnnotation activeTokens =
                 |> Maybe.withDefault []
                 |> String.join " :"
 
-        tipeParts =
-            getTipeParts tipeString
-
         returnTipe =
-            Helper.last tipeParts
-                |> Maybe.withDefault ""
+            getReturnTipe tipeString
+
+        parameterTipes =
+            getTipeParts tipeString
+                |> Helper.dropLast
 
         argNames =
-            getDefaultArgNames (Helper.dropLast tipeParts)
+            getDefaultArgNames parameterTipes
     in
         name
             ++ (if List.length argNames > 0 then
@@ -1657,15 +1679,9 @@ constructCaseOf token activeTokens =
                     in
                         case List.head args of
                             Just "->" ->
-                                let
-                                    returnTipe =
-                                        getTipeParts tokenHint.tipe
-                                            |> Helper.last
-                                            |> Maybe.withDefault ""
-                                in
-                                    ( returnTipe
-                                    , []
-                                    )
+                                ( getReturnTipe tokenHint.tipe
+                                , []
+                                )
 
                             Just _ ->
                                 ( name, args )
@@ -2283,14 +2299,14 @@ type alias ImportSuggestion =
 getActiveTokens : Maybe ActiveFile -> Maybe ActiveTopLevel -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict
 getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict projectPackageDocs =
     case maybeActiveFile of
-        Just { projectDirectory } ->
+        Just { projectDirectory, filePath } ->
             let
                 fileContentsDict =
                     getFileContentsOfProject projectDirectory projectFileContentsDict
 
                 getHints moduleDocs =
                     Maybe.map
-                        (getFilteredHints moduleDocs)
+                        (getFilteredHints filePath moduleDocs)
                         (Dict.get moduleDocs.name (getImportsPlusActiveModuleForActiveFile maybeActiveFile fileContentsDict))
 
                 insert ( token, hint ) dict =
@@ -2369,6 +2385,13 @@ getArgsPartsRecur str acc parts ( openParentheses, openBraces ) =
                                     ( openParentheses, openBraces )
                     in
                         getArgsPartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
+
+
+getReturnTipe : String -> String
+getReturnTipe tipeString =
+    getTipeParts tipeString
+        |> Helper.last
+        |> Maybe.withDefault ""
 
 
 {-| Example: getTipeParts "Int -> Int -> Int" == [ "Int", "Int" ]
@@ -2596,12 +2619,12 @@ tipeToHintable tipe =
     )
 
 
-getFilteredHints : ModuleDocs -> Import -> List ( String, Hint )
-getFilteredHints moduleDocs importData =
-    List.concatMap (unionTagsToHints moduleDocs importData) moduleDocs.values.tipes
-        ++ List.concatMap (nameToHints moduleDocs importData KindTypeAlias) (List.map valueToHintable moduleDocs.values.aliases)
-        ++ List.concatMap (nameToHints moduleDocs importData KindType) (List.map tipeToHintable moduleDocs.values.tipes)
-        ++ List.concatMap (nameToHints moduleDocs importData KindDefault) (List.map valueToHintable moduleDocs.values.values)
+getFilteredHints : FilePath -> ModuleDocs -> Import -> List ( String, Hint )
+getFilteredHints activeFilePath moduleDocs importData =
+    List.concatMap (unionTagsToHints moduleDocs importData activeFilePath) moduleDocs.values.tipes
+        ++ List.concatMap (nameToHints moduleDocs importData activeFilePath KindTypeAlias) (List.map valueToHintable moduleDocs.values.aliases)
+        ++ List.concatMap (nameToHints moduleDocs importData activeFilePath KindType) (List.map tipeToHintable moduleDocs.values.tipes)
+        ++ List.concatMap (nameToHints moduleDocs importData activeFilePath KindDefault) (List.map valueToHintable moduleDocs.values.values)
         ++ moduleToHints moduleDocs importData
 
 
@@ -2747,8 +2770,8 @@ getTipeCaseTypeAnnotation tipeCase tipe =
         |> String.join " -> "
 
 
-unionTagsToHints : ModuleDocs -> Import -> Tipe -> List ( String, Hint )
-unionTagsToHints moduleDocs { alias, exposed } tipe =
+unionTagsToHints : ModuleDocs -> Import -> FilePath -> Tipe -> List ( String, Hint )
+unionTagsToHints moduleDocs { alias, exposed } activeFilePath tipe =
     let
         addHints tipeCase hints =
             let
@@ -2772,17 +2795,24 @@ unionTagsToHints moduleDocs { alias, exposed } tipe =
 
                 moduleLocalName =
                     getModuleLocalName moduleDocs.name alias tag
+
+                isInActiveModule =
+                    activeFilePath == hint.sourcePath
             in
-                if isExposed tag exposed || isExposed tipe.name exposed then
-                    hints ++ [ ( moduleLocalName, hint ), ( tag, hint ) ]
-                else
-                    hints ++ [ ( moduleLocalName, hint ) ]
+                hints
+                    ++ (if isInActiveModule then
+                            [ ( tag, hint ) ]
+                        else if isExposed tag exposed || isExposed tipe.name exposed then
+                            [ ( moduleLocalName, hint ), ( tag, hint ) ]
+                        else
+                            [ ( moduleLocalName, hint ) ]
+                       )
     in
         List.foldl addHints [] tipe.cases
 
 
-nameToHints : ModuleDocs -> Import -> SymbolKind -> ( Value, List TipeCase ) -> List ( String, Hint )
-nameToHints moduleDocs { alias, exposed } kind ( { name, comment, tipe, args, associativity, precedence }, tipeCases ) =
+nameToHints : ModuleDocs -> Import -> FilePath -> SymbolKind -> ( Value, List TipeCase ) -> List ( String, Hint )
+nameToHints moduleDocs { alias, exposed } activeFilePath kind ( { name, comment, tipe, args, associativity, precedence }, tipeCases ) =
     let
         hint =
             { name = name
@@ -2807,8 +2837,13 @@ nameToHints moduleDocs { alias, exposed } kind ( { name, comment, tipe, args, as
 
         moduleLocalName =
             getModuleLocalName moduleDocs.name alias name
+
+        isInActiveModule =
+            activeFilePath == hint.sourcePath
     in
-        if isExposed name exposed then
+        if isInActiveModule then
+            [ ( name, hint ) ]
+        else if isExposed name exposed then
             [ ( name, hint ), ( moduleLocalName, hint ) ]
         else
             [ ( moduleLocalName, hint ) ]

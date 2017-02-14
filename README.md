@@ -162,14 +162,20 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ### <a name="infer-expression-type">`Elmjutsu: Infer Expression Type`
 * Select some text or make sure that the cursor is between whitespaces before invoking this command.
-* You can also check the `Infer Expression Type On The Fly` option in the package settings.
+* Make sure that `Elm Make Path` is properly configured in the package settings.
+* You should also have `Show Types in Tooltip` checked in the package settings (or the Sidekick panel visible) to be able to see the inferred types.
 * This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html) and may sometimes be inaccurate.
+
+### <a name="infer-expression-type-on-the-fly">Infer expression type on the fly
+* You can also check the `Infer Type Of Selection On The Fly` and `Infer Expected Type At Cursor On The Fly` options in the package settings.
+* Take note that `Infer Type Of Selection On The Fly` currently has bad interaction with some packages that decorate the markers (e.g. `Find And Replace`) :cry: This will be fixed in the future.
 
 ![infer-expression-type-on-the-fly](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/infer-expression-type-on-the-fly.gif?raw=true)
 
 ### <a name="infer-hole-types">`Elmjutsu: Infer Hole Types`
 * Use question marks (`?`) to represent the type holes.
-* Make sure that `Elm Make Path` is properly configured and `Show Types in Tooltip` is checked in the package settings.
+* Make sure that `Elm Make Path` is properly configured in the package settings.
+* You should also have `Show Types in Tooltip` checked in the package settings (or the Sidekick panel visible) to be able to see the inferred types.
 * You can also check the `Infer Hole Types On The Fly` option in the package settings.
 * This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html) and may sometimes be inaccurate.
 
