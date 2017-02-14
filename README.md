@@ -70,6 +70,10 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 ![auto-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/auto-import.gif?raw=true)
 
+* Check `Enable Type-Aware Autocomplete` if you want to prioritize suggestions matching the expected type at cursor position.  The type can be inferred via the `Infer Expression Type` command, but it's recommended to check `Infer Expected Type At Cursor On The Fly` in the package settings instead.
+
+![type-aware-autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/type-aware-autocomplete.gif?raw=true)
+
 * You can also check `Enable Autocomplete Snippets` if you prefer.
 
 ![autocomplete-snippet](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-snippet.gif?raw=true)
@@ -161,7 +165,7 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 ![sidekick2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick2.gif?raw=true)
 
 ### <a name="infer-expression-type">`Elmjutsu: Infer Expression Type`
-* Select some text or make sure that the cursor is between whitespaces before invoking this command.
+* Select some text or make sure that the cursor is between whitespaces or before a closing parenthesis before invoking this command.
 * Make sure that `Elm Make Path` is properly configured in the package settings.
 * You should also have `Show Types in Tooltip` checked in the package settings (or the Sidekick panel visible) to be able to see the inferred types.
 * This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html) and may sometimes be inaccurate.

@@ -898,14 +898,6 @@ getHintsForPartial partial maybeInferredTipe isGlobal maybeActiveFile projectFil
                         Nothing ->
                             String.startsWith partial name
 
-                filterByTipe { tipe } =
-                    case maybeInferredTipe of
-                        Just tipeString ->
-                            getReturnTipe tipeString == getReturnTipe tipe
-
-                        Nothing ->
-                            True
-
                 argHints =
                     activeTokens
                         |> Dict.values
@@ -942,15 +934,50 @@ getHintsForPartial partial maybeInferredTipe isGlobal maybeActiveFile projectFil
             in
                 case maybeInferredTipe of
                     Just tipeString ->
-                        sortByName (List.filter filterByTipe argHints)
-                            ++ sortByName (List.filter filterByTipe defaultHints)
-                            ++ sortByName (List.filter filterByTipe exposedHints)
-                            ++ sortByName (List.filter filterByTipe unexposedHints)
+                        let
+                            -- TODO: Handle type variables (e.g. List a)?
+                            partitionByTipe { tipe } =
+                                case maybeInferredTipe of
+                                    Just tipeString ->
+                                        getReturnTipe tipeString == getReturnTipe tipe
+
+                                    Nothing ->
+                                        True
+
+                            ( argHintsMatchingTipe, argHintsNotMatchingTipe ) =
+                                List.partition partitionByTipe argHints
+
+                            ( defaultHintsMatchingTipe, defaultHintsNotMatchingTipe ) =
+                                List.partition partitionByTipe defaultHints
+
+                            ( exposedHintsMatchingTipe, exposedHintsNotMatchingTipe ) =
+                                List.partition partitionByTipe exposedHints
+
+                            ( unexposedHintsMatchingTipe, unexposedHintsNotMatchingTipe ) =
+                                List.partition partitionByTipe unexposedHints
+
+                            filterWithPartial { name } =
+                                if partial /= "" then
+                                    String.startsWith partial name
+                                else
+                                    False
+                        in
+                            sortByName argHintsMatchingTipe
+                                ++ sortByName defaultHintsMatchingTipe
+                                ++ sortByName exposedHintsMatchingTipe
+                                ++ sortByName unexposedHintsMatchingTipe
+                                ++ (sortByName
+                                        (List.filter filterWithPartial argHintsNotMatchingTipe
+                                            ++ List.filter filterWithPartial defaultHintsNotMatchingTipe
+                                            ++ List.filter filterWithPartial exposedHintsNotMatchingTipe
+                                        )
+                                        ++ sortByName (List.filter filterWithPartial unexposedHintsNotMatchingTipe)
+                                   )
 
                     Nothing ->
                         sortByName
-                            (defaultHints
-                                ++ argHints
+                            (argHints
+                                ++ defaultHints
                                 ++ exposedHints
                             )
                             ++ sortByName unexposedHints
