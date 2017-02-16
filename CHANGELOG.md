@@ -1,3 +1,12 @@
+## 5.0.0
+* BREAKING CHANGE: Rename `Infer Expression Type` to `Infer Type`.
+* BREAKING CHANGE: Remove the `Infer Hole Types` command and `Infer Hole Types On The Fly` option since we can usually achieve similar results by just using `Infer Expression Type` (renamed to `Infer Type`) and friends.
+* Add `Types Tooltip Position` option.
+* Add settings option for each special completion so that they can be disabled individually.
+* Fix issue causing extra infer type tasks.
+* Better infer type task queuing.
+* Fix Sidekick display bugs.
+
 ## 4.0.0
 * BREAKING CHANGE: Remove `Infer Expression Type On The Fly`. Add `Infer Expected Type At Cursor On The Fly` and `Infer Type Of Selection On The Fly`.
 * Add `Enable Type-Aware Autocomplete` option.

@@ -7638,7 +7638,7 @@ var _user$project$Indexer$tipeToVar = function (tipeString) {
 			_elm_lang$core$List$reverse(
 				A3(_elm_lang$core$Regex$split, _elm_lang$core$Regex$All, _user$project$Helper$argSeparatorRegex, tipeString))));
 };
-var _user$project$Indexer$getFunctionArgName = F2(
+var _user$project$Indexer$getFunctionArgNameRecur = F2(
 	function (argString, argNameCounters) {
 		var updatePartNameAndArgNameCounters = F2(
 			function (partName2, argNameCounters2) {
@@ -7675,7 +7675,7 @@ var _user$project$Indexer$getFunctionArgName = F2(
 					F2(
 						function (part, _p76) {
 							var _p77 = _p76;
-							var _p78 = A2(_user$project$Indexer$getFunctionArgName, part, _p77._1);
+							var _p78 = A2(_user$project$Indexer$getFunctionArgNameRecur, part, _p77._1);
 							var partName = _p78._0;
 							var updateArgNameCounters2 = _p78._1;
 							return {
@@ -7779,7 +7779,7 @@ var _user$project$Indexer$getDefaultArgNames = function (args) {
 		F2(
 			function (part, _p81) {
 				var _p82 = _p81;
-				var _p83 = A2(_user$project$Indexer$getFunctionArgName, part, _p82._1);
+				var _p83 = A2(_user$project$Indexer$getFunctionArgNameRecur, part, _p82._1);
 				var partName = _p83._0;
 				var updatedArgNameCounters = _p83._1;
 				return {
@@ -8976,8 +8976,8 @@ var _user$project$Indexer$constructFromTypeAnnotationSub = _elm_lang$core$Native
 var _user$project$Indexer$constructCaseOfSub = _elm_lang$core$Native_Platform.incomingPort('constructCaseOfSub', _elm_lang$core$Json_Decode$string);
 var _user$project$Indexer$constructDefaultValueForTypeSub = _elm_lang$core$Native_Platform.incomingPort('constructDefaultValueForTypeSub', _elm_lang$core$Json_Decode$string);
 var _user$project$Indexer$constructDefaultArgumentsSub = _elm_lang$core$Native_Platform.incomingPort('constructDefaultArgumentsSub', _elm_lang$core$Json_Decode$string);
-var _user$project$Indexer$holeEnteredSub = _elm_lang$core$Native_Platform.incomingPort(
-	'holeEnteredSub',
+var _user$project$Indexer$inferenceEnteredSub = _elm_lang$core$Native_Platform.incomingPort(
+	'inferenceEnteredSub',
 	A2(
 		_elm_lang$core$Json_Decode$andThen,
 		function (name) {
@@ -9335,7 +9335,7 @@ var _user$project$Indexer$FileContents = F2(
 	function (a, b) {
 		return {moduleDocs: a, imports: b};
 	});
-var _user$project$Indexer$Hole = F2(
+var _user$project$Indexer$Inference = F2(
 	function (a, b) {
 		return {name: a, tipe: b};
 	});
@@ -9450,8 +9450,8 @@ _user$project$Indexer_ops['=>'] = F2(
 			_1: A2(_user$project$Indexer$Import, _elm_lang$core$Maybe$Nothing, exposed)
 		};
 	});
-var _user$project$Indexer$HoleEntered = function (a) {
-	return {ctor: 'HoleEntered', _0: a};
+var _user$project$Indexer$InferenceEntered = function (a) {
+	return {ctor: 'InferenceEntered', _0: a};
 };
 var _user$project$Indexer$ConstructDefaultArguments = function (a) {
 	return {ctor: 'ConstructDefaultArguments', _0: a};
@@ -9754,9 +9754,9 @@ var _user$project$Indexer$unionTagsToHints = F4(
 			tipe.cases);
 	});
 var _user$project$Indexer$KindType = {ctor: 'KindType'};
-var _user$project$Indexer$getDefaultValueForType = F3(
+var _user$project$Indexer$getDefaultValueForTypeRecur = F3(
 	function (activeTokens, maybeRootTipeString, tipeString) {
-		getDefaultValueForType:
+		getDefaultValueForTypeRecur:
 		while (true) {
 			if (_elm_lang$core$Native_Utils.eq(
 				_elm_lang$core$String$trim(tipeString),
@@ -9777,7 +9777,7 @@ var _user$project$Indexer$getDefaultValueForType = F3(
 									A2(
 										_elm_lang$core$Basics_ops['++'],
 										' = ',
-										A3(_user$project$Indexer$getDefaultValueForType, activeTokens, maybeRootTipeString, _p122._1)));
+										A3(_user$project$Indexer$getDefaultValueForTypeRecur, activeTokens, maybeRootTipeString, _p122._1)));
 							},
 							_user$project$Indexer$getRecordTipeParts(tipeString)));
 					return A2(
@@ -9789,7 +9789,7 @@ var _user$project$Indexer$getDefaultValueForType = F3(
 						var parts = A2(
 							_elm_lang$core$List$map,
 							function (part) {
-								return A3(_user$project$Indexer$getDefaultValueForType, activeTokens, maybeRootTipeString, part);
+								return A3(_user$project$Indexer$getDefaultValueForTypeRecur, activeTokens, maybeRootTipeString, part);
 							},
 							_user$project$Indexer$getTupleParts(tipeString));
 						return _user$project$Indexer$getTupleStringFromParts(parts);
@@ -9844,7 +9844,7 @@ var _user$project$Indexer$getDefaultValueForType = F3(
 													activeTokens = _v106;
 													maybeRootTipeString = _v107;
 													tipeString = _v108;
-													continue getDefaultValueForType;
+													continue getDefaultValueForTypeRecur;
 												} else {
 													return '_';
 												}
@@ -9855,7 +9855,7 @@ var _user$project$Indexer$getDefaultValueForType = F3(
 												activeTokens = _v109;
 												maybeRootTipeString = _v110;
 												tipeString = _v111;
-												continue getDefaultValueForType;
+												continue getDefaultValueForTypeRecur;
 											}
 										} else {
 											if (_elm_lang$core$Native_Utils.eq(_p130.kind, _user$project$Indexer$KindType)) {
@@ -9878,7 +9878,7 @@ var _user$project$Indexer$getDefaultValueForType = F3(
 																' ',
 																A2(
 																	_elm_lang$core$List$map,
-																	A2(_user$project$Indexer$getDefaultValueForType, activeTokens, _elm_lang$core$Maybe$Nothing),
+																	A2(_user$project$Indexer$getDefaultValueForTypeRecur, activeTokens, _elm_lang$core$Maybe$Nothing),
 																	alignedArgs))));
 												} else {
 													return '_';
@@ -9931,7 +9931,7 @@ var _user$project$Indexer$constructFromTypeAnnotation = F2(
 					A2(
 						_elm_lang$core$Basics_ops['++'],
 						' =\n    ',
-						A3(_user$project$Indexer$getDefaultValueForType, activeTokens, _elm_lang$core$Maybe$Nothing, returnTipe)))));
+						A3(_user$project$Indexer$getDefaultValueForTypeRecur, activeTokens, _elm_lang$core$Maybe$Nothing, returnTipe)))));
 	});
 var _user$project$Indexer$doConstructFromTypeAnnotation = F2(
 	function (typeAnnotation, model) {
@@ -9957,7 +9957,7 @@ var _user$project$Indexer$constructDefaultArguments = F2(
 				A2(
 					_elm_lang$core$List$map,
 					function (tipeString) {
-						var value = A3(_user$project$Indexer$getDefaultValueForType, activeTokens, _elm_lang$core$Maybe$Nothing, tipeString);
+						var value = A3(_user$project$Indexer$getDefaultValueForTypeRecur, activeTokens, _elm_lang$core$Maybe$Nothing, tipeString);
 						return (A2(_elm_lang$core$String$contains, ' ', value) && ((!_user$project$Indexer$isRecordString(value)) && (!_user$project$Indexer$isTupleString(value)))) ? A2(
 							_elm_lang$core$Basics_ops['++'],
 							'(',
@@ -10108,7 +10108,7 @@ var _user$project$Indexer$constructDefaultValueForType = F2(
 						_elm_lang$core$Maybe$Just(token),
 						activeTokens))),
 			0) > 0) ? _elm_lang$core$Maybe$Just(
-			A3(_user$project$Indexer$getDefaultValueForType, activeTokens, _elm_lang$core$Maybe$Nothing, token)) : _elm_lang$core$Maybe$Nothing;
+			A3(_user$project$Indexer$getDefaultValueForTypeRecur, activeTokens, _elm_lang$core$Maybe$Nothing, token)) : _elm_lang$core$Maybe$Nothing;
 	});
 var _user$project$Indexer$doConstructDefaultValueForType = F2(
 	function (token, model) {
@@ -10473,12 +10473,12 @@ var _user$project$Indexer$emptyHint = {
 	kind: _user$project$Indexer$KindDefault,
 	isImported: true
 };
-var _user$project$Indexer$holeToHints = function (hole) {
+var _user$project$Indexer$inferenceToHints = function (inference) {
 	return {
 		ctor: '::',
 		_0: _elm_lang$core$Native_Utils.update(
 			_user$project$Indexer$emptyHint,
-			{name: hole.name, tipe: hole.tipe}),
+			{name: inference.name, tipe: inference.tipe}),
 		_1: {ctor: '[]'}
 	};
 };
@@ -11710,7 +11710,7 @@ var _user$project$Indexer$update = F2(
 						A2(
 							_elm_lang$core$List$map,
 							_user$project$Indexer$encodeHint,
-							_user$project$Indexer$holeToHints(_p238._0)))
+							_user$project$Indexer$inferenceToHints(_p238._0)))
 				};
 		}
 	});
@@ -11812,7 +11812,7 @@ var _user$project$Indexer$subscriptions = function (model) {
 																					_0: _user$project$Indexer$constructDefaultArgumentsSub(_user$project$Indexer$ConstructDefaultArguments),
 																					_1: {
 																						ctor: '::',
-																						_0: _user$project$Indexer$holeEnteredSub(_user$project$Indexer$HoleEntered),
+																						_0: _user$project$Indexer$inferenceEnteredSub(_user$project$Indexer$InferenceEntered),
 																						_1: {ctor: '[]'}
 																					}
 																				}

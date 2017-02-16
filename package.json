@@ -14,14 +14,14 @@
     "atom": ">=1.0.0 <2.0.0"
   },
   "dependencies": {
-    "fs-extra": "0.30.0",
-    "underscore-plus": "1.6.6",
-    "atom-space-pen-views": "^0.20.0",
-    "chokidar": "1.5.2",
-    "tmp": "0.0.28",
-    "untildify": "3.0.2",
     "atom-linter": "8.0.0",
-    "promise-queue": "2.2.3"
+    "atom-space-pen-views": "^0.20.0",
+    "better-queue": "^3.8.4",
+    "chokidar": "1.5.2",
+    "fs-extra": "0.30.0",
+    "tmp": "0.0.28",
+    "underscore-plus": "1.6.6",
+    "untildify": "3.0.2"
   },
   "providedServices": {
     "autocomplete.provider": {

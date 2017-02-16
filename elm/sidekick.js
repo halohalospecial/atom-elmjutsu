@@ -8687,23 +8687,15 @@ var _user$project$Sidekick$viewHint = F3(
 			_elm_lang$core$Basics_ops['++'],
 			'(',
 			A2(_elm_lang$core$Basics_ops['++'], hint.name, ')')) : hint.name);
-		var formattedTipe = function () {
-			if (_elm_lang$core$Native_Utils.eq(hint.tipe, '')) {
-				var hintArgsString = A2(_elm_lang$core$String$join, ' ', hint.args);
-				return (!_elm_lang$core$Native_Utils.eq(
-					_elm_lang$core$String$trim(hintArgsString),
-					'')) ? A2(
-					_elm_lang$core$Basics_ops['++'],
-					'*',
-					A2(_elm_lang$core$Basics_ops['++'], hintArgsString, '*')) : '';
-			} else {
-				if (!_elm_lang$core$Native_Utils.eq(formattedName, '')) {
-					return A2(_elm_lang$core$Basics_ops['++'], ': ', hint.tipe);
-				} else {
-					return hint.tipe;
-				}
-			}
-		}();
+		var formattedTipe = _elm_lang$core$Native_Utils.eq(hint.tipe, '') ? ((_elm_lang$core$Native_Utils.cmp(
+			_elm_lang$core$List$length(hint.args),
+			0) > 0) ? A2(
+			_elm_lang$core$Basics_ops['++'],
+			'*',
+			A2(
+				_elm_lang$core$Basics_ops['++'],
+				A2(_elm_lang$core$String$join, ' ', hint.args),
+				'*')) : '') : ((!_elm_lang$core$Native_Utils.eq(formattedName, '')) ? A2(_elm_lang$core$Basics_ops['++'], ': ', hint.tipe) : hint.tipe);
 		var formattedModuleName = (_elm_lang$core$Native_Utils.eq(hint.moduleName, '') || _elm_lang$core$Native_Utils.eq(activeFilePath, hint.sourcePath)) ? '' : A2(_elm_lang$core$Basics_ops['++'], hint.moduleName, '.');
 		var maybeType = config.showTypes ? A2(
 			_elm_lang$core$Basics_ops['++'],
@@ -8713,11 +8705,14 @@ var _user$project$Sidekick$viewHint = F3(
 				formattedModuleName,
 				A2(
 					_elm_lang$core$Basics_ops['++'],
-					'**',
-					A2(
+					(_elm_lang$core$Native_Utils.cmp(
+						_elm_lang$core$String$length(
+							_elm_lang$core$String$trim(formattedName)),
+						0) > 0) ? A2(
 						_elm_lang$core$Basics_ops['++'],
-						formattedName,
-						A2(_elm_lang$core$Basics_ops['++'], '** ', formattedTipe))))) : '';
+						'**',
+						A2(_elm_lang$core$Basics_ops['++'], formattedName, '** ')) : '',
+					formattedTipe))) : '';
 		return A2(
 			_elm_lang$core$Basics_ops['++'],
 			maybeType,

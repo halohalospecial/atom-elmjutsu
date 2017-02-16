@@ -187,13 +187,26 @@ atom-text-editor.elmjutsu-pipe-selections.processing {
     background-color: fadeout(@tool-panel-background-color, 15%) !important;
     border: 1px solid fadeout(@text-color-subtle, 30%) !important;
     color: @text-color !important;
-    // font-size: @font-size;
     font-size: 90%;
   }
   &.top {
     .tooltip-arrow {
-      // border-top-color: fadeout(@tool-panel-background-color, 15%) !important;
       border-top-color: fadeout(@text-color-subtle, 30%) !important;
+    }
+  }
+  &.bottom {
+    .tooltip-arrow {
+      border-bottom-color: fadeout(@text-color-subtle, 30%) !important;
+    }
+  }
+  &.left {
+    .tooltip-arrow {
+      border-left-color: fadeout(@text-color-subtle, 30%) !important;
+    }
+  }
+  &.right {
+    .tooltip-arrow {
+      border-right-color: fadeout(@text-color-subtle, 30%) !important;
     }
   }
 }

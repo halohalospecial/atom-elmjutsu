@@ -248,14 +248,10 @@ viewHint config activeFilePath hint =
 
         formattedTipe =
             if hint.tipe == "" then
-                let
-                    hintArgsString =
-                        String.join " " hint.args
-                in
-                    if String.trim hintArgsString /= "" then
-                        "*" ++ hintArgsString ++ "*"
-                    else
-                        ""
+                if List.length hint.args > 0 then
+                    "*" ++ String.join " " hint.args ++ "*"
+                else
+                    ""
             else if formattedName /= "" then
                 ": " ++ hint.tipe
             else
@@ -265,9 +261,11 @@ viewHint config activeFilePath hint =
             if config.showTypes then
                 "#### "
                     ++ formattedModuleName
-                    ++ "**"
-                    ++ formattedName
-                    ++ "** "
+                    ++ (if String.length (String.trim formattedName) > 0 then
+                            "**" ++ formattedName ++ "** "
+                        else
+                            ""
+                       )
                     ++ formattedTipe
             else
                 ""

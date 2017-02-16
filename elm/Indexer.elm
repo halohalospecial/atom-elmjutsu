@@ -59,7 +59,7 @@ subscriptions model =
         , constructCaseOfSub ConstructCaseOf
         , constructDefaultValueForTypeSub ConstructDefaultValueForType
         , constructDefaultArgumentsSub ConstructDefaultArguments
-        , holeEnteredSub HoleEntered
+        , inferenceEnteredSub InferenceEntered
         ]
 
 
@@ -88,7 +88,7 @@ port downloadMissingPackageDocsSub : (List Dependency -> msg) -> Sub msg
 port docsReadSub : (List ( Dependency, String ) -> msg) -> Sub msg
 
 
-port goToDefinitionSub : (Maybe String -> msg) -> Sub msg
+port goToDefinitionSub : (Maybe Token -> msg) -> Sub msg
 
 
 port showGoToSymbolViewSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
@@ -124,7 +124,7 @@ port constructDefaultValueForTypeSub : (Token -> msg) -> Sub msg
 port constructDefaultArgumentsSub : (Token -> msg) -> Sub msg
 
 
-port holeEnteredSub : (Hole -> msg) -> Sub msg
+port inferenceEnteredSub : (Inference -> msg) -> Sub msg
 
 
 
@@ -254,7 +254,7 @@ type alias Version =
     String
 
 
-type alias Hole =
+type alias Inference =
     { name : String
     , tipe : String
     }
@@ -324,7 +324,7 @@ type Msg
     | ConstructCaseOf Token
     | ConstructDefaultValueForType Token
     | ConstructDefaultArguments Token
-    | HoleEntered Hole
+    | InferenceEntered Inference
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -432,18 +432,18 @@ update msg model =
         ConstructDefaultArguments token ->
             doConstructDefaultArguments token model
 
-        HoleEntered hole ->
+        InferenceEntered inference ->
             ( model
-            , List.map encodeHint (holeToHints hole)
+            , List.map encodeHint (inferenceToHints inference)
                 |> activeTokenHintsChangedCmd
             )
 
 
-holeToHints : Hole -> List Hint
-holeToHints hole =
+inferenceToHints : Inference -> List Hint
+inferenceToHints inference =
     [ { emptyHint
-        | name = hole.name
-        , tipe = hole.tipe
+        | name = inference.name
+        , tipe = inference.tipe
       }
     ]
 
@@ -1503,7 +1503,7 @@ constructFromTypeAnnotation typeAnnotation activeTokens =
                )
             ++ (String.join " " argNames)
             ++ " =\n    "
-            ++ getDefaultValueForType activeTokens Nothing returnTipe
+            ++ getDefaultValueForTypeRecur activeTokens Nothing returnTipe
 
 
 getDefaultArgNames : List String -> List String
@@ -1515,7 +1515,7 @@ getDefaultArgNames args =
                     (\part ( args, argNameCounters ) ->
                         let
                             ( partName, updatedArgNameCounters ) =
-                                getFunctionArgName part argNameCounters
+                                getFunctionArgNameRecur part argNameCounters
                         in
                             ( args ++ [ partName ]
                             , updatedArgNameCounters
@@ -1537,8 +1537,8 @@ isPrimitiveType tipeString =
         ]
 
 
-getDefaultValueForType : TokenDict -> Maybe String -> String -> String
-getDefaultValueForType activeTokens maybeRootTipeString tipeString =
+getDefaultValueForTypeRecur : TokenDict -> Maybe String -> String -> String
+getDefaultValueForTypeRecur activeTokens maybeRootTipeString tipeString =
     if String.trim tipeString == "" then
         "_"
     else if isRecordString tipeString then
@@ -1547,7 +1547,7 @@ getDefaultValueForType activeTokens maybeRootTipeString tipeString =
                 getRecordTipeParts tipeString
                     |> List.map
                         (\( field, tipe ) ->
-                            field ++ " = " ++ getDefaultValueForType activeTokens maybeRootTipeString tipe
+                            field ++ " = " ++ getDefaultValueForTypeRecur activeTokens maybeRootTipeString tipe
                         )
                     |> String.join ", "
         in
@@ -1558,7 +1558,7 @@ getDefaultValueForType activeTokens maybeRootTipeString tipeString =
                 getTupleParts tipeString
                     |> List.map
                         (\part ->
-                            getDefaultValueForType activeTokens maybeRootTipeString part
+                            getDefaultValueForTypeRecur activeTokens maybeRootTipeString part
                         )
         in
             getTupleStringFromParts parts
@@ -1615,12 +1615,12 @@ getDefaultValueForType activeTokens maybeRootTipeString tipeString =
                                     case maybeRootTipeString of
                                         Just rootTipeString ->
                                             if hint.name /= rootTipeString then
-                                                getDefaultValueForType activeTokens (Just hint.name) hint.tipe
+                                                getDefaultValueForTypeRecur activeTokens (Just hint.name) hint.tipe
                                             else
                                                 "_"
 
                                         Nothing ->
-                                            getDefaultValueForType activeTokens (Just hint.name) hint.tipe
+                                            getDefaultValueForTypeRecur activeTokens (Just hint.name) hint.tipe
                                 else if hint.kind == KindType then
                                     case List.head hint.cases of
                                         Just tipeCase ->
@@ -1637,7 +1637,7 @@ getDefaultValueForType activeTokens maybeRootTipeString tipeString =
                                                         else
                                                             ""
                                                        )
-                                                    ++ String.join " " (List.map (getDefaultValueForType activeTokens Nothing) alignedArgs)
+                                                    ++ String.join " " (List.map (getDefaultValueForTypeRecur activeTokens Nothing) alignedArgs)
 
                                         Nothing ->
                                             "_"
@@ -1788,7 +1788,7 @@ constructDefaultValueForType token activeTokens =
         )
             > 0
     then
-        getDefaultValueForType activeTokens Nothing token
+        getDefaultValueForTypeRecur activeTokens Nothing token
             |> Just
     else
         Nothing
@@ -1812,7 +1812,7 @@ constructDefaultArguments token activeTokens =
                         (\tipeString ->
                             let
                                 value =
-                                    getDefaultValueForType activeTokens Nothing tipeString
+                                    getDefaultValueForTypeRecur activeTokens Nothing tipeString
                             in
                                 if
                                     String.contains " " value
@@ -1848,8 +1848,8 @@ getTipeCaseAlignedArgTipes tipeArgs tipeAnnotationArgs tipeCaseArgs =
                 )
 
 
-getFunctionArgName : String -> Dict.Dict String Int -> ( String, Dict.Dict String Int )
-getFunctionArgName argString argNameCounters =
+getFunctionArgNameRecur : String -> Dict.Dict String Int -> ( String, Dict.Dict String Int )
+getFunctionArgNameRecur argString argNameCounters =
     let
         updatePartNameAndArgNameCounters partName2 argNameCounters2 =
             case Dict.get partName2 argNameCounters2 of
@@ -1873,7 +1873,7 @@ getFunctionArgName argString argNameCounters =
                             (\part ( partNames, argNameCounters2 ) ->
                                 let
                                     ( partName, updateArgNameCounters2 ) =
-                                        getFunctionArgName part argNameCounters2
+                                        getFunctionArgNameRecur part argNameCounters2
                                 in
                                     ( partNames ++ [ partName ]
                                     , updateArgNameCounters2

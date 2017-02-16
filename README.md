@@ -36,8 +36,8 @@ Related Atom packages:
   * [Show Types in Tooltip](#show-types-in-tooltip)
   * [Toggle Sidekick](#toggle-sidekick)
     * Show the type and documentation for the symbol at cursor position in a panel.
-  * [Infer Expression Type](#infer-expression-type)
-  * [Infer Hole Types](#infer-hole-types)
+  * [Infer Type](#infer-type)
+  <!-- * [Infer Hole Types](#infer-hole-types) -->
 
 * Imports Management
   * [Add Import](#add-import)
@@ -66,11 +66,13 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 ![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
 
-* Check `Enable Global Autocomplete` if you want to include unimported project symbols.  This will also enable :zap:`Auto import` completion (which works like [Add Import](#elmjutsu-add-import)).  Take note that you may encounter some lag if you have a very large project.
+* Check `Enable Global Autocomplete` if you want to include unimported project symbols.  This will also allow :zap:`Auto import` completion (which works like [Add Import](#elmjutsu-add-import)).  Take note that you may encounter some lag if you have a very large project.
 
 ![auto-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/auto-import.gif?raw=true)
 
-* Check `Enable Type-Aware Autocomplete` if you want to prioritize suggestions matching the expected type at cursor position.  The type can be inferred via the `Infer Expression Type` command, but it's recommended to check `Infer Expected Type At Cursor On The Fly` in the package settings instead.
+* Check `Enable Type-Aware Autocomplete` if you want to prioritize suggestions matching the expected type at cursor position.
+  * The type can be inferred via the `Infer Type` command, but it's recommended to check `Infer Expected Type At Cursor On The Fly` in the package settings instead.
+  * This will also allow :zap:`Replace with inferred type` completion.
 
 ![type-aware-autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/type-aware-autocomplete.gif?raw=true)
 
@@ -80,7 +82,7 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 #### Special completions :zap:
 
-Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).
+Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).  Special completions can be disabled individually in the package settings.
 
 * :zap:`Insert module`
 * :zap:`Insert let/in`
@@ -145,7 +147,7 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).
     Closes the `Usages` panel (the panel is shown after invoking `Find Usages` or `Rename Symbol`).
 
 ### <a name="show-types-in-tooltip">Show Types in Tooltip
-This is disabled by default.  To turn it on, check `Show Types in Tooltip` in the package settings.
+This is disabled by default.  To turn it on, check `Show Types in Tooltip` in the package settings.  You can also change the placement of the tooltip (`Types Tooltip Position`).
 
 ![show-types-in-tooltip](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/show-types-in-tooltip.gif?raw=true)
 
@@ -164,19 +166,19 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ![sidekick2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick2.gif?raw=true)
 
-### <a name="infer-expression-type">`Elmjutsu: Infer Expression Type`
+### <a name="infer-type">`Elmjutsu: Infer Type`
 * Select some text or make sure that the cursor is between whitespaces or before a closing parenthesis before invoking this command.
 * Make sure that `Elm Make Path` is properly configured in the package settings.
 * You should also have `Show Types in Tooltip` checked in the package settings (or the Sidekick panel visible) to be able to see the inferred types.
 * This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html) and may sometimes be inaccurate.
 
-### <a name="infer-expression-type-on-the-fly">Infer expression type on the fly
-* You can also check the `Infer Type Of Selection On The Fly` and `Infer Expected Type At Cursor On The Fly` options in the package settings.
-* Take note that `Infer Type Of Selection On The Fly` currently has bad interaction with some packages that decorate the markers (e.g. `Find And Replace`) :cry: This will be fixed in the future.
+### <a name="infer-types-on-the-fly">Infer types on the fly
+* You can also check the `Infer Expected Type At Cursor On The Fly` and `Infer Type Of Selection On The Fly` options in the package settings.
+* WARNING: `Infer Type Of Selection On The Fly` currently has bad interactions with some packages that decorate the markers (e.g. `Find And Replace`) :cry: This will be fixed in the future.
 
-![infer-expression-type-on-the-fly](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/infer-expression-type-on-the-fly.gif?raw=true)
+![infer-types-on-the-fly](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/infer-types-on-the-fly.gif?raw=true)
 
-### <a name="infer-hole-types">`Elmjutsu: Infer Hole Types`
+<!-- ### <a name="infer-hole-types">`Elmjutsu: Infer Hole Types`
 * Use question marks (`?`) to represent the type holes.
 * Make sure that `Elm Make Path` is properly configured in the package settings.
 * You should also have `Show Types in Tooltip` checked in the package settings (or the Sidekick panel visible) to be able to see the inferred types.
@@ -186,7 +188,7 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 ![infer-hole-types](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/infer-hole-types.gif?raw=true)
 
 ![infer-hole-types-2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/infer-hole-types-2.gif?raw=true)
-
+-->
 ### <a name="add-import"></a>`Elmjutsu: Add Import`
 
 Quickly adds an import without scrolling to the top of the file.  Also sorts the imports, removes duplicates, and removes [defaults](http://package.elm-lang.org/packages/elm-lang/core/latest/) automatically.
@@ -261,18 +263,19 @@ Here is an example:
   'alt-l': 'elmjutsu:surround-with-let'
   'alt-shift-l': 'elmjutsu:lift-to-let'
   'alt-t': 'elmjutsu:lift-to-top-level'
+  'alt-i': 'elmjutsu:infer-type'
 
 'atom-workspace':
   'f1': 'elmjutsu:toggle-sidekick'
   'ctrl-shift-f12': 'elmjutsu:hide-usages-panel'
-
-'atom-text-editor':
+```
+<!-- 'atom-text-editor':
   'alt-enter': 'elmjutsu:eval'
   'ctrl-enter': 'elmjutsu:pipe-selections'
 
 '.elmjutsu-pipe-selections':
   "ctrl-enter": "elmjutsu:apply-pipe-selections"
-```
+``` -->
 
 Add them to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
 
