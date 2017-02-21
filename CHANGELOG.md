@@ -1,3 +1,8 @@
+## 5.0.1
+* Support non-ASCII names (#57).  Thanks to @jespersm for reporting!
+* Change the direction of the arrow in the types tooltip based on tooltip placement.
+* `Infer Type` command: Select the word at cursor when nothing is selected.
+
 ## 5.0.0
 * BREAKING CHANGE: Rename `Infer Expression Type` to `Infer Type`.
 * BREAKING CHANGE: Remove the `Infer Hole Types` command and `Infer Hole Types On The Fly` option since we can usually achieve similar results by just using `Infer Expression Type` (renamed to `Infer Type`) and friends.

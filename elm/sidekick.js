@@ -8560,9 +8560,16 @@ var _user$project$Helper$dropLast = function (list) {
 			_elm_lang$core$List$tail(
 				_elm_lang$core$List$reverse(list))));
 };
-var _user$project$Helper$argSeparatorRegex = _elm_lang$core$Regex$regex('\\s+|\\(|\\)|\\.|,|-|>');
-var _user$project$Helper$capitalizedRegex = _elm_lang$core$Regex$regex('^[A-Z]');
-var _user$project$Helper$isCapitalized = _elm_lang$core$Regex$contains(_user$project$Helper$capitalizedRegex);
+var _user$project$Helper$isCapitalized = function (str) {
+	var firstChar = A3(_elm_lang$core$String$slice, 0, 1, str);
+	return _elm_lang$core$Native_Utils.eq(firstChar, '') ? false : _elm_lang$core$Native_Utils.eq(
+		firstChar,
+		A3(
+			_elm_lang$core$String$slice,
+			0,
+			1,
+			_elm_lang$core$String$toUpper(str)));
+};
 var _user$project$Helper$infixRegex = _elm_lang$core$Regex$regex('^[~!@#\\$%\\^&\\*\\-\\+=:\\|\\\\<>\\.\\?\\/]+$');
 var _user$project$Helper$isInfix = _elm_lang$core$Regex$contains(_user$project$Helper$infixRegex);
 var _user$project$Helper$holeToken = '?';

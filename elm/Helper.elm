@@ -1,4 +1,4 @@
-module Helper exposing (..)
+module Helper exposing (holeToken, isInfix, isCapitalized, dropLast, last, decapitalize)
 
 import Regex
 
@@ -19,21 +19,16 @@ infixRegex =
     Regex.regex "^[~!@#\\$%\\^&\\*\\-\\+=:\\|\\\\<>\\.\\?\\/]+$"
 
 
-{-| TODO: Allow unicode.
--}
-capitalizedRegex : Regex.Regex
-capitalizedRegex =
-    Regex.regex "^[A-Z]"
-
-
 isCapitalized : String -> Bool
-isCapitalized =
-    Regex.contains capitalizedRegex
-
-
-argSeparatorRegex : Regex.Regex
-argSeparatorRegex =
-    Regex.regex "\\s+|\\(|\\)|\\.|,|-|>"
+isCapitalized str =
+    let
+        firstChar =
+            String.slice 0 1 str
+    in
+        if firstChar == "" then
+            False
+        else
+            firstChar == String.slice 0 1 (String.toUpper str)
 
 
 dropLast : List a -> List a

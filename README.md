@@ -37,7 +37,6 @@ Related Atom packages:
   * [Toggle Sidekick](#toggle-sidekick)
     * Show the type and documentation for the symbol at cursor position in a panel.
   * [Infer Type](#infer-type)
-  <!-- * [Infer Hole Types](#infer-hole-types) -->
 
 * Imports Management
   * [Add Import](#add-import)
@@ -66,21 +65,24 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 ![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
 
+#### <a name="global-autocomplete"></a>Global Autocomplete
 * Check `Enable Global Autocomplete` if you want to include unimported project symbols.  This will also allow :zap:`Auto import` completion (which works like [Add Import](#elmjutsu-add-import)).  Take note that you may encounter some lag if you have a very large project.
 
 ![auto-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/auto-import.gif?raw=true)
 
+#### <a name="type-aware-autocomplete"></a>Type-Aware Autocomplete
 * Check `Enable Type-Aware Autocomplete` if you want to prioritize suggestions matching the expected type at cursor position.
   * The type can be inferred via the `Infer Type` command, but it's recommended to check `Infer Expected Type At Cursor On The Fly` in the package settings instead.
   * This will also allow :zap:`Replace with inferred type` completion.
 
 ![type-aware-autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/type-aware-autocomplete.gif?raw=true)
 
+#### <a name="autocomplete-snippets"></a>Autocomplete Snippets
 * You can also check `Enable Autocomplete Snippets` if you prefer.
 
 ![autocomplete-snippet](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-snippet.gif?raw=true)
 
-#### Special completions :zap:
+#### <a name="special-completions"></a>Special completions :zap:
 
 Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).  Special completions can be disabled individually in the package settings.
 
@@ -107,6 +109,14 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
 ![construct-from-type-annotation-1](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-from-type-annotation-1.gif?raw=true)
 
 ![construct-from-type-annotation-2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-from-type-annotation-2.gif?raw=true)
+
+* :zap:`Auto import`
+
+  See [Global Autocomplete](#global-autocomplete).
+
+* :zap:`Replace with inferred type`
+
+  See [Type-Aware Autocomplete](#type-aware-autocomplete).
 
 ### Navigation
 
@@ -146,12 +156,12 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
 
     Closes the `Usages` panel (the panel is shown after invoking `Find Usages` or `Rename Symbol`).
 
-### <a name="show-types-in-tooltip">Show Types in Tooltip
+### <a name="show-types-in-tooltip"></a>Show Types in Tooltip
 This is disabled by default.  To turn it on, check `Show Types in Tooltip` in the package settings.  You can also change the placement of the tooltip (`Types Tooltip Position`).
 
 ![show-types-in-tooltip](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/show-types-in-tooltip.gif?raw=true)
 
-### <a name="toggle-sidekick">`Elmjutsu: Toggle Sidekick`
+### <a name="toggle-sidekick"></a>`Elmjutsu: Toggle Sidekick`
 Shows the type hints and documentation for the symbol at cursor position.  The size, position of the panel, and amount of information to show can be modified in the package settings.
 
 * Example #1 (default): `Sidekick Position` = "bottom", `Sidekick Size` = 0 (Automatically resizes to fit content.)
@@ -166,24 +176,24 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ![sidekick2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick2.gif?raw=true)
 
-### <a name="infer-type">`Elmjutsu: Infer Type`
+### <a name="infer-type"></a>`Elmjutsu: Infer Type`
 * Select some text or make sure that the cursor is between whitespaces or before a closing parenthesis before invoking this command.
 * Make sure that `Elm Make Path` is properly configured in the package settings.
 * You should also have `Show Types in Tooltip` checked in the package settings (or the Sidekick panel visible) to be able to see the inferred types.
-* This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html) and may sometimes be inaccurate.
+* This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html) and may sometimes fail.
 
-### <a name="infer-types-on-the-fly">Infer types on the fly
+### <a name="infer-types-on-the-fly"></a>Infer types on the fly
 * You can also check the `Infer Expected Type At Cursor On The Fly` and `Infer Type Of Selection On The Fly` options in the package settings.
 * WARNING: `Infer Type Of Selection On The Fly` currently has bad interactions with some packages that decorate the markers (e.g. `Find And Replace`) :cry: This will be fixed in the future.
 
 ![infer-types-on-the-fly](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/infer-types-on-the-fly.gif?raw=true)
 
-<!-- ### <a name="infer-hole-types">`Elmjutsu: Infer Hole Types`
+<!-- ### <a name="infer-hole-types"></a>`Elmjutsu: Infer Hole Types`
 * Use question marks (`?`) to represent the type holes.
 * Make sure that `Elm Make Path` is properly configured in the package settings.
 * You should also have `Show Types in Tooltip` checked in the package settings (or the Sidekick panel visible) to be able to see the inferred types.
 * You can also check the `Infer Hole Types On The Fly` option in the package settings.
-* This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html) and may sometimes be inaccurate.
+* This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html) and may sometimes fail.
 
 ![infer-hole-types](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/infer-hole-types.gif?raw=true)
 
@@ -199,14 +209,14 @@ Quickly adds an import without scrolling to the top of the file.  Also sorts the
 
 ### Package Management
 
-  * #### <a name="install-package">`Elmjutsu: Install Package`
+  * #### <a name="install-package"></a>`Elmjutsu: Install Package`
 
     Quickly installs a package.
 
     - This runs `elm-package install --yes <name> <version>` (or `elm-package install --yes <name>` if the selected version is "Auto").
     - Make sure that `Elm Package Path` is properly configured in the package settings.
 
-  * ### <a name="uninstall-package">`Elmjutsu: Uninstall Package`
+  * ### <a name="uninstall-package"></a>`Elmjutsu: Uninstall Package`
 
     Removes an installed package.
 
@@ -214,7 +224,7 @@ Quickly adds an import without scrolling to the top of the file.  Also sorts the
 
 ### Refactoring
 
-  * #### <a name="rename-symbol">`Elmjutsu: Rename Symbol`
+  * #### <a name="rename-symbol"></a>`Elmjutsu: Rename Symbol`
 
     Renames the symbol across the whole project.  Take note that this is *not* an undoable operation.
 
@@ -226,20 +236,20 @@ Quickly adds an import without scrolling to the top of the file.  Also sorts the
 
     ![rename-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/rename-symbol.gif?raw=true)
 
-  * #### <a name="surround-with-let">`Elmjutsu: Surround With Let`
+  * #### <a name="surround-with-let"></a>`Elmjutsu: Surround With Let`
 
     * Press <kbd>escape</kbd> when you're done naming your variable.
 
     ![surround-with-let](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/surround-with-let-in.gif?raw=true)
 
-  * #### <a name="lift-to-let">`Elmjutsu: Lift To Let`
+  * #### <a name="lift-to-let"></a>`Elmjutsu: Lift To Let`
 
     * Press <kbd>escape</kbd> when you're done naming your variable.
     * There are still cases where this will not work properly.  There will be a better implementation in the future.
 
     ![lift-to-let](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/lift-to-let.gif?raw=true)
 
-  * #### <a name="lift-to-top-level">`Elmjutsu: Lift To Top Level`
+  * #### <a name="lift-to-top-level"></a>`Elmjutsu: Lift To Top Level`
 
     * Press <kbd>escape</kbd> when you're done naming your function.
     * This does not compute the needed function arguments (yet?), so you also have to type those in with the function name.
@@ -247,7 +257,7 @@ Quickly adds an import without scrolling to the top of the file.  Also sorts the
     ![lift-to-top-level](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/lift-to-top-level.gif?raw=true)
 
 
-## <a name="keybindings">Keybindings
+## <a name="keybindings"></a>Keybindings
 
 Here is an example:
 ```
@@ -260,8 +270,8 @@ Here is an example:
   'ctrl-f12': 'elmjutsu:go-back'
   'alt-insert': 'elmjutsu:add-import'
   'f2': 'elmjutsu:rename-symbol'
-  'alt-l': 'elmjutsu:surround-with-let'
-  'alt-shift-l': 'elmjutsu:lift-to-let'
+  'alt-shift-l': 'elmjutsu:surround-with-let'
+  'alt-l': 'elmjutsu:lift-to-let'
   'alt-t': 'elmjutsu:lift-to-top-level'
   'alt-i': 'elmjutsu:infer-type'
 

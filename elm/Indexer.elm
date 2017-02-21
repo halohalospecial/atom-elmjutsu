@@ -1890,10 +1890,15 @@ getFunctionArgNameRecur argString argNameCounters =
 
 tipeToVar : String -> String
 tipeToVar tipeString =
-    Regex.split Regex.All Helper.argSeparatorRegex tipeString
+    Regex.split Regex.All argSeparatorRegex tipeString
         |> List.reverse
         |> String.concat
         |> Helper.decapitalize
+
+
+argSeparatorRegex : Regex.Regex
+argSeparatorRegex =
+    Regex.regex "\\s+|\\(|\\)|\\.|,|-|>"
 
 
 getTupleStringFromParts : List String -> String
