@@ -1,3 +1,6 @@
+## 5.0.2
+* Fix `Add Import` regression bug.
+
 ## 5.0.1
 * Support non-ASCII names (#57).  Thanks to @jespersm for reporting!
 * Change the direction of the arrow in the types tooltip based on tooltip placement.
