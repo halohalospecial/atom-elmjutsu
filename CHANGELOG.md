@@ -1,3 +1,6 @@
+## 5.0.3
+* Fix issue where the text of the types tooltip is not visible when using some UI themes.  Thanks to @AntouanK for reporting!
+
 ## 5.0.2
 * Fix `Add Import` regression bug.
 
