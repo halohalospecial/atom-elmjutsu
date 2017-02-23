@@ -88,7 +88,7 @@ port downloadMissingPackageDocsSub : (List Dependency -> msg) -> Sub msg
 port docsReadSub : (List ( Dependency, String ) -> msg) -> Sub msg
 
 
-port goToDefinitionSub : (Maybe Token -> msg) -> Sub msg
+port goToDefinitionSub : (( Maybe Token, Maybe ActiveTopLevel ) -> msg) -> Sub msg
 
 
 port showGoToSymbolViewSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
@@ -100,7 +100,7 @@ port getHintsForPartialSub : (( String, Maybe String, Bool ) -> msg) -> Sub msg
 port getSuggestionsForImportSub : (String -> msg) -> Sub msg
 
 
-port askCanGoToDefinitionSub : (Token -> msg) -> Sub msg
+port askCanGoToDefinitionSub : (( Token, Maybe ActiveTopLevel ) -> msg) -> Sub msg
 
 
 port getImportersForTokenSub : (( Maybe ProjectDirectory, Maybe Token, Maybe Bool ) -> msg) -> Sub msg
@@ -311,11 +311,11 @@ type Msg
     | UpdateFileContents FilePath ProjectDirectory FileContents
     | RemoveFileContents ( FilePath, ProjectDirectory )
     | UpdateProjectDependencies ( String, List Dependency )
-    | GoToDefinition (Maybe Token)
+    | GoToDefinition ( Maybe Token, Maybe ActiveTopLevel )
     | ShowGoToSymbolView ( Maybe ProjectDirectory, Maybe String )
     | GetHintsForPartial ( String, Maybe String, Bool )
     | GetSuggestionsForImport String
-    | AskCanGoToDefinition Token
+    | AskCanGoToDefinition ( Token, Maybe ActiveTopLevel )
     | GetImporterSourcePathsForToken ( Maybe ProjectDirectory, Maybe Token, Maybe Bool )
     | DownloadMissingPackageDocs (List Dependency)
     | ShowAddImportView ( FilePath, Maybe Token )
@@ -396,8 +396,8 @@ update msg model =
         DownloadMissingPackageDocs dependencies ->
             doDownloadMissingPackageDocs dependencies model
 
-        GoToDefinition maybeToken ->
-            doGoToDefinition maybeToken model
+        GoToDefinition ( maybeToken, maybeActiveTopLevel ) ->
+            doGoToDefinition maybeToken maybeActiveTopLevel model
 
         ShowGoToSymbolView ( maybeProjectDirectory, maybeToken ) ->
             doShowGoToSymbolView maybeProjectDirectory maybeToken model
@@ -408,8 +408,8 @@ update msg model =
         GetSuggestionsForImport partial ->
             doGetSuggestionsForImport partial model
 
-        AskCanGoToDefinition token ->
-            doAskCanGoToDefinition token model
+        AskCanGoToDefinition ( token, maybeActiveTopLevel ) ->
+            doAskCanGoToDefinition token maybeActiveTopLevel model
 
         GetImporterSourcePathsForToken ( maybeProjectDirectory, maybeToken, maybeIsCursorAtLastPartOfToken ) ->
             doGetImporterSourcePathsForToken maybeProjectDirectory maybeToken maybeIsCursorAtLastPartOfToken model
@@ -452,7 +452,7 @@ doUpdateActiveTokenHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Mod
 doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
     let
         updatedActiveTokens =
-            getActiveTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
+            getActiveTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
 
         updatedActiveTokenHints =
             getHintsForToken maybeToken updatedActiveTokens
@@ -470,7 +470,7 @@ doUpdateActiveFile : Maybe ActiveFile -> Maybe ActiveTopLevel -> Maybe Token -> 
 doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model =
     let
         updatedActiveTokens =
-            getActiveTokens maybeActiveFile maybeActiveTopLevel model.projectFileContentsDict (getProjectPackageDocs maybeActiveFile model.projectDependencies model.packageDocs)
+            getActiveTokens maybeActiveFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
 
         updatedActiveTokenHints =
             getHintsForToken maybeToken updatedActiveTokens
@@ -496,7 +496,7 @@ doUpdateFileContents filePath projectDirectory fileContents model =
             updateFileContents filePath projectDirectory fileContents model.projectFileContentsDict
 
         updatedActiveTokens =
-            getActiveTokens model.activeFile model.activeTopLevel updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
+            getActiveTokens model.activeFile model.activeTopLevel updatedProjectFileContentsDict model.projectDependencies model.packageDocs
     in
         ( { model
             | projectFileContentsDict = updatedProjectFileContentsDict
@@ -532,7 +532,7 @@ doRemoveFileContents filePath projectDirectory model =
                 Dict.update projectDirectory (always <| Just updatedFileContentsDict) model.projectFileContentsDict
 
         updatedActiveTokens =
-            getActiveTokens model.activeFile model.activeTopLevel updatedProjectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
+            getActiveTokens model.activeFile model.activeTopLevel updatedProjectFileContentsDict model.projectDependencies model.packageDocs
     in
         ( { model
             | projectFileContentsDict = updatedProjectFileContentsDict
@@ -569,11 +569,14 @@ doDownloadMissingPackageDocs dependencies model =
     )
 
 
-doGoToDefinition : Maybe Token -> Model -> ( Model, Cmd Msg )
-doGoToDefinition maybeToken model =
+doGoToDefinition : Maybe Token -> Maybe ActiveTopLevel -> Model -> ( Model, Cmd Msg )
+doGoToDefinition maybeToken maybeActiveTopLevel model =
     let
+        activeTokens =
+            getActiveTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+
         requests =
-            getHintsForToken maybeToken model.activeTokens
+            getHintsForToken maybeToken activeTokens
                 |> List.map
                     (\hint ->
                         let
@@ -651,14 +654,18 @@ doGetSuggestionsForImport partial model =
     )
 
 
-doAskCanGoToDefinition : Token -> Model -> ( Model, Cmd Msg )
-doAskCanGoToDefinition token model =
-    ( model
-    , ( token
-      , Dict.member token model.activeTokens
-      )
-        |> canGoToDefinitionRepliedCmd
-    )
+doAskCanGoToDefinition : Token -> Maybe ActiveTopLevel -> Model -> ( Model, Cmd Msg )
+doAskCanGoToDefinition token maybeActiveTopLevel model =
+    let
+        activeTokens =
+            getActiveTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+    in
+        ( model
+        , ( token
+          , Dict.member token activeTokens
+          )
+            |> canGoToDefinitionRepliedCmd
+        )
 
 
 doGetImporterSourcePathsForToken : Maybe ProjectDirectory -> Maybe Token -> Maybe Bool -> Model -> ( Model, Cmd Msg )
@@ -713,7 +720,7 @@ addLoadedPackageDocs loadedPackageDocs model =
             List.map truncateModuleComment missingPackageDocs ++ model.packageDocs
 
         updatedActiveTokens =
-            getActiveTokens model.activeFile model.activeTopLevel model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies updatedPackageDocs)
+            getActiveTokens model.activeFile model.activeTopLevel model.projectFileContentsDict model.projectDependencies updatedPackageDocs
     in
         { model
             | packageDocs = updatedPackageDocs
@@ -783,7 +790,7 @@ getProjectFileSymbols projectDirectory projectFileContentsDict =
         allFileSymbols
             |> List.filter
                 (\{ sourcePath } ->
-                    not (String.startsWith packageDocsPrefix sourcePath)
+                    isProjectSourcePath sourcePath
                 )
 
 
@@ -1161,7 +1168,7 @@ getSuggestionsForImport partial maybeActiveFile projectFileContentsDict projectP
                                 { name = name
                                 , comment = comment
                                 , sourcePath =
-                                    if String.startsWith packageDocsPrefix sourcePath then
+                                    if isPackageSourcePath sourcePath then
                                         sourcePath ++ dotToHyphen name
                                     else
                                         ""
@@ -1526,7 +1533,7 @@ getDefaultArgNames args =
         argNames
 
 
-isPrimitiveType : String -> Bool
+isPrimitiveType : TipeString -> Bool
 isPrimitiveType tipeString =
     List.member tipeString
         [ "number"
@@ -1537,7 +1544,7 @@ isPrimitiveType tipeString =
         ]
 
 
-getDefaultValueForTypeRecur : TokenDict -> Maybe String -> String -> String
+getDefaultValueForTypeRecur : TokenDict -> Maybe TipeString -> TipeString -> String
 getDefaultValueForTypeRecur activeTokens maybeRootTipeString tipeString =
     if String.trim tipeString == "" then
         "_"
@@ -1675,7 +1682,7 @@ doConstructDefaultArguments token model =
     )
 
 
-typeConstructorToNameAndArgs : String -> ( String, List String )
+typeConstructorToNameAndArgs : TipeString -> ( String, List String )
 typeConstructorToNameAndArgs tipeString =
     let
         tipeParts =
@@ -1888,7 +1895,7 @@ getFunctionArgNameRecur argString argNameCounters =
             updatePartNameAndArgNameCounters (tipeToVar argString) argNameCounters
 
 
-tipeToVar : String -> String
+tipeToVar : TipeString -> String
 tipeToVar tipeString =
     Regex.split Regex.All argSeparatorRegex tipeString
         |> List.reverse
@@ -1962,11 +1969,15 @@ getActiveFileContents maybeActiveFile fileContentsDict =
 
 
 type alias ModuleDocs =
-    { sourcePath : String
+    { sourcePath : SourcePath
     , name : String
     , values : Values
     , comment : String
     }
+
+
+type alias SourcePath =
+    String
 
 
 type alias Values =
@@ -1979,10 +1990,14 @@ type alias Values =
 type alias Tipe =
     { name : String
     , comment : String
-    , tipe : String
+    , tipe : TipeString
     , args : List String
     , cases : List TipeCase
     }
+
+
+type alias TipeString =
+    String
 
 
 type alias TipeCase =
@@ -2008,7 +2023,7 @@ type Associativity
 
 
 type alias EncodedModuleDocs =
-    { sourcePath : String
+    { sourcePath : SourcePath
     , name : String
     , values : EncodedValues
     , comment : String
@@ -2041,10 +2056,20 @@ formatSourcePath { sourcePath, name } valueName =
             else
                 "#" ++ valueName
     in
-        if String.startsWith packageDocsPrefix sourcePath then
+        if isPackageSourcePath sourcePath then
             sourcePath ++ dotToHyphen name ++ anchor
         else
             sourcePath
+
+
+isPackageSourcePath : String -> Bool
+isPackageSourcePath sourcePath =
+    String.startsWith packageDocsPrefix sourcePath
+
+
+isProjectSourcePath : String -> Bool
+isProjectSourcePath sourcePath =
+    not (isPackageSourcePath sourcePath)
 
 
 dotToHyphen : String -> String
@@ -2137,7 +2162,7 @@ decodeAssociativity maybeString =
             Nothing
 
 
-decodeModuleDocs : String -> Decode.Decoder ModuleDocs
+decodeModuleDocs : SourcePath -> Decode.Decoder ModuleDocs
 decodeModuleDocs sourcePath =
     let
         name =
@@ -2193,11 +2218,12 @@ type SymbolKind
     | KindType
     | KindTypeCase
     | KindModule
+    | KindVariable
 
 
 type alias Symbol =
     { fullName : String
-    , sourcePath : String
+    , sourcePath : SourcePath
     , caseTipe : Maybe String
     , kind : SymbolKind
     }
@@ -2205,7 +2231,7 @@ type alias Symbol =
 
 type alias EncodedSymbol =
     { fullName : String
-    , sourcePath : String
+    , sourcePath : SourcePath
     , caseTipe : Maybe String
     , kind : String
     }
@@ -2223,7 +2249,7 @@ encodeSymbol symbol =
 type alias Hint =
     { name : String
     , moduleName : String
-    , sourcePath : String
+    , sourcePath : SourcePath
     , comment : String
     , tipe : String
     , args : List String
@@ -2256,7 +2282,7 @@ emptyHint =
 type alias EncodedHint =
     { name : String
     , moduleName : String
-    , sourcePath : String
+    , sourcePath : SourcePath
     , comment : String
     , tipe : String
     , args : List String
@@ -2320,19 +2346,25 @@ symbolKindToString kind =
         KindModule ->
             "module"
 
+        KindVariable ->
+            "variable"
+
 
 type alias ImportSuggestion =
     { name : String
     , comment : String
-    , sourcePath : String
+    , sourcePath : SourcePath
     }
 
 
-getActiveTokens : Maybe ActiveFile -> Maybe ActiveTopLevel -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict
-getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict projectPackageDocs =
+getActiveTokens : Maybe ActiveFile -> Maybe ActiveTopLevel -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> TokenDict
+getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict projectDependencies packageDocs =
     case maybeActiveFile of
         Just { projectDirectory, filePath } ->
             let
+                projectPackageDocs =
+                    getProjectPackageDocs maybeActiveFile projectDependencies packageDocs
+
                 fileContentsDict =
                     getFileContentsOfProject projectDirectory projectFileContentsDict
 
@@ -2359,12 +2391,164 @@ getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict proj
                             )
 
                 argHints =
-                    List.concatMap (topLevelArgToHints maybeActiveTopLevel topLevelTokens) topLevelArgTipePairs
+                    case maybeActiveTopLevel of
+                        Just activeTopLevel ->
+                            List.concatMap
+                                (topLevelArgToHints activeTopLevel
+                                    filePath
+                                    ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                                    topLevelTokens
+                                )
+                                topLevelArgTipePairs
+
+                        Nothing ->
+                            []
+
+                activeTokens =
+                    List.foldl insert topLevelTokens argHints
+
+                computeVariableSourcePaths =
+                    Dict.map
+                        (\_ hints ->
+                            hints
+                                |> List.map
+                                    (\hint ->
+                                        if hint.kind == KindVariable then
+                                            { hint
+                                                | sourcePath =
+                                                    getSourcePathOfRecordFieldToken hint.name
+                                                        filePath
+                                                        maybeActiveTopLevel
+                                                        ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                                                        activeTokens
+                                            }
+                                        else
+                                            hint
+                                    )
+                        )
             in
-                List.foldl insert topLevelTokens argHints
+                activeTokens
+                    |> computeVariableSourcePaths
 
         Nothing ->
             Dict.empty
+
+
+filePathSeparator : String
+filePathSeparator =
+    " > "
+
+
+getSourcePathOfRecordFieldToken : String -> FilePath -> Maybe ActiveTopLevel -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> SourcePath
+getSourcePathOfRecordFieldToken name filePath maybeActiveTopLevel ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) tokens =
+    let
+        parts =
+            String.split "." name
+    in
+        if List.length parts == 1 then
+            case maybeActiveTopLevel of
+                Just activeTopLevel ->
+                    filePath ++ filePathSeparator ++ activeTopLevel
+
+                Nothing ->
+                    ""
+        else
+            case List.head parts of
+                Just parentName ->
+                    getSourcePathOfRecordFieldTokenRecur
+                        parentName
+                        parentName
+                        filePath
+                        (List.tail parts |> Maybe.withDefault [])
+                        ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                        tokens
+                        tokens
+
+                Nothing ->
+                    ""
+
+
+getSourcePathOfRecordFieldTokenRecur : String -> String -> SourcePath -> List String -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> TokenDict -> String
+getSourcePathOfRecordFieldTokenRecur parentPartName parentName parentSourcePath tailParts ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) rootTokens tokens =
+    case List.head tailParts of
+        Just headName ->
+            let
+                doDefault parentHint =
+                    if parentHint.sourcePath == "" then
+                        parentSourcePath ++ filePathSeparator ++ parentHint.tipe
+                    else
+                        parentHint.sourcePath ++ filePathSeparator ++ parentHint.tipe
+
+                newPrefixSourcePath =
+                    case getHintsForToken (Just parentName) tokens |> List.head of
+                        Just parentHint ->
+                            if isRecordString parentHint.tipe then
+                                parentSourcePath ++ filePathSeparator ++ parentPartName
+                            else
+                                case getHintsForToken (Just parentHint.tipe) tokens |> List.head of
+                                    Just tipeHint ->
+                                        if tipeHint.sourcePath /= parentSourcePath then
+                                            tipeHint.sourcePath ++ filePathSeparator ++ tipeHint.name
+                                        else
+                                            doDefault parentHint
+
+                                    Nothing ->
+                                        doDefault parentHint
+
+                        Nothing ->
+                            case getHintsForToken (Just parentName) rootTokens |> List.head of
+                                Just parentHint ->
+                                    case getHintsForToken (Just parentHint.tipe) tokens |> List.head of
+                                        Just tipeHint ->
+                                            if tipeHint.sourcePath /= parentSourcePath then
+                                                tipeHint.sourcePath ++ filePathSeparator ++ tipeHint.name
+                                            else
+                                                doDefault parentHint
+
+                                        Nothing ->
+                                            doDefault parentHint
+
+                                Nothing ->
+                                    parentSourcePath
+
+                ( updatedActiveFile, updatedTokens ) =
+                    case ( String.split filePathSeparator parentSourcePath |> List.head, String.split filePathSeparator newPrefixSourcePath |> List.head ) of
+                        ( Just parentFilePath, Just prefixFilePath ) ->
+                            let
+                                maybeNewActiveFile =
+                                    case maybeActiveFile of
+                                        Just activeFile ->
+                                            Just { activeFile | filePath = prefixFilePath }
+
+                                        Nothing ->
+                                            Nothing
+                            in
+                                case maybeNewActiveFile of
+                                    Just newActiveFile ->
+                                        if parentFilePath /= prefixFilePath && isProjectSourcePath prefixFilePath then
+                                            ( maybeNewActiveFile
+                                            , getActiveTokens maybeNewActiveFile Nothing projectFileContentsDict projectDependencies packageDocs
+                                            )
+                                        else
+                                            ( maybeActiveFile, tokens )
+
+                                    Nothing ->
+                                        ( maybeActiveFile, tokens )
+
+                        _ ->
+                            ( maybeActiveFile, tokens )
+            in
+                getSourcePathOfRecordFieldTokenRecur
+                    headName
+                    (parentName ++ "." ++ headName)
+                    newPrefixSourcePath
+                    (List.tail tailParts |> Maybe.withDefault [])
+                    ( updatedActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                    rootTokens
+                    updatedTokens
+
+        Nothing ->
+            parentSourcePath
 
 
 {-| Example: getArgsParts "a b c" == [ "a", "b", "c" ]
@@ -2419,7 +2603,7 @@ getArgsPartsRecur str acc parts ( openParentheses, openBraces ) =
                         getArgsPartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
-getReturnTipe : String -> String
+getReturnTipe : TipeString -> String
 getReturnTipe tipeString =
     getTipeParts tipeString
         |> Helper.last
@@ -2428,7 +2612,7 @@ getReturnTipe tipeString =
 
 {-| Example: getTipeParts "Int -> Int -> Int" == [ "Int", "Int" ]
 -}
-getTipeParts : String -> List String
+getTipeParts : TipeString -> List String
 getTipeParts tipeString =
     case tipeString of
         "" ->
@@ -2553,7 +2737,7 @@ getRecordArgParts recordString =
 
 {-| Example: getRecordTipeParts "{ a : Int, b : String }" == [ ("a", "Int"), ("b", "String") ]
 -}
-getRecordTipeParts : String -> List ( String, String )
+getRecordTipeParts : TipeString -> List ( String, String )
 getRecordTipeParts tipeString =
     -- Remove open and close braces.
     case String.slice 1 -1 tipeString of
@@ -2614,7 +2798,7 @@ getRecordTipePartsRecur str ( fieldAcc, tipeAcc ) lookingForTipe parts ( openPar
 
 {-| Example: getRecordTipeFieldNames "{ a : Int, b : String }" == [ "a", "b" ]
 -}
-getRecordTipeFieldNames : String -> List String
+getRecordTipeFieldNames : TipeString -> List String
 getRecordTipeFieldNames tipeString =
     getRecordTipeParts tipeString
         |> List.map Tuple.first
@@ -2622,7 +2806,7 @@ getRecordTipeFieldNames tipeString =
 
 {-| Example: getRecordTipeFieldTipes "{ a : Int, b : String }" == [ "a", "b" ]
 -}
-getRecordTipeFieldTipes : String -> List String
+getRecordTipeFieldTipes : TipeString -> List String
 getRecordTipeFieldTipes tipeString =
     getRecordTipeParts tipeString
         |> List.map Tuple.second
@@ -2660,8 +2844,8 @@ getFilteredHints activeFilePath moduleDocs importData =
         ++ moduleToHints moduleDocs importData
 
 
-topLevelArgToHints : Maybe ActiveTopLevel -> TokenDict -> ( String, String ) -> List ( String, Hint )
-topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
+topLevelArgToHints : ActiveTopLevel -> SourcePath -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> ( String, TipeString ) -> List ( String, Hint )
+topLevelArgToHints activeTopLevel parentSourcePath ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) topLevelTokens ( name, tipeString ) =
     let
         getHint ( name, tipeString ) =
             let
@@ -2676,7 +2860,7 @@ topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
                     , cases = []
                     , associativity = Nothing
                     , precedence = Nothing
-                    , kind = KindDefault
+                    , kind = KindVariable
                     , isImported = True
                     }
             in
@@ -2691,7 +2875,14 @@ topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
                                 Dict.get field (getRecordTipeParts tipeString |> Dict.fromList)
                                     |> Maybe.map
                                         (\tipeString ->
-                                            getRecordFieldTokens field tipeString topLevelTokens True Nothing
+                                            getRecordFieldTokensRecur field
+                                                tipeString
+                                                parentSourcePath
+                                                ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                                                topLevelTokens
+                                                True
+                                                Nothing
+                                                Set.empty
                                         )
                             )
                         |> List.concat
@@ -2709,24 +2900,21 @@ topLevelArgToHints maybeActiveTopLevel topLevelTokens ( name, tipeString ) =
                                 []
 
                     ( False, _ ) ->
-                        getRecordFieldTokens name tipeString topLevelTokens True Nothing
+                        getRecordFieldTokensRecur name
+                            tipeString
+                            parentSourcePath
+                            ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                            topLevelTokens
+                            True
+                            Nothing
+                            Set.empty
     in
         tipes
             |> List.concatMap getHint
 
 
-isTupleString : String -> Bool
-isTupleString str =
-    String.startsWith "(" str
-
-
-isRecordString : String -> Bool
-isRecordString str =
-    String.startsWith "{" str
-
-
-getRecordFieldTokens : String -> String -> TokenDict -> Bool -> Maybe String -> List ( String, String )
-getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf maybeRootTipeString =
+getRecordFieldTokensRecur : String -> TipeString -> SourcePath -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> Bool -> Maybe String -> Set.Set String -> List ( String, TipeString )
+getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) topLevelTokens shouldAddSelf maybeRootTipeString visitedSourcePaths =
     (if shouldAddSelf then
         [ ( name, tipeString ) ]
      else
@@ -2742,7 +2930,14 @@ getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf maybeRootTipeS
                                     Dict.get field (getRecordTipeParts tipeString2 |> Dict.fromList)
                                         |> Maybe.map
                                             (\tipeString ->
-                                                getRecordFieldTokens field tipeString topLevelTokens True maybeRootTipeString
+                                                getRecordFieldTokensRecur field
+                                                    tipeString
+                                                    parentSourcePath
+                                                    ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                                                    topLevelTokens
+                                                    True
+                                                    maybeRootTipeString
+                                                    visitedSourcePaths
                                             )
                                 )
                             |> List.concat
@@ -2760,35 +2955,95 @@ getRecordFieldTokens name tipeString topLevelTokens shouldAddSelf maybeRootTipeS
                 getRecordTipeParts tipeString
                     |> List.concatMap
                         (\( field, tipeString ) ->
-                            getRecordFieldTokens (name ++ "." ++ field) tipeString topLevelTokens True maybeRootTipeString
+                            getRecordFieldTokensRecur (name ++ "." ++ field)
+                                tipeString
+                                parentSourcePath
+                                ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                                topLevelTokens
+                                True
+                                maybeRootTipeString
+                                visitedSourcePaths
                         )
              else if isTupleString name && isTupleString tipeString then
                 List.map2 (,) (getTupleParts name) (getTupleParts tipeString)
                     |> List.map
                         (\( name, tipeString ) ->
-                            getRecordFieldTokens name tipeString topLevelTokens True maybeRootTipeString
+                            getRecordFieldTokensRecur name
+                                tipeString
+                                parentSourcePath
+                                ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                                topLevelTokens
+                                True
+                                maybeRootTipeString
+                                visitedSourcePaths
                         )
                     |> List.concat
              else
                 case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
                     Just hint ->
                         -- Avoid infinite recursion.
-                        if hint.kind /= KindType && hint.tipe /= tipeString then
-                            case maybeRootTipeString of
-                                Just rootTipeString ->
-                                    if hint.name /= rootTipeString then
-                                        getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
-                                    else
-                                        []
+                        if hint.kind /= KindType && hint.tipe /= tipeString && not (Set.member hint.sourcePath visitedSourcePaths) then
+                            let
+                                maybeNewActiveFile =
+                                    case maybeActiveFile of
+                                        Just activeFile ->
+                                            Just { activeFile | filePath = hint.sourcePath }
 
-                                Nothing ->
-                                    getRecordFieldTokens name hint.tipe topLevelTokens False (Just hint.name)
+                                        Nothing ->
+                                            Nothing
+
+                                ( newParentSourcePath, newTokens ) =
+                                    ( hint.sourcePath
+                                    , if hint.sourcePath /= parentSourcePath && isProjectSourcePath hint.sourcePath then
+                                        getActiveTokens maybeNewActiveFile Nothing projectFileContentsDict projectDependencies packageDocs
+                                      else
+                                        topLevelTokens
+                                    )
+
+                                updatedVisitedSourcePaths =
+                                    Set.insert
+                                        hint.sourcePath
+                                        visitedSourcePaths
+                            in
+                                case maybeRootTipeString of
+                                    Just rootTipeString ->
+                                        if hint.name /= rootTipeString then
+                                            getRecordFieldTokensRecur name
+                                                hint.tipe
+                                                newParentSourcePath
+                                                ( maybeNewActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                                                newTokens
+                                                False
+                                                (Just hint.name)
+                                                updatedVisitedSourcePaths
+                                        else
+                                            []
+
+                                    Nothing ->
+                                        getRecordFieldTokensRecur name
+                                            hint.tipe
+                                            newParentSourcePath
+                                            ( maybeNewActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                                            newTokens
+                                            False
+                                            (Just hint.name)
+                                            updatedVisitedSourcePaths
                         else
                             []
 
                     Nothing ->
                         []
             )
+
+
+isTupleString : String -> Bool
+isTupleString str =
+    String.startsWith "(" str
+
+
+isRecordString : String -> Bool
+isRecordString str =
+    String.startsWith "{" str
 
 
 getTipeCaseTypeAnnotation : TipeCase -> Tipe -> String

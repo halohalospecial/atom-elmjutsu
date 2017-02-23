@@ -1,8 +1,14 @@
+## 5.1.0
+* Allow `Go To Definition` and Hyperclick on top-level arguments and record fields (#58).  Thanks to @jespersm for suggesting!
+* Store jump point when using for `Go To Definition` via Hyperclick.
+* Fix `Go To Symbol` regression bug (#59). Thanks to @dillonkearns for reporting!
+* Get token based on cursor position in dotted symbol.
+
 ## 5.0.3
 * Fix issue where the text of the types tooltip is not visible when using some UI themes.  Thanks to @AntouanK for reporting!
 
 ## 5.0.2
-* Fix `Add Import` regression bug.
+* Fix `Add Import` regression bug. Thanks to @stil4m for reporting!
 
 ## 5.0.1
 * Support non-ASCII names (#57).  Thanks to @jespersm for reporting!
