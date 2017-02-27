@@ -1,3 +1,6 @@
+## 5.1.2
+* Fix activation crash.
+
 ## 5.1.1
 * Make `Infer Type` work with if expressions, case expressions, functions (top-level or anonymous), arguments, and let variables.
 * If `Enable Autocomplete Snippets` is checked and an argument type contains a space, enclose it with parentheses (#60).  Thanks to @aravantv for the suggestion!
