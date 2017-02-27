@@ -86,6 +86,7 @@ type alias Config =
     , showAssociativities : Bool
     , showPrecedences : Bool
     , showSourcePaths : Bool
+    , showAliasesOfType : Bool
     }
 
 
@@ -114,6 +115,7 @@ emptyModel =
         , showAssociativities = False
         , showPrecedences = False
         , showSourcePaths = False
+        , showAliasesOfType = False
         }
     }
 
@@ -257,6 +259,13 @@ viewHint config activeFilePath hint =
             else
                 hint.tipe
 
+        maybeAliasesOfType =
+            if config.showAliasesOfType then
+                List.map (\tipeAlias -> " *a.k.a.* " ++ tipeAlias) hint.aliasesOfTipe
+                    |> String.join ""
+            else
+                ""
+
         maybeType =
             if config.showTypes then
                 "#### "
@@ -267,6 +276,7 @@ viewHint config activeFilePath hint =
                             ""
                        )
                     ++ formattedTipe
+                    ++ maybeAliasesOfType
             else
                 ""
 
@@ -352,6 +362,7 @@ type alias Hint =
     , cases : List TipeCase
     , associativity : Maybe String
     , precedence : Maybe Int
+    , aliasesOfTipe : List String
     }
 
 

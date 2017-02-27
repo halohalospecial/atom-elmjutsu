@@ -177,10 +177,10 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 ![sidekick2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/sidekick2.gif?raw=true)
 
 ### <a name="infer-type"></a>`Elmjutsu: Infer Type`
-* Select some text or make sure that the cursor is between whitespaces or before a closing parenthesis before invoking this command.
+* Select some text or make sure that the cursor is between whitespaces or before a closing parenthesis before invoking this command.  If nothing is selected and the cursor is not between whitespaces, the word under the cursor will be selected.
 * Make sure that `Elm Make Path` is properly configured in the package settings.
 * You should also have `Show Types in Tooltip` checked in the package settings (or the Sidekick panel visible) to be able to see the inferred types.
-* This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html) and may sometimes fail.
+* This uses similar tricks as those described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html), which may sometimes fail or give incorrect results.
 
 ### <a name="infer-types-on-the-fly"></a>Infer types on the fly
 * You can also check the `Infer Expected Type At Cursor On The Fly` and `Infer Type Of Selection On The Fly` options in the package settings.

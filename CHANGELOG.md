@@ -1,5 +1,11 @@
+## 5.1.1
+* Make `Infer Type` work with if expressions, case expressions, functions (top-level or anonymous), arguments, and let variables.
+* If `Enable Autocomplete Snippets` is checked and an argument type contains a space, enclose it with parentheses (#60).  Thanks to @aravantv for the suggestion!
+* If `Insert default arguments` is checked and the symbol is preceeded by `|>`, succeeded by `<|`, or preceeded/succeeded by `<<` or `>>`, do no include the last argument.
+* Compute default values of anonymous functions (for `Insert default arguments`, `Replace type with default`, and `Define from type annotation`).
+
 ## 5.1.0
-* Allow `Go To Definition` and Hyperclick on top-level arguments and record fields (#58).  Thanks to @jespersm for suggesting!
+* Allow `Go To Definition` and Hyperclick on top-level arguments and record fields (#58).  Thanks to @jespersm for the suggestion!
 * Store jump point when using for `Go To Definition` via Hyperclick.
 * Fix `Go To Symbol` regression bug (#59). Thanks to @dillonkearns for reporting!
 * Get token based on cursor position in dotted symbol.
@@ -50,7 +56,7 @@
 
 ## 3.2.0
 * Fix #39.  Thanks to @pauldijou for reporting and @gothy for providing a sample project and tracing the cause!
-* If autocomplete snippets are enabled and the preceeding token is `|>` or the succeeding token is `<|`, remove the last argument from the snippet.  Will also behave this way if the preceeding or succeeding token is `<<` or `>>`.  Thanks to @mandrolic for the suggestion!
+* If autocomplete snippets are enabled and the preceeding token is `|>` or the succeeding token is `<|`, do not include the last argument in the snippet.  Will also behave this way if the preceeding or succeeding token is `<<` or `>>`.  Thanks to @mandrolic for the suggestion!
 * Add `Show Associativities in Sidekick`, `Show Precedences in Sidekick`, and `Show Tags of Union Types in Sidekick` options.
 
 ## 3.1.1
@@ -231,7 +237,7 @@
 * Reorganized menu and context menu items.
 
 ## 2.6.0
-* Go To Definition: Now works for 3rd-party packages (Fix #15).  Thanks to @abhinavzspace for suggestion!
+* Go To Definition: Now works for 3rd-party packages (Fix #15).  Thanks to @abhinavzspace for the suggestion!
 
 ## 2.5.6
 * Check if source directory exists first before parsing (Fix #13).  Thanks to @note89 for reporting!

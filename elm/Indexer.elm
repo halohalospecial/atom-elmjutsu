@@ -60,6 +60,8 @@ subscriptions model =
         , constructDefaultValueForTypeSub ConstructDefaultValueForType
         , constructDefaultArgumentsSub ConstructDefaultArguments
         , inferenceEnteredSub InferenceEntered
+        , configChangedSub ConfigChanged
+        , getAliasesOfTypeSub GetAliasesOfType
         ]
 
 
@@ -127,6 +129,12 @@ port constructDefaultArgumentsSub : (Token -> msg) -> Sub msg
 port inferenceEnteredSub : (Inference -> msg) -> Sub msg
 
 
+port configChangedSub : (Config -> msg) -> Sub msg
+
+
+port getAliasesOfTypeSub : (Token -> msg) -> Sub msg
+
+
 
 -- OUTGOING PORTS
 
@@ -191,6 +199,9 @@ port defaultValueForTypeConstructedCmd : Maybe String -> Cmd msg
 port defaultArgumentsConstructedCmd : Maybe (List String) -> Cmd msg
 
 
+port aliasesOfTypeReceivedCmd : List TipeString -> Cmd msg
+
+
 
 -- MODEL
 
@@ -203,6 +214,12 @@ type alias Model =
     , activeFile : Maybe ActiveFile
     , activeTopLevel : Maybe ActiveTopLevel
     , projectDependencies : ProjectDependencies
+    , config : Config
+    }
+
+
+type alias Config =
+    { showAliasesOfType : Bool
     }
 
 
@@ -276,7 +293,13 @@ emptyModel =
     , activeFile = Nothing
     , activeTopLevel = Nothing
     , projectDependencies = Dict.empty
+    , config = emptyConfig
     }
+
+
+emptyConfig : Config
+emptyConfig =
+    { showAliasesOfType = False }
 
 
 emptyModuleDocs : ModuleDocs
@@ -325,6 +348,8 @@ type Msg
     | ConstructDefaultValueForType Token
     | ConstructDefaultArguments Token
     | InferenceEntered Inference
+    | ConfigChanged Config
+    | GetAliasesOfType Token
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -434,9 +459,17 @@ update msg model =
 
         InferenceEntered inference ->
             ( model
-            , List.map encodeHint (inferenceToHints inference)
+            , List.map (encodeHint model.config.showAliasesOfType model.activeTokens) (inferenceToHints inference)
                 |> activeTokenHintsChangedCmd
             )
+
+        ConfigChanged config ->
+            ( { model | config = config }
+            , Cmd.none
+            )
+
+        GetAliasesOfType token ->
+            doGetAliasesOfType token model
 
 
 inferenceToHints : Inference -> List Hint
@@ -461,7 +494,7 @@ doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
             | activeTopLevel = maybeActiveTopLevel
             , activeTokenHints = updatedActiveTokenHints
           }
-        , List.map encodeHint updatedActiveTokenHints
+        , List.map (encodeHint model.config.showAliasesOfType updatedActiveTokens) updatedActiveTokenHints
             |> activeTokenHintsChangedCmd
         )
 
@@ -483,7 +516,7 @@ doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model =
           }
         , Cmd.batch
             [ activeFileChangedCmd maybeActiveFile
-            , List.map encodeHint updatedActiveTokenHints
+            , List.map (encodeHint model.config.showAliasesOfType updatedActiveTokens) updatedActiveTokenHints
                 |> activeTokenHintsChangedCmd
             ]
         )
@@ -638,7 +671,7 @@ doGetHintsForPartial partial maybeInferredTipe isGlobal model =
     ( model
     , ( partial
       , getHintsForPartial partial maybeInferredTipe isGlobal model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
-            |> List.map encodeHint
+            |> List.map (encodeHint model.config.showAliasesOfType model.activeTokens)
       )
         |> hintsForPartialReceivedCmd
     )
@@ -871,7 +904,93 @@ getModuleSymbols moduleDocs =
         valueSymbols ++ aliasSymbols ++ tipeSymbols ++ tipeCaseSymbols ++ [ moduleDocsSymbol ]
 
 
-getHintsForToken : Maybe String -> TokenDict -> List Hint
+getAliasesOfType : TokenDict -> String -> TipeString -> List TipeString
+getAliasesOfType tokens name tipeString =
+    if tipeString == "" then
+        []
+    else
+        let
+            normalizedTipeString =
+                normalizeTipe tokens tipeString
+        in
+            (primitiveTipes
+                |> List.filter
+                    (\primitiveTipe ->
+                        (tipeString /= primitiveTipe)
+                            && (normalizedTipeString == primitiveTipe)
+                    )
+            )
+                ++ (Dict.values tokens
+                        |> List.concat
+                        |> List.filter
+                            (\hint ->
+                                let
+                                    normalizedHintTipe =
+                                        normalizeTipe tokens hint.tipe
+                                in
+                                    (hint.tipe /= "")
+                                        && (hint.kind == KindTypeAlias)
+                                        && (tipeString /= hint.name)
+                                        -- && (name /= hint.tipe)
+                                        &&
+                                            (name /= hint.name)
+                                        && ((name == normalizedHintTipe)
+                                                || (normalizedTipeString == normalizedHintTipe)
+                                            -- || (normalizedTipeString == normalizeTipe tokens hint.name)
+                                           )
+                            )
+                        |> List.map .name
+                   )
+
+
+normalizeTipe : TokenDict -> TipeString -> TipeString
+normalizeTipe tokens tipeString =
+    normalizeTipeRecur tokens Set.empty tipeString
+
+
+normalizeTipeRecur : TokenDict -> Set.Set TipeString -> TipeString -> TipeString
+normalizeTipeRecur tokens visitedTipeAliases tipeString =
+    if isPrimitiveTipe tipeString then
+        tipeString
+    else if isRecordString tipeString then
+        let
+            fieldAndValues =
+                getRecordTipeParts tipeString
+                    |> Dict.fromList
+                    |> Dict.map
+                        (\fieldName fieldTipeString ->
+                            fieldName ++ " : " ++ normalizeTipeRecur tokens visitedTipeAliases fieldTipeString
+                        )
+                    |> Dict.values
+                    |> String.join ", "
+        in
+            "{ " ++ fieldAndValues ++ " }"
+    else if isTupleString tipeString then
+        let
+            parts =
+                getTupleParts tipeString
+                    |> List.map
+                        (\part ->
+                            normalizeTipeRecur tokens visitedTipeAliases part
+                        )
+        in
+            getTupleStringFromParts parts
+    else
+        case getHintsForToken (Just tipeString) tokens |> List.head of
+            Just hint ->
+                -- Avoid infinite recursion.
+                if Set.member hint.tipe visitedTipeAliases then
+                    tipeString
+                else if hint.kind == KindTypeAlias then
+                    normalizeTipeRecur tokens (Set.insert hint.tipe visitedTipeAliases) hint.tipe
+                else
+                    hint.tipe
+
+            Nothing ->
+                tipeString
+
+
+getHintsForToken : Maybe Token -> TokenDict -> List Hint
 getHintsForToken maybeToken tokens =
     case maybeToken of
         Just token ->
@@ -1128,20 +1247,24 @@ getHintsForUnexposedNames includeQualified moduleDocs unexposedNames =
                                     |> List.filter filter
                                     |> List.concatMap
                                         (\tipeCase ->
-                                            { name = tipeCase.name
-                                            , moduleName = moduleDocs.name
-                                            , sourcePath = moduleDocs.sourcePath
-                                            , comment = ""
-                                            , tipe = getTipeCaseTypeAnnotation tipeCase tipe
-                                            , args = tipeCase.args
-                                            , caseTipe = Just tipe.name
-                                            , cases = []
-                                            , associativity = Nothing
-                                            , precedence = Nothing
-                                            , kind = KindTypeCase
-                                            , isImported = False
-                                            }
-                                                |> qualifiedAndUnqualified
+                                            let
+                                                hintTipe =
+                                                    getTipeCaseTypeAnnotation tipeCase tipe
+                                            in
+                                                { name = tipeCase.name
+                                                , moduleName = moduleDocs.name
+                                                , sourcePath = moduleDocs.sourcePath
+                                                , comment = ""
+                                                , tipe = hintTipe
+                                                , args = tipeCase.args
+                                                , caseTipe = Just tipe.name
+                                                , cases = []
+                                                , associativity = Nothing
+                                                , precedence = Nothing
+                                                , kind = KindTypeCase
+                                                , isImported = False
+                                                }
+                                                    |> qualifiedAndUnqualified
                                         )
                                )
                     )
@@ -1510,7 +1633,7 @@ constructFromTypeAnnotation typeAnnotation activeTokens =
                )
             ++ (String.join " " argNames)
             ++ " =\n    "
-            ++ getDefaultValueForTypeRecur activeTokens Nothing returnTipe
+            ++ getDefaultValueForType activeTokens returnTipe
 
 
 getDefaultArgNames : List String -> List String
@@ -1533,15 +1656,27 @@ getDefaultArgNames args =
         argNames
 
 
-isPrimitiveType : TipeString -> Bool
-isPrimitiveType tipeString =
+isPrimitiveTipe : TipeString -> Bool
+isPrimitiveTipe tipeString =
     List.member tipeString
-        [ "number"
-        , "Int"
-        , "Float"
-        , "Bool"
-        , "String"
-        ]
+        primitiveTipes
+
+
+primitiveTipes : List TipeString
+primitiveTipes =
+    [ "number"
+    , "appendable"
+    , "comparable"
+    , "Int"
+    , "Float"
+    , "Bool"
+    , "String"
+    ]
+
+
+getDefaultValueForType : TokenDict -> TipeString -> String
+getDefaultValueForType activeTokens tipeString =
+    getDefaultValueForTypeRecur activeTokens Nothing tipeString
 
 
 getDefaultValueForTypeRecur : TokenDict -> Maybe TipeString -> TipeString -> String
@@ -1569,6 +1704,19 @@ getDefaultValueForTypeRecur activeTokens maybeRootTipeString tipeString =
                         )
         in
             getTupleStringFromParts parts
+    else if isFunctionTypeString tipeString then
+        let
+            arguments =
+                getTipeParts tipeString
+                    |> Helper.dropLast
+                    |> getDefaultArgNames
+                    |> String.join " "
+
+            returnValue =
+                getReturnTipe tipeString
+                    |> getDefaultValueForTypeRecur activeTokens maybeRootTipeString
+        in
+            "\\" ++ arguments ++ " -> " ++ returnValue
     else
         case List.head (String.split " " tipeString) of
             Just headTipeString ->
@@ -1618,7 +1766,12 @@ getDefaultValueForTypeRecur activeTokens maybeRootTipeString tipeString =
                         case getHintsForToken (Just headTipeString) activeTokens |> List.head of
                             Just hint ->
                                 -- Avoid infinite recursion.
-                                if hint.kind /= KindType && hint.tipe /= headTipeString then
+                                if
+                                    (hint.kind /= KindType)
+                                        && (hint.tipe /= headTipeString)
+                                        && (hint.kind /= KindTypeAlias || (hint.kind == KindTypeAlias && List.length hint.args == 0))
+                                    -- TODO: ^ Make it work with aliases with type variables (e.g. `type alias AliasedType a b = ( a, b )`).
+                                then
                                     case maybeRootTipeString of
                                         Just rootTipeString ->
                                             if hint.name /= rootTipeString then
@@ -1787,7 +1940,7 @@ constructCaseOf token activeTokens =
 constructDefaultValueForType : Token -> TokenDict -> Maybe String
 constructDefaultValueForType token activeTokens =
     if
-        -- isPrimitiveType token
+        -- isPrimitiveTipe token
         --     ||
         (getHintsForToken (Just token) activeTokens
             |> List.filter (\hint -> hint.kind == KindType || hint.kind == KindTypeAlias)
@@ -1795,7 +1948,7 @@ constructDefaultValueForType token activeTokens =
         )
             > 0
     then
-        getDefaultValueForTypeRecur activeTokens Nothing token
+        getDefaultValueForType activeTokens token
             |> Just
     else
         Nothing
@@ -1819,7 +1972,7 @@ constructDefaultArguments token activeTokens =
                         (\tipeString ->
                             let
                                 value =
-                                    getDefaultValueForTypeRecur activeTokens Nothing tipeString
+                                    getDefaultValueForType activeTokens tipeString
                             in
                                 if
                                     String.contains " " value
@@ -1893,6 +2046,14 @@ getFunctionArgNameRecur argString argNameCounters =
                 )
         else
             updatePartNameAndArgNameCounters (tipeToVar argString) argNameCounters
+
+
+doGetAliasesOfType : Token -> Model -> ( Model, Cmd Msg )
+doGetAliasesOfType token model =
+    ( model
+    , getAliasesOfType model.activeTokens "" token
+        |> aliasesOfTypeReceivedCmd
+    )
 
 
 tipeToVar : TipeString -> String
@@ -2209,7 +2370,7 @@ decodeModuleDocs sourcePath =
 
 
 type alias TokenDict =
-    Dict.Dict String (List Hint)
+    Dict.Dict Token (List Hint)
 
 
 type SymbolKind
@@ -2251,7 +2412,7 @@ type alias Hint =
     , moduleName : String
     , sourcePath : SourcePath
     , comment : String
-    , tipe : String
+    , tipe : TipeString
     , args : List String
     , caseTipe : Maybe String
     , cases : List TipeCase
@@ -2292,11 +2453,12 @@ type alias EncodedHint =
     , precedence : Maybe Int
     , kind : String
     , isImported : Bool
+    , aliasesOfTipe : List TipeString
     }
 
 
-encodeHint : Hint -> EncodedHint
-encodeHint hint =
+encodeHint : Bool -> TokenDict -> Hint -> EncodedHint
+encodeHint showAliasesOfType tokens hint =
     { name = hint.name
     , moduleName = hint.moduleName
     , sourcePath = hint.sourcePath
@@ -2309,6 +2471,11 @@ encodeHint hint =
     , precedence = hint.precedence
     , kind = symbolKindToString hint.kind
     , isImported = hint.isImported
+    , aliasesOfTipe =
+        if showAliasesOfType then
+            getAliasesOfType tokens hint.name hint.tipe
+        else
+            []
     }
 
 
@@ -2804,7 +2971,7 @@ getRecordTipeFieldNames tipeString =
         |> List.map Tuple.first
 
 
-{-| Example: getRecordTipeFieldTipes "{ a : Int, b : String }" == [ "a", "b" ]
+{-| Example: getRecordTipeFieldTipes "{ a : Int, b : String }" == [ "Int", "String" ]
 -}
 getRecordTipeFieldTipes : TipeString -> List String
 getRecordTipeFieldTipes tipeString =
@@ -3036,14 +3203,19 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
             )
 
 
-isTupleString : String -> Bool
-isTupleString str =
-    String.startsWith "(" str
-
-
 isRecordString : String -> Bool
-isRecordString str =
-    String.startsWith "{" str
+isRecordString =
+    String.startsWith "{"
+
+
+isTupleString : String -> Bool
+isTupleString =
+    String.startsWith "("
+
+
+isFunctionTypeString : String -> Bool
+isFunctionTypeString =
+    String.contains "->"
 
 
 getTipeCaseTypeAnnotation : TipeCase -> Tipe -> String
@@ -3066,19 +3238,23 @@ unionTagsToHints moduleDocs { alias, exposed } activeFilePath tipe =
                     tipeCase.name
 
                 hint =
-                    { name = tag
-                    , moduleName = moduleDocs.name
-                    , sourcePath = formatSourcePath moduleDocs tipe.name
-                    , comment = tipe.comment
-                    , tipe = getTipeCaseTypeAnnotation tipeCase tipe
-                    , args = tipeCase.args
-                    , caseTipe = Just tipe.name
-                    , cases = []
-                    , associativity = Nothing
-                    , precedence = Nothing
-                    , kind = KindTypeCase
-                    , isImported = True
-                    }
+                    let
+                        hintTipe =
+                            getTipeCaseTypeAnnotation tipeCase tipe
+                    in
+                        { name = tag
+                        , moduleName = moduleDocs.name
+                        , sourcePath = formatSourcePath moduleDocs tipe.name
+                        , comment = tipe.comment
+                        , tipe = hintTipe
+                        , args = tipeCase.args
+                        , caseTipe = Just tipe.name
+                        , cases = []
+                        , associativity = Nothing
+                        , precedence = Nothing
+                        , kind = KindTypeCase
+                        , isImported = True
+                        }
 
                 moduleLocalName =
                     getModuleLocalName moduleDocs.name alias tag
