@@ -1,3 +1,6 @@
+## 5.1.3
+* Fix activation crash 2nd attempt.
+
 ## 5.1.2
 * Fix activation crash.
 
