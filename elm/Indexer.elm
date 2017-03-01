@@ -906,6 +906,7 @@ getModuleSymbols moduleDocs =
 
 getAliasesOfType : TokenDict -> String -> TipeString -> List TipeString
 getAliasesOfType tokens name tipeString =
+    -- TODO: Handle type variables.
     if tipeString == "" then
         []
     else
@@ -1600,40 +1601,54 @@ doConstructFromTypeAnnotation typeAnnotation model =
     )
 
 
+invalidTipeRegex : Regex.Regex
+invalidTipeRegex =
+    Regex.regex "\\||:|\\[|\\]"
+
+
+isValidTipe : String -> Bool
+isValidTipe tipeString =
+    not (Regex.contains invalidTipeRegex tipeString)
+
+
 constructFromTypeAnnotation : String -> TokenDict -> String
 constructFromTypeAnnotation typeAnnotation activeTokens =
     let
         parts =
             String.split " :" typeAnnotation
 
-        name =
-            List.head parts
-                |> Maybe.withDefault typeAnnotation
-
         tipeString =
             List.tail parts
                 |> Maybe.withDefault []
                 |> String.join " :"
-
-        returnTipe =
-            getReturnTipe tipeString
-
-        parameterTipes =
-            getTipeParts tipeString
-                |> Helper.dropLast
-
-        argNames =
-            getDefaultArgNames parameterTipes
     in
-        name
-            ++ (if List.length argNames > 0 then
-                    " "
-                else
-                    ""
-               )
-            ++ (String.join " " argNames)
-            ++ " =\n    "
-            ++ getDefaultValueForType activeTokens returnTipe
+        if isValidTipe tipeString then
+            let
+                name =
+                    List.head parts
+                        |> Maybe.withDefault typeAnnotation
+
+                returnTipe =
+                    getReturnTipe tipeString
+
+                parameterTipes =
+                    getTipeParts tipeString
+                        |> Helper.dropLast
+
+                argNames =
+                    getDefaultArgNames parameterTipes
+            in
+                name
+                    ++ (if List.length argNames > 0 then
+                            " "
+                        else
+                            ""
+                       )
+                    ++ (String.join " " argNames)
+                    ++ " =\n    "
+                    ++ getDefaultValueForType activeTokens returnTipe
+        else
+            ""
 
 
 getDefaultArgNames : List String -> List String
@@ -2572,7 +2587,13 @@ getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict proj
                             []
 
                 activeTokens =
-                    List.foldl insert topLevelTokens argHints
+                    (argHints
+                        ++ (defaultSuggestions
+                                |> List.filter (\hint -> hint.comment /= "")
+                                |> List.map (\hint -> ( hint.name, hint ))
+                           )
+                    )
+                        |> List.foldl insert topLevelTokens
 
                 computeVariableSourcePaths =
                     Dict.map
@@ -3440,7 +3461,6 @@ defaultSuggestions =
         , "->"
         , "True"
         , "False"
-        , "number"
         , "Int"
         , "Float"
         , "Char"
@@ -3470,9 +3490,20 @@ defaultSuggestions =
           -- , "perform"
           -- , "deriving"
         , "type alias"
-        , "comparable"
-        , "appendable"
         ]
+        ++ [ { emptyHint
+                | name = "number"
+                , comment = "`Int` or `Float` depending on usage."
+             }
+           , { emptyHint
+                | name = "appendable"
+                , comment = "This includes strings, lists, and text."
+             }
+           , { emptyHint
+                | name = "comparable"
+                , comment = "This includes numbers, characters, strings, lists of comparable things, and tuples of comparable things. Note that tuples with 7 or more elements are not comparable."
+             }
+           ]
 
 
 getLastName : String -> String

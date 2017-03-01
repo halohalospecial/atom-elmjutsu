@@ -7808,6 +7808,10 @@ var _user$project$Indexer$getDefaultArgNames = function (args) {
 	var argNames = _p80._0;
 	return argNames;
 };
+var _user$project$Indexer$invalidTipeRegex = _elm_lang$core$Regex$regex('\\||:|\\[|\\]');
+var _user$project$Indexer$isValidTipe = function (tipeString) {
+	return !A2(_elm_lang$core$Regex$contains, _user$project$Indexer$invalidTipeRegex, tipeString);
+};
 var _user$project$Indexer$getSuggestionsForImport = F4(
 	function (partial, maybeActiveFile, projectFileContentsDict, projectPackageDocs) {
 		var _p84 = maybeActiveFile;
@@ -9887,7 +9891,7 @@ var _user$project$Indexer$normalizeTipe = F2(
 	function (tokens, tipeString) {
 		return A3(_user$project$Indexer$normalizeTipeRecur, tokens, _elm_lang$core$Set$empty, tipeString);
 	});
-var _user$project$Indexer$getAliasesOfTipe = F3(
+var _user$project$Indexer$getAliasesOfType = F3(
 	function (tokens, name, tipeString) {
 		if (_elm_lang$core$Native_Utils.eq(tipeString, '')) {
 			return {ctor: '[]'};
@@ -9922,7 +9926,7 @@ var _user$project$Indexer$doGetAliasesOfType = F2(
 			ctor: '_Tuple2',
 			_0: model,
 			_1: _user$project$Indexer$aliasesOfTypeReceivedCmd(
-				A3(_user$project$Indexer$getAliasesOfTipe, model.activeTokens, '', token))
+				A3(_user$project$Indexer$getAliasesOfType, model.activeTokens, '', token))
 		};
 	});
 var _user$project$Indexer$encodeHint = F3(
@@ -9940,7 +9944,7 @@ var _user$project$Indexer$encodeHint = F3(
 			precedence: hint.precedence,
 			kind: _user$project$Indexer$symbolKindToString(hint.kind),
 			isImported: hint.isImported,
-			aliasesOfTipe: showAliasesOfType ? A3(_user$project$Indexer$getAliasesOfTipe, tokens, hint.name, hint.tipe) : {ctor: '[]'}
+			aliasesOfTipe: showAliasesOfType ? A3(_user$project$Indexer$getAliasesOfType, tokens, hint.name, hint.tipe) : {ctor: '[]'}
 		};
 	});
 var _user$project$Indexer$getDefaultValueForTypeRecur = F3(
@@ -10118,10 +10122,6 @@ var _user$project$Indexer$getDefaultValueForType = F2(
 var _user$project$Indexer$constructFromTypeAnnotation = F2(
 	function (typeAnnotation, activeTokens) {
 		var parts = A2(_elm_lang$core$String$split, ' :', typeAnnotation);
-		var name = A2(
-			_elm_lang$core$Maybe$withDefault,
-			typeAnnotation,
-			_elm_lang$core$List$head(parts));
 		var tipeString = A2(
 			_elm_lang$core$String$join,
 			' :',
@@ -10129,25 +10129,33 @@ var _user$project$Indexer$constructFromTypeAnnotation = F2(
 				_elm_lang$core$Maybe$withDefault,
 				{ctor: '[]'},
 				_elm_lang$core$List$tail(parts)));
-		var returnTipe = _user$project$Indexer$getReturnTipe(tipeString);
-		var parameterTipes = _user$project$Helper$dropLast(
-			_user$project$Indexer$getTipeParts(tipeString));
-		var argNames = _user$project$Indexer$getDefaultArgNames(parameterTipes);
-		return A2(
-			_elm_lang$core$Basics_ops['++'],
-			name,
-			A2(
+		if (_user$project$Indexer$isValidTipe(tipeString)) {
+			var parameterTipes = _user$project$Helper$dropLast(
+				_user$project$Indexer$getTipeParts(tipeString));
+			var argNames = _user$project$Indexer$getDefaultArgNames(parameterTipes);
+			var returnTipe = _user$project$Indexer$getReturnTipe(tipeString);
+			var name = A2(
+				_elm_lang$core$Maybe$withDefault,
+				typeAnnotation,
+				_elm_lang$core$List$head(parts));
+			return A2(
 				_elm_lang$core$Basics_ops['++'],
-				(_elm_lang$core$Native_Utils.cmp(
-					_elm_lang$core$List$length(argNames),
-					0) > 0) ? ' ' : '',
+				name,
 				A2(
 					_elm_lang$core$Basics_ops['++'],
-					A2(_elm_lang$core$String$join, ' ', argNames),
+					(_elm_lang$core$Native_Utils.cmp(
+						_elm_lang$core$List$length(argNames),
+						0) > 0) ? ' ' : '',
 					A2(
 						_elm_lang$core$Basics_ops['++'],
-						' =\n    ',
-						A2(_user$project$Indexer$getDefaultValueForType, activeTokens, returnTipe)))));
+						A2(_elm_lang$core$String$join, ' ', argNames),
+						A2(
+							_elm_lang$core$Basics_ops['++'],
+							' =\n    ',
+							A2(_user$project$Indexer$getDefaultValueForType, activeTokens, returnTipe)))));
+		} else {
+			return '';
+		}
 	});
 var _user$project$Indexer$doConstructFromTypeAnnotation = F2(
 	function (typeAnnotation, model) {
@@ -10583,27 +10591,26 @@ var _user$project$Indexer$inferenceToHints = function (inference) {
 	};
 };
 var _user$project$Indexer$defaultSuggestions = A2(
-	_elm_lang$core$List$map,
-	function (suggestion) {
-		return _elm_lang$core$Native_Utils.update(
-			_user$project$Indexer$emptyHint,
-			{name: suggestion});
-	},
-	{
-		ctor: '::',
-		_0: '=',
-		_1: {
+	_elm_lang$core$Basics_ops['++'],
+	A2(
+		_elm_lang$core$List$map,
+		function (suggestion) {
+			return _elm_lang$core$Native_Utils.update(
+				_user$project$Indexer$emptyHint,
+				{name: suggestion});
+		},
+		{
 			ctor: '::',
-			_0: '->',
+			_0: '=',
 			_1: {
 				ctor: '::',
-				_0: 'True',
+				_0: '->',
 				_1: {
 					ctor: '::',
-					_0: 'False',
+					_0: 'True',
 					_1: {
 						ctor: '::',
-						_0: 'number',
+						_0: 'False',
 						_1: {
 							ctor: '::',
 							_0: 'Int',
@@ -10673,15 +10680,7 @@ var _user$project$Indexer$defaultSuggestions = A2(
 																												_1: {
 																													ctor: '::',
 																													_0: 'type alias',
-																													_1: {
-																														ctor: '::',
-																														_0: 'comparable',
-																														_1: {
-																															ctor: '::',
-																															_0: 'appendable',
-																															_1: {ctor: '[]'}
-																														}
-																													}
+																													_1: {ctor: '[]'}
 																												}
 																											}
 																										}
@@ -10707,6 +10706,24 @@ var _user$project$Indexer$defaultSuggestions = A2(
 						}
 					}
 				}
+			}
+		}),
+	{
+		ctor: '::',
+		_0: _elm_lang$core$Native_Utils.update(
+			_user$project$Indexer$emptyHint,
+			{name: 'number', comment: '`Int` or `Float` depending on usage.'}),
+		_1: {
+			ctor: '::',
+			_0: _elm_lang$core$Native_Utils.update(
+				_user$project$Indexer$emptyHint,
+				{name: 'appendable', comment: 'This includes strings, lists, and text.'}),
+			_1: {
+				ctor: '::',
+				_0: _elm_lang$core$Native_Utils.update(
+					_user$project$Indexer$emptyHint,
+					{name: 'comparable', comment: 'This includes numbers, characters, strings, lists of comparable things, and tuples of comparable things. Note that tuples with 7 or more elements are not comparable.'}),
+				_1: {ctor: '[]'}
 			}
 		}
 	});
@@ -11249,7 +11266,24 @@ var _user$project$Indexer$getActiveTokens = F5(
 					return {ctor: '[]'};
 				}
 			}();
-			var activeTokens = A3(_elm_lang$core$List$foldl, insert, topLevelTokens, argHints);
+			var activeTokens = A3(
+				_elm_lang$core$List$foldl,
+				insert,
+				topLevelTokens,
+				A2(
+					_elm_lang$core$Basics_ops['++'],
+					argHints,
+					A2(
+						_elm_lang$core$List$map,
+						function (hint) {
+							return {ctor: '_Tuple2', _0: hint.name, _1: hint};
+						},
+						A2(
+							_elm_lang$core$List$filter,
+							function (hint) {
+								return !_elm_lang$core$Native_Utils.eq(hint.comment, '');
+							},
+							_user$project$Indexer$defaultSuggestions))));
 			var computeVariableSourcePaths = _elm_lang$core$Dict$map(
 				F2(
 					function (_p205, hints) {

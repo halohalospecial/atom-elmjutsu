@@ -1,5 +1,10 @@
+## 5.1.4
+* Fix `Go To Definition` bug.
+* Fix infinite recursion when constructing definition from type annotation.  Thanks to @splodingsocks for reporting!
+* Add comments for `number`, `appendable`, and `comparable`.
+
 ## 5.1.3
-* Fix activation crash 2nd attempt.
+* Fix activation crash (2nd attempt).
 
 ## 5.1.2
 * Fix activation crash.
