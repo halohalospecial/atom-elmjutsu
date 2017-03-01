@@ -1,7 +1,14 @@
-## 5.1.4
+## 5.1.7
+* Fix #62.  Thanks to @AkosLukacs for reporting!
+* Fix infinite recursion bugs caused by mismatched parens.
+
+## 5.1.6
 * Fix `Go To Definition` bug.
 * Fix infinite recursion when constructing definition from type annotation.  Thanks to @splodingsocks for reporting!
 * Add comments for `number`, `appendable`, and `comparable`.
+
+## 5.1.4, 5.1.5
+* These versions were not released due to publish failures.
 
 ## 5.1.3
 * Fix activation crash (2nd attempt).
@@ -58,6 +65,9 @@
 
 ## 3.3.2
 * Add `Show Types in Tooltip` image.
+
+## 3.3.1
+* This version was not released due to publish failure.
 
 ## 3.3.0
 * Add `Show Types in Tooltip` option.

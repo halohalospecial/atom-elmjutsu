@@ -1601,16 +1601,6 @@ doConstructFromTypeAnnotation typeAnnotation model =
     )
 
 
-invalidTipeRegex : Regex.Regex
-invalidTipeRegex =
-    Regex.regex "\\||:|\\[|\\]"
-
-
-isValidTipe : String -> Bool
-isValidTipe tipeString =
-    not (Regex.contains invalidTipeRegex tipeString)
-
-
 constructFromTypeAnnotation : String -> TokenDict -> String
 constructFromTypeAnnotation typeAnnotation activeTokens =
     let
@@ -1622,33 +1612,30 @@ constructFromTypeAnnotation typeAnnotation activeTokens =
                 |> Maybe.withDefault []
                 |> String.join " :"
     in
-        if isValidTipe tipeString then
-            let
-                name =
-                    List.head parts
-                        |> Maybe.withDefault typeAnnotation
+        let
+            name =
+                List.head parts
+                    |> Maybe.withDefault typeAnnotation
 
-                returnTipe =
-                    getReturnTipe tipeString
+            returnTipe =
+                getReturnTipe tipeString
 
-                parameterTipes =
-                    getTipeParts tipeString
-                        |> Helper.dropLast
+            parameterTipes =
+                getTipeParts tipeString
+                    |> Helper.dropLast
 
-                argNames =
-                    getDefaultArgNames parameterTipes
-            in
-                name
-                    ++ (if List.length argNames > 0 then
-                            " "
-                        else
-                            ""
-                       )
-                    ++ (String.join " " argNames)
-                    ++ " =\n    "
-                    ++ getDefaultValueForType activeTokens returnTipe
-        else
-            ""
+            argNames =
+                getDefaultArgNames parameterTipes
+        in
+            name
+                ++ (if List.length argNames > 0 then
+                        " "
+                    else
+                        ""
+                   )
+                ++ (String.join " " argNames)
+                ++ " =\n    "
+                ++ getDefaultValueForType activeTokens returnTipe
 
 
 getDefaultArgNames : List String -> List String
@@ -1682,6 +1669,7 @@ primitiveTipes =
     [ "number"
     , "appendable"
     , "comparable"
+      -- , "compappend"
     , "Int"
     , "Float"
     , "Bool"
@@ -2760,12 +2748,7 @@ getArgsPartsRecur str acc parts ( openParentheses, openBraces ) =
         _ ->
             let
                 ( thisChar, thisRest ) =
-                    case String.uncons str of
-                        Just ( ch, rest ) ->
-                            ( String.fromChar ch, rest )
-
-                        Nothing ->
-                            ( "", str )
+                    getCharAndRest str
             in
                 if openParentheses == 0 && openBraces == 0 && thisChar == " " then
                     getArgsPartsRecur thisRest "" (parts ++ [ String.trim acc ]) ( 0, 0 )
@@ -2788,7 +2771,10 @@ getArgsPartsRecur str acc parts ( openParentheses, openBraces ) =
                                 _ ->
                                     ( openParentheses, openBraces )
                     in
-                        getArgsPartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
+                        if updatedOpenParentheses < 0 || updatedOpenBraces < 0 then
+                            []
+                        else
+                            getArgsPartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
 getReturnTipe : TipeString -> String
@@ -2812,48 +2798,51 @@ getTipeParts tipeString =
 
 getTipePartsRecur : String -> String -> List String -> ( Int, Int ) -> List String
 getTipePartsRecur str acc parts ( openParentheses, openBraces ) =
-    case str of
-        "" ->
-            parts ++ [ String.trim acc ]
+    if str == "" then
+        parts ++ [ String.trim acc ]
+    else
+        let
+            ( thisChar, thisRest ) =
+                getCharAndRest str
 
-        _ ->
-            let
-                getCharAndRest s =
-                    case String.uncons s of
-                        Just ( ch, rest ) ->
-                            ( String.fromChar ch, rest )
+            ( nextChar, nextRest ) =
+                getCharAndRest thisRest
+        in
+            if openParentheses == 0 && openBraces == 0 && thisChar == "-" && nextChar == ">" then
+                getTipePartsRecur nextRest "" (parts ++ [ String.trim acc ]) ( 0, 0 )
+            else
+                let
+                    ( updatedOpenParentheses, updatedOpenBraces ) =
+                        case thisChar of
+                            "(" ->
+                                ( openParentheses + 1, openBraces )
 
-                        Nothing ->
-                            ( "", s )
+                            ")" ->
+                                ( openParentheses - 1, openBraces )
 
-                ( thisChar, thisRest ) =
-                    getCharAndRest str
+                            "{" ->
+                                ( openParentheses, openBraces + 1 )
 
-                ( nextChar, nextRest ) =
-                    getCharAndRest thisRest
-            in
-                if openParentheses == 0 && openBraces == 0 && thisChar == "-" && nextChar == ">" then
-                    getTipePartsRecur nextRest "" (parts ++ [ String.trim acc ]) ( 0, 0 )
-                else
-                    let
-                        ( updatedOpenParentheses, updatedOpenBraces ) =
-                            case thisChar of
-                                "(" ->
-                                    ( openParentheses + 1, openBraces )
+                            "}" ->
+                                ( openParentheses, openBraces - 1 )
 
-                                ")" ->
-                                    ( openParentheses - 1, openBraces )
-
-                                "{" ->
-                                    ( openParentheses, openBraces + 1 )
-
-                                "}" ->
-                                    ( openParentheses, openBraces - 1 )
-
-                                _ ->
-                                    ( openParentheses, openBraces )
-                    in
+                            _ ->
+                                ( openParentheses, openBraces )
+                in
+                    if updatedOpenParentheses < 0 || updatedOpenBraces < 0 then
+                        []
+                    else
                         getTipePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
+
+
+getCharAndRest : String -> ( String, String )
+getCharAndRest str =
+    case String.uncons str of
+        Just ( ch, rest ) ->
+            ( String.fromChar ch, rest )
+
+        Nothing ->
+            ( "", "" )
 
 
 {-| Example: getTupleParts "( Int, String )" == [ "Int", "String" ]
@@ -2878,12 +2867,7 @@ getTuplePartsRecur str acc parts ( openParentheses, openBraces ) =
         _ ->
             let
                 ( thisChar, thisRest ) =
-                    case String.uncons str of
-                        Just ( ch, rest ) ->
-                            ( String.fromChar ch, rest )
-
-                        Nothing ->
-                            ( "", str )
+                    getCharAndRest str
             in
                 if openParentheses == 0 && openBraces == 0 && thisChar == "," then
                     getTuplePartsRecur thisRest "" (parts ++ [ String.trim acc ]) ( 0, 0 )
@@ -2906,7 +2890,10 @@ getTuplePartsRecur str acc parts ( openParentheses, openBraces ) =
                                 _ ->
                                     ( openParentheses, openBraces )
                     in
-                        getTuplePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
+                        if updatedOpenParentheses < 0 || updatedOpenBraces < 0 then
+                            []
+                        else
+                            getTuplePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
 {-| Example: getRecordArgParts "{ a, b }" == [ "a", "b" ]
@@ -2945,12 +2932,7 @@ getRecordTipePartsRecur str ( fieldAcc, tipeAcc ) lookingForTipe parts ( openPar
         _ ->
             let
                 ( thisChar, thisRest ) =
-                    case String.uncons str of
-                        Just ( ch, rest ) ->
-                            ( String.fromChar ch, rest )
-
-                        Nothing ->
-                            ( "", str )
+                    getCharAndRest str
             in
                 if openParentheses == 0 && openBraces == 0 && thisChar == "," then
                     getRecordTipePartsRecur thisRest ( "", "" ) False (parts ++ [ ( String.trim fieldAcc, String.trim tipeAcc ) ]) ( 0, 0 )
@@ -2981,7 +2963,10 @@ getRecordTipePartsRecur str ( fieldAcc, tipeAcc ) lookingForTipe parts ( openPar
                             else
                                 ( fieldAcc ++ thisChar, tipeAcc )
                     in
-                        getRecordTipePartsRecur thisRest ( updatedFieldAcc, updatedTipeAcc ) lookingForTipe parts ( updatedOpenParentheses, updatedOpenBraces )
+                        if updatedOpenParentheses < 0 || updatedOpenBraces < 0 then
+                            []
+                        else
+                            getRecordTipePartsRecur thisRest ( updatedFieldAcc, updatedTipeAcc ) lookingForTipe parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
 {-| Example: getRecordTipeFieldNames "{ a : Int, b : String }" == [ "a", "b" ]
@@ -3483,13 +3468,14 @@ defaultSuggestions =
         , "infixl"
         , "infixr"
         , "infix"
+        , "type alias"
           -- , "open"
           -- , "hiding"
           -- , "export"
           -- , "foreign"
           -- , "perform"
           -- , "deriving"
-        , "type alias"
+          -- , "compappend"
         ]
         ++ [ { emptyHint
                 | name = "number"
