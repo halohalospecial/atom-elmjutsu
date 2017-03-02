@@ -1,3 +1,6 @@
+## 5.1.8
+* Fix `Infer Type` error caused by elm-make returning a relative source path.  Thanks to @splodingsocks for reporting!
+
 ## 5.1.7
 * Fix #62.  Thanks to @AkosLukacs for reporting!
 * Fix infinite recursion bugs caused by mismatched parens.

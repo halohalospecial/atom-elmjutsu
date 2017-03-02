@@ -23,6 +23,10 @@ Related Atom packages:
 ## Features Overview
 
 * [Autocomplete](#autocomplete)
+  * [Global Autocomplete](#global-autocomplete)
+  * [Type-Aware Autocomplete](#type-aware-autocomplete)
+  * [Autocomplete Snippets](#autocomplete-snippets)
+  * [Special completions](#special-completions)
 
 * Navigation
   * [Go to Definition](#go-to-definition)
