@@ -1,3 +1,8 @@
+## 5.2.0
+* Optimization: Only compute source paths of record fields when needed (e.g. for `Go To Definition`).
+* Type-aware autocomplete: Sort suggestions based on "distance" from expected type.
+* Regex autocomplete filtering: If the typed text starts with a slash (`/`), use the rest of the characters as a regular expression to filter the suggestions.
+
 ## 5.1.8
 * Fix `Infer Type` error caused by elm-make returning a relative source path.  Thanks to @splodingsocks for reporting!
 

@@ -27,6 +27,7 @@ Related Atom packages:
   * [Type-Aware Autocomplete](#type-aware-autocomplete)
   * [Autocomplete Snippets](#autocomplete-snippets)
   * [Special completions](#special-completions)
+  * [Regex filtering](#regex-autocomplete-filtering)
 
 * Navigation
   * [Go to Definition](#go-to-definition)
@@ -121,6 +122,11 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
 * :zap:`Replace with inferred type`
 
   See [Type-Aware Autocomplete](#type-aware-autocomplete).
+
+#### <a name="regex-autocomplete-filtering"></a>Regex filtering
+If the typed text starts with a slash (`/`), the rest of the characters will be used as a regular expression to filter the suggestions.
+
+![regex-autocomplete-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/regex-autocomplete-filtering.gif?raw=true)
 
 ### Navigation
 
@@ -283,13 +289,15 @@ Here is an example:
   'f1': 'elmjutsu:toggle-sidekick'
   'ctrl-shift-f12': 'elmjutsu:hide-usages-panel'
 ```
-<!-- 'atom-text-editor':
+<!--
+'atom-text-editor':
   'alt-enter': 'elmjutsu:eval'
   'ctrl-enter': 'elmjutsu:pipe-selections'
 
 '.elmjutsu-pipe-selections':
   "ctrl-enter": "elmjutsu:apply-pipe-selections"
-``` -->
+```
+-->
 
 Add them to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
 
