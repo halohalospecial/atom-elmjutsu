@@ -1,3 +1,6 @@
+## 5.2.1
+* Fix infinite recursion bugs related to computing default values (#56).  Thanks to @pacbeckh for reporting and providing reproduction steps!
+
 ## 5.2.0
 * Optimization: Only compute source paths of record fields when needed (e.g. for `Go To Definition`).
 * Type-aware autocomplete: Sort suggestions based on "distance" from expected type.

@@ -1948,11 +1948,11 @@ isSuperTipe tipeString =
 
 getDefaultValueForType : TokenDict -> TipeString -> String
 getDefaultValueForType activeTokens tipeString =
-    getDefaultValueForTypeRecur activeTokens Nothing tipeString
+    getDefaultValueForTypeRecur activeTokens Set.empty tipeString
 
 
-getDefaultValueForTypeRecur : TokenDict -> Maybe TipeString -> TipeString -> String
-getDefaultValueForTypeRecur activeTokens maybeRootTipeString tipeString =
+getDefaultValueForTypeRecur : TokenDict -> Set.Set String -> TipeString -> String
+getDefaultValueForTypeRecur activeTokens visitedTypes tipeString =
     if String.trim tipeString == "" then
         "_"
     else if isRecordString tipeString then
@@ -1961,7 +1961,7 @@ getDefaultValueForTypeRecur activeTokens maybeRootTipeString tipeString =
                 getRecordTipeParts tipeString
                     |> List.map
                         (\( field, tipe ) ->
-                            field ++ " = " ++ getDefaultValueForTypeRecur activeTokens maybeRootTipeString tipe
+                            field ++ " = " ++ getDefaultValueForTypeRecur activeTokens visitedTypes tipe
                         )
                     |> String.join ", "
         in
@@ -1972,7 +1972,7 @@ getDefaultValueForTypeRecur activeTokens maybeRootTipeString tipeString =
                 getTupleParts tipeString
                     |> List.map
                         (\part ->
-                            getDefaultValueForTypeRecur activeTokens maybeRootTipeString part
+                            getDefaultValueForTypeRecur activeTokens visitedTypes part
                         )
         in
             getTupleStringFromParts parts
@@ -1986,7 +1986,7 @@ getDefaultValueForTypeRecur activeTokens maybeRootTipeString tipeString =
 
             returnValue =
                 getReturnTipe tipeString
-                    |> getDefaultValueForTypeRecur activeTokens maybeRootTipeString
+                    |> getDefaultValueForTypeRecur activeTokens visitedTypes
         in
             "\\" ++ arguments ++ " -> " ++ returnValue
     else
@@ -2044,32 +2044,30 @@ getDefaultValueForTypeRecur activeTokens maybeRootTipeString tipeString =
                                         && (hint.kind /= KindTypeAlias || (hint.kind == KindTypeAlias && List.length hint.args == 0))
                                     -- TODO: ^ Make it work with aliases with type variables (e.g. `type alias AliasedType a b = ( a, b )`).
                                 then
-                                    case maybeRootTipeString of
-                                        Just rootTipeString ->
-                                            if hint.name /= rootTipeString then
-                                                getDefaultValueForTypeRecur activeTokens (Just hint.name) hint.tipe
-                                            else
-                                                "_"
-
-                                        Nothing ->
-                                            getDefaultValueForTypeRecur activeTokens (Just hint.name) hint.tipe
+                                    if Set.member hint.name visitedTypes then
+                                        "_"
+                                    else
+                                        getDefaultValueForTypeRecur activeTokens (Set.insert hint.name visitedTypes) hint.tipe
                                 else if hint.kind == KindType then
                                     case List.head hint.cases of
                                         Just tipeCase ->
-                                            let
-                                                ( _, annotatedTipeArgs ) =
-                                                    typeConstructorToNameAndArgs tipeString
+                                            if Set.member hint.name visitedTypes then
+                                                "_"
+                                            else
+                                                let
+                                                    ( _, annotatedTipeArgs ) =
+                                                        typeConstructorToNameAndArgs tipeString
 
-                                                alignedArgs =
-                                                    getTipeCaseAlignedArgTipes hint.args annotatedTipeArgs tipeCase.args
-                                            in
-                                                tipeCase.name
-                                                    ++ (if List.length alignedArgs > 0 then
-                                                            " "
-                                                        else
-                                                            ""
-                                                       )
-                                                    ++ String.join " " (List.map (getDefaultValueForTypeRecur activeTokens Nothing) alignedArgs)
+                                                    alignedArgs =
+                                                        getTipeCaseAlignedArgTipes hint.args annotatedTipeArgs tipeCase.args
+                                                in
+                                                    tipeCase.name
+                                                        ++ (if List.length alignedArgs > 0 then
+                                                                " "
+                                                            else
+                                                                ""
+                                                           )
+                                                        ++ String.join " " (List.map (getDefaultValueForTypeRecur activeTokens (Set.insert hint.name visitedTypes)) alignedArgs)
 
                                         Nothing ->
                                             "_"
@@ -2316,6 +2314,8 @@ getFunctionArgNameRecur argString argNameCounters =
                 ( getTupleStringFromParts partNames
                 , updateArgNameCounters
                 )
+        else if isFunctionTypeString argString then
+            updatePartNameAndArgNameCounters "function" argNameCounters
         else
             updatePartNameAndArgNameCounters (tipeToVar argString) argNameCounters
 
@@ -3505,9 +3505,7 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                                     )
 
                                 updatedVisitedSourcePaths =
-                                    Set.insert
-                                        hint.sourcePath
-                                        visitedSourcePaths
+                                    Set.insert hint.sourcePath visitedSourcePaths
                             in
                                 case maybeRootTipeString of
                                     Just rootTipeString ->

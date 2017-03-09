@@ -202,7 +202,6 @@ ta9 stringMyType =
 
 ta10 : (a -> b) -> (a -> b) -> List a -> List b
 ta10 function function2 aList =
-    -- Not yet supported.
     []
 
 

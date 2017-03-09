@@ -188,7 +188,7 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ### <a name="infer-type"></a>`Elmjutsu: Infer Type`
 * Select some text or make sure that the cursor is between whitespaces or before a closing parenthesis before invoking this command.  If nothing is selected and the cursor is not between whitespaces, the word under the cursor will be selected.
-* Make sure that `Elm Make Path` is properly configured in the package settings.
+* Make sure that `Elm Make Path` is properly configured in the package settings.  The default works for most cases.
 * You should also have `Show Types in Tooltip` checked in the package settings (or the Sidekick panel visible) to be able to see the inferred types.
 * This uses similar tricks as those described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html), which may sometimes fail or give incorrect results.
 
@@ -200,7 +200,7 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 <!-- ### <a name="infer-hole-types"></a>`Elmjutsu: Infer Hole Types`
 * Use question marks (`?`) to represent the type holes.
-* Make sure that `Elm Make Path` is properly configured in the package settings.
+* Make sure that `Elm Make Path` is properly configured in the package settings.  The default works for most cases.
 * You should also have `Show Types in Tooltip` checked in the package settings (or the Sidekick panel visible) to be able to see the inferred types.
 * You can also check the `Infer Hole Types On The Fly` option in the package settings.
 * This uses the trick described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html) and may sometimes fail.
@@ -224,7 +224,7 @@ Quickly adds an import without scrolling to the top of the file.  Also sorts the
     Quickly installs a package.
 
     - This runs `elm-package install --yes <name> <version>` (or `elm-package install --yes <name>` if the selected version is "Auto").
-    - Make sure that `Elm Package Path` is properly configured in the package settings.
+    - Make sure that `Elm Package Path` is properly configured in the package settings.  The default works for most cases.
 
   * ### <a name="uninstall-package"></a>`Elmjutsu: Uninstall Package`
 
