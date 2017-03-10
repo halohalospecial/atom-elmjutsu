@@ -1,3 +1,8 @@
+## 5.3.0
+* Add autocomplete fuzzy filtering (`Enable Autocomplete Fuzzy Filtering` option).  Thanks to @splodingsocks for the suggestion!
+* For performance reasons, put a limit on the number of autocomplete suggestions to return (50 by default).  This can be changed by setting the `Max Number of Autocomplete Suggestions` option.
+* Other minor optimizations.
+
 ## 5.2.1
 * Fix infinite recursion bugs related to computing default values (#56).  Thanks to @pacbeckh for reporting and providing reproduction steps!
 

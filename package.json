@@ -19,6 +19,7 @@
     "better-queue": "^3.8.4",
     "chokidar": "1.5.2",
     "fs-extra": "0.30.0",
+    "fuzzaldrin-plus": "0.4.1",
     "tmp": "0.0.28",
     "underscore-plus": "1.6.6",
     "untildify": "3.0.2"

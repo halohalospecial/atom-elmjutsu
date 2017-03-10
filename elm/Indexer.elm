@@ -100,10 +100,10 @@ port askCanGoToDefinitionSub : (( Maybe ActiveTopLevel, Token ) -> msg) -> Sub m
 port showGoToSymbolViewSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
 
 
-port getHintsForPartialSub : (( String, Maybe TipeString, Maybe Token, Bool, Bool ) -> msg) -> Sub msg
+port getHintsForPartialSub : (( String, Maybe TipeString, Maybe Token, Bool, Bool, Bool ) -> msg) -> Sub msg
 
 
-port getSuggestionsForImportSub : (String -> msg) -> Sub msg
+port getSuggestionsForImportSub : (( String, Bool ) -> msg) -> Sub msg
 
 
 port getImportersForTokenSub : (( Maybe ProjectDirectory, Maybe Token, Maybe Bool ) -> msg) -> Sub msg
@@ -210,11 +210,11 @@ port aliasesOfTypeReceivedCmd : List TipeString -> Cmd msg
 type alias Model =
     { packageDocs : List ModuleDocs
     , projectFileContentsDict : ProjectFileContentsDict
+    , projectDependencies : ProjectDependencies
     , activeTokens : TokenDict
     , activeTokenHints : List Hint
     , activeFile : Maybe ActiveFile
     , activeTopLevel : Maybe ActiveTopLevel
-    , projectDependencies : ProjectDependencies
     , config : Config
     }
 
@@ -338,8 +338,8 @@ type Msg
     | GoToDefinition ( Maybe ActiveTopLevel, Maybe Token )
     | AskCanGoToDefinition ( Maybe ActiveTopLevel, Token )
     | ShowGoToSymbolView ( Maybe ProjectDirectory, Maybe String )
-    | GetHintsForPartial ( String, Maybe TipeString, Maybe Token, Bool, Bool )
-    | GetSuggestionsForImport String
+    | GetHintsForPartial ( String, Maybe TipeString, Maybe Token, Bool, Bool, Bool )
+    | GetSuggestionsForImport ( String, Bool )
     | GetImporterSourcePathsForToken ( Maybe ProjectDirectory, Maybe Token, Maybe Bool )
     | DownloadMissingPackageDocs (List Dependency)
     | ShowAddImportView ( FilePath, Maybe Token )
@@ -431,11 +431,11 @@ update msg model =
         ShowGoToSymbolView ( maybeProjectDirectory, maybeToken ) ->
             doShowGoToSymbolView maybeProjectDirectory maybeToken model
 
-        GetHintsForPartial ( partial, maybeInferredTipe, preceedingToken, isRegex, isGlobal ) ->
-            doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isGlobal model
+        GetHintsForPartial ( partial, maybeInferredTipe, preceedingToken, isRegex, isFiltered, isGlobal ) ->
+            doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal model
 
-        GetSuggestionsForImport partial ->
-            doGetSuggestionsForImport partial model
+        GetSuggestionsForImport ( partial, isFiltered ) ->
+            doGetSuggestionsForImport partial isFiltered model
 
         GetImporterSourcePathsForToken ( maybeProjectDirectory, maybeToken, maybeIsCursorAtLastPartOfToken ) ->
             doGetImporterSourcePathsForToken maybeProjectDirectory maybeToken maybeIsCursorAtLastPartOfToken model
@@ -487,13 +487,17 @@ doUpdateActiveTokenHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Mod
 doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
     let
         updatedActiveTokens =
-            getActiveTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+            if model.activeTopLevel /= maybeActiveTopLevel then
+                getActiveTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+            else
+                model.activeTokens
 
         updatedActiveTokenHints =
             getHintsForToken maybeToken updatedActiveTokens
     in
         ( { model
             | activeTopLevel = maybeActiveTopLevel
+            , activeTokens = updatedActiveTokens
             , activeTokenHints = updatedActiveTokenHints
           }
         , updatedActiveTokenHints
@@ -506,7 +510,10 @@ doUpdateActiveFile : Maybe ActiveFile -> Maybe ActiveTopLevel -> Maybe Token -> 
 doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model =
     let
         updatedActiveTokens =
-            getActiveTokens maybeActiveFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+            if model.activeFile /= maybeActiveFile && model.activeTopLevel /= maybeActiveTopLevel then
+                getActiveTokens maybeActiveFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+            else
+                model.activeTokens
 
         updatedActiveTokenHints =
             getHintsForToken maybeToken updatedActiveTokens
@@ -686,22 +693,22 @@ doShowGoToSymbolView maybeProjectDirectory maybeToken model =
             )
 
 
-doGetHintsForPartial : String -> Maybe TipeString -> Maybe Token -> Bool -> Bool -> Model -> ( Model, Cmd Msg )
-doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isGlobal model =
+doGetHintsForPartial : String -> Maybe TipeString -> Maybe Token -> Bool -> Bool -> Bool -> Model -> ( Model, Cmd Msg )
+doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal model =
     ( model
     , ( partial
-      , getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isGlobal model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
+      , getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
             |> List.map (encodeHint ( model.activeTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs, model.config.showAliasesOfType ) model.activeTokens)
       )
         |> hintsForPartialReceivedCmd
     )
 
 
-doGetSuggestionsForImport : String -> Model -> ( Model, Cmd Msg )
-doGetSuggestionsForImport partial model =
+doGetSuggestionsForImport : String -> Bool -> Model -> ( Model, Cmd Msg )
+doGetSuggestionsForImport partial isFiltered model =
     ( model
     , ( partial
-      , getSuggestionsForImport partial model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
+      , getSuggestionsForImport partial isFiltered model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs)
       )
         |> suggestionsForImportReceivedCmd
     )
@@ -1130,25 +1137,28 @@ areTipesCompatibleRecur tipe1 tipe2 =
                         False
 
 
-getHintsForPartial : String -> Maybe TipeString -> Maybe Token -> Bool -> Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
-getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isGlobal maybeActiveFile projectFileContentsDict projectPackageDocs activeTokens =
+getHintsForPartial : String -> Maybe TipeString -> Maybe Token -> Bool -> Bool -> Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
+getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal maybeActiveFile projectFileContentsDict projectPackageDocs activeTokens =
     case maybeActiveFile of
         Just { projectDirectory, filePath } ->
             let
                 filterFunction testString name =
-                    if isRegex && String.startsWith "/" testString then
-                        let
-                            -- NOTE: The regex expression should be pre-validated to prevent a crash.
-                            expression =
-                                String.dropLeft 1 testString
-                        in
-                            if expression /= "" then
-                                String.startsWith testString name
-                                    || Regex.contains (Regex.regex expression) name
-                            else
-                                String.startsWith testString name
-                    else
-                        String.startsWith testString name
+                    let
+                        startsWithName =
+                            String.startsWith testString name
+                    in
+                        if isRegex && String.startsWith "/" testString then
+                            let
+                                -- NOTE: The regex expression should be pre-validated to prevent a crash.
+                                expression =
+                                    String.dropLeft 1 testString
+                            in
+                                if expression /= "" then
+                                    startsWithName || Regex.contains (Regex.regex expression) name
+                                else
+                                    startsWithName
+                        else
+                            startsWithName
 
                 allModuleDocs =
                     projectPackageDocs ++ getProjectModuleDocs projectDirectory projectFileContentsDict
@@ -1161,23 +1171,36 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isGlobal ma
                     getFileContentsOfProject projectDirectory projectFileContentsDict
                         |> getActiveFileContents maybeActiveFile
 
-                filterByName { name } =
-                    case maybeInferredTipe of
-                        Just tipeString ->
-                            partial == "" || filterFunction partial name
+                filterByName hints =
+                    if isFiltered || isRegex then
+                        let
+                            filter =
+                                List.filter
+                                    (\{ name } ->
+                                        filterFunction partial name
+                                    )
+                        in
+                            case maybeInferredTipe of
+                                Just _ ->
+                                    if partial == "" then
+                                        hints
+                                    else
+                                        filter hints
 
-                        Nothing ->
-                            filterFunction partial name
+                                Nothing ->
+                                    filter hints
+                    else
+                        hints
 
                 argHints =
                     activeTokens
                         |> Dict.values
                         |> List.concat
                         |> List.filter (\hint -> hint.moduleName == "")
-                        |> List.filter filterByName
+                        |> filterByName
 
                 defaultHints =
-                    List.filter filterByName defaultSuggestions
+                    filterByName defaultSuggestions
 
                 ( rawExposedHints, rawUnexposedHints ) =
                     if isGlobal then
@@ -1195,10 +1218,10 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isGlobal ma
                             getExposedAndUnexposedHints False filePath importsPlusActiveModule importedModuleDocs
 
                 exposedHints =
-                    List.filter filterByName rawExposedHints
+                    filterByName rawExposedHints
 
                 unexposedHints =
-                    List.filter filterByName rawUnexposedHints
+                    filterByName rawUnexposedHints
 
                 sortByName =
                     List.sortBy .name
@@ -1269,11 +1292,17 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isGlobal ma
                             ( unexposedHintsCompatible, unexposedHintsNotCompatible ) =
                                 partitionHints unexposedHints
 
-                            filterWithPartial { name } =
-                                if partial /= "" then
-                                    filterFunction partial name
+                            filterWithPartial hints =
+                                if partial == "" then
+                                    []
+                                else if isFiltered || isRegex then
+                                    hints
+                                        |> List.filter
+                                            (\{ name } ->
+                                                filterFunction partial name
+                                            )
                                 else
-                                    False
+                                    hints
 
                             getTipeDistance tipe1 tipe2 =
                                 if tipe1 == tipe2 then
@@ -1352,20 +1381,31 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isGlobal ma
                                 ++ sortByScore exposedHintsCompatible
                                 ++ sortByScore unexposedHintsCompatible
                                 ++ (sortByName
-                                        (List.filter filterWithPartial argHintsNotCompatible
-                                            ++ List.filter filterWithPartial defaultHintsNotCompatible
-                                            ++ List.filter filterWithPartial exposedHintsNotCompatible
+                                        (filterWithPartial argHintsNotCompatible
+                                            ++ filterWithPartial defaultHintsNotCompatible
+                                            ++ filterWithPartial exposedHintsNotCompatible
                                         )
-                                        ++ sortByName (List.filter filterWithPartial unexposedHintsNotCompatible)
+                                        ++ sortByName (filterWithPartial unexposedHintsNotCompatible)
                                    )
 
                     Nothing ->
-                        sortByName
-                            (argHints
-                                ++ defaultHints
-                                ++ exposedHints
-                            )
-                            ++ sortByName unexposedHints
+                        -- sortByName
+                        --     (argHints
+                        --         ++ defaultHints
+                        --         ++ exposedHints
+                        --     )
+                        --     ++ sortByName unexposedHints
+                        (argHints
+                            ++ defaultHints
+                            ++ exposedHints
+                            ++ unexposedHints
+                        )
+                            |> (\hints ->
+                                    if isFiltered then
+                                        sortByName hints
+                                    else
+                                        hints
+                               )
 
         Nothing ->
             []
@@ -1538,8 +1578,8 @@ getHintsForUnexposedNames includeQualified moduleDocs unexposedNames =
             ++ valueHints
 
 
-getSuggestionsForImport : String -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> List ImportSuggestion
-getSuggestionsForImport partial maybeActiveFile projectFileContentsDict projectPackageDocs =
+getSuggestionsForImport : String -> Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> List ImportSuggestion
+getSuggestionsForImport partial isFiltered maybeActiveFile projectFileContentsDict projectPackageDocs =
     case maybeActiveFile of
         Just { projectDirectory } ->
             let
@@ -1557,12 +1597,15 @@ getSuggestionsForImport partial maybeActiveFile projectFileContentsDict projectP
                                 }
                             )
             in
-                List.filter
-                    (\{ name } ->
-                        String.startsWith partial name
-                    )
+                if isFiltered then
                     suggestions
-                    |> List.sortBy .name
+                        |> List.filter
+                            (\{ name } ->
+                                String.startsWith partial name
+                            )
+                        |> List.sortBy .name
+                else
+                    suggestions
 
         Nothing ->
             []
@@ -3562,7 +3605,7 @@ isFunctionTypeString tipeString =
             else
                 tipeString
     in
-        tipe /= "" && not (isRecordString tipe) && not (isTupleString tipe) && (String.contains "->" tipe)
+        tipe /= "" && not (isRecordString tipe) && not (isTupleString tipe) && (String.contains "->" tipe) && List.length (getArgsParts tipe) == 1
 
 
 getTipeCaseTypeAnnotation : TipeCase -> Tipe -> String
