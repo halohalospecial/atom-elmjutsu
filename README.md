@@ -128,15 +128,17 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
 
 #### <a name="autocomplete-filtering"></a>Filtering suggestions
 
-* <a name="fuzzy-autocomplete-filtering"></a>Fuzzy filtering
+* <a name="autocomplete-fuzzy-filtering"></a>Fuzzy filtering
 
   You can check `Enable Autocomplete Fuzzy Filtering` to filter suggestions using [fuzz-aldrin-plus](https://github.com/jeancroy/fuzz-aldrin-plus).
 
-* <a name="regex-autocomplete-filtering"></a>Regex filtering
+  ![autocomplete-fuzzy-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-fuzzy-filtering.gif?raw=true)
+
+* <a name="autocomplete-regex-filtering"></a>Regex filtering
 
   If the typed text starts with a slash (`/`), the rest of the characters will be used as a regular expression to filter the suggestions.
 
-  ![regex-autocomplete-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/regex-autocomplete-filtering.gif?raw=true)
+  ![autocomplete-regex-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-regex-filtering.gif?raw=true)
 
 ### Navigation
 
