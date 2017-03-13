@@ -1,3 +1,6 @@
+## 5.3.2
+* Add basic caching for autocomplete suggestions to improve performance (should be a lot faster than before).
+
 ## 5.3.1
 * Change default value of `Max Number of Autocomplete Suggestions` to `0` (no limit).
 

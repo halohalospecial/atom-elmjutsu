@@ -28,6 +28,7 @@ Related Atom packages:
   * [Autocomplete Snippets](#autocomplete-snippets)
   * [Special completions](#special-completions)
   * [Filtering suggestions](#autocomplete-filtering)
+  * [Performance tuning](#autocomplete-performance-tuning)
 
 * Navigation
   * [Go to Definition](#go-to-definition)
@@ -73,7 +74,7 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 #### <a name="global-autocomplete"></a>Global Autocomplete
 * Check `Enable Global Autocomplete` if you want to include unimported project symbols.
   * This will also allow :zap:`Auto import` completion (which works like [Add Import](#elmjutsu-add-import)).
-  * Take note that you may encounter some lag if you have a large project.
+  * Take note that you may experience lag if you have a large project.
 
 ![auto-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/auto-import.gif?raw=true)
 
@@ -81,7 +82,7 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 * Check `Enable Type-Aware Autocomplete` if you want to prioritize suggestions matching the expected type at cursor position.
   * The type can be inferred via the `Infer Type` command, but it's recommended to check `Infer Expected Type At Cursor On The Fly` in the package settings instead.
   * This will also allow :zap:`Replace with inferred type` completion.
-  * Take note that you may encounter some lag if you have large file or project.
+  * WARNING: This is highly experimental and may cause lag, especially if `Enable Global Autocomplete` is also checked.
 
 ![type-aware-autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/type-aware-autocomplete.gif?raw=true)
 
@@ -139,6 +140,12 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
   If the typed text starts with a slash (`/`), the rest of the characters will be used as a regular expression to filter the suggestions.
 
   ![autocomplete-regex-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-regex-filtering.gif?raw=true)
+
+#### <a name="autocomplete-performance-tuning"></a>Performance tuning
+
+  * If you are experiencing lag while typing, you can set the value of `Max Number of Autocomplete Suggestions` to a small number such as `50` so that Atom will have less items to render.
+
+  * Enabling <b>both</b> [Global Autocomplete](#global-autocomplete) and [Type-Aware Autocomplete](#type-aware-autocomplete) will usually result to lag because there will be lots of computations involved.  This may be improved in the future.
 
 ### Navigation
 

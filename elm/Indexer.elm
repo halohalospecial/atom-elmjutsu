@@ -63,6 +63,7 @@ subscriptions model =
         , inferenceEnteredSub InferenceEntered
         , configChangedSub ConfigChanged
         , getAliasesOfTypeSub GetAliasesOfType
+        , clearHintsCacheSub (always ClearHintsCache)
         ]
 
 
@@ -134,6 +135,9 @@ port configChangedSub : (Config -> msg) -> Sub msg
 
 
 port getAliasesOfTypeSub : (Token -> msg) -> Sub msg
+
+
+port clearHintsCacheSub : (() -> msg) -> Sub msg
 
 
 
@@ -211,11 +215,13 @@ type alias Model =
     { packageDocs : List ModuleDocs
     , projectFileContentsDict : ProjectFileContentsDict
     , projectDependencies : ProjectDependencies
-    , activeTokens : TokenDict
-    , activeTokenHints : List Hint
     , activeFile : Maybe ActiveFile
+    , activeFileTokens : TokenDict
+    , activeToken : Maybe Token
+    , activeTokenHints : List Hint
     , activeTopLevel : Maybe ActiveTopLevel
     , config : Config
+    , hintsCache : Maybe HintsCache
     }
 
 
@@ -278,6 +284,10 @@ type alias Inference =
     }
 
 
+type alias HintsCache =
+    { exposedHints : List Hint, unexposedHints : List Hint, argHints : List Hint }
+
+
 init : ( Model, Cmd Msg )
 init =
     ( emptyModel
@@ -289,12 +299,14 @@ emptyModel : Model
 emptyModel =
     { packageDocs = []
     , projectFileContentsDict = Dict.empty
-    , activeTokens = Dict.empty
-    , activeTokenHints = []
     , activeFile = Nothing
+    , activeFileTokens = Dict.empty
+    , activeToken = Nothing
+    , activeTokenHints = []
     , activeTopLevel = Nothing
     , projectDependencies = Dict.empty
     , config = emptyConfig
+    , hintsCache = Nothing
     }
 
 
@@ -351,6 +363,7 @@ type Msg
     | InferenceEntered Inference
     | ConfigChanged Config
     | GetAliasesOfType Token
+    | ClearHintsCache
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -461,7 +474,7 @@ update msg model =
         InferenceEntered inference ->
             ( model
             , inferenceToHints inference
-                |> List.map (encodeHint ( model.activeTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs, model.config.showAliasesOfType ) model.activeTokens)
+                |> List.map (encodeHint ( model.activeTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs, model.config.showAliasesOfType ) model.activeFileTokens)
                 |> activeTokenHintsChangedCmd
             )
 
@@ -472,6 +485,11 @@ update msg model =
 
         GetAliasesOfType token ->
             doGetAliasesOfType token model
+
+        ClearHintsCache ->
+            ( { model | hintsCache = Nothing }
+            , Cmd.none
+            )
 
 
 inferenceToHints : Inference -> List Hint
@@ -486,22 +504,23 @@ inferenceToHints inference =
 doUpdateActiveTokenHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
 doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
     let
-        updatedActiveTokens =
+        updatedActiveFileTokens =
             if model.activeTopLevel /= maybeActiveTopLevel then
-                getActiveTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+                getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
             else
-                model.activeTokens
+                model.activeFileTokens
 
         updatedActiveTokenHints =
-            getHintsForToken maybeToken updatedActiveTokens
+            getHintsForToken maybeToken updatedActiveFileTokens
     in
         ( { model
             | activeTopLevel = maybeActiveTopLevel
-            , activeTokens = updatedActiveTokens
+            , activeFileTokens = updatedActiveFileTokens
+            , activeToken = maybeToken
             , activeTokenHints = updatedActiveTokenHints
           }
         , updatedActiveTokenHints
-            |> List.map (encodeHint ( maybeActiveTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs, model.config.showAliasesOfType ) updatedActiveTokens)
+            |> List.map (encodeHint ( maybeActiveTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs, model.config.showAliasesOfType ) updatedActiveFileTokens)
             |> activeTokenHintsChangedCmd
         )
 
@@ -509,25 +528,27 @@ doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
 doUpdateActiveFile : Maybe ActiveFile -> Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
 doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model =
     let
-        updatedActiveTokens =
-            if model.activeFile /= maybeActiveFile && model.activeTopLevel /= maybeActiveTopLevel then
-                getActiveTokens maybeActiveFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+        updatedActiveFileTokens =
+            if model.activeFile /= maybeActiveFile || model.activeTopLevel /= maybeActiveTopLevel then
+                getActiveFileTokens maybeActiveFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
             else
-                model.activeTokens
+                model.activeFileTokens
 
         updatedActiveTokenHints =
-            getHintsForToken maybeToken updatedActiveTokens
+            getHintsForToken maybeToken updatedActiveFileTokens
     in
         ( { model
             | activeFile = maybeActiveFile
             , activeTopLevel = maybeActiveTopLevel
-            , activeTokens = updatedActiveTokens
+            , activeFileTokens = updatedActiveFileTokens
+            , activeToken = maybeToken
             , activeTokenHints = updatedActiveTokenHints
+            , hintsCache = Nothing
           }
         , Cmd.batch
             [ activeFileChangedCmd maybeActiveFile
             , updatedActiveTokenHints
-                |> List.map (encodeHint ( maybeActiveTopLevel, maybeActiveFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs, model.config.showAliasesOfType ) updatedActiveTokens)
+                |> List.map (encodeHint ( maybeActiveTopLevel, maybeActiveFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs, model.config.showAliasesOfType ) updatedActiveFileTokens)
                 |> activeTokenHintsChangedCmd
             ]
         )
@@ -539,12 +560,12 @@ doUpdateFileContents filePath projectDirectory fileContents model =
         updatedProjectFileContentsDict =
             updateFileContents filePath projectDirectory fileContents model.projectFileContentsDict
 
-        updatedActiveTokens =
-            getActiveTokens model.activeFile model.activeTopLevel updatedProjectFileContentsDict model.projectDependencies model.packageDocs
+        updatedActiveFileTokens =
+            getActiveFileTokens model.activeFile model.activeTopLevel updatedProjectFileContentsDict model.projectDependencies model.packageDocs
     in
         ( { model
             | projectFileContentsDict = updatedProjectFileContentsDict
-            , activeTokens = updatedActiveTokens
+            , activeFileTokens = updatedActiveFileTokens
           }
         , activeFileChangedCmd model.activeFile
         )
@@ -575,12 +596,12 @@ doRemoveFileContents filePath projectDirectory model =
             in
                 Dict.update projectDirectory (always <| Just updatedFileContentsDict) model.projectFileContentsDict
 
-        updatedActiveTokens =
-            getActiveTokens model.activeFile model.activeTopLevel updatedProjectFileContentsDict model.projectDependencies model.packageDocs
+        updatedActiveFileTokens =
+            getActiveFileTokens model.activeFile model.activeTopLevel updatedProjectFileContentsDict model.projectDependencies model.packageDocs
     in
         ( { model
             | projectFileContentsDict = updatedProjectFileContentsDict
-            , activeTokens = updatedActiveTokens
+            , activeFileTokens = updatedActiveFileTokens
           }
         , activeFileChangedCmd model.activeFile
         )
@@ -595,7 +616,10 @@ doUpdateProjectDependencies projectDirectory dependencies model =
         missingDependencies =
             List.filter (\dependency -> not <| List.member (toPackageUri dependency) existingPackages) dependencies
     in
-        ( { model | projectDependencies = Dict.update projectDirectory (always <| Just dependencies) model.projectDependencies }
+        ( { model
+            | projectDependencies = Dict.update projectDirectory (always <| Just dependencies) model.projectDependencies
+            , hintsCache = Nothing
+          }
         , Cmd.batch
             [ readingPackageDocsCmd ()
             , readPackageDocsCmd missingDependencies
@@ -616,12 +640,12 @@ doDownloadMissingPackageDocs dependencies model =
 doGoToDefinition : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
 doGoToDefinition maybeActiveTopLevel maybeToken model =
     let
-        activeTokens =
-            getActiveTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+        activeFileTokens =
+            getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
                 |> computeVariableSourcePaths ( maybeActiveTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs )
 
         requests =
-            getHintsForToken maybeToken activeTokens
+            getHintsForToken maybeToken activeFileTokens
                 |> List.map
                     (\hint ->
                         let
@@ -646,13 +670,13 @@ doGoToDefinition maybeActiveTopLevel maybeToken model =
 doAskCanGoToDefinition : Maybe ActiveTopLevel -> Token -> Model -> ( Model, Cmd Msg )
 doAskCanGoToDefinition maybeActiveTopLevel token model =
     let
-        activeTokens =
-            getActiveTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+        activeFileTokens =
+            getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
                 |> computeVariableSourcePaths ( maybeActiveTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs )
     in
         ( model
         , ( token
-          , Dict.member token activeTokens
+          , Dict.member token activeFileTokens
           )
             |> canGoToDefinitionRepliedCmd
         )
@@ -664,7 +688,7 @@ doShowGoToSymbolView maybeProjectDirectory maybeToken model =
         Just projectDirectory ->
             let
                 hints =
-                    getHintsForToken maybeToken model.activeTokens
+                    getHintsForToken maybeToken model.activeFileTokens
 
                 defaultSymbolName =
                     case List.head hints of
@@ -695,13 +719,17 @@ doShowGoToSymbolView maybeProjectDirectory maybeToken model =
 
 doGetHintsForPartial : String -> Maybe TipeString -> Maybe Token -> Bool -> Bool -> Bool -> Model -> ( Model, Cmd Msg )
 doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal model =
-    ( model
-    , ( partial
-      , getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal model.activeFile model.projectFileContentsDict (getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs) model.activeTokens
-            |> List.map (encodeHint ( model.activeTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs, model.config.showAliasesOfType ) model.activeTokens)
-      )
-        |> hintsForPartialReceivedCmd
-    )
+    let
+        ( hints, updatedHintsCache ) =
+            getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal model.activeFile model.projectFileContentsDict model.projectDependencies model.packageDocs model.hintsCache model.activeFileTokens
+    in
+        ( { model | hintsCache = updatedHintsCache }
+        , ( partial
+          , hints
+                |> List.map (encodeHint ( model.activeTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs, model.config.showAliasesOfType ) model.activeFileTokens)
+          )
+            |> hintsForPartialReceivedCmd
+        )
 
 
 doGetSuggestionsForImport : String -> Bool -> Model -> ( Model, Cmd Msg )
@@ -740,7 +768,7 @@ doGetImporterSourcePathsForToken maybeProjectDirectory maybeToken maybeIsCursorA
                   , rawToken
                   , willUseFullToken
                   , isCursorAtLastPartOfToken
-                  , getImportersForToken token isCursorAtLastPartOfToken model.activeFile model.activeTokens activeFileContents model.projectFileContentsDict
+                  , getImportersForToken token isCursorAtLastPartOfToken model.activeFile model.activeFileTokens activeFileContents model.projectFileContentsDict
                   )
                     |> importersForTokenReceivedCmd
                 )
@@ -765,12 +793,12 @@ addLoadedPackageDocs loadedPackageDocs model =
         updatedPackageDocs =
             List.map truncateModuleComment missingPackageDocs ++ model.packageDocs
 
-        updatedActiveTokens =
-            getActiveTokens model.activeFile model.activeTopLevel model.projectFileContentsDict model.projectDependencies updatedPackageDocs
+        updatedActiveFileTokens =
+            getActiveFileTokens model.activeFile model.activeTopLevel model.projectFileContentsDict model.projectDependencies updatedPackageDocs
     in
         { model
             | packageDocs = updatedPackageDocs
-            , activeTokens = updatedActiveTokens
+            , activeFileTokens = updatedActiveFileTokens
         }
 
 
@@ -1137,8 +1165,8 @@ areTipesCompatibleRecur tipe1 tipe2 =
                         False
 
 
-getHintsForPartial : String -> Maybe TipeString -> Maybe Token -> Bool -> Bool -> Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> TokenDict -> List Hint
-getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal maybeActiveFile projectFileContentsDict projectPackageDocs activeTokens =
+getHintsForPartial : String -> Maybe TipeString -> Maybe Token -> Bool -> Bool -> Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> Maybe HintsCache -> TokenDict -> ( List Hint, Maybe HintsCache )
+getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal maybeActiveFile projectFileContentsDict projectDependencies packageDocs maybeHintsCache activeFileTokens =
     case maybeActiveFile of
         Just { projectDirectory, filePath } ->
             let
@@ -1159,17 +1187,6 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered 
                                     startsWithName
                         else
                             startsWithName
-
-                allModuleDocs =
-                    projectPackageDocs ++ getProjectModuleDocs projectDirectory projectFileContentsDict
-
-                importsPlusActiveModule =
-                    getFileContentsOfProject projectDirectory projectFileContentsDict
-                        |> getImportsPlusActiveModuleForActiveFile maybeActiveFile
-
-                activeFileContents =
-                    getFileContentsOfProject projectDirectory projectFileContentsDict
-                        |> getActiveFileContents maybeActiveFile
 
                 filterByName hints =
                     if isFiltered || isRegex then
@@ -1192,223 +1209,260 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered 
                     else
                         hints
 
-                argHints =
-                    activeTokens
-                        |> Dict.values
-                        |> List.concat
-                        |> List.filter (\hint -> hint.moduleName == "")
-                        |> filterByName
+                ( exposedHints, unexposedHints, argHints ) =
+                    case maybeHintsCache of
+                        Just { exposedHints, unexposedHints, argHints } ->
+                            ( exposedHints, unexposedHints, argHints )
 
-                defaultHints =
+                        Nothing ->
+                            let
+                                projectPackageDocs =
+                                    getProjectPackageDocs maybeActiveFile projectDependencies packageDocs
+
+                                allModuleDocs =
+                                    projectPackageDocs ++ getProjectModuleDocs projectDirectory projectFileContentsDict
+
+                                importsPlusActiveModule =
+                                    getFileContentsOfProject projectDirectory projectFileContentsDict
+                                        |> getImportsPlusActiveModuleForActiveFile maybeActiveFile
+
+                                ( exposedHints, unexposedHints ) =
+                                    if isGlobal then
+                                        getExposedAndUnexposedHints True filePath importsPlusActiveModule allModuleDocs
+                                    else
+                                        let
+                                            importedModuleDocs =
+                                                allModuleDocs
+                                                    |> List.filter
+                                                        (\moduleDocs ->
+                                                            List.member moduleDocs.name (Dict.keys importsPlusActiveModule)
+                                                        )
+                                        in
+                                            -- Only check the imported modules.
+                                            getExposedAndUnexposedHints False filePath importsPlusActiveModule importedModuleDocs
+
+                                argHints =
+                                    activeFileTokens
+                                        |> Dict.values
+                                        |> List.concat
+                                        |> List.filter (\hint -> hint.moduleName == "")
+                            in
+                                ( exposedHints, unexposedHints, argHints )
+
+                updatedHintsCache =
+                    Just { exposedHints = exposedHints, unexposedHints = unexposedHints, argHints = argHints }
+
+                filteredDefaultHints =
                     filterByName defaultSuggestions
 
-                ( rawExposedHints, rawUnexposedHints ) =
-                    if isGlobal then
-                        getExposedAndUnexposedHints True filePath importsPlusActiveModule allModuleDocs
-                    else
-                        let
-                            importedModuleDocs =
-                                allModuleDocs
-                                    |> List.filter
-                                        (\moduleDocs ->
-                                            List.member moduleDocs.name (Dict.keys importsPlusActiveModule)
-                                        )
-                        in
-                            -- Only check the imported modules.
-                            getExposedAndUnexposedHints False filePath importsPlusActiveModule importedModuleDocs
+                filteredExposedHints =
+                    filterByName exposedHints
 
-                exposedHints =
-                    filterByName rawExposedHints
+                filteredUnexposedHints =
+                    filterByName unexposedHints
 
-                unexposedHints =
-                    filterByName rawUnexposedHints
+                filteredArgHints =
+                    filterByName argHints
 
-                sortByName =
-                    List.sortBy .name
-            in
-                case maybeInferredTipe of
-                    Just tipeString ->
-                        let
-                            lastParameterTipe t =
-                                let
-                                    parts =
-                                        getTipeParts t
-                                in
-                                    case List.tail parts of
-                                        Just _ ->
-                                            parts
-                                                |> Helper.dropLast
-                                                |> Helper.last
-                                                |> Maybe.withDefault ""
+                hints =
+                    case maybeInferredTipe of
+                        Just tipeString ->
+                            let
+                                partitionHints hints =
+                                    List.partition (partitionByTipe tipeString preceedingToken) hints
 
-                                        Nothing ->
-                                            ""
+                                ( argHintsCompatible, argHintsNotCompatible ) =
+                                    partitionHints filteredArgHints
 
-                            partitionByTipe hint =
-                                let
-                                    returnTipe1 =
-                                        getReturnTipe tipeString
+                                ( defaultHintsCompatible, defaultHintsNotCompatible ) =
+                                    partitionHints filteredDefaultHints
 
-                                    returnTipe2 =
-                                        getReturnTipe hint.tipe
-                                in
-                                    (List.length (getTipeParts tipeString) <= List.length (getTipeParts hint.tipe))
-                                        && (areTipesCompatibleRecur returnTipe1 returnTipe2
-                                                || areTipesCompatibleRecur returnTipe2 returnTipe1
-                                           )
-                                        && (case preceedingToken of
-                                                Just token ->
-                                                    case token of
-                                                        "|>" ->
-                                                            let
-                                                                parameterTipe1 =
-                                                                    lastParameterTipe tipeString
+                                ( exposedHintsCompatible, exposedHintsNotCompatible ) =
+                                    partitionHints filteredExposedHints
 
-                                                                parameterTipe2 =
-                                                                    lastParameterTipe hint.tipe
-                                                            in
-                                                                areTipesCompatibleRecur parameterTipe1 parameterTipe2
-                                                                    || areTipesCompatibleRecur parameterTipe2 parameterTipe1
+                                ( unexposedHintsCompatible, unexposedHintsNotCompatible ) =
+                                    partitionHints filteredUnexposedHints
 
-                                                        _ ->
-                                                            True
-
-                                                Nothing ->
-                                                    True
-                                           )
-
-                            partitionHints hints =
-                                List.partition partitionByTipe hints
-
-                            ( argHintsCompatible, argHintsNotCompatible ) =
-                                partitionHints argHints
-
-                            ( defaultHintsCompatible, defaultHintsNotCompatible ) =
-                                partitionHints defaultHints
-
-                            ( exposedHintsCompatible, exposedHintsNotCompatible ) =
-                                partitionHints exposedHints
-
-                            ( unexposedHintsCompatible, unexposedHintsNotCompatible ) =
-                                partitionHints unexposedHints
-
-                            filterWithPartial hints =
-                                if partial == "" then
-                                    []
-                                else if isFiltered || isRegex then
-                                    hints
-                                        |> List.filter
-                                            (\{ name } ->
-                                                filterFunction partial name
-                                            )
-                                else
-                                    hints
-
-                            getTipeDistance tipe1 tipe2 =
-                                if tipe1 == tipe2 then
-                                    0
-                                else
-                                    let
-                                        parts1 =
-                                            getArgsParts tipe1
-
-                                        numParts1 =
-                                            List.length parts1
-
-                                        parts2 =
-                                            getArgsParts tipe2
-
-                                        numParts2 =
-                                            List.length parts2
-
-                                        genericTipePenalty =
-                                            if numParts2 == 1 && isTipeVariable tipe2 && not (isSuperTipe tipe2) then
-                                                numParts1
-                                            else
-                                                0
-                                    in
-                                        (if numParts1 == numParts2 then
-                                            List.map2
-                                                (\part1 part2 ->
-                                                    if part1 == part2 then
-                                                        0
-                                                    else
-                                                        1
+                                filterWithPartial hints =
+                                    if partial == "" then
+                                        []
+                                    else if isFiltered || isRegex then
+                                        hints
+                                            |> List.filter
+                                                (\{ name } ->
+                                                    filterFunction partial name
                                                 )
-                                                parts1
-                                                parts2
-                                                |> List.sum
-                                         else
-                                            max numParts1 numParts2
-                                        )
-                                            + genericTipePenalty
-
-                            sortByScore hints =
-                                hints
-                                    |> List.map
-                                        (\hint ->
-                                            { hint = hint
-                                            , distance =
-                                                getTipeDistance (getReturnTipe tipeString) (getReturnTipe hint.tipe)
-                                                    + (case preceedingToken of
-                                                        Just token ->
-                                                            case token of
-                                                                "|>" ->
-                                                                    getTipeDistance (lastParameterTipe tipeString) (lastParameterTipe hint.tipe)
-
-                                                                _ ->
-                                                                    0
-
-                                                        Nothing ->
-                                                            0
-                                                      )
-                                            }
-                                        )
-                                    |> Dict.Extra.groupBy .distance
-                                    |> Dict.toList
-                                    |> List.sortWith
-                                        (\a b ->
-                                            compare (Tuple.first a) (Tuple.first b)
-                                        )
-                                    |> List.map Tuple.second
-                                    |> List.concatMap
-                                        (\group ->
-                                            sortByName (List.map .hint group)
-                                        )
-                        in
-                            sortByScore argHintsCompatible
-                                ++ sortByScore defaultHintsCompatible
-                                ++ sortByScore exposedHintsCompatible
-                                ++ sortByScore unexposedHintsCompatible
-                                ++ (sortByName
-                                        (filterWithPartial argHintsNotCompatible
-                                            ++ filterWithPartial defaultHintsNotCompatible
-                                            ++ filterWithPartial exposedHintsNotCompatible
-                                        )
-                                        ++ sortByName (filterWithPartial unexposedHintsNotCompatible)
-                                   )
-
-                    Nothing ->
-                        -- sortByName
-                        --     (argHints
-                        --         ++ defaultHints
-                        --         ++ exposedHints
-                        --     )
-                        --     ++ sortByName unexposedHints
-                        (argHints
-                            ++ defaultHints
-                            ++ exposedHints
-                            ++ unexposedHints
-                        )
-                            |> (\hints ->
-                                    if isFiltered then
-                                        sortByName hints
                                     else
                                         hints
-                               )
+                            in
+                                sortHintsByScore tipeString preceedingToken argHintsCompatible
+                                    ++ sortHintsByScore tipeString preceedingToken defaultHintsCompatible
+                                    ++ sortHintsByScore tipeString preceedingToken exposedHintsCompatible
+                                    ++ sortHintsByScore tipeString preceedingToken unexposedHintsCompatible
+                                    ++ (sortHintsByName
+                                            (filterWithPartial argHintsNotCompatible
+                                                ++ filterWithPartial defaultHintsNotCompatible
+                                                ++ filterWithPartial exposedHintsNotCompatible
+                                            )
+                                            ++ sortHintsByName (filterWithPartial unexposedHintsNotCompatible)
+                                       )
+
+                        Nothing ->
+                            -- sortHintsByName
+                            --     (filteredArgHints
+                            --         ++ filteredDefaultHints
+                            --         ++ filteredExposedHints
+                            --     )
+                            --     ++ sortHintsByName filteredUnexposedHints
+                            (filteredArgHints
+                                ++ filteredDefaultHints
+                                ++ filteredExposedHints
+                                ++ filteredUnexposedHints
+                            )
+                                |> (\hints ->
+                                        if isFiltered then
+                                            sortHintsByName hints
+                                        else
+                                            hints
+                                   )
+            in
+                ( hints, updatedHintsCache )
 
         Nothing ->
-            []
+            ( [], maybeHintsCache )
+
+
+getTipeDistance : String -> String -> Int
+getTipeDistance tipe1 tipe2 =
+    if tipe1 == tipe2 then
+        0
+    else
+        let
+            parts1 =
+                getArgsParts tipe1
+
+            numParts1 =
+                List.length parts1
+
+            parts2 =
+                getArgsParts tipe2
+
+            numParts2 =
+                List.length parts2
+
+            genericTipePenalty =
+                if numParts2 == 1 && isTipeVariable tipe2 && not (isSuperTipe tipe2) then
+                    numParts1
+                else
+                    0
+        in
+            (if numParts1 == numParts2 then
+                List.map2
+                    (\part1 part2 ->
+                        if part1 == part2 then
+                            0
+                        else
+                            1
+                    )
+                    parts1
+                    parts2
+                    |> List.sum
+             else
+                max numParts1 numParts2
+            )
+                + genericTipePenalty
+
+
+sortHintsByScore : TipeString -> Maybe String -> List Hint -> List Hint
+sortHintsByScore tipeString preceedingToken hints =
+    hints
+        |> List.map
+            (\hint ->
+                { hint = hint
+                , distance =
+                    getTipeDistance (getReturnTipe tipeString) (getReturnTipe hint.tipe)
+                        + (case preceedingToken of
+                            Just token ->
+                                case token of
+                                    "|>" ->
+                                        getTipeDistance (lastParameterTipe tipeString) (lastParameterTipe hint.tipe)
+
+                                    _ ->
+                                        0
+
+                            Nothing ->
+                                0
+                          )
+                }
+            )
+        |> Dict.Extra.groupBy .distance
+        |> Dict.toList
+        |> List.sortWith
+            (\a b ->
+                compare (Tuple.first a) (Tuple.first b)
+            )
+        |> List.map Tuple.second
+        |> List.concatMap
+            (\group ->
+                sortHintsByName (List.map .hint group)
+            )
+
+
+sortHintsByName : List Hint -> List Hint
+sortHintsByName =
+    List.sortBy .name
+
+
+partitionByTipe : TipeString -> Maybe String -> Hint -> Bool
+partitionByTipe tipeString preceedingToken hint =
+    let
+        returnTipe1 =
+            getReturnTipe tipeString
+
+        returnTipe2 =
+            getReturnTipe hint.tipe
+    in
+        (List.length (getTipeParts tipeString) <= List.length (getTipeParts hint.tipe))
+            && (areTipesCompatibleRecur returnTipe1 returnTipe2
+                    || areTipesCompatibleRecur returnTipe2 returnTipe1
+               )
+            && (case preceedingToken of
+                    Just token ->
+                        case token of
+                            "|>" ->
+                                let
+                                    parameterTipe1 =
+                                        lastParameterTipe tipeString
+
+                                    parameterTipe2 =
+                                        lastParameterTipe hint.tipe
+                                in
+                                    areTipesCompatibleRecur parameterTipe1 parameterTipe2
+                                        || areTipesCompatibleRecur parameterTipe2 parameterTipe1
+
+                            _ ->
+                                True
+
+                    Nothing ->
+                        True
+               )
+
+
+lastParameterTipe : TipeString -> String
+lastParameterTipe t =
+    let
+        parts =
+            getTipeParts t
+    in
+        case List.tail parts of
+            Just _ ->
+                parts
+                    |> Helper.dropLast
+                    |> Helper.last
+                    |> Maybe.withDefault ""
+
+            Nothing ->
+                ""
 
 
 getExposedAndUnexposedHints : Bool -> FilePath -> ImportDict -> List ModuleDocs -> ( List Hint, List Hint )
@@ -1813,7 +1867,7 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
             { fileContents | imports = updatedImports }
     in
         ( { model | projectFileContentsDict = updateFileContents filePath projectDirectory updatedFileContents model.projectFileContentsDict }
-        , ( filePath, importsToString updatedImports model.activeTokens )
+        , ( filePath, importsToString updatedImports model.activeFileTokens )
             |> updateImportsCmd
         )
 
@@ -1897,13 +1951,13 @@ importsToString imports tokens =
 doConstructFromTypeAnnotation : String -> Model -> ( Model, Cmd Msg )
 doConstructFromTypeAnnotation typeAnnotation model =
     ( model
-    , constructFromTypeAnnotation typeAnnotation model.activeTokens
+    , constructFromTypeAnnotation typeAnnotation model.activeFileTokens
         |> fromTypeAnnotationConstructedCmd
     )
 
 
 constructFromTypeAnnotation : String -> TokenDict -> String
-constructFromTypeAnnotation typeAnnotation activeTokens =
+constructFromTypeAnnotation typeAnnotation activeFileTokens =
     let
         parts =
             String.split " :" typeAnnotation
@@ -1936,7 +1990,7 @@ constructFromTypeAnnotation typeAnnotation activeTokens =
                    )
                 ++ (String.join " " argNames)
                 ++ " =\n    "
-                ++ getDefaultValueForType activeTokens returnTipe
+                ++ getDefaultValueForType activeFileTokens returnTipe
 
 
 getDefaultArgNames : List String -> List String
@@ -1990,12 +2044,12 @@ isSuperTipe tipeString =
 
 
 getDefaultValueForType : TokenDict -> TipeString -> String
-getDefaultValueForType activeTokens tipeString =
-    getDefaultValueForTypeRecur activeTokens Set.empty tipeString
+getDefaultValueForType activeFileTokens tipeString =
+    getDefaultValueForTypeRecur activeFileTokens Set.empty tipeString
 
 
 getDefaultValueForTypeRecur : TokenDict -> Set.Set String -> TipeString -> String
-getDefaultValueForTypeRecur activeTokens visitedTypes tipeString =
+getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
     if String.trim tipeString == "" then
         "_"
     else if isRecordString tipeString then
@@ -2004,7 +2058,7 @@ getDefaultValueForTypeRecur activeTokens visitedTypes tipeString =
                 getRecordTipeParts tipeString
                     |> List.map
                         (\( field, tipe ) ->
-                            field ++ " = " ++ getDefaultValueForTypeRecur activeTokens visitedTypes tipe
+                            field ++ " = " ++ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipe
                         )
                     |> String.join ", "
         in
@@ -2015,7 +2069,7 @@ getDefaultValueForTypeRecur activeTokens visitedTypes tipeString =
                 getTupleParts tipeString
                     |> List.map
                         (\part ->
-                            getDefaultValueForTypeRecur activeTokens visitedTypes part
+                            getDefaultValueForTypeRecur activeFileTokens visitedTypes part
                         )
         in
             getTupleStringFromParts parts
@@ -2029,7 +2083,7 @@ getDefaultValueForTypeRecur activeTokens visitedTypes tipeString =
 
             returnValue =
                 getReturnTipe tipeString
-                    |> getDefaultValueForTypeRecur activeTokens visitedTypes
+                    |> getDefaultValueForTypeRecur activeFileTokens visitedTypes
         in
             "\\" ++ arguments ++ " -> " ++ returnValue
     else
@@ -2078,7 +2132,7 @@ getDefaultValueForTypeRecur activeTokens visitedTypes tipeString =
                         "Sub.none"
 
                     _ ->
-                        case getHintsForToken (Just headTipeString) activeTokens |> List.head of
+                        case getHintsForToken (Just headTipeString) activeFileTokens |> List.head of
                             Just hint ->
                                 -- Avoid infinite recursion.
                                 if
@@ -2090,7 +2144,7 @@ getDefaultValueForTypeRecur activeTokens visitedTypes tipeString =
                                     if Set.member hint.name visitedTypes then
                                         "_"
                                     else
-                                        getDefaultValueForTypeRecur activeTokens (Set.insert hint.name visitedTypes) hint.tipe
+                                        getDefaultValueForTypeRecur activeFileTokens (Set.insert hint.name visitedTypes) hint.tipe
                                 else if hint.kind == KindType then
                                     case List.head hint.cases of
                                         Just tipeCase ->
@@ -2110,7 +2164,7 @@ getDefaultValueForTypeRecur activeTokens visitedTypes tipeString =
                                                             else
                                                                 ""
                                                            )
-                                                        ++ String.join " " (List.map (getDefaultValueForTypeRecur activeTokens (Set.insert hint.name visitedTypes)) alignedArgs)
+                                                        ++ String.join " " (List.map (getDefaultValueForTypeRecur activeFileTokens (Set.insert hint.name visitedTypes)) alignedArgs)
 
                                         Nothing ->
                                             "_"
@@ -2127,7 +2181,7 @@ getDefaultValueForTypeRecur activeTokens visitedTypes tipeString =
 doConstructCaseOf : Token -> Model -> ( Model, Cmd Msg )
 doConstructCaseOf token model =
     ( model
-    , constructCaseOf token model.activeTokens
+    , constructCaseOf token model.activeFileTokens
         |> caseOfConstructedCmd
     )
 
@@ -2135,7 +2189,7 @@ doConstructCaseOf token model =
 doConstructDefaultValueForType : Token -> Model -> ( Model, Cmd Msg )
 doConstructDefaultValueForType token model =
     ( model
-    , constructDefaultValueForType token model.activeTokens
+    , constructDefaultValueForType token model.activeFileTokens
         |> defaultValueForTypeConstructedCmd
     )
 
@@ -2143,7 +2197,7 @@ doConstructDefaultValueForType token model =
 doConstructDefaultArguments : Token -> Model -> ( Model, Cmd Msg )
 doConstructDefaultArguments token model =
     ( model
-    , constructDefaultArguments token model.activeTokens
+    , constructDefaultArguments token model.activeFileTokens
         |> defaultArgumentsConstructedCmd
     )
 
@@ -2168,8 +2222,8 @@ typeConstructorToNameAndArgs tipeString =
 
 
 constructCaseOf : Token -> TokenDict -> Maybe String
-constructCaseOf token activeTokens =
-    case getHintsForToken (Just token) activeTokens |> List.head of
+constructCaseOf token activeFileTokens =
+    case getHintsForToken (Just token) activeFileTokens |> List.head of
         Just tokenHint ->
             let
                 ( tokenTipeName, tokenTipeArgs ) =
@@ -2213,7 +2267,7 @@ constructCaseOf token activeTokens =
                                 )
                             else
                                 case
-                                    getHintsForToken (Just tokenTipeName) activeTokens
+                                    getHintsForToken (Just tokenTipeName) activeFileTokens
                                         |> List.filter (\hint -> List.length hint.cases > 0)
                                         |> List.head
                                 of
@@ -2251,25 +2305,25 @@ constructCaseOf token activeTokens =
 
 
 constructDefaultValueForType : Token -> TokenDict -> Maybe String
-constructDefaultValueForType token activeTokens =
+constructDefaultValueForType token activeFileTokens =
     if
         -- isPrimitiveTipe token
         --     ||
-        (getHintsForToken (Just token) activeTokens
+        (getHintsForToken (Just token) activeFileTokens
             |> List.filter (\hint -> hint.kind == KindType || hint.kind == KindTypeAlias)
             |> List.length
         )
             > 0
     then
-        getDefaultValueForType activeTokens token
+        getDefaultValueForType activeFileTokens token
             |> Just
     else
         Nothing
 
 
 constructDefaultArguments : Token -> TokenDict -> Maybe (List String)
-constructDefaultArguments token activeTokens =
-    case getHintsForToken (Just token) activeTokens |> List.head of
+constructDefaultArguments token activeFileTokens =
+    case getHintsForToken (Just token) activeFileTokens |> List.head of
         Just hint ->
             let
                 parts =
@@ -2285,7 +2339,7 @@ constructDefaultArguments token activeTokens =
                         (\tipeString ->
                             let
                                 value =
-                                    getDefaultValueForType activeTokens tipeString
+                                    getDefaultValueForType activeFileTokens tipeString
                             in
                                 if
                                     String.contains " " value
@@ -2366,7 +2420,7 @@ getFunctionArgNameRecur argString argNameCounters =
 doGetAliasesOfType : Token -> Model -> ( Model, Cmd Msg )
 doGetAliasesOfType token model =
     ( model
-    , getAliasesOfType model.activeTokens "" token
+    , getAliasesOfType model.activeFileTokens "" token
         |> aliasesOfTypeReceivedCmd
     )
 
@@ -2853,8 +2907,8 @@ type alias ImportSuggestion =
     }
 
 
-getActiveTokens : Maybe ActiveFile -> Maybe ActiveTopLevel -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> TokenDict
-getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict projectDependencies packageDocs =
+getActiveFileTokens : Maybe ActiveFile -> Maybe ActiveTopLevel -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> TokenDict
+getActiveFileTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict projectDependencies packageDocs =
     case maybeActiveFile of
         Just { projectDirectory, filePath } ->
             let
@@ -2900,7 +2954,7 @@ getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict proj
                         Nothing ->
                             []
 
-                activeTokens =
+                activeFileTokens =
                     (argHints
                         ++ (defaultSuggestions
                                 |> List.filter (\hint -> hint.comment /= "")
@@ -2909,7 +2963,7 @@ getActiveTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict proj
                     )
                         |> List.foldl insert topLevelTokens
             in
-                activeTokens
+                activeFileTokens
 
         -- |> computeVariableSourcePaths ( maybeActiveTopLevel, maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
         Nothing ->
@@ -3037,7 +3091,7 @@ getSourcePathOfRecordFieldTokenRecur parentPartName parentName parentSourcePath 
                                     Just newActiveFile ->
                                         if parentFilePath /= prefixFilePath && isProjectSourcePath prefixFilePath then
                                             ( maybeNewActiveFile
-                                            , getActiveTokens maybeNewActiveFile Nothing projectFileContentsDict projectDependencies packageDocs
+                                            , getActiveFileTokens maybeNewActiveFile Nothing projectFileContentsDict projectDependencies packageDocs
                                             )
                                         else
                                             ( maybeActiveFile, tokens )
@@ -3542,7 +3596,7 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                                 ( newParentSourcePath, newTokens ) =
                                     ( hint.sourcePath
                                     , if hint.sourcePath /= parentSourcePath && isProjectSourcePath hint.sourcePath then
-                                        getActiveTokens maybeNewActiveFile Nothing projectFileContentsDict projectDependencies packageDocs
+                                        getActiveFileTokens maybeNewActiveFile Nothing projectFileContentsDict projectDependencies packageDocs
                                       else
                                         topLevelTokens
                                     )
