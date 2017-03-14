@@ -1,3 +1,7 @@
+## 5.3.3
+* Add some more basic caching for autocomplete suggestions.
+* Sort identically-named suggestions by their module names.
+
 ## 5.3.2
 * Add basic caching for autocomplete suggestions to improve performance (should be a lot faster than before).
 

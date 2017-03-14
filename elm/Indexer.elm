@@ -63,7 +63,7 @@ subscriptions model =
         , inferenceEnteredSub InferenceEntered
         , configChangedSub ConfigChanged
         , getAliasesOfTypeSub GetAliasesOfType
-        , clearHintsCacheSub (always ClearHintsCache)
+        , clearLocalHintsCacheSub (always ClearLocalHintsCache)
         ]
 
 
@@ -137,7 +137,7 @@ port configChangedSub : (Config -> msg) -> Sub msg
 port getAliasesOfTypeSub : (Token -> msg) -> Sub msg
 
 
-port clearHintsCacheSub : (() -> msg) -> Sub msg
+port clearLocalHintsCacheSub : (() -> msg) -> Sub msg
 
 
 
@@ -285,7 +285,21 @@ type alias Inference =
 
 
 type alias HintsCache =
-    { exposedHints : List Hint, unexposedHints : List Hint, argHints : List Hint }
+    { external : Maybe ExternalHints
+    , local : Maybe LocalHints
+    }
+
+
+type alias ExternalHints =
+    { importedHints : List Hint
+    , unimportedHints : List Hint
+    }
+
+
+type alias LocalHints =
+    { topLevelHints : List Hint
+    , argHints : List Hint
+    }
 
 
 init : ( Model, Cmd Msg )
@@ -363,7 +377,7 @@ type Msg
     | InferenceEntered Inference
     | ConfigChanged Config
     | GetAliasesOfType Token
-    | ClearHintsCache
+    | ClearLocalHintsCache
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -486,8 +500,16 @@ update msg model =
         GetAliasesOfType token ->
             doGetAliasesOfType token model
 
-        ClearHintsCache ->
-            ( { model | hintsCache = Nothing }
+        ClearLocalHintsCache ->
+            ( { model
+                | hintsCache =
+                    case model.hintsCache of
+                        Just hintsCache ->
+                            Just { hintsCache | local = Nothing }
+
+                        Nothing ->
+                            Nothing
+              }
             , Cmd.none
             )
 
@@ -562,10 +584,48 @@ doUpdateFileContents filePath projectDirectory fileContents model =
 
         updatedActiveFileTokens =
             getActiveFileTokens model.activeFile model.activeTopLevel updatedProjectFileContentsDict model.projectDependencies model.packageDocs
+
+        updatedHintsCache =
+            case model.hintsCache of
+                Just hintsCache ->
+                    case hintsCache.external of
+                        Just _ ->
+                            case model.activeFile of
+                                Just activeFile ->
+                                    let
+                                        projectPackageDocs =
+                                            getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs
+
+                                        oldFileContentsDict =
+                                            getFileContentsOfProject activeFile.projectDirectory model.projectFileContentsDict
+
+                                        oldActiveFileContents =
+                                            getActiveFileContents model.activeFile oldFileContentsDict
+
+                                        newFileContentsDict =
+                                            getFileContentsOfProject activeFile.projectDirectory updatedProjectFileContentsDict
+
+                                        newActiveFileContents =
+                                            getActiveFileContents model.activeFile newFileContentsDict
+                                    in
+                                        if activeFile.filePath == filePath && oldActiveFileContents.imports /= newActiveFileContents.imports then
+                                            Just { hintsCache | external = Nothing }
+                                        else
+                                            model.hintsCache
+
+                                Nothing ->
+                                    model.hintsCache
+
+                        Nothing ->
+                            model.hintsCache
+
+                Nothing ->
+                    model.hintsCache
     in
         ( { model
             | projectFileContentsDict = updatedProjectFileContentsDict
             , activeFileTokens = updatedActiveFileTokens
+            , hintsCache = updatedHintsCache
           }
         , activeFileChangedCmd model.activeFile
         )
@@ -602,6 +662,7 @@ doRemoveFileContents filePath projectDirectory model =
         ( { model
             | projectFileContentsDict = updatedProjectFileContentsDict
             , activeFileTokens = updatedActiveFileTokens
+            , hintsCache = Nothing
           }
         , activeFileChangedCmd model.activeFile
         )
@@ -1165,104 +1226,127 @@ areTipesCompatibleRecur tipe1 tipe2 =
                         False
 
 
+getExternalHints : Bool -> FilePath -> FileContents -> List ModuleDocs -> ExternalHints
+getExternalHints isGlobal filePath activeFileContents allModuleDocs =
+    let
+        moduleDocsToCheck =
+            if isGlobal then
+                allModuleDocs
+                    |> List.filter
+                        (\moduleDocs ->
+                            moduleDocs.sourcePath /= filePath
+                        )
+            else
+                allModuleDocs
+                    |> List.filter
+                        (\moduleDocs ->
+                            List.member moduleDocs.name (Dict.keys activeFileContents.imports)
+                                && (moduleDocs.sourcePath /= filePath)
+                        )
+
+        ( importedHints, unimportedHints ) =
+            getExposedAndUnexposedHints isGlobal filePath activeFileContents.imports moduleDocsToCheck
+    in
+        { importedHints = importedHints
+        , unimportedHints = unimportedHints
+        }
+
+
+getLocalHints : FilePath -> FileContents -> TokenDict -> LocalHints
+getLocalHints filePath activeFileContents activeFileTokens =
+    let
+        selfImport =
+            Dict.singleton activeFileContents.moduleDocs.name { alias = Nothing, exposed = All }
+    in
+        { topLevelHints =
+            getExposedAndUnexposedHints False filePath selfImport [ activeFileContents.moduleDocs ]
+                |> Tuple.first
+        , argHints =
+            activeFileTokens
+                |> Dict.values
+                |> List.concat
+                |> List.filter (\hint -> hint.moduleName == "")
+        }
+
+
+getExternalAndLocalHints : Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> Maybe ExternalHints -> Maybe LocalHints -> TokenDict -> HintsCache
+getExternalAndLocalHints isGlobal maybeActiveFile projectFileContentsDict projectDependencies packageDocs maybeCachedExternal maybeCachedLocal activeFileTokens =
+    case maybeActiveFile of
+        Just { projectDirectory, filePath } ->
+            let
+                projectPackageDocs =
+                    getProjectPackageDocs maybeActiveFile projectDependencies packageDocs
+
+                allModuleDocs =
+                    projectPackageDocs ++ getProjectModuleDocs projectDirectory projectFileContentsDict
+
+                fileContentsDict =
+                    getFileContentsOfProject projectDirectory projectFileContentsDict
+
+                activeFileContents =
+                    getActiveFileContents maybeActiveFile fileContentsDict
+
+                local =
+                    case maybeCachedLocal of
+                        Just cachedLocal ->
+                            cachedLocal
+
+                        Nothing ->
+                            getLocalHints filePath activeFileContents activeFileTokens
+
+                external =
+                    case maybeCachedExternal of
+                        Just cachedExternal ->
+                            cachedExternal
+
+                        Nothing ->
+                            getExternalHints isGlobal filePath activeFileContents allModuleDocs
+            in
+                { external = Just external, local = Just local }
+
+        Nothing ->
+            { external = Just { importedHints = [], unimportedHints = [] }
+            , local = Just { topLevelHints = [], argHints = [] }
+            }
+
+
 getHintsForPartial : String -> Maybe TipeString -> Maybe Token -> Bool -> Bool -> Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> Maybe HintsCache -> TokenDict -> ( List Hint, Maybe HintsCache )
 getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal maybeActiveFile projectFileContentsDict projectDependencies packageDocs maybeHintsCache activeFileTokens =
     case maybeActiveFile of
         Just { projectDirectory, filePath } ->
             let
-                filterFunction testString name =
-                    let
-                        startsWithName =
-                            String.startsWith testString name
-                    in
-                        if isRegex && String.startsWith "/" testString then
-                            let
-                                -- NOTE: The regex expression should be pre-validated to prevent a crash.
-                                expression =
-                                    String.dropLeft 1 testString
-                            in
-                                if expression /= "" then
-                                    startsWithName || Regex.contains (Regex.regex expression) name
-                                else
-                                    startsWithName
-                        else
-                            startsWithName
-
-                filterByName hints =
-                    if isFiltered || isRegex then
-                        let
-                            filter =
-                                List.filter
-                                    (\{ name } ->
-                                        filterFunction partial name
-                                    )
-                        in
-                            case maybeInferredTipe of
-                                Just _ ->
-                                    if partial == "" then
-                                        hints
-                                    else
-                                        filter hints
-
-                                Nothing ->
-                                    filter hints
-                    else
-                        hints
-
-                ( exposedHints, unexposedHints, argHints ) =
+                { external, local } =
                     case maybeHintsCache of
-                        Just { exposedHints, unexposedHints, argHints } ->
-                            ( exposedHints, unexposedHints, argHints )
+                        Just hintsCache ->
+                            case ( hintsCache.external, hintsCache.local ) of
+                                ( Just external, Just local ) ->
+                                    hintsCache
+
+                                ( maybeCachedExternal, maybeCachedLocal ) ->
+                                    getExternalAndLocalHints isGlobal maybeActiveFile projectFileContentsDict projectDependencies packageDocs maybeCachedExternal maybeCachedLocal activeFileTokens
 
                         Nothing ->
-                            let
-                                projectPackageDocs =
-                                    getProjectPackageDocs maybeActiveFile projectDependencies packageDocs
+                            getExternalAndLocalHints isGlobal maybeActiveFile projectFileContentsDict projectDependencies packageDocs Nothing Nothing activeFileTokens
 
-                                allModuleDocs =
-                                    projectPackageDocs ++ getProjectModuleDocs projectDirectory projectFileContentsDict
+                ( exposedAndTopLevelHints, unexposedHints, argHints ) =
+                    case ( external, local ) of
+                        ( Just external, Just local ) ->
+                            ( external.importedHints ++ local.topLevelHints, external.unimportedHints, local.argHints )
 
-                                importsPlusActiveModule =
-                                    getFileContentsOfProject projectDirectory projectFileContentsDict
-                                        |> getImportsPlusActiveModuleForActiveFile maybeActiveFile
-
-                                ( exposedHints, unexposedHints ) =
-                                    if isGlobal then
-                                        getExposedAndUnexposedHints True filePath importsPlusActiveModule allModuleDocs
-                                    else
-                                        let
-                                            importedModuleDocs =
-                                                allModuleDocs
-                                                    |> List.filter
-                                                        (\moduleDocs ->
-                                                            List.member moduleDocs.name (Dict.keys importsPlusActiveModule)
-                                                        )
-                                        in
-                                            -- Only check the imported modules.
-                                            getExposedAndUnexposedHints False filePath importsPlusActiveModule importedModuleDocs
-
-                                argHints =
-                                    activeFileTokens
-                                        |> Dict.values
-                                        |> List.concat
-                                        |> List.filter (\hint -> hint.moduleName == "")
-                            in
-                                ( exposedHints, unexposedHints, argHints )
-
-                updatedHintsCache =
-                    Just { exposedHints = exposedHints, unexposedHints = unexposedHints, argHints = argHints }
+                        _ ->
+                            ( [], [], [] )
 
                 filteredDefaultHints =
-                    filterByName defaultSuggestions
+                    filterHintsByName partial maybeInferredTipe isFiltered isRegex defaultSuggestions
 
                 filteredExposedHints =
-                    filterByName exposedHints
+                    filterHintsByName partial maybeInferredTipe isFiltered isRegex exposedAndTopLevelHints
 
                 filteredUnexposedHints =
-                    filterByName unexposedHints
+                    filterHintsByName partial maybeInferredTipe isFiltered isRegex unexposedHints
 
                 filteredArgHints =
-                    filterByName argHints
+                    filterHintsByName partial maybeInferredTipe isFiltered isRegex argHints
 
                 hints =
                     case maybeInferredTipe of
@@ -1282,38 +1366,20 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered 
 
                                 ( unexposedHintsCompatible, unexposedHintsNotCompatible ) =
                                     partitionHints filteredUnexposedHints
-
-                                filterWithPartial hints =
-                                    if partial == "" then
-                                        []
-                                    else if isFiltered || isRegex then
-                                        hints
-                                            |> List.filter
-                                                (\{ name } ->
-                                                    filterFunction partial name
-                                                )
-                                    else
-                                        hints
                             in
                                 sortHintsByScore tipeString preceedingToken argHintsCompatible
                                     ++ sortHintsByScore tipeString preceedingToken defaultHintsCompatible
                                     ++ sortHintsByScore tipeString preceedingToken exposedHintsCompatible
                                     ++ sortHintsByScore tipeString preceedingToken unexposedHintsCompatible
                                     ++ (sortHintsByName
-                                            (filterWithPartial argHintsNotCompatible
-                                                ++ filterWithPartial defaultHintsNotCompatible
-                                                ++ filterWithPartial exposedHintsNotCompatible
+                                            (filterTypeIncompatibleHints partial isFiltered isRegex argHintsNotCompatible
+                                                ++ filterTypeIncompatibleHints partial isFiltered isRegex defaultHintsNotCompatible
+                                                ++ filterTypeIncompatibleHints partial isFiltered isRegex exposedHintsNotCompatible
                                             )
-                                            ++ sortHintsByName (filterWithPartial unexposedHintsNotCompatible)
+                                            ++ sortHintsByName (filterTypeIncompatibleHints partial isFiltered isRegex unexposedHintsNotCompatible)
                                        )
 
                         Nothing ->
-                            -- sortHintsByName
-                            --     (filteredArgHints
-                            --         ++ filteredDefaultHints
-                            --         ++ filteredExposedHints
-                            --     )
-                            --     ++ sortHintsByName filteredUnexposedHints
                             (filteredArgHints
                                 ++ filteredDefaultHints
                                 ++ filteredExposedHints
@@ -1326,10 +1392,67 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered 
                                             hints
                                    )
             in
-                ( hints, updatedHintsCache )
+                ( hints, Just { external = external, local = local } )
 
         Nothing ->
             ( [], maybeHintsCache )
+
+
+filterHintsByName : String -> Maybe TipeString -> Bool -> Bool -> List Hint -> List Hint
+filterHintsByName partial maybeInferredTipe isFiltered isRegex hints =
+    if isFiltered || isRegex then
+        let
+            filter =
+                List.filter
+                    (\{ name } ->
+                        filterHintsFunction isRegex partial name
+                    )
+        in
+            case maybeInferredTipe of
+                Just _ ->
+                    if partial == "" then
+                        hints
+                    else
+                        filter hints
+
+                Nothing ->
+                    filter hints
+    else
+        hints
+
+
+filterHintsFunction : Bool -> String -> String -> Bool
+filterHintsFunction isRegex testString name =
+    let
+        startsWithName =
+            String.startsWith testString name
+    in
+        if isRegex && String.startsWith "/" testString then
+            let
+                -- NOTE: The regex expression should be pre-validated to prevent a crash.
+                expression =
+                    String.dropLeft 1 testString
+            in
+                if expression /= "" then
+                    startsWithName || Regex.contains (Regex.regex expression) name
+                else
+                    startsWithName
+        else
+            startsWithName
+
+
+filterTypeIncompatibleHints : String -> Bool -> Bool -> List Hint -> List Hint
+filterTypeIncompatibleHints partial isFiltered isRegex hints =
+    if partial == "" then
+        []
+    else if isFiltered || isRegex then
+        hints
+            |> List.filter
+                (\{ name } ->
+                    filterHintsFunction isRegex partial name
+                )
+    else
+        hints
 
 
 getTipeDistance : String -> String -> Int
@@ -1449,10 +1572,10 @@ partitionByTipe tipeString preceedingToken hint =
 
 
 lastParameterTipe : TipeString -> String
-lastParameterTipe t =
+lastParameterTipe tipeString =
     let
         parts =
-            getTipeParts t
+            getTipeParts tipeString
     in
         case List.tail parts of
             Just _ ->
@@ -1466,10 +1589,10 @@ lastParameterTipe t =
 
 
 getExposedAndUnexposedHints : Bool -> FilePath -> ImportDict -> List ModuleDocs -> ( List Hint, List Hint )
-getExposedAndUnexposedHints includeUnexposed activeFilePath importsPlusActiveModule moduleDocs =
+getExposedAndUnexposedHints includeUnexposed activeFilePath imports moduleDocsList =
     let
         ( exposedLists, unexposedLists ) =
-            moduleDocs
+            moduleDocsList
                 |> List.foldl
                     (\moduleDocs ( accExposedHints, accUnexposedHints ) ->
                         let
@@ -1488,7 +1611,7 @@ getExposedAndUnexposedHints includeUnexposed activeFilePath importsPlusActiveMod
                                     |> Set.fromList
 
                             ( exposedHints, unexposedHints ) =
-                                case Dict.get moduleDocs.name importsPlusActiveModule of
+                                case Dict.get moduleDocs.name imports of
                                     Just importData ->
                                         let
                                             exposed =
@@ -2475,7 +2598,8 @@ getFileContentsOfProject projectDirectory projectFileContentsDict =
 
 getImportsPlusActiveModuleForActiveFile : Maybe ActiveFile -> FileContentsDict -> ImportDict
 getImportsPlusActiveModuleForActiveFile maybeActiveFile fileContentsDict =
-    getImportsPlusActiveModule (getActiveFileContents maybeActiveFile fileContentsDict)
+    getActiveFileContents maybeActiveFile fileContentsDict
+        |> getImportsPlusActiveModule
 
 
 getImportsPlusActiveModule : FileContents -> ImportDict
