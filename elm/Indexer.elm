@@ -298,7 +298,7 @@ type alias ExternalHints =
 
 type alias LocalHints =
     { topLevelHints : List Hint
-    , argHints : List Hint
+    , variableHints : List Hint
     }
 
 
@@ -398,7 +398,25 @@ update msg model =
                                     ( successes ++ [ ( moduleDocsList, ( dependency, jsonString ) ) ], failures )
 
                                 Err message ->
-                                    ( successes, failures ++ [ toString message ++ " " ++ toPackageUri dependency ++ "documentation.json" ] )
+                                    let
+                                        errorDetails =
+                                            case message of
+                                                Http.BadUrl string ->
+                                                    "BadUrl " ++ string
+
+                                                Http.Timeout ->
+                                                    "Timeout"
+
+                                                Http.NetworkError ->
+                                                    "NetworkError"
+
+                                                Http.BadStatus { status } ->
+                                                    "BadStatus " ++ toString status.code ++ " " ++ status.message
+
+                                                Http.BadPayload _ { status } ->
+                                                    "BadPayload " ++ toString status.code ++ " " ++ status.message
+                                    in
+                                        ( successes, failures ++ [ toPackageUri dependency ++ "documentation.json (" ++ errorDetails ++ ")" ] )
                         )
                         ( [], [] )
                         (List.map2 (,) dependencies result)
@@ -415,7 +433,7 @@ update msg model =
                 , Cmd.batch
                     ([ docsDownloadedCmd loadedDependenciesAndJson ]
                         ++ (if List.length failures > 0 then
-                                [ downloadDocsFailedCmd (String.join "\n" failures) ]
+                                [ downloadDocsFailedCmd (String.join "\n---\n" failures) ]
                             else
                                 []
                            )
@@ -1261,7 +1279,7 @@ getLocalHints filePath activeFileContents activeFileTokens =
         { topLevelHints =
             getExposedAndUnexposedHints False filePath selfImport [ activeFileContents.moduleDocs ]
                 |> Tuple.first
-        , argHints =
+        , variableHints =
             activeFileTokens
                 |> Dict.values
                 |> List.concat
@@ -1306,7 +1324,7 @@ getExternalAndLocalHints isGlobal maybeActiveFile projectFileContentsDict projec
 
         Nothing ->
             { external = Just { importedHints = [], unimportedHints = [] }
-            , local = Just { topLevelHints = [], argHints = [] }
+            , local = Just { topLevelHints = [], variableHints = [] }
             }
 
 
@@ -1328,10 +1346,10 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered 
                         Nothing ->
                             getExternalAndLocalHints isGlobal maybeActiveFile projectFileContentsDict projectDependencies packageDocs Nothing Nothing activeFileTokens
 
-                ( exposedAndTopLevelHints, unexposedHints, argHints ) =
+                ( exposedAndTopLevelHints, unexposedHints, variableHints ) =
                     case ( external, local ) of
                         ( Just external, Just local ) ->
-                            ( external.importedHints ++ local.topLevelHints, external.unimportedHints, local.argHints )
+                            ( external.importedHints ++ local.topLevelHints, external.unimportedHints, local.variableHints )
 
                         _ ->
                             ( [], [], [] )
@@ -1345,8 +1363,8 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered 
                 filteredUnexposedHints =
                     filterHintsByName partial maybeInferredTipe isFiltered isRegex unexposedHints
 
-                filteredArgHints =
-                    filterHintsByName partial maybeInferredTipe isFiltered isRegex argHints
+                filteredVariableHints =
+                    filterHintsByName partial maybeInferredTipe isFiltered isRegex variableHints
 
                 hints =
                     case maybeInferredTipe of
@@ -1355,8 +1373,8 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered 
                                 partitionHints hints =
                                     List.partition (partitionByTipe tipeString preceedingToken) hints
 
-                                ( argHintsCompatible, argHintsNotCompatible ) =
-                                    partitionHints filteredArgHints
+                                ( variableHintsCompatible, variableHintsNotCompatible ) =
+                                    partitionHints filteredVariableHints
 
                                 ( defaultHintsCompatible, defaultHintsNotCompatible ) =
                                     partitionHints filteredDefaultHints
@@ -1367,12 +1385,12 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered 
                                 ( unexposedHintsCompatible, unexposedHintsNotCompatible ) =
                                     partitionHints filteredUnexposedHints
                             in
-                                sortHintsByScore tipeString preceedingToken argHintsCompatible
+                                sortHintsByScore tipeString preceedingToken variableHintsCompatible
                                     ++ sortHintsByScore tipeString preceedingToken defaultHintsCompatible
                                     ++ sortHintsByScore tipeString preceedingToken exposedHintsCompatible
                                     ++ sortHintsByScore tipeString preceedingToken unexposedHintsCompatible
                                     ++ (sortHintsByName
-                                            (filterTypeIncompatibleHints partial isFiltered isRegex argHintsNotCompatible
+                                            (filterTypeIncompatibleHints partial isFiltered isRegex variableHintsNotCompatible
                                                 ++ filterTypeIncompatibleHints partial isFiltered isRegex defaultHintsNotCompatible
                                                 ++ filterTypeIncompatibleHints partial isFiltered isRegex exposedHintsNotCompatible
                                             )
@@ -1380,7 +1398,7 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered 
                                        )
 
                         Nothing ->
-                            (filteredArgHints
+                            (filteredVariableHints
                                 ++ filteredDefaultHints
                                 ++ filteredExposedHints
                                 ++ filteredUnexposedHints
@@ -3064,11 +3082,11 @@ getActiveFileTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict 
                                 List.map2 (,) args (getTipeParts tipe)
                             )
 
-                argHints =
+                argumentHints =
                     case maybeActiveTopLevel of
                         Just activeTopLevel ->
                             List.concatMap
-                                (topLevelArgToHints activeTopLevel
+                                (topLevelArgToHints
                                     filePath
                                     ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
                                     topLevelTokens
@@ -3079,7 +3097,7 @@ getActiveFileTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict 
                             []
 
                 activeFileTokens =
-                    (argHints
+                    (argumentHints
                         ++ (defaultSuggestions
                                 |> List.filter (\hint -> hint.comment /= "")
                                 |> List.map (\hint -> ( hint.name, hint ))
@@ -3569,8 +3587,8 @@ getFilteredHints activeFilePath moduleDocs importData =
         ++ moduleToHints moduleDocs importData
 
 
-topLevelArgToHints : ActiveTopLevel -> SourcePath -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> ( String, TipeString ) -> List ( String, Hint )
-topLevelArgToHints activeTopLevel parentSourcePath ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) topLevelTokens ( name, tipeString ) =
+topLevelArgToHints : SourcePath -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> ( String, TipeString ) -> List ( String, Hint )
+topLevelArgToHints parentSourcePath ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) topLevelTokens ( name, tipeString ) =
     let
         getHint ( name, tipeString ) =
             let
@@ -3600,14 +3618,11 @@ topLevelArgToHints activeTopLevel parentSourcePath ( maybeActiveFile, projectFil
                                 Dict.get field (getRecordTipeParts tipeString |> Dict.fromList)
                                     |> Maybe.map
                                         (\tipeString ->
-                                            getRecordFieldTokensRecur field
+                                            getRecordFieldTokens field
                                                 tipeString
                                                 parentSourcePath
                                                 ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
                                                 topLevelTokens
-                                                True
-                                                Nothing
-                                                Set.empty
                                         )
                             )
                         |> List.concat
@@ -3625,17 +3640,19 @@ topLevelArgToHints activeTopLevel parentSourcePath ( maybeActiveFile, projectFil
                                 []
 
                     ( False, _ ) ->
-                        getRecordFieldTokensRecur name
+                        getRecordFieldTokens name
                             tipeString
                             parentSourcePath
                             ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
                             topLevelTokens
-                            True
-                            Nothing
-                            Set.empty
     in
         tipes
             |> List.concatMap getHint
+
+
+getRecordFieldTokens : String -> TipeString -> SourcePath -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> List ( String, TipeString )
+getRecordFieldTokens name tipeString parentSourcePath ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) topLevelTokens =
+    getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) topLevelTokens True Nothing Set.empty
 
 
 getRecordFieldTokensRecur : String -> TipeString -> SourcePath -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> Bool -> Maybe String -> Set.Set String -> List ( String, TipeString )

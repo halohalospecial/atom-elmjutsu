@@ -8909,7 +8909,6 @@ var _user$project$Sidekick$docsDownloadedSub = _elm_lang$core$Native_Platform.in
 	'docsDownloadedSub',
 	_elm_lang$core$Json_Decode$null(
 		{ctor: '_Tuple0'}));
-var _user$project$Sidekick$downloadDocsFailedSub = _elm_lang$core$Native_Platform.incomingPort('downloadDocsFailedSub', _elm_lang$core$Json_Decode$string);
 var _user$project$Sidekick$readingPackageDocsSub = _elm_lang$core$Native_Platform.incomingPort(
 	'readingPackageDocsSub',
 	_elm_lang$core$Json_Decode$null(
@@ -8996,16 +8995,6 @@ var _user$project$Sidekick$update = F2(
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
 						{note: ''}),
-					_1: _elm_lang$core$Platform_Cmd$none
-				};
-			case 'DownloadDocsFailed':
-				return {
-					ctor: '_Tuple2',
-					_0: _elm_lang$core$Native_Utils.update(
-						model,
-						{
-							note: A2(_elm_lang$core$Basics_ops['++'], 'Failed to download package docs:\n', _p8._0)
-						}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'ReadingPackageDocs':
@@ -9213,9 +9202,6 @@ var _user$project$Sidekick$view = function (_p9) {
 };
 var _user$project$Sidekick$DownloadingPackageDocs = {ctor: 'DownloadingPackageDocs'};
 var _user$project$Sidekick$ReadingPackageDocs = {ctor: 'ReadingPackageDocs'};
-var _user$project$Sidekick$DownloadDocsFailed = function (a) {
-	return {ctor: 'DownloadDocsFailed', _0: a};
-};
 var _user$project$Sidekick$DocsDownloaded = {ctor: 'DocsDownloaded'};
 var _user$project$Sidekick$DocsRead = {ctor: 'DocsRead'};
 var _user$project$Sidekick$ActiveFileChanged = function (a) {
@@ -9246,24 +9232,20 @@ var _user$project$Sidekick$subscriptions = function (model) {
 							}),
 						_1: {
 							ctor: '::',
-							_0: _user$project$Sidekick$downloadDocsFailedSub(_user$project$Sidekick$DownloadDocsFailed),
+							_0: _user$project$Sidekick$readingPackageDocsSub(
+								function (_p15) {
+									return _user$project$Sidekick$ReadingPackageDocs;
+								}),
 							_1: {
 								ctor: '::',
-								_0: _user$project$Sidekick$readingPackageDocsSub(
-									function (_p15) {
-										return _user$project$Sidekick$ReadingPackageDocs;
+								_0: _user$project$Sidekick$downloadingPackageDocsSub(
+									function (_p16) {
+										return _user$project$Sidekick$DownloadingPackageDocs;
 									}),
 								_1: {
 									ctor: '::',
-									_0: _user$project$Sidekick$downloadingPackageDocsSub(
-										function (_p16) {
-											return _user$project$Sidekick$DownloadingPackageDocs;
-										}),
-									_1: {
-										ctor: '::',
-										_0: _user$project$Sidekick$configChangedSub(_user$project$Sidekick$ConfigChanged),
-										_1: {ctor: '[]'}
-									}
+									_0: _user$project$Sidekick$configChangedSub(_user$project$Sidekick$ConfigChanged),
+									_1: {ctor: '[]'}
 								}
 							}
 						}

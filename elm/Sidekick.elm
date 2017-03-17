@@ -25,7 +25,7 @@ subscriptions model =
         , activeFileChangedSub ActiveFileChanged
         , docsReadSub (\_ -> DocsRead)
         , docsDownloadedSub (\_ -> DocsDownloaded)
-        , downloadDocsFailedSub DownloadDocsFailed
+          -- , downloadDocsFailedSub DownloadDocsFailed
         , readingPackageDocsSub (\_ -> ReadingPackageDocs)
         , downloadingPackageDocsSub (\_ -> DownloadingPackageDocs)
         , configChangedSub ConfigChanged
@@ -48,7 +48,8 @@ port docsReadSub : (() -> msg) -> Sub msg
 port docsDownloadedSub : (() -> msg) -> Sub msg
 
 
-port downloadDocsFailedSub : (String -> msg) -> Sub msg
+
+-- port downloadDocsFailedSub : (String -> msg) -> Sub msg
 
 
 port readingPackageDocsSub : (() -> msg) -> Sub msg
@@ -129,7 +130,7 @@ type Msg
     | ActiveFileChanged (Maybe ActiveFile)
     | DocsRead
     | DocsDownloaded
-    | DownloadDocsFailed String
+      -- | DownloadDocsFailed String
     | ReadingPackageDocs
     | DownloadingPackageDocs
     | GoToDefinition String
@@ -159,11 +160,10 @@ update msg model =
             , Cmd.none
             )
 
-        DownloadDocsFailed message ->
-            ( { model | note = "Failed to download package docs:\n" ++ message }
-            , Cmd.none
-            )
-
+        -- DownloadDocsFailed message ->
+        --     ( { model | note = "Failed to download package docs:\n" ++ message }
+        --     , Cmd.none
+        --     )
         ReadingPackageDocs ->
             ( { model | note = "Reading package docs..." }
             , Cmd.none

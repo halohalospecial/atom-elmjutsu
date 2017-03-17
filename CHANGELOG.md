@@ -1,3 +1,8 @@
+## 5.3.4
+* Fix issue when deleting `.elm` files. (#66).  Thanks to @pacbeckh for reporting!
+* Fix `Add Import` styling issue.
+* Remove package docs download failure messages from the Sidekick panel and show in a notification popup instead (#67).  Thanks to @vladpazych for reporting!
+
 ## 5.3.3
 * Add some more basic caching for autocomplete suggestions.
 * Sort identically-named suggestions by their module names.
