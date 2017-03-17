@@ -101,7 +101,7 @@ port askCanGoToDefinitionSub : (( Maybe ActiveTopLevel, Token ) -> msg) -> Sub m
 port showGoToSymbolViewSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
 
 
-port getHintsForPartialSub : (( String, Maybe TipeString, Maybe Token, Bool, Bool, Bool ) -> msg) -> Sub msg
+port getHintsForPartialSub : (( String, Maybe TipeString, Maybe Token, Bool, Bool, Bool, Bool ) -> msg) -> Sub msg
 
 
 port getSuggestionsForImportSub : (( String, Bool ) -> msg) -> Sub msg
@@ -364,7 +364,7 @@ type Msg
     | GoToDefinition ( Maybe ActiveTopLevel, Maybe Token )
     | AskCanGoToDefinition ( Maybe ActiveTopLevel, Token )
     | ShowGoToSymbolView ( Maybe ProjectDirectory, Maybe String )
-    | GetHintsForPartial ( String, Maybe TipeString, Maybe Token, Bool, Bool, Bool )
+    | GetHintsForPartial ( String, Maybe TipeString, Maybe Token, Bool, Bool, Bool, Bool )
     | GetSuggestionsForImport ( String, Bool )
     | GetImporterSourcePathsForToken ( Maybe ProjectDirectory, Maybe Token, Maybe Bool )
     | DownloadMissingPackageDocs (List Dependency)
@@ -476,8 +476,8 @@ update msg model =
         ShowGoToSymbolView ( maybeProjectDirectory, maybeToken ) ->
             doShowGoToSymbolView maybeProjectDirectory maybeToken model
 
-        GetHintsForPartial ( partial, maybeInferredTipe, preceedingToken, isRegex, isFiltered, isGlobal ) ->
-            doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal model
+        GetHintsForPartial ( partial, maybeInferredTipe, preceedingToken, isRegex, isTypeSignature, isFiltered, isGlobal ) ->
+            doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSignature isFiltered isGlobal model
 
         GetSuggestionsForImport ( partial, isFiltered ) ->
             doGetSuggestionsForImport partial isFiltered model
@@ -796,11 +796,11 @@ doShowGoToSymbolView maybeProjectDirectory maybeToken model =
             )
 
 
-doGetHintsForPartial : String -> Maybe TipeString -> Maybe Token -> Bool -> Bool -> Bool -> Model -> ( Model, Cmd Msg )
-doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal model =
+doGetHintsForPartial : String -> Maybe TipeString -> Maybe Token -> Bool -> Bool -> Bool -> Bool -> Model -> ( Model, Cmd Msg )
+doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSignature isFiltered isGlobal model =
     let
         ( hints, updatedHintsCache ) =
-            getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal model.activeFile model.projectFileContentsDict model.projectDependencies model.packageDocs model.hintsCache model.activeFileTokens
+            getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSignature isFiltered isGlobal model.activeFile model.projectFileContentsDict model.projectDependencies model.packageDocs model.hintsCache model.activeFileTokens
     in
         ( { model | hintsCache = updatedHintsCache }
         , ( partial
@@ -1328,8 +1328,8 @@ getExternalAndLocalHints isGlobal maybeActiveFile projectFileContentsDict projec
             }
 
 
-getHintsForPartial : String -> Maybe TipeString -> Maybe Token -> Bool -> Bool -> Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> Maybe HintsCache -> TokenDict -> ( List Hint, Maybe HintsCache )
-getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered isGlobal maybeActiveFile projectFileContentsDict projectDependencies packageDocs maybeHintsCache activeFileTokens =
+getHintsForPartial : String -> Maybe TipeString -> Maybe Token -> Bool -> Bool -> Bool -> Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> Maybe HintsCache -> TokenDict -> ( List Hint, Maybe HintsCache )
+getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSignature isFiltered isGlobal maybeActiveFile projectFileContentsDict projectDependencies packageDocs maybeHintsCache activeFileTokens =
     case maybeActiveFile of
         Just { projectDirectory, filePath } ->
             let
@@ -1354,17 +1354,20 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered 
                         _ ->
                             ( [], [], [] )
 
+                filterByPartial =
+                    filterHintsByPartial partial maybeInferredTipe isFiltered isRegex isTypeSignature
+
                 filteredDefaultHints =
-                    filterHintsByName partial maybeInferredTipe isFiltered isRegex defaultSuggestions
+                    filterByPartial defaultSuggestions
 
                 filteredExposedHints =
-                    filterHintsByName partial maybeInferredTipe isFiltered isRegex exposedAndTopLevelHints
+                    filterByPartial exposedAndTopLevelHints
 
                 filteredUnexposedHints =
-                    filterHintsByName partial maybeInferredTipe isFiltered isRegex unexposedHints
+                    filterByPartial unexposedHints
 
                 filteredVariableHints =
-                    filterHintsByName partial maybeInferredTipe isFiltered isRegex variableHints
+                    filterByPartial variableHints
 
                 hints =
                     case maybeInferredTipe of
@@ -1416,14 +1419,21 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isFiltered 
             ( [], maybeHintsCache )
 
 
-filterHintsByName : String -> Maybe TipeString -> Bool -> Bool -> List Hint -> List Hint
-filterHintsByName partial maybeInferredTipe isFiltered isRegex hints =
-    if isFiltered || isRegex then
+filterHintsByPartial : String -> Maybe TipeString -> Bool -> Bool -> Bool -> List Hint -> List Hint
+filterHintsByPartial partial maybeInferredTipe isFiltered isRegex isTypeSignature hints =
+    if isFiltered || isRegex || isTypeSignature then
         let
             filter =
                 List.filter
-                    (\{ name } ->
-                        filterHintsFunction isRegex partial name
+                    (\hint ->
+                        let
+                            fieldValue =
+                                if isTypeSignature then
+                                    hint.tipe
+                                else
+                                    hint.name
+                        in
+                            filterHintsFunction isRegex isTypeSignature partial hint.name fieldValue
                     )
         in
             case maybeInferredTipe of
@@ -1439,22 +1449,61 @@ filterHintsByName partial maybeInferredTipe isFiltered isRegex hints =
         hints
 
 
-filterHintsFunction : Bool -> String -> String -> Bool
-filterHintsFunction isRegex testString name =
+compressTipeRegex : Regex.Regex
+compressTipeRegex =
+    Regex.regex "\\s*(->|:|,)\\s*|(\\{|\\()\\s*|\\s*(\\}|\\))"
+
+
+compressTipeString : String -> String
+compressTipeString =
+    Regex.replace Regex.All compressTipeRegex (\{ match } -> String.trim match)
+
+
+filterHintsFunction : Bool -> Bool -> String -> String -> String -> Bool
+filterHintsFunction isRegex isTypeSignature testString name fieldValue =
     let
         startsWithName =
             String.startsWith testString name
     in
-        if isRegex && String.startsWith "/" testString then
+        if (isRegex && String.startsWith "/" testString) || (isTypeSignature && String.startsWith ":" testString) then
             let
-                -- NOTE: The regex expression should be pre-validated to prevent a crash.
-                expression =
-                    String.dropLeft 1 testString
+                strippedTestString =
+                    testString
+                        |> String.dropLeft 1
+
+                -- NOTE: The regex expressions should be pre-validated outside of Elm to prevent crashing.
+                ( fieldValueExpression, nameExpression ) =
+                    if isTypeSignature then
+                        let
+                            ( testString1, maybeTestString2 ) =
+                                case String.split "__" strippedTestString of
+                                    [ namePart, typeSignaturePart ] ->
+                                        ( typeSignaturePart, Just namePart )
+
+                                    _ ->
+                                        ( strippedTestString, Nothing )
+                        in
+                            ( testString1
+                                |> Regex.replace Regex.All (Regex.regex "_") (\_ -> " ")
+                                |> compressTipeString
+                            , maybeTestString2
+                            )
+                    else
+                        ( strippedTestString, Nothing )
+
+                formattedFieldValue =
+                    if isTypeSignature then
+                        compressTipeString fieldValue
+                    else
+                        fieldValue
             in
-                if expression /= "" then
-                    startsWithName || Regex.contains (Regex.regex expression) name
+                if fieldValueExpression == "" then
+                    startsWithName
                 else
                     startsWithName
+                        || (Regex.contains (Regex.regex fieldValueExpression) formattedFieldValue
+                                && (nameExpression == Nothing || Regex.contains (Regex.regex (Maybe.withDefault "" nameExpression)) name)
+                           )
         else
             startsWithName
 
@@ -1467,7 +1516,7 @@ filterTypeIncompatibleHints partial isFiltered isRegex hints =
         hints
             |> List.filter
                 (\{ name } ->
-                    filterHintsFunction isRegex partial name
+                    filterHintsFunction isRegex False partial name name
                 )
     else
         hints

@@ -1,4 +1,5 @@
-## 5.3.4
+## 5.4.0
+* Add autocomplete type filtering: If the typed text starts with a colon (`:`), use the rest of the characters as a regular expression to filter the suggestions by type signature.
 * Fix issue when deleting `.elm` files. (#66).  Thanks to @pacbeckh for reporting!
 * Fix `Add Import` styling issue.
 * Remove package docs download failure messages from the Sidekick panel and show in a notification popup instead (#67).  Thanks to @vladpazych for reporting!
@@ -24,7 +25,7 @@
 ## 5.2.0
 * Optimization: Only compute source paths of record fields when needed (e.g. for `Go To Definition`).
 * Type-aware autocomplete: Sort suggestions based on "distance" from expected type.
-* Regex autocomplete filtering: If the typed text starts with a slash (`/`), use the rest of the characters as a regular expression to filter the suggestions.
+* Add autocomplete regex filtering: If the typed text starts with a slash (`/`), use the rest of the characters as a regular expression to filter the suggestions by name.
 
 ## 5.1.8
 * Fix `Infer Type` error caused by elm-make returning a relative source path.  Thanks to @splodingsocks for reporting!
