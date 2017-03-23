@@ -1,3 +1,9 @@
+## 5.5.0
+* Fix "Uncaught ReferenceError" (#69).  Thanks to @xorsnn and @pruett for reporting!
+* Sidekick: Do not display (for now) source paths of function arguments in exchange for performance improvements.
+* Fix `Go To Definition` bug when module and type names are the same.
+* Add `Show Scope Bar` option (experimental).
+
 ## 5.4.0
 * Add autocomplete type filtering: If the typed text starts with a colon (`:`), use the rest of the characters as a regular expression to filter the suggestions by type signature.
 * Fix issue when deleting `.elm` files. (#66).  Thanks to @pacbeckh for reporting!

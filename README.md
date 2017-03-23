@@ -28,6 +28,9 @@ Related Atom packages:
   * [Autocomplete Snippets](#autocomplete-snippets)
   * [Special completions](#special-completions)
   * [Filtering suggestions](#autocomplete-filtering)
+    * [Fuzzy filtering](#autocomplete-fuzzy-filtering)
+    * [Regex filtering](#autocomplete-regex-filtering)
+    * [Type filtering](#autocomplete-type-filtering)
   * [Performance tuning](#autocomplete-performance-tuning)
 
 * Navigation

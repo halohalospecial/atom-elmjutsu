@@ -63,7 +63,7 @@ subscriptions model =
         , inferenceEnteredSub InferenceEntered
         , configChangedSub ConfigChanged
         , getAliasesOfTypeSub GetAliasesOfType
-        , clearLocalHintsCacheSub (always ClearLocalHintsCache)
+        , clearLocalHintsCacheSub (\_ -> ClearLocalHintsCache)
         ]
 
 
@@ -506,7 +506,7 @@ update msg model =
         InferenceEntered inference ->
             ( model
             , inferenceToHints inference
-                |> List.map (encodeHint ( model.activeTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs, model.config.showAliasesOfType ) model.activeFileTokens)
+                |> List.map (encodeHint model.config.showAliasesOfType model.activeFileTokens)
                 |> activeTokenHintsChangedCmd
             )
 
@@ -560,7 +560,7 @@ doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
             , activeTokenHints = updatedActiveTokenHints
           }
         , updatedActiveTokenHints
-            |> List.map (encodeHint ( maybeActiveTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs, model.config.showAliasesOfType ) updatedActiveFileTokens)
+            |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
             |> activeTokenHintsChangedCmd
         )
 
@@ -588,7 +588,7 @@ doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model =
         , Cmd.batch
             [ activeFileChangedCmd maybeActiveFile
             , updatedActiveTokenHints
-                |> List.map (encodeHint ( maybeActiveTopLevel, maybeActiveFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs, model.config.showAliasesOfType ) updatedActiveFileTokens)
+                |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
                 |> activeTokenHintsChangedCmd
             ]
         )
@@ -656,9 +656,9 @@ updateFileContents filePath projectDirectory fileContents projectFileContentsDic
             getFileContentsOfProject projectDirectory projectFileContentsDict
 
         updatedFileContentsDict =
-            Dict.update filePath (always <| Just fileContents) fileContentsDict
+            Dict.update filePath (\_ -> Just fileContents) fileContentsDict
     in
-        Dict.update projectDirectory (always <| Just updatedFileContentsDict) projectFileContentsDict
+        Dict.update projectDirectory (\_ -> Just updatedFileContentsDict) projectFileContentsDict
 
 
 doRemoveFileContents : FilePath -> ProjectDirectory -> Model -> ( Model, Cmd Msg )
@@ -672,7 +672,7 @@ doRemoveFileContents filePath projectDirectory model =
                 updatedFileContentsDict =
                     Dict.remove filePath fileContentsDict
             in
-                Dict.update projectDirectory (always <| Just updatedFileContentsDict) model.projectFileContentsDict
+                Dict.update projectDirectory (\_ -> Just updatedFileContentsDict) model.projectFileContentsDict
 
         updatedActiveFileTokens =
             getActiveFileTokens model.activeFile model.activeTopLevel updatedProjectFileContentsDict model.projectDependencies model.packageDocs
@@ -696,7 +696,7 @@ doUpdateProjectDependencies projectDirectory dependencies model =
             List.filter (\dependency -> not <| List.member (toPackageUri dependency) existingPackages) dependencies
     in
         ( { model
-            | projectDependencies = Dict.update projectDirectory (always <| Just dependencies) model.projectDependencies
+            | projectDependencies = Dict.update projectDirectory (\_ -> Just dependencies) model.projectDependencies
             , hintsCache = Nothing
           }
         , Cmd.batch
@@ -721,7 +721,7 @@ doGoToDefinition maybeActiveTopLevel maybeToken model =
     let
         activeFileTokens =
             getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
-                |> computeVariableSourcePaths ( maybeActiveTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs )
+                |> computeVariableSourcePaths ( model.activeFile, maybeActiveTopLevel, model.projectFileContentsDict, model.projectDependencies, model.packageDocs )
 
         requests =
             getHintsForToken maybeToken activeFileTokens
@@ -751,7 +751,7 @@ doAskCanGoToDefinition maybeActiveTopLevel token model =
     let
         activeFileTokens =
             getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
-                |> computeVariableSourcePaths ( maybeActiveTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs )
+                |> computeVariableSourcePaths ( model.activeFile, maybeActiveTopLevel, model.projectFileContentsDict, model.projectDependencies, model.packageDocs )
     in
         ( model
         , ( token
@@ -805,7 +805,7 @@ doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSig
         ( { model | hintsCache = updatedHintsCache }
         , ( partial
           , hints
-                |> List.map (encodeHint ( model.activeTopLevel, model.activeFile, model.projectFileContentsDict, model.projectDependencies, model.packageDocs, model.config.showAliasesOfType ) model.activeFileTokens)
+                |> List.map (encodeHint model.config.showAliasesOfType model.activeFileTokens)
           )
             |> hintsForPartialReceivedCmd
         )
@@ -1137,13 +1137,13 @@ isTipeVariable tipeString =
 
 
 {-|
-```
+    ```
     isNumberTipe "number" == True
     isNumberTipe "Int" == True
     isNumberTipe "Float" == True
 
     isNumberTipe "a" == False
-```
+    ```
 -}
 isNumberTipe : String -> Bool
 isNumberTipe tipeString =
@@ -1151,7 +1151,7 @@ isNumberTipe tipeString =
 
 
 {-|
-```
+    ```
     isAppendableTipe "appendable" == True
     isAppendableTipe "String" == True
     isAppendableTipe "List" == True
@@ -1159,7 +1159,7 @@ isNumberTipe tipeString =
     isAppendableTipe "List Int" == True
 
     isAppendableTipe "number" == False
-```
+    ```
 -}
 isAppendableTipe : String -> Bool
 isAppendableTipe tipeString =
@@ -1173,7 +1173,7 @@ isComparableTipe tipeString =
 
 
 {-|
-```
+    ```
     areTipesCompatibleRecur "a" "b" == True
     areTipesCompatibleRecur "number" "a" == True
     areTipesCompatibleRecur "appendable" "a" == True
@@ -1198,7 +1198,7 @@ isComparableTipe tipeString =
 
     areTipesCompatibleRecur "" "Int" == False
     areTipesCompatibleRecur "Int" "" == False
-```
+    ```
 -}
 areTipesCompatibleRecur : String -> String -> Bool
 areTipesCompatibleRecur tipe1 tipe2 =
@@ -2024,12 +2024,12 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
 
                                 Some exposed ->
                                     if symbolName == ".." then
-                                        Dict.update moduleName (always <| Just { moduleImport | exposed = All }) fileContents.imports
+                                        Dict.update moduleName (\_ -> Just { moduleImport | exposed = All }) fileContents.imports
                                     else
-                                        Dict.update moduleName (always <| Just { moduleImport | exposed = Some (Set.insert symbolName exposed) }) fileContents.imports
+                                        Dict.update moduleName (\_ -> Just { moduleImport | exposed = Some (Set.insert symbolName exposed) }) fileContents.imports
 
                                 None ->
-                                    Dict.update moduleName (always <| Just { moduleImport | exposed = Some (Set.singleton symbolName) }) fileContents.imports
+                                    Dict.update moduleName (\_ -> Just { moduleImport | exposed = Some (Set.singleton symbolName) }) fileContents.imports
 
                         Nothing ->
                             fileContents.imports
@@ -2572,7 +2572,7 @@ getFunctionArgNameRecur argString argNameCounters =
             case Dict.get partName2 argNameCounters2 of
                 Just count ->
                     ( partName2 ++ (toString (count + 1))
-                    , Dict.update partName2 (always <| Just (count + 1)) argNameCounters2
+                    , Dict.update partName2 (\_ -> Just (count + 1)) argNameCounters2
                     )
 
                 Nothing ->
@@ -2671,7 +2671,7 @@ getImportsPlusActiveModuleForActiveFile maybeActiveFile fileContentsDict =
 
 getImportsPlusActiveModule : FileContents -> ImportDict
 getImportsPlusActiveModule fileContents =
-    Dict.update fileContents.moduleDocs.name (always <| Just { alias = Nothing, exposed = All }) fileContents.imports
+    Dict.update fileContents.moduleDocs.name (\_ -> Just { alias = Nothing, exposed = All }) fileContents.imports
 
 
 getActiveFileContents : Maybe ActiveFile -> FileContentsDict -> FileContents
@@ -3017,25 +3017,11 @@ type alias EncodedHint =
     }
 
 
-encodeHint : ( Maybe ActiveTopLevel, Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs, Bool ) -> TokenDict -> Hint -> EncodedHint
-encodeHint ( maybeActiveTopLevel, maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs, showAliasesOfType ) tokens hint =
+encodeHint : Bool -> TokenDict -> Hint -> EncodedHint
+encodeHint showAliasesOfType tokens hint =
     { name = hint.name
-    , moduleName =
-        hint.moduleName
-    , sourcePath =
-        if hint.kind == KindVariable then
-            case maybeActiveFile of
-                Just { filePath } ->
-                    getSourcePathOfRecordFieldToken hint.name
-                        filePath
-                        maybeActiveTopLevel
-                        ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
-                        tokens
-
-                Nothing ->
-                    hint.sourcePath
-        else
-            hint.sourcePath
+    , moduleName = hint.moduleName
+    , sourcePath = hint.sourcePath
     , comment = hint.comment
     , tipe = hint.tipe
     , args = hint.args
@@ -3156,13 +3142,13 @@ getActiveFileTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict 
             in
                 activeFileTokens
 
-        -- |> computeVariableSourcePaths ( maybeActiveTopLevel, maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+        -- |> computeVariableSourcePaths ( maybeActiveFile, maybeActiveTopLevel, projectFileContentsDict, projectDependencies, packageDocs )
         Nothing ->
             Dict.empty
 
 
-computeVariableSourcePaths : ( Maybe ActiveTopLevel, Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> TokenDict
-computeVariableSourcePaths ( maybeActiveTopLevel, maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) tokens =
+computeVariableSourcePaths : ( Maybe ActiveFile, Maybe ActiveTopLevel, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> TokenDict
+computeVariableSourcePaths ( maybeActiveFile, maybeActiveTopLevel, projectFileContentsDict, projectDependencies, packageDocs ) tokens =
     case maybeActiveFile of
         Just { filePath } ->
             tokens
@@ -3307,9 +3293,9 @@ getSourcePathOfRecordFieldTokenRecur parentPartName parentName parentSourcePath 
 
 
 {-|
-```
+    ```
     getArgsParts "a b c" == [ "a", "b", "c" ]
-```
+    ```
 -}
 getArgsParts : String -> List String
 getArgsParts argsString =
@@ -3374,11 +3360,11 @@ getReturnTipe tipeString =
 
 
 {-|
-```
+    ```
     getTipeParts "Int -> Int -> Int" == [ "Int", "Int" ]
     getTipeParts "a -> b" == [ "a -> b" ]
     getTipeParts "(a -> b)" == [ "a", "b" ]
-```
+    ```
 -}
 getTipeParts : TipeString -> List String
 getTipeParts tipeString =
@@ -3450,9 +3436,9 @@ getCharAndRest str =
 
 
 {-|
-```
+    ```
     getTupleParts "( Int, String )" == [ "Int", "String" ]
-```
+    ```
 -}
 getTupleParts : String -> List String
 getTupleParts tupleString =
@@ -3504,9 +3490,9 @@ getTuplePartsRecur str acc parts ( openParentheses, openBraces ) =
 
 
 {-|
-```
+    ```
     getRecordArgParts "{ a, b }" == [ "a", "b" ]
-```
+    ```
 -}
 getRecordArgParts : String -> List String
 getRecordArgParts recordString =
@@ -3521,9 +3507,9 @@ getRecordArgParts recordString =
 
 
 {-|
-```
+    ```
     getRecordTipeParts "{ a : Int, b : String }" == [ ("a", "Int"), ("b", "String") ]
-```
+    ```
 -}
 getRecordTipeParts : TipeString -> List ( String, String )
 getRecordTipeParts tipeString =
@@ -3583,9 +3569,9 @@ getRecordTipePartsRecur str ( fieldAcc, tipeAcc ) lookingForTipe parts ( openPar
 
 
 {-|
-```
+    ```
     getRecordTipeFieldNames "{ a : Int, b : String }" == [ "a", "b" ]
-```
+    ```
 -}
 getRecordTipeFieldNames : TipeString -> List String
 getRecordTipeFieldNames tipeString =
@@ -3594,9 +3580,9 @@ getRecordTipeFieldNames tipeString =
 
 
 {-|
-```
+    ```
     getRecordTipeFieldTipes "{ a : Int, b : String }" == [ "Int", "String" ]
-```
+    ```
 -}
 getRecordTipeFieldTipes : TipeString -> List String
 getRecordTipeFieldTipes tipeString =
@@ -3770,7 +3756,12 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                         )
                     |> List.concat
              else
-                case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
+                case
+                    getHintsForToken (Just tipeString) topLevelTokens
+                        |> List.partition (.tipe >> isRecordString)
+                        |> uncurry (++)
+                        |> List.head
+                of
                     Just hint ->
                         -- Avoid infinite recursion.
                         if hint.kind /= KindType && hint.tipe /= tipeString && not (Set.member hint.sourcePath visitedSourcePaths) then
@@ -3826,9 +3817,9 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
 
 
 {-|
-```
+    ```
     isRecordString "{ x : Int , y : Int , ab : { a : Int , b : Int } , cd : Aaa.Cd }" == True
-```
+    ```
 -}
 isRecordString : String -> Bool
 isRecordString tipeString =
