@@ -22,7 +22,8 @@
     "fuzzaldrin-plus": "0.4.1",
     "tmp": "0.0.28",
     "underscore-plus": "1.6.6",
-    "untildify": "3.0.2"
+    "untildify": "3.0.2",
+    "socket.io": "1.7.3"
   },
   "providedServices": {
     "autocomplete.provider": {

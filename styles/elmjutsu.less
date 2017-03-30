@@ -138,6 +138,18 @@ atom-text-editor {
     box-sizing: border-box;
     border-right: 1px solid fadeout(@text-color-error, 25%);
   }
+  .elmjutsu-inferred-range .region {
+    border: 1px dotted @ui-site-color-4; // purple
+    border-radius: @component-border-radius;
+  }
+  .elmjutsu-watch-range .region {
+    border-bottom: 1px solid @ui-site-color-4; // purple
+  }
+  .elmjutsu-watch-value {
+    background-color: @tool-panel-background-color;
+    color: @ui-site-color-4; // purple
+    font-style: italic;
+  }
 }
 atom-text-editor.elmjutsu-pipe-selections {
   // Imitate mini editor.
@@ -215,10 +227,6 @@ atom-text-editor.elmjutsu-pipe-selections.processing {
       border-right-color: fadeout(@text-color-subtle, 30%) !important;
     }
   }
-}
-.elmjutsu-inferred-range .region {
-  border: 1px dotted @ui-site-color-4; // purple
-  border-radius: @component-border-radius;
 }
 atom-text-editor:not([mini])[data-grammar="source elm"] autocomplete-suggestion-list {
   // font-size: @font-size;
