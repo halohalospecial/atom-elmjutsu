@@ -1,3 +1,7 @@
+## 5.5.1
+* Fix issue when dragging the mouse to select text and `Infer Type Of Selection On The Fly` is enabled.  Thanks to @nmsmith for reporting!
+* Add the environment when spawning the elm-repl process.  Thanks to @AntouanK for the fix!
+
 ## 5.5.0
 * Fix "Uncaught ReferenceError" (#69).  Thanks to @xorsnn and @pruett for reporting!
 * Sidekick: Do not display (for now) source paths of function arguments in exchange for performance improvements.
