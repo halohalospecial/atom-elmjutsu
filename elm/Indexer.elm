@@ -1053,8 +1053,7 @@ getAliasesOfType tokens name tipeString =
                                         && (hint.kind == KindTypeAlias)
                                         && (tipeString /= hint.name)
                                         -- && (name /= hint.tipe)
-                                        &&
-                                            (name /= hint.name)
+                                        && (name /= hint.name)
                                         && ((name == normalizedHintTipe)
                                                 || (normalizedTipeString == normalizedHintTipe)
                                             -- || (normalizedTipeString == normalizeTipe tokens hint.name)
@@ -2047,11 +2046,10 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
                         Dict.insert moduleName importToAdd fileContents.imports
             )
                 -- Remove default imports.
-                |>
-                    Dict.filter
-                        (\moduleName moduleImport ->
-                            not (List.member ( moduleName, moduleImport ) (Dict.toList defaultImports))
-                        )
+                |> Dict.filter
+                    (\moduleName moduleImport ->
+                        not (List.member ( moduleName, moduleImport ) (Dict.toList defaultImports))
+                    )
 
         updatedFileContents =
             { fileContents | imports = updatedImports }
@@ -2224,7 +2222,8 @@ superTipes =
     [ "number"
     , "appendable"
     , "comparable"
-      -- , "compappend"
+
+    -- , "compappend"
     ]
 
 
@@ -4088,13 +4087,14 @@ defaultSuggestions =
         , "infixr"
         , "infix"
         , "type alias"
-          -- , "open"
-          -- , "hiding"
-          -- , "export"
-          -- , "foreign"
-          -- , "perform"
-          -- , "deriving"
-          -- , "compappend"
+
+        -- , "open"
+        -- , "hiding"
+        -- , "export"
+        -- , "foreign"
+        -- , "perform"
+        -- , "deriving"
+        -- , "compappend"
         ]
         ++ [ { emptyHint
                 | name = "number"

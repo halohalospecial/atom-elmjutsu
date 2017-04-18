@@ -24,13 +24,13 @@ Related Atom packages:
 
 * [Autocomplete](#autocomplete)
   * [Global Autocomplete](#global-autocomplete)
-  * [Type-Aware Autocomplete](#type-aware-autocomplete)
-  * [Autocomplete Snippets](#autocomplete-snippets)
-  * [Special completions](#special-completions)
   * [Filtering suggestions](#autocomplete-filtering)
     * [Fuzzy filtering](#autocomplete-fuzzy-filtering)
     * [Regex filtering](#autocomplete-regex-filtering)
     * [Type filtering](#autocomplete-type-filtering)
+  * [Autocomplete Snippets](#autocomplete-snippets)
+  * [Special completions](#special-completions)
+  * [Type-Aware Autocomplete](#type-aware-autocomplete)
   * [Performance tuning](#autocomplete-performance-tuning)
 
 * Navigation
@@ -81,12 +81,31 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 ![auto-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/auto-import.gif?raw=true)
 
-#### <a name="type-aware-autocomplete"></a>Type-Aware Autocomplete
-* Check `Enable Type-Aware Autocomplete` if you want to prioritize suggestions matching the expected type at cursor position.
-  * The type can be inferred via the `Infer Type` command, but it's recommended to check `Infer Expected Type At Cursor On The Fly` in the package settings instead.
-  * WARNING: This is highly experimental and may cause lag, especially if `Enable Global Autocomplete` is also checked.
+#### <a name="autocomplete-filtering"></a>Filtering suggestions
 
-![type-aware-autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/type-aware-autocomplete.gif?raw=true)
+* <a name="autocomplete-fuzzy-filtering"></a>Fuzzy filtering
+
+  You can check `Enable Autocomplete Fuzzy Filtering` to filter suggestions using [fuzz-aldrin-plus](https://github.com/jeancroy/fuzz-aldrin-plus).
+
+  ![autocomplete-fuzzy-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-fuzzy-filtering.gif?raw=true)
+
+* <a name="autocomplete-regex-filtering"></a>Regex filtering
+
+  If the typed text starts with a slash (`/`), the rest of the characters will be used as a regular expression to filter the suggestions by name.
+
+  ![autocomplete-regex-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-regex-filtering.gif?raw=true)
+
+* <a name="autocomplete-type-filtering"></a>Type filtering
+
+  If the typed text starts with a colon (`:`), the rest of the characters will be used as a regular expression to filter the suggestions by type signature.
+
+  ![autocomplete-type-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-type-filtering.gif?raw=true)
+
+  * If you want to filter by name and type signature, put two underscores (`__`) in between.  For example, `:cons__String` will suggest `String.cons` (`Char -> String -> String`) and `String.uncons` (`String -> Maybe.Maybe ( Char, String )`).
+
+  * Use underscores in lieu of spaces (e.g. to match `List a`, type `List_a`).
+
+  * Remember to escape dots, vertical bars, parentheses (for records), braces (for tuples), etc.
 
 #### <a name="autocomplete-snippets"></a>Autocomplete Snippets
 * You can also check `Enable Autocomplete Snippets` if you prefer.
@@ -129,31 +148,12 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
 
   See [Type-Aware Autocomplete](#type-aware-autocomplete) for a screenshot.
 
-#### <a name="autocomplete-filtering"></a>Filtering suggestions
+#### <a name="type-aware-autocomplete"></a>Type-Aware Autocomplete
+* Check `Enable Type-Aware Autocomplete` if you want to prioritize suggestions matching the expected type at cursor position.
+  * The type can be inferred via the `Infer Type` command, but it's recommended to check `Infer Expected Type At Cursor On The Fly` in the package settings instead.
+  * WARNING: This is highly experimental and may cause lag, especially if `Enable Global Autocomplete` is also checked.
 
-* <a name="autocomplete-fuzzy-filtering"></a>Fuzzy filtering
-
-  You can check `Enable Autocomplete Fuzzy Filtering` to filter suggestions using [fuzz-aldrin-plus](https://github.com/jeancroy/fuzz-aldrin-plus).
-
-  ![autocomplete-fuzzy-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-fuzzy-filtering.gif?raw=true)
-
-* <a name="autocomplete-regex-filtering"></a>Regex filtering
-
-  If the typed text starts with a slash (`/`), the rest of the characters will be used as a regular expression to filter the suggestions by name.
-
-  ![autocomplete-regex-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-regex-filtering.gif?raw=true)
-
-* <a name="autocomplete-type-filtering"></a>Type filtering
-
-  If the typed text starts with a colon (`:`), the rest of the characters will be used as a regular expression to filter the suggestions by type signature.
-
-  ![autocomplete-type-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-type-filtering.gif?raw=true)
-
-  * If you want to filter by name and type signature, put two underscores (`__`) in between.  For example, `:cons__String` will suggest `String.cons` (`Char -> String -> String`) and `String.uncons` (`String -> Maybe.Maybe ( Char, String )`).
-
-  * Use underscores in lieu of spaces (e.g. to match `List a`, type `List_a`).
-
-  * Remember to escape dots, vertical bars, parentheses (for records), braces (for tuples), etc.
+![type-aware-autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/type-aware-autocomplete.gif?raw=true)
 
 #### <a name="autocomplete-performance-tuning"></a>Performance tuning
 

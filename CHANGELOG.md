@@ -1,3 +1,6 @@
+## 5.5.2
+* Add `Autocomplete Description Display` option ("markdown", "text", "none").
+
 ## 5.5.1
 * Fix issue when dragging the mouse to select text and `Infer Type Of Selection On The Fly` is enabled.  Thanks to @nmsmith for reporting!
 * Add the environment when spawning the elm-repl process.  Thanks to @AntouanK for the fix!
