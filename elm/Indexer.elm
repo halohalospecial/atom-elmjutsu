@@ -3,7 +3,7 @@ port module Indexer exposing (..)
 import Dict
 import Dict.Extra
 import Helper
-import Http exposing (encodeUri)
+import Http
 import Json.Decode as Decode
 import Regex
 import Set
