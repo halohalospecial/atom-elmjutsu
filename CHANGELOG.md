@@ -1,3 +1,6 @@
+## 5.5.3
+* Remove duplicate entries while renaming (#81).  Thanks to @AionDev for reporting!
+
 ## 5.5.2
 * Add `Autocomplete Description Display` option ("markdown", "text", "none").
 * Fix deactivate bug.
