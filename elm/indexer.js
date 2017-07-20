@@ -9600,6 +9600,20 @@ var _user$project$Indexer$downloadDocsFailedCmd = _elm_lang$core$Native_Platform
 	function (v) {
 		return v;
 	});
+var _user$project$Indexer$dependenciesNotFoundCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'dependenciesNotFoundCmd',
+	function (v) {
+		return [
+			_elm_lang$core$Native_List.toArray(v._0).map(
+			function (v) {
+				return v;
+			}),
+			_elm_lang$core$Native_List.toArray(v._1).map(
+			function (v) {
+				return [v._0, v._1];
+			})
+		];
+	});
 var _user$project$Indexer$goToDefinitionCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'goToDefinitionCmd',
 	function (v) {
@@ -12906,13 +12920,7 @@ var _user$project$Indexer$update = F2(
 											_p331,
 											{
 												ctor: '::',
-												_0: A2(
-													_elm_lang$core$Basics_ops['++'],
-													_user$project$Indexer$toPackageUri(_p333),
-													A2(
-														_elm_lang$core$Basics_ops['++'],
-														'documentation.json (',
-														A2(_elm_lang$core$Basics_ops['++'], errorDetails, ')'))),
+												_0: {ctor: '_Tuple2', _0: _p333, _1: errorDetails},
 												_1: {ctor: '[]'}
 											})
 									};
@@ -12948,23 +12956,61 @@ var _user$project$Indexer$update = F2(
 								},
 								(_elm_lang$core$Native_Utils.cmp(
 									_elm_lang$core$List$length(failures),
-									0) > 0) ? {
-									ctor: '::',
-									_0: _user$project$Indexer$downloadDocsFailedCmd(
-										A2(_elm_lang$core$String$join, '\n---\n', failures)),
-									_1: {ctor: '[]'}
-								} : {ctor: '[]'}))
+									0) > 0) ? A2(
+									_elm_lang$core$Basics_ops['++'],
+									{
+										ctor: '::',
+										_0: _user$project$Indexer$downloadDocsFailedCmd(
+											A2(
+												_elm_lang$core$String$join,
+												'\n',
+												A2(
+													_elm_lang$core$List$map,
+													function (_p334) {
+														var _p335 = _p334;
+														return A2(
+															_elm_lang$core$Basics_ops['++'],
+															_user$project$Indexer$toPackageUri(_p335._0),
+															A2(
+																_elm_lang$core$Basics_ops['++'],
+																'documentation.json (',
+																A2(_elm_lang$core$Basics_ops['++'], _p335._1, ')')));
+													},
+													failures))),
+										_1: {ctor: '[]'}
+									},
+									function () {
+										var projectDirectories = _elm_lang$core$Dict$keys(model.projectFileContentsDict);
+										var notFoundDependencies = A2(
+											_elm_lang$core$List$map,
+											_elm_lang$core$Tuple$first,
+											A2(
+												_elm_lang$core$List$filter,
+												function (_p336) {
+													var _p337 = _p336;
+													return _elm_lang$core$Native_Utils.eq(_p337._1, 'BadStatus 404 Not found');
+												},
+												failures));
+										return (_elm_lang$core$Native_Utils.cmp(
+											_elm_lang$core$List$length(notFoundDependencies),
+											0) > 0) ? {
+											ctor: '::',
+											_0: _user$project$Indexer$dependenciesNotFoundCmd(
+												{ctor: '_Tuple2', _0: projectDirectories, _1: notFoundDependencies}),
+											_1: {ctor: '[]'}
+										} : {ctor: '[]'};
+									}()) : {ctor: '[]'}))
 					};
 				}
 			case 'DocsRead':
 				var loadedPackageDocs = A2(
 					_elm_lang$core$List$concatMap,
-					function (_p334) {
-						var _p335 = _p334;
+					function (_p338) {
+						var _p339 = _p338;
 						return A2(
 							_user$project$Indexer$toModuleDocs,
-							_user$project$Indexer$toPackageUri(_p335._0),
-							_p335._1);
+							_user$project$Indexer$toPackageUri(_p339._0),
+							_p339._1);
 					},
 					_p321._0);
 				return {
@@ -13036,11 +13082,11 @@ var _user$project$Indexer$update = F2(
 						model,
 						{
 							hintsCache: function () {
-								var _p336 = model.hintsCache;
-								if (_p336.ctor === 'Just') {
+								var _p340 = model.hintsCache;
+								if (_p340.ctor === 'Just') {
 									return _elm_lang$core$Maybe$Just(
 										_elm_lang$core$Native_Utils.update(
-											_p336._0,
+											_p340._0,
 											{local: _elm_lang$core$Maybe$Nothing}));
 								} else {
 									return _elm_lang$core$Maybe$Nothing;
@@ -13069,10 +13115,10 @@ var _user$project$Indexer$subscriptions = function (model) {
 				_1: {
 					ctor: '::',
 					_0: _user$project$Indexer$fileContentsChangedSub(
-						function (_p337) {
-							var _p338 = _p337;
-							var _p339 = _p338._2;
-							var encodedValues = _p339.values;
+						function (_p341) {
+							var _p342 = _p341;
+							var _p343 = _p342._2;
+							var encodedValues = _p343.values;
 							var decodeValue = function (encoded) {
 								return _elm_lang$core$Native_Utils.update(
 									encoded,
@@ -13081,7 +13127,7 @@ var _user$project$Indexer$subscriptions = function (model) {
 									});
 							};
 							var moduleDocs = _elm_lang$core$Native_Utils.update(
-								_p339,
+								_p343,
 								{
 									values: _elm_lang$core$Native_Utils.update(
 										encodedValues,
@@ -13092,12 +13138,12 @@ var _user$project$Indexer$subscriptions = function (model) {
 								});
 							return A3(
 								_user$project$Indexer$UpdateFileContents,
-								_p338._0,
-								_p338._1,
+								_p342._0,
+								_p342._1,
 								A2(
 									_user$project$Indexer$FileContents,
 									moduleDocs,
-									_user$project$Indexer$toImportDict(_p338._3)));
+									_user$project$Indexer$toImportDict(_p342._3)));
 						}),
 					_1: {
 						ctor: '::',
@@ -13159,7 +13205,7 @@ var _user$project$Indexer$subscriptions = function (model) {
 																								_1: {
 																									ctor: '::',
 																									_0: _user$project$Indexer$clearLocalHintsCacheSub(
-																										function (_p340) {
+																										function (_p344) {
 																											return _user$project$Indexer$ClearLocalHintsCache;
 																										}),
 																									_1: {ctor: '[]'}
