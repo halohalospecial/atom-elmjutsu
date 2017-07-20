@@ -1,3 +1,6 @@
+## 5.6.0
+* If there are package dependencies not found in the package.elm-lang.org, parse the associated directories in `elm-stuff/packages`. (#73, #80).  Thanks to @stejanse and @rupertlssmith for reporting!
+
 ## 5.5.3
 * Remove duplicate entries while renaming (#81).  Thanks to @AionDev for reporting!
 
