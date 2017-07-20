@@ -153,6 +153,9 @@ port docsDownloadedCmd : List ( Dependency, String ) -> Cmd msg
 port downloadDocsFailedCmd : String -> Cmd msg
 
 
+port dependenciesNotFoundCmd : ( List ProjectDirectory, List Dependency ) -> Cmd msg
+
+
 port goToDefinitionCmd : ( Maybe ActiveFile, EncodedSymbol ) -> Cmd msg
 
 
@@ -416,7 +419,7 @@ update msg model =
                                                 Http.BadPayload _ { status } ->
                                                     "BadPayload " ++ toString status.code ++ " " ++ status.message
                                     in
-                                        ( successes, failures ++ [ toPackageUri dependency ++ "documentation.json (" ++ errorDetails ++ ")" ] )
+                                        ( successes, failures ++ [ ( dependency, errorDetails ) ] )
                         )
                         ( [], [] )
                         (List.map2 (,) dependencies result)
@@ -433,7 +436,32 @@ update msg model =
                 , Cmd.batch
                     ([ docsDownloadedCmd loadedDependenciesAndJson ]
                         ++ (if List.length failures > 0 then
-                                [ downloadDocsFailedCmd (String.join "\n---\n" failures) ]
+                                [ downloadDocsFailedCmd
+                                    (failures
+                                        |> List.map
+                                            (\( dependency, errorDetails ) ->
+                                                toPackageUri dependency ++ "documentation.json (" ++ errorDetails ++ ")"
+                                            )
+                                        |> String.join "\n"
+                                    )
+                                ]
+                                    ++ (let
+                                            notFoundDependencies =
+                                                failures
+                                                    |> List.filter
+                                                        (\( _, errorDetails ) ->
+                                                            errorDetails == "BadStatus 404 Not found"
+                                                        )
+                                                    |> List.map Tuple.first
+
+                                            projectDirectories =
+                                                Dict.keys model.projectFileContentsDict
+                                        in
+                                            if List.length notFoundDependencies > 0 then
+                                                [ dependenciesNotFoundCmd ( projectDirectories, notFoundDependencies ) ]
+                                            else
+                                                []
+                                       )
                             else
                                 []
                            )
@@ -1121,6 +1149,7 @@ getHintsForToken maybeToken tokens =
 
 
 {-|
+
     ```
     isTipeVariable "a" == True
     isTipeVariable "number" == True
@@ -1136,6 +1165,7 @@ isTipeVariable tipeString =
 
 
 {-|
+
     ```
     isNumberTipe "number" == True
     isNumberTipe "Int" == True
@@ -1150,6 +1180,7 @@ isNumberTipe tipeString =
 
 
 {-|
+
     ```
     isAppendableTipe "appendable" == True
     isAppendableTipe "String" == True
@@ -1172,6 +1203,7 @@ isComparableTipe tipeString =
 
 
 {-|
+
     ```
     areTipesCompatibleRecur "a" "b" == True
     areTipesCompatibleRecur "number" "a" == True
@@ -3292,6 +3324,7 @@ getSourcePathOfRecordFieldTokenRecur parentPartName parentName parentSourcePath 
 
 
 {-|
+
     ```
     getArgsParts "a b c" == [ "a", "b", "c" ]
     ```
@@ -3359,6 +3392,7 @@ getReturnTipe tipeString =
 
 
 {-|
+
     ```
     getTipeParts "Int -> Int -> Int" == [ "Int", "Int" ]
     getTipeParts "a -> b" == [ "a -> b" ]
@@ -3435,6 +3469,7 @@ getCharAndRest str =
 
 
 {-|
+
     ```
     getTupleParts "( Int, String )" == [ "Int", "String" ]
     ```
@@ -3489,6 +3524,7 @@ getTuplePartsRecur str acc parts ( openParentheses, openBraces ) =
 
 
 {-|
+
     ```
     getRecordArgParts "{ a, b }" == [ "a", "b" ]
     ```
@@ -3506,6 +3542,7 @@ getRecordArgParts recordString =
 
 
 {-|
+
     ```
     getRecordTipeParts "{ a : Int, b : String }" == [ ("a", "Int"), ("b", "String") ]
     ```
@@ -3568,6 +3605,7 @@ getRecordTipePartsRecur str ( fieldAcc, tipeAcc ) lookingForTipe parts ( openPar
 
 
 {-|
+
     ```
     getRecordTipeFieldNames "{ a : Int, b : String }" == [ "a", "b" ]
     ```
@@ -3579,6 +3617,7 @@ getRecordTipeFieldNames tipeString =
 
 
 {-|
+
     ```
     getRecordTipeFieldTipes "{ a : Int, b : String }" == [ "Int", "String" ]
     ```
@@ -3816,6 +3855,7 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
 
 
 {-|
+
     ```
     isRecordString "{ x : Int , y : Int , ab : { a : Int , b : Int } , cd : Aaa.Cd }" == True
     ```
