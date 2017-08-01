@@ -1,4 +1,4 @@
-## 5.6.0
+## 5.6.2
 * Use [atom-package-deps](https://www.npmjs.com/package/atom-package-deps) to automatically install the minimum required packages.
 
 ## 5.6.0
