@@ -1,4 +1,7 @@
 ## 5.6.0
+* Use [atom-package-deps](https://www.npmjs.com/package/atom-package-deps) to automatically install the minimum required packages.
+
+## 5.6.0
 * If there are package dependencies not found in package.elm-lang.org, parse the associated directories in `elm-stuff/packages`. (#73, #80).  Thanks to @stejanse and @rupertlssmith for reporting!
 
 ## 5.5.3

@@ -105,7 +105,7 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
   * Use underscores in lieu of spaces (e.g. to match `List a`, type `List_a`).
 
-  * Remember to escape dots, vertical bars, parentheses (for records), braces (for tuples), etc.
+  * Remember to escape dots, vertical bars, braces (for records), parentheses (for tuples), etc.
 
 #### <a name="autocomplete-snippets"></a>Autocomplete Snippets
 * You can also check `Enable Autocomplete Snippets` if you prefer.
