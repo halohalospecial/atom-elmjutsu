@@ -25,13 +25,13 @@ Related Atom packages:
 * [Autocomplete](#autocomplete)
   * [Global Autocomplete](#global-autocomplete)
   * [Filtering suggestions](#autocomplete-filtering)
-    * [Fuzzy filtering](#autocomplete-fuzzy-filtering)
-    * [Regex filtering](#autocomplete-regex-filtering)
-    * [Type filtering](#autocomplete-type-filtering)
+    * [Fuzzy Filtering](#autocomplete-fuzzy-filtering)
+    * [Regex Filtering](#autocomplete-regex-filtering)
+    * [Type Filtering](#autocomplete-type-filtering)
   * [Autocomplete Snippets](#autocomplete-snippets)
-  * [Special completions](#special-completions)
+  * [Special Completions](#special-completions)
   * [Type-Aware Autocomplete](#type-aware-autocomplete)
-  * [Performance tuning](#autocomplete-performance-tuning)
+  * [Performance Tuning](#autocomplete-performance-tuning)
 
 * Navigation
   * [Go to Definition](#go-to-definition)
@@ -83,19 +83,19 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 #### <a name="autocomplete-filtering"></a>Filtering suggestions
 
-* <a name="autocomplete-fuzzy-filtering"></a>Fuzzy filtering
+* <a name="autocomplete-fuzzy-filtering"></a>Fuzzy Filtering
 
   You can check `Enable Autocomplete Fuzzy Filtering` to filter suggestions using [fuzz-aldrin-plus](https://github.com/jeancroy/fuzz-aldrin-plus).
 
   ![autocomplete-fuzzy-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-fuzzy-filtering.gif?raw=true)
 
-* <a name="autocomplete-regex-filtering"></a>Regex filtering
+* <a name="autocomplete-regex-filtering"></a>Regex Filtering
 
   If the typed text starts with a slash (`/`), the rest of the characters will be used as a regular expression to filter the suggestions by name.
 
   ![autocomplete-regex-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-regex-filtering.gif?raw=true)
 
-* <a name="autocomplete-type-filtering"></a>Type filtering
+* <a name="autocomplete-type-filtering"></a>Type Filtering
 
   If the typed text starts with a colon (`:`), the rest of the characters will be used as a regular expression to filter the suggestions by type signature.
 
@@ -112,7 +112,7 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 ![autocomplete-snippet](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-snippet.gif?raw=true)
 
-#### <a name="special-completions"></a>Special completions :zap:
+#### <a name="special-completions"></a>Special Completions :zap:
 
 Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).  Special completions can be disabled individually in the package settings.
 
@@ -155,7 +155,9 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
 
 ![type-aware-autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/type-aware-autocomplete.gif?raw=true)
 
-#### <a name="autocomplete-performance-tuning"></a>Performance tuning
+#### <a name="autocomplete-performance-tuning"></a>Performance Tuning
+
+  * It's recommended to uncheck `Enable autocomplete` of the [language-elm](https://atom.io/packages/language-elm).  No need to install `elm-oracle`.
 
   * If you are experiencing lag while typing, you can set the value of `Max Number of Autocomplete Suggestions` to a small number such as `50` so that Atom will have less items to render.
 
