@@ -25,7 +25,8 @@ subscriptions model =
         , activeFileChangedSub ActiveFileChanged
         , docsReadSub (\_ -> DocsRead)
         , docsDownloadedSub (\_ -> DocsDownloaded)
-          -- , downloadDocsFailedSub DownloadDocsFailed
+
+        -- , downloadDocsFailedSub DownloadDocsFailed
         , readingPackageDocsSub (\_ -> ReadingPackageDocs)
         , downloadingPackageDocsSub (\_ -> DownloadingPackageDocs)
         , configChangedSub ConfigChanged
