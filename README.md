@@ -9,10 +9,12 @@ https://atom.io/packages/elmjutsu
 * Install [Elm](http://elm-lang.org/install).
 * Install [language-elm](https://atom.io/packages/language-elm) (no need to install `elm-oracle` or `goto`).
 * For `Go to Definition`:
-  * Install [hyperclick](https://atom.io/packages/hyperclick) (optional).
+  * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) or [hyperclick](https://atom.io/packages/hyperclick) (both optional).
 * For `Autocomplete`:
   * Install [autocomplete-plus](https://atom.io/packages/autocomplete-plus) (installed by default).
   * Install [snippets](https://atom.io/packages/snippets) (optional, installed by default).
+* For `Datatips`:
+  * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) (optional).
 * Add your [keybindings](#keybindings).
 
 Related Atom packages:
@@ -42,6 +44,7 @@ Related Atom packages:
   * [Go Back](#go-back)
 
 * Information
+  * [Datatips](#datatips)
   * [Show Types in Tooltip](#show-types-in-tooltip)
   * [Toggle Sidekick](#toggle-sidekick)
     * Show the type and documentation for the symbol at cursor position in a panel.
@@ -194,12 +197,18 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
       * `Go To Symbol`
       * `Go To Next Usage`
       * `Go To Previous Usage`
+      * Clicking on a source path link (Sidekick and Datatip).
 
     Invoke this command to jump back to the previous position.
 
   * #### <a name="hide-usages-panel"></a>`Elmjutsu: Hide Usages Panel`
 
     Closes the `Usages` panel (the panel is shown after invoking `Find Usages` or `Rename Symbol`).
+
+### <a name="datatips"></a>Datatips
+Provides support for [Datatips](https://github.com/facebook-atom/atom-ide-ui/blob/master/docs/datatips.md).  The [atom-ide-ui](https://atom.io/packages/atom-ide-ui) package should be installed for this to work.
+
+![datatips](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/datatips.gif?raw=true)
 
 ### <a name="show-types-in-tooltip"></a>Show Types in Tooltip
 This is disabled by default.  To turn it on, check `Show Types in Tooltip` in the package settings.  You can also change the placement of the tooltip (`Types Tooltip Position`).
