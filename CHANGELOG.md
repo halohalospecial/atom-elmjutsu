@@ -1,5 +1,7 @@
 ## 5.7.0
 * Add [Datatips](https://github.com/facebook-atom/atom-ide-ui/blob/master/docs/datatips.md) integration.
+* Sidekick: Fix bug regarding source path links for project symbols.
+* Sidekick: Use monospace for code sections.
 
 ## 5.6.3
 * Make autocomplete work with Atom 1.19.1 (#89).  Thanks to @MaximeRDY for reporting!

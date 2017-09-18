@@ -155,13 +155,10 @@ atom-text-editor.elmjutsu-pipe-selections {
 atom-text-editor.elmjutsu-pipe-selections.processing {
   border-color: @background-color-warning;
 }
-.elmjutsu-sidekick {
-  height: 100%;
-  overflow: auto;
+.elmjutsu-hint-view {
   padding: 0px;
   font-size: @font-size;
   font-family: @font-family;
-  border: 1px solid rgba(255, 255, 255, 0.1);
   h4 {
     padding: 0px;
     margin: 0px;
@@ -171,14 +168,8 @@ atom-text-editor.elmjutsu-pipe-selections.processing {
   }
   code {
     font-size: @font-size;
-    font-family: @font-family;
-  }
-  .note {
-    white-space: pre-line;
-  }
-  .hint {
-    padding: 2px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    // font-family: @font-family;
+    font-family: monospace;
   }
   .source-path {
     margin-top: @component-padding;
@@ -188,6 +179,25 @@ atom-text-editor.elmjutsu-pipe-selections.processing {
     a {
       color: @text-color-subtle;
     }
+  }
+}
+.elmjutsu-datatip {
+  .elmjutsu-hint-view;
+  .comment {
+    margin: 15px 0;
+  }
+}
+.elmjutsu-sidekick {
+  .elmjutsu-hint-view;
+  height: 100%;
+  overflow: auto;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  .hint {
+    padding: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .note {
+    white-space: pre-line;
   }
 }
 .elmjutsu-hint-tooltip.tooltip {
