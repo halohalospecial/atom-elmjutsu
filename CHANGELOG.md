@@ -3,6 +3,7 @@
 * Sidekick: Fix bug regarding source path links for project symbols.
 * Sidekick: Use monospace for code sections.
 * Sidekick and Datatip: Store jump point when clicking on source path link.
+* Use [`atom-linter`](https://www.npmjs.com/package/atom-linter)'s `uniqueKey` in lieu of the infer task queue.
 
 ## 5.6.3
 * Make autocomplete work with Atom 1.19.1 (#89).  Thanks to @MaximeRDY for reporting!

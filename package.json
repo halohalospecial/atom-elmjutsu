@@ -16,7 +16,6 @@
   "dependencies": {
     "atom-linter": "8.0.0",
     "atom-space-pen-views": "^0.20.0",
-    "better-queue": "^3.8.4",
     "chokidar": "1.5.2",
     "fs-extra": "0.30.0",
     "fuzzaldrin-plus": "0.4.1",
