@@ -24,15 +24,17 @@ Related Atom packages:
 
 ## Features Overview
 
+Note: Features marked with `*` are disabled by default.  You may enable them in the Settings view.
+
 * [Autocomplete](#autocomplete)
-  * [Global Autocomplete](#global-autocomplete)
+  * [Global Autocomplete](#global-autocomplete) `*`
   * [Filtering suggestions](#autocomplete-filtering)
-    * [Fuzzy Filtering](#autocomplete-fuzzy-filtering)
+    * [Fuzzy Filtering](#autocomplete-fuzzy-filtering) `*`
     * [Regex Filtering](#autocomplete-regex-filtering)
     * [Type Filtering](#autocomplete-type-filtering)
-  * [Autocomplete Snippets](#autocomplete-snippets)
+  * [Autocomplete Snippets](#autocomplete-snippets) `*`
   * [Special Completions](#special-completions)
-  * [Type-Aware Autocomplete](#type-aware-autocomplete)
+  * [Type-Aware Autocomplete](#type-aware-autocomplete) `*`
   * [Performance Tuning](#autocomplete-performance-tuning)
 
 * Navigation
@@ -45,10 +47,11 @@ Related Atom packages:
 
 * Information
   * [Datatips](#datatips)
-  * [Show Types in Tooltip](#show-types-in-tooltip)
+  * [Show Types in Tooltip](#show-types-in-tooltip) `*`
   * [Toggle Sidekick](#toggle-sidekick)
     * Show the type and documentation for the symbol at cursor position in a panel.
   * [Infer Type](#infer-type)
+  * [Infer Types on the Fly](#infer-types-on-the-fly) `*`
 
 * Imports Management
   * [Add Import](#add-import)
@@ -65,11 +68,9 @@ Related Atom packages:
 
 ## Feature Details
 
-By default, the only thing this package does is parse your project's source files to extract information, and download documentation of 3rd-party Elm packages.  You have to manually enable the features that you need.  The downloaded documentation files will be saved to the path set in `Cache Directory` in the settings view.  If `Cache Directory` is blank, a temporary directory will be used.  Take note that most operating systems delete temporary directories at bootup or at regular intervals.
+This package parses your projects' source files to extract information, and downloads documentation of 3rd-party Elm packages.  The downloaded documentation files will be saved to the path set in `Cache Directory` in the Settings view.  If `Cache Directory` is blank, a temporary directory will be used.  Take note that most operating systems delete temporary directories at bootup or at regular intervals.
 
 ### <a name="autocomplete"></a>Autocomplete
-
-Autocomplete is turned off by default.  To turn it on, check `Enable Autocomplete` in the package settings.
 
 This provides suggestions for imports, project symbols, and 3rd-party package symbols.
 
@@ -77,7 +78,7 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 ![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
 
-#### <a name="global-autocomplete"></a>Global Autocomplete
+#### <a name="global-autocomplete"></a>Global Autocomplete `*`
 * Check `Enable Global Autocomplete` if you want to include unimported project symbols.
   * This will also allow :zap:`Auto import` completion (which works like [Add Import](#elmjutsu-add-import)).
   * Take note that you may experience lag if you have a large project.
@@ -86,7 +87,7 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 #### <a name="autocomplete-filtering"></a>Filtering suggestions
 
-* <a name="autocomplete-fuzzy-filtering"></a>Fuzzy Filtering
+* <a name="autocomplete-fuzzy-filtering"></a>Fuzzy Filtering `*`
 
   You can check `Enable Autocomplete Fuzzy Filtering` to filter suggestions using [fuzz-aldrin-plus](https://github.com/jeancroy/fuzz-aldrin-plus).
 
@@ -110,7 +111,7 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
   * Remember to escape dots, vertical bars, braces (for records), parentheses (for tuples), etc.
 
-#### <a name="autocomplete-snippets"></a>Autocomplete Snippets
+#### <a name="autocomplete-snippets"></a>Autocomplete Snippets `*`
 * You can also check `Enable Autocomplete Snippets` if you prefer.
 
 ![autocomplete-snippet](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-snippet.gif?raw=true)
@@ -151,7 +152,7 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
 
   See [Type-Aware Autocomplete](#type-aware-autocomplete) for a screenshot.
 
-#### <a name="type-aware-autocomplete"></a>Type-Aware Autocomplete
+#### <a name="type-aware-autocomplete"></a>Type-Aware Autocomplete `*`
 * Check `Enable Type-Aware Autocomplete` if you want to prioritize suggestions matching the expected type at cursor position.
   * The type can be inferred via the `Infer Type` command, but it's recommended to check `Infer Expected Type At Cursor On The Fly` in the package settings instead.
   * WARNING: This is highly experimental and may cause lag, especially if `Enable Global Autocomplete` is also checked.
@@ -210,7 +211,7 @@ Provides support for [Datatips](https://github.com/facebook-atom/atom-ide-ui/blo
 
 ![datatips](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/datatips.gif?raw=true)
 
-### <a name="show-types-in-tooltip"></a>Show Types in Tooltip
+### <a name="show-types-in-tooltip"></a>Show Types in Tooltip `*`
 This is disabled by default.  To turn it on, check `Show Types in Tooltip` in the package settings.  You can also change the placement of the tooltip (`Types Tooltip Position`).
 
 ![show-types-in-tooltip](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/show-types-in-tooltip.gif?raw=true)
@@ -236,7 +237,7 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 * You should also have `Show Types in Tooltip` checked in the package settings (or the Sidekick panel visible) to be able to see the inferred types.
 * This uses similar tricks as those described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html), which may sometimes fail or give incorrect results.
 
-### <a name="infer-types-on-the-fly"></a>Infer types on the fly
+### <a name="infer-types-on-the-fly"></a>Infer Types on the Fly `*`
 * You can also check the `Infer Expected Type At Cursor On The Fly` and `Infer Type Of Selection On The Fly` options in the package settings.
 * WARNING: `Infer Type Of Selection On The Fly` currently has bad interactions with some packages that decorate the markers (e.g. `Find And Replace`) :cry: This will be fixed in the future.
 

@@ -1,3 +1,7 @@
+## 6.0.0
+* Autocomplete is now enabled by default.  If the autocomplete feature of `language-elm` is also enabled, a notification will offer to disable it.
+* Hyperclick support is now enabled by default.  (Should still install `hyperclick` or `atom-ide-ui`.)
+
 ## 5.7.0
 * Add [Datatips](https://github.com/facebook-atom/atom-ide-ui/blob/master/docs/datatips.md) integration.
 * Sidekick: Fix bug regarding source path links for project symbols.
