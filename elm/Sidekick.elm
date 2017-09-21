@@ -204,11 +204,11 @@ view { note, activeTokenHints, activeFile, config } =
                 sourcePathView hint =
                     if String.startsWith (packageDocsPrefix ++ "/") hint.sourcePath then
                         [ span [ class "icon-link-external" ] []
-                        , a [ title hint.sourcePath, href hint.sourcePath ] [ text (removePrefix packageDocsPrefix hint.sourcePath) ]
+                        , a [ title ("Open in browser:\n" ++ hint.sourcePath), href hint.sourcePath ] [ text (removePrefix packageDocsPrefix hint.sourcePath) ]
                         ]
                     else
                         [ a
-                            [ title hint.sourcePath
+                            [ title ("Go to definition in\n" ++ hint.sourcePath)
                             , onClick (GoToDefinition hint.name)
                             ]
                             [ text (removePrefix projectDirectory hint.sourcePath) ]
