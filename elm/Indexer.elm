@@ -586,10 +586,15 @@ doUpdateActiveTokenHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Mod
 doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
     let
         updatedActiveFileTokens =
-            if model.activeTopLevel /= maybeActiveTopLevel then
-                getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
-            else
-                model.activeFileTokens
+            case maybeToken of
+                Just token ->
+                    if model.activeTopLevel /= maybeActiveTopLevel then
+                        getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+                    else
+                        model.activeFileTokens
+
+                Nothing ->
+                    Dict.empty
 
         updatedActiveTokenHints =
             getHintsForToken maybeToken updatedActiveFileTokens
