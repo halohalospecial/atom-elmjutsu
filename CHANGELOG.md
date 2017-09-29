@@ -1,3 +1,6 @@
+## 6.1.0
+* Fix case/of completion bug.
+
 ## 6.0.0
 * Autocomplete is now enabled by default.  If the autocomplete feature of `language-elm` is also enabled, a notification will offer to disable it.
 * Hyperclick support is now enabled by default.  (Should still install `hyperclick` or `atom-ide-ui`.)
