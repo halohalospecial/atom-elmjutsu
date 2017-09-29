@@ -597,7 +597,12 @@ doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
                     Dict.empty
 
         updatedActiveTokenHints =
-            getHintsForToken maybeToken updatedActiveFileTokens
+            case maybeToken of
+                Just token ->
+                    getHintsForToken maybeToken updatedActiveFileTokens
+
+                Nothing ->
+                    []
     in
         ( { model
             | activeTopLevel = maybeActiveTopLevel
