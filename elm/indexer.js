@@ -12358,10 +12358,10 @@ var _user$project$Indexer$doUpdateActiveTokenHints = F3(
 		var updatedActiveFileTokens = function () {
 			var _p263 = maybeToken;
 			if (_p263.ctor === 'Nothing') {
-				return _elm_lang$core$Dict$empty;
+				return model.activeFileTokens;
 			} else {
 				if (_p263._0 === '') {
-					return _elm_lang$core$Dict$empty;
+					return model.activeFileTokens;
 				} else {
 					return (!_elm_lang$core$Native_Utils.eq(model.activeTopLevel, maybeActiveTopLevel)) ? A5(_user$project$Indexer$getActiveFileTokens, model.activeFile, maybeActiveTopLevel, model.projectFileContentsDict, model.projectDependencies, model.packageDocs) : model.activeFileTokens;
 				}

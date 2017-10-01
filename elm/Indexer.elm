@@ -588,10 +588,10 @@ doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
         updatedActiveFileTokens =
             case maybeToken of
                 Nothing ->
-                    Dict.empty
+                    model.activeFileTokens
 
                 Just "" ->
-                    Dict.empty
+                    model.activeFileTokens
 
                 Just token ->
                     if model.activeTopLevel /= maybeActiveTopLevel then
