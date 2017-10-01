@@ -12357,18 +12357,26 @@ var _user$project$Indexer$doUpdateActiveTokenHints = F3(
 	function (maybeActiveTopLevel, maybeToken, model) {
 		var updatedActiveFileTokens = function () {
 			var _p263 = maybeToken;
-			if (_p263.ctor === 'Just') {
-				return (!_elm_lang$core$Native_Utils.eq(model.activeTopLevel, maybeActiveTopLevel)) ? A5(_user$project$Indexer$getActiveFileTokens, model.activeFile, maybeActiveTopLevel, model.projectFileContentsDict, model.projectDependencies, model.packageDocs) : model.activeFileTokens;
-			} else {
+			if (_p263.ctor === 'Nothing') {
 				return _elm_lang$core$Dict$empty;
+			} else {
+				if (_p263._0 === '') {
+					return _elm_lang$core$Dict$empty;
+				} else {
+					return (!_elm_lang$core$Native_Utils.eq(model.activeTopLevel, maybeActiveTopLevel)) ? A5(_user$project$Indexer$getActiveFileTokens, model.activeFile, maybeActiveTopLevel, model.projectFileContentsDict, model.projectDependencies, model.packageDocs) : model.activeFileTokens;
+				}
 			}
 		}();
 		var updatedActiveTokenHints = function () {
 			var _p264 = maybeToken;
-			if (_p264.ctor === 'Just') {
-				return A2(_user$project$Indexer$getHintsForToken, maybeToken, updatedActiveFileTokens);
-			} else {
+			if (_p264.ctor === 'Nothing') {
 				return {ctor: '[]'};
+			} else {
+				if (_p264._0 === '') {
+					return {ctor: '[]'};
+				} else {
+					return A2(_user$project$Indexer$getHintsForToken, maybeToken, updatedActiveFileTokens);
+				}
 			}
 		}();
 		return {

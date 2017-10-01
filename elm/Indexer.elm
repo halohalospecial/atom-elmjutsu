@@ -587,22 +587,28 @@ doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
     let
         updatedActiveFileTokens =
             case maybeToken of
+                Nothing ->
+                    Dict.empty
+
+                Just "" ->
+                    Dict.empty
+
                 Just token ->
                     if model.activeTopLevel /= maybeActiveTopLevel then
                         getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
                     else
                         model.activeFileTokens
 
-                Nothing ->
-                    Dict.empty
-
         updatedActiveTokenHints =
             case maybeToken of
-                Just token ->
-                    getHintsForToken maybeToken updatedActiveFileTokens
-
                 Nothing ->
                     []
+
+                Just "" ->
+                    []
+
+                Just token ->
+                    getHintsForToken maybeToken updatedActiveFileTokens
     in
         ( { model
             | activeTopLevel = maybeActiveTopLevel
