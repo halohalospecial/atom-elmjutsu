@@ -351,6 +351,7 @@ Add them to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
 * Be sure to check out the [settings](http://flight-manual.atom.io/using-atom/sections/atom-packages/#package-settings) for this package to find out about the available options.
 * It's highly recommended to read `CHANGELOG.md` before upgrading to a newer version to check for breaking changes.
 * The commands only work for top-level values for now.
+* This package may fail to activate (when starting Atom) if you don't have `elm-package.json` files in your Elm project directories.  This issue will be handled properly in the future.
 * You may encounter weird behaviors if multiple files are using the same module name in your project.
 * Major parts of this will be rewritten when a way to get the AST becomes available. Also, more features :)
 
