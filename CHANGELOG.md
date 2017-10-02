@@ -1,5 +1,7 @@
-## 6.1.0
+## 7.0.0
 * Fix case/of completion bug.
+* Change the default `Autocomplete Description Display` value to "markdown".
+* Datatips: Mousing over a symbol will display info about it in the Sidekick panel.  Clicking on a symbol will go to its definition.
 
 ## 6.0.0
 * Autocomplete is now enabled by default.  If the autocomplete feature of `language-elm` is also enabled, a notification will offer to disable it.
