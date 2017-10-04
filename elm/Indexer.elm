@@ -64,6 +64,7 @@ subscriptions model =
         , configChangedSub ConfigChanged
         , getAliasesOfTypeSub GetAliasesOfType
         , clearLocalHintsCacheSub (\_ -> ClearLocalHintsCache)
+        , getTokenInfoSub GetTokenInfo
         ]
 
 
@@ -140,6 +141,9 @@ port getAliasesOfTypeSub : (Token -> msg) -> Sub msg
 port clearLocalHintsCacheSub : (() -> msg) -> Sub msg
 
 
+port getTokenInfoSub : (( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTopLevel, Maybe Token ) -> msg) -> Sub msg
+
+
 
 -- OUTGOING PORTS
 
@@ -168,7 +172,7 @@ port showGoToSymbolViewCmd : ( Maybe String, Maybe ActiveFile, List EncodedSymbo
 port activeFileChangedCmd : Maybe ActiveFile -> Cmd msg
 
 
-port activeTokenHintsChangedCmd : List EncodedHint -> Cmd msg
+port activeTokenHintsChangedCmd : ( Token, List EncodedHint ) -> Cmd msg
 
 
 port readingPackageDocsCmd : () -> Cmd msg
@@ -208,6 +212,9 @@ port defaultArgumentsConstructedCmd : Maybe (List String) -> Cmd msg
 
 
 port aliasesOfTypeReceivedCmd : List TipeString -> Cmd msg
+
+
+port tokenInfoReceivedCmd : List EncodedHint -> Cmd msg
 
 
 
@@ -381,6 +388,7 @@ type Msg
     | ConfigChanged Config
     | GetAliasesOfType Token
     | ClearLocalHintsCache
+    | GetTokenInfo ( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTopLevel, Maybe Token )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -533,9 +541,11 @@ update msg model =
 
         InferenceEntered inference ->
             ( model
-            , inferenceToHints inference
-                |> List.map (encodeHint model.config.showAliasesOfType model.activeFileTokens)
-                |> activeTokenHintsChangedCmd
+            , activeTokenHintsChangedCmd
+                ( inference.name
+                , inferenceToHints inference
+                    |> List.map (encodeHint model.config.showAliasesOfType model.activeFileTokens)
+                )
             )
 
         ConfigChanged config ->
@@ -559,6 +569,9 @@ update msg model =
             , Cmd.none
             )
 
+        GetTokenInfo ( maybeProjectDirectory, maybeFilePath, maybeActiveTopLevel, maybeToken ) ->
+            doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeToken model
+
 
 inferenceToHints : Inference -> List Hint
 inferenceToHints inference =
@@ -573,13 +586,29 @@ doUpdateActiveTokenHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Mod
 doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
     let
         updatedActiveFileTokens =
-            if model.activeTopLevel /= maybeActiveTopLevel then
-                getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
-            else
-                model.activeFileTokens
+            case maybeToken of
+                Nothing ->
+                    model.activeFileTokens
+
+                Just "" ->
+                    model.activeFileTokens
+
+                Just token ->
+                    if model.activeTopLevel /= maybeActiveTopLevel then
+                        getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+                    else
+                        model.activeFileTokens
 
         updatedActiveTokenHints =
-            getHintsForToken maybeToken updatedActiveFileTokens
+            case maybeToken of
+                Nothing ->
+                    []
+
+                Just "" ->
+                    []
+
+                Just token ->
+                    getHintsForToken maybeToken updatedActiveFileTokens
     in
         ( { model
             | activeTopLevel = maybeActiveTopLevel
@@ -587,10 +616,43 @@ doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
             , activeToken = maybeToken
             , activeTokenHints = updatedActiveTokenHints
           }
-        , updatedActiveTokenHints
-            |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
-            |> activeTokenHintsChangedCmd
+        , activeTokenHintsChangedCmd
+            ( Maybe.withDefault "" maybeToken
+            , updatedActiveTokenHints
+                |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
+            )
         )
+
+
+doGetTokenInfo : Maybe ProjectDirectory -> Maybe FilePath -> Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
+doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeToken model =
+    case ( maybeProjectDirectory, maybeFilePath ) of
+        ( Just projectDirectory, Just filePath ) ->
+            let
+                fileTokens =
+                    case model.activeFile of
+                        Just activeFile ->
+                            if activeFile.filePath == filePath && model.activeTopLevel == maybeActiveTopLevel then
+                                model.activeFileTokens
+                            else
+                                getActiveFileTokens (Just { filePath = filePath, projectDirectory = projectDirectory }) maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+
+                        Nothing ->
+                            getActiveFileTokens (Just { filePath = filePath, projectDirectory = projectDirectory }) maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+
+                tokenHints =
+                    getHintsForToken maybeToken fileTokens
+            in
+                ( model
+                , tokenHints
+                    |> List.map (encodeHint model.config.showAliasesOfType fileTokens)
+                    |> tokenInfoReceivedCmd
+                )
+
+        _ ->
+            ( model
+            , tokenInfoReceivedCmd []
+            )
 
 
 doUpdateActiveFile : Maybe ActiveFile -> Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
@@ -615,9 +677,11 @@ doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model =
           }
         , Cmd.batch
             [ activeFileChangedCmd maybeActiveFile
-            , updatedActiveTokenHints
-                |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
-                |> activeTokenHintsChangedCmd
+            , activeTokenHintsChangedCmd
+                ( Maybe.withDefault "" maybeToken
+                , updatedActiveTokenHints
+                    |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
+                )
             ]
         )
 
@@ -4137,8 +4201,20 @@ defaultSuggestions =
         -- , "compappend"
         ]
         ++ [ { emptyHint
+                | name = "Int"
+                , comment = "Integer."
+             }
+           , { emptyHint
+                | name = "Float"
+                , comment = "Floating-point number."
+             }
+           , { emptyHint
+                | name = "Bool"
+                , comment = "`True` or `False`."
+             }
+           , { emptyHint
                 | name = "number"
-                , comment = "`Int` or `Float` depending on usage."
+                , comment = "Can be an `Int` or a `Float` depending on usage."
              }
            , { emptyHint
                 | name = "appendable"
