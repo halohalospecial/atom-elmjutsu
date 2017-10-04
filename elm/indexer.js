@@ -11384,18 +11384,36 @@ var _user$project$Indexer$defaultSuggestions = A2(
 		ctor: '::',
 		_0: _elm_lang$core$Native_Utils.update(
 			_user$project$Indexer$emptyHint,
-			{name: 'number', comment: '`Int` or `Float` depending on usage.'}),
+			{name: 'Int', comment: 'Integer.'}),
 		_1: {
 			ctor: '::',
 			_0: _elm_lang$core$Native_Utils.update(
 				_user$project$Indexer$emptyHint,
-				{name: 'appendable', comment: 'This includes strings, lists, and text.'}),
+				{name: 'Float', comment: 'Floating-point number.'}),
 			_1: {
 				ctor: '::',
 				_0: _elm_lang$core$Native_Utils.update(
 					_user$project$Indexer$emptyHint,
-					{name: 'comparable', comment: 'This includes numbers, characters, strings, lists of comparable things, and tuples of comparable things. Note that tuples with 7 or more elements are not comparable.'}),
-				_1: {ctor: '[]'}
+					{name: 'Bool', comment: '`True` or `False`.'}),
+				_1: {
+					ctor: '::',
+					_0: _elm_lang$core$Native_Utils.update(
+						_user$project$Indexer$emptyHint,
+						{name: 'number', comment: 'Can be an `Int` or a `Float` depending on usage.'}),
+					_1: {
+						ctor: '::',
+						_0: _elm_lang$core$Native_Utils.update(
+							_user$project$Indexer$emptyHint,
+							{name: 'appendable', comment: 'This includes strings, lists, and text.'}),
+						_1: {
+							ctor: '::',
+							_0: _elm_lang$core$Native_Utils.update(
+								_user$project$Indexer$emptyHint,
+								{name: 'comparable', comment: 'This includes numbers, characters, strings, lists of comparable things, and tuples of comparable things. Note that tuples with 7 or more elements are not comparable.'}),
+							_1: {ctor: '[]'}
+						}
+					}
+				}
 			}
 		}
 	});

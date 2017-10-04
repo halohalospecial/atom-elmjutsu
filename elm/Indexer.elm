@@ -4201,8 +4201,20 @@ defaultSuggestions =
         -- , "compappend"
         ]
         ++ [ { emptyHint
+                | name = "Int"
+                , comment = "Integer."
+             }
+           , { emptyHint
+                | name = "Float"
+                , comment = "Floating-point number."
+             }
+           , { emptyHint
+                | name = "Bool"
+                , comment = "`True` or `False`."
+             }
+           , { emptyHint
                 | name = "number"
-                , comment = "`Int` or `Float` depending on usage."
+                , comment = "Can be an `Int` or a `Float` depending on usage."
              }
            , { emptyHint
                 | name = "appendable"
