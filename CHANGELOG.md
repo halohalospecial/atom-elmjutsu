@@ -1,3 +1,7 @@
+## 7.0.1
+* Allow going to the definition of symbols in the form `<module>.<variable>` when editing `<module>`.  This is mainly for `linter-elm-make` since we're not allowed to do an `import <module>` inside `<module>` by the compiler (circular dependency).
+* Go To Symbol: Only disable `linter` when it's enabled.
+
 ## 7.0.0
 * Fix case/of completion bug.
 * Change the default `Autocomplete Description Display` value to "markdown".

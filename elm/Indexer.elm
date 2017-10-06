@@ -811,12 +811,11 @@ doDownloadMissingPackageDocs dependencies model =
 doGoToDefinition : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
 doGoToDefinition maybeActiveTopLevel maybeToken model =
     let
-        activeFileTokens =
-            getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
-                |> computeVariableSourcePaths ( model.activeFile, maybeActiveTopLevel, model.projectFileContentsDict, model.projectDependencies, model.packageDocs )
+        ( tokenToCheck, activeFileTokens ) =
+            getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel maybeToken model
 
         requests =
-            getHintsForToken maybeToken activeFileTokens
+            getHintsForToken tokenToCheck activeFileTokens
                 |> List.map
                     (\hint ->
                         let
@@ -841,16 +840,53 @@ doGoToDefinition maybeActiveTopLevel maybeToken model =
 doAskCanGoToDefinition : Maybe ActiveTopLevel -> Token -> Model -> ( Model, Cmd Msg )
 doAskCanGoToDefinition maybeActiveTopLevel token model =
     let
+        ( tokenToCheck, activeFileTokens ) =
+            getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel (Just token) model
+    in
+        case tokenToCheck of
+            Nothing ->
+                ( model
+                , ( token, False ) |> canGoToDefinitionRepliedCmd
+                )
+
+            Just token2 ->
+                ( model
+                , ( token
+                  , Dict.member token2 activeFileTokens
+                  )
+                    |> canGoToDefinitionRepliedCmd
+                )
+
+
+getTokenAndActiveFileTokensForGoToDefinition : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Maybe Token, TokenDict )
+getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel maybeToken model =
+    let
+        tokenToCheck =
+            case ( maybeToken, model.activeFile ) of
+                ( Just token, Just { projectDirectory } ) ->
+                    let
+                        fileContentsDict =
+                            getFileContentsOfProject projectDirectory model.projectFileContentsDict
+
+                        activeFileContents =
+                            getActiveFileContents model.activeFile fileContentsDict
+                    in
+                        if activeFileContents.moduleDocs.name == getModuleName token then
+                            Just (getLastName token)
+                        else
+                            Just token
+
+                ( Just token, Nothing ) ->
+                    Just token
+
+                ( Nothing, _ ) ->
+                    Nothing
+
         activeFileTokens =
             getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
                 |> computeVariableSourcePaths ( model.activeFile, maybeActiveTopLevel, model.projectFileContentsDict, model.projectDependencies, model.packageDocs )
     in
-        ( model
-        , ( token
-          , Dict.member token activeFileTokens
-          )
-            |> canGoToDefinitionRepliedCmd
-        )
+        ( tokenToCheck, activeFileTokens )
 
 
 doShowGoToSymbolView : Maybe ProjectDirectory -> Maybe String -> Model -> ( Model, Cmd Msg )
