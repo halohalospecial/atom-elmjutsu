@@ -1,5 +1,6 @@
 port module Indexer exposing (..)
 
+import Ast
 import Dict
 import Dict.Extra
 import Helper
@@ -8,6 +9,7 @@ import Json.Decode as Decode
 import Regex
 import Set
 import Task
+import Ast.Statement exposing (..)
 
 
 main : Program Never Model Msg
@@ -65,6 +67,7 @@ subscriptions model =
         , getAliasesOfTypeSub GetAliasesOfType
         , clearLocalHintsCacheSub (\_ -> ClearLocalHintsCache)
         , getTokenInfoSub GetTokenInfo
+        , getSymbolsMatchingTypeSub GetSymbolsMatchingType
         ]
 
 
@@ -144,6 +147,9 @@ port clearLocalHintsCacheSub : (() -> msg) -> Sub msg
 port getTokenInfoSub : (( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTopLevel, Maybe Token ) -> msg) -> Sub msg
 
 
+port getSymbolsMatchingTypeSub : (( TipeString, Maybe ProjectDirectory, Maybe FilePath ) -> msg) -> Sub msg
+
+
 
 -- OUTGOING PORTS
 
@@ -215,6 +221,9 @@ port aliasesOfTypeReceivedCmd : List TipeString -> Cmd msg
 
 
 port tokenInfoReceivedCmd : List EncodedHint -> Cmd msg
+
+
+port symbolsMatchingTypeReceivedCmd : List EncodedHint -> Cmd msg
 
 
 
@@ -389,6 +398,7 @@ type Msg
     | GetAliasesOfType Token
     | ClearLocalHintsCache
     | GetTokenInfo ( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTopLevel, Maybe Token )
+    | GetSymbolsMatchingType ( TipeString, Maybe ProjectDirectory, Maybe FilePath )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -571,6 +581,18 @@ update msg model =
 
         GetTokenInfo ( maybeProjectDirectory, maybeFilePath, maybeActiveTopLevel, maybeToken ) ->
             doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeToken model
+
+        GetSymbolsMatchingType ( tipeString, maybeProjectDirectory, maybeFilePath ) ->
+            doGetSymbolsMatchingType tipeString maybeProjectDirectory maybeFilePath model
+
+
+doGetSymbolsMatchingType : TipeString -> Maybe ProjectDirectory -> Maybe FilePath -> Model -> ( Model, Cmd msg )
+doGetSymbolsMatchingType tipeString maybeProjectDirectory maybeFilePath model =
+    ( model
+    , getSymbolsMatchingType tipeString maybeProjectDirectory maybeFilePath model.projectFileContentsDict model.projectDependencies model.packageDocs
+        |> List.map (encodeHint model.config.showAliasesOfType Dict.empty)
+        |> symbolsMatchingTypeReceivedCmd
+    )
 
 
 inferenceToHints : Inference -> List Hint
@@ -1373,6 +1395,185 @@ areTipesCompatibleRecur tipe1 tipe2 =
 
                     _ ->
                         False
+
+
+getSymbolsMatchingType : TipeString -> Maybe ProjectDirectory -> Maybe FilePath -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> List Hint
+getSymbolsMatchingType tipeString maybeProjectDirectory maybeFilePath projectFileContentsDict projectDependencies packageDocs =
+    case ( maybeProjectDirectory, maybeFilePath ) of
+        ( Just projectDirectory, Just filePath ) ->
+            let
+                activeFile =
+                    Just { projectDirectory = projectDirectory, filePath = filePath }
+
+                activeFileTokens =
+                    getActiveFileTokens activeFile Nothing projectFileContentsDict projectDependencies packageDocs
+
+                { external, local } =
+                    getExternalAndLocalHints True activeFile projectFileContentsDict projectDependencies packageDocs Nothing Nothing activeFileTokens
+
+                ( exposedAndTopLevelHints, unexposedHints, variableHints ) =
+                    case ( external, local ) of
+                        ( Just external, Just local ) ->
+                            ( external.importedHints ++ local.topLevelHints, external.unimportedHints, local.variableHints )
+
+                        _ ->
+                            ( [], [], [] )
+            in
+                (exposedAndTopLevelHints
+                    ++ unexposedHints
+                    ++ variableHints
+                )
+                    |> List.filter (\hint -> areMatchingTypes tipeString hint.tipe)
+
+        _ ->
+            []
+
+
+parseTipeString : String -> Maybe Type
+parseTipeString tipeString =
+    case Ast.parseStatement Dict.empty ("x : " ++ tipeString) of
+        Ok ( (), _, FunctionTypeDeclaration "x" typeAnnotation ) ->
+            Just typeAnnotation
+
+        _ ->
+            Nothing
+
+
+{-|
+
+    ```
+    areMatchingTypes "a" "b" == True
+    areMatchingTypes "number" "a" == True
+    areMatchingTypes "appendable" "a" == True
+    areMatchingTypes "comparable" "a" == True
+
+    areMatchingTypes "MyType" "a" == True
+    areMatchingTypes "MyType" "MyType" == True
+
+    areMatchingTypes "number" "number" == True
+    areMatchingTypes "Int" "number" == True
+    areMatchingTypes "Float" "number" == True
+    areMatchingTypes "List MyType" "List number" == False
+
+    areMatchingTypes "appendable" "appendable" == True
+    areMatchingTypes "String" "appendable" == True
+    areMatchingTypes "List a" "appendable" == True
+    areMatchingTypes "List Int" "appendable" == True
+
+    areMatchingTypes "List a" "a" == True
+    areMatchingTypes "List Int" "List a" == True
+    areMatchingTypes "List Int" "List Float" == False
+
+    areMatchingTypes "" "Int" == False
+    areMatchingTypes "Int" "" == False
+
+    areMatchingTypes "List String -> Int" "List a -> Int" == True
+    areMatchingTypes "List String -> Int" "a -> a" == False
+    ```
+-}
+areMatchingTypes : String -> String -> Bool
+areMatchingTypes tipeString1 tipeString2 =
+    case ( parseTipeString tipeString1, parseTipeString tipeString2 ) of
+        ( Nothing, _ ) ->
+            False
+
+        ( _, Nothing ) ->
+            False
+
+        ( Just annotation1, Just annotation2 ) ->
+            let
+                ( result, typeVariables1, typeVariables2 ) =
+                    areMatchingTypesRecur annotation1 annotation2 Dict.empty Dict.empty []
+            in
+                result
+
+
+areMatchingTypesRecur : Type -> Type -> Dict.Dict String Type -> Dict.Dict String Type -> List ( Type, Type ) -> ( Bool, Dict.Dict String Type, Dict.Dict String Type )
+areMatchingTypesRecur annotation1 annotation2 typeVariables1 typeVariables2 nextAnnotations =
+    let
+        ( continueChecking, updatedTypeVariables1, updatedTypeVariables2, updatedNextAnnotations ) =
+            if annotation1 == annotation2 then
+                ( True, typeVariables1, typeVariables2, nextAnnotations )
+            else
+                case ( annotation1, annotation2 ) of
+                    -- number (Int, Float)
+                    ( TypeVariable "number", TypeConstructor [ "Int" ] [] ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeConstructor [ "Int" ] [], TypeVariable "number" ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeVariable "number", TypeConstructor [ "Float" ] [] ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeConstructor [ "Float" ] [], TypeVariable "number" ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    -- appendable (String, List)
+                    ( TypeVariable "appendable", TypeConstructor [ "String" ] [] ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeConstructor [ "String" ] [], TypeVariable "appendable" ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeVariable "appendable", TypeConstructor [ "List" ] anyType ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeConstructor [ "List" ] anyType, TypeVariable "appendable" ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    -- generic type (e.g. a, b, c)
+                    ( TypeVariable variable, anyType ) ->
+                        if isSuperTipe variable then
+                            ( False, typeVariables1, typeVariables2, nextAnnotations )
+                        else
+                            case Dict.get variable typeVariables1 of
+                                Nothing ->
+                                    ( True, Dict.insert variable anyType typeVariables1, typeVariables2, nextAnnotations )
+
+                                Just variableAnnotation ->
+                                    ( True, typeVariables1, typeVariables2, [ ( variableAnnotation, anyType ) ] ++ nextAnnotations )
+
+                    ( anyType, TypeVariable variable ) ->
+                        if isSuperTipe variable then
+                            ( False, typeVariables1, typeVariables2, nextAnnotations )
+                        else
+                            case Dict.get variable typeVariables2 of
+                                Nothing ->
+                                    ( True, typeVariables1, Dict.insert variable anyType typeVariables2, nextAnnotations )
+
+                                Just variableAnnotation ->
+                                    ( True, typeVariables1, typeVariables2, [ ( anyType, variableAnnotation ) ] ++ nextAnnotations )
+
+                    -- type application (e.g. String -> Int)
+                    ( TypeApplication typeA1 typeB1, TypeApplication typeA2 typeB2 ) ->
+                        ( True, typeVariables1, typeVariables2, [ ( typeA1, typeA2 ), ( typeB1, typeB2 ) ] ++ nextAnnotations )
+
+                    -- type constructor (e.g. MyType String)
+                    ( TypeConstructor constructor1 children1, TypeConstructor constructor2 children2 ) ->
+                        if constructor1 == constructor2 then
+                            if List.length children1 == List.length children2 then
+                                ( True, typeVariables1, typeVariables2, (List.map2 (,) children1 children2) ++ nextAnnotations )
+                            else
+                                ( False, typeVariables1, typeVariables2, nextAnnotations )
+                        else
+                            ( False, typeVariables1, typeVariables2, nextAnnotations )
+
+                    -- TODO
+                    -- Comparable types includes numbers, characters, strings, lists of comparable things, and tuples of comparable things.
+                    -- Note that tuples with 7 or more elements are not comparable.
+                    _ ->
+                        ( False, typeVariables1, typeVariables2, nextAnnotations )
+    in
+        if continueChecking then
+            case updatedNextAnnotations of
+                ( head1, head2 ) :: tails ->
+                    areMatchingTypesRecur head1 head2 updatedTypeVariables1 updatedTypeVariables2 tails
+
+                [] ->
+                    ( True, updatedTypeVariables1, updatedTypeVariables2 )
+        else
+            ( False, updatedTypeVariables1, updatedTypeVariables2 )
 
 
 getExternalHints : Bool -> FilePath -> FileContents -> List ModuleDocs -> ExternalHints
