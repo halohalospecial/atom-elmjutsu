@@ -12664,11 +12664,11 @@ var _user$project$Indexer$areMatchingTypesRecur = F5(
 					return {ctor: '_Tuple4', _0: true, _1: typeVariables1, _2: typeVariables2, _3: nextAnnotations};
 				} else {
 					var _p104 = {ctor: '_Tuple2', _0: annotation1, _1: annotation2};
-					_v87_14:
+					_v87_16:
 					do {
-						_v87_11:
+						_v87_13:
 						do {
-							_v87_10:
+							_v87_12:
 							do {
 								if (_p104.ctor === '_Tuple2') {
 									switch (_p104._0.ctor) {
@@ -12685,10 +12685,10 @@ var _user$project$Indexer$areMatchingTypesRecur = F5(
 																		case 'Float':
 																			return {ctor: '_Tuple4', _0: true, _1: typeVariables1, _2: typeVariables2, _3: nextAnnotations};
 																		default:
-																			break _v87_10;
+																			break _v87_12;
 																	}
 																} else {
-																	break _v87_10;
+																	break _v87_12;
 																}
 															case 'appendable':
 																switch (_p104._1._0._0) {
@@ -12696,42 +12696,44 @@ var _user$project$Indexer$areMatchingTypesRecur = F5(
 																		if (_p104._1._1.ctor === '[]') {
 																			return {ctor: '_Tuple4', _0: true, _1: typeVariables1, _2: typeVariables2, _3: nextAnnotations};
 																		} else {
-																			break _v87_10;
+																			break _v87_12;
 																		}
 																	case 'List':
 																		return {ctor: '_Tuple4', _0: true, _1: typeVariables1, _2: typeVariables2, _3: nextAnnotations};
 																	default:
-																		break _v87_10;
+																		break _v87_12;
 																}
 															default:
-																break _v87_10;
+																break _v87_12;
 														}
 													} else {
-														break _v87_10;
+														break _v87_12;
 													}
+												case 'TypeApplication':
+													return {ctor: '_Tuple4', _0: false, _1: typeVariables1, _2: typeVariables2, _3: nextAnnotations};
 												case 'TypeVariable':
-													if (_p104._1._0 === 'number') {
+													if (_p104._0._0 === 'number') {
 														return A2(
-															checkTypeVariables1,
-															_p104._0._0,
+															checkTypeVariables2,
+															_p104._1._0,
 															_Bogdanp$elm_ast$Ast_Statement$TypeVariable('number'));
 													} else {
-														if (_p104._0._0 === 'number') {
+														if (_p104._1._0 === 'number') {
 															return A2(
-																checkTypeVariables2,
-																_p104._1._0,
+																checkTypeVariables1,
+																_p104._0._0,
 																_Bogdanp$elm_ast$Ast_Statement$TypeVariable('number'));
 														} else {
-															break _v87_10;
+															break _v87_12;
 														}
 													}
 												default:
-													break _v87_10;
+													break _v87_12;
 											}
 										case 'TypeApplication':
 											switch (_p104._1.ctor) {
 												case 'TypeVariable':
-													break _v87_11;
+													return {ctor: '_Tuple4', _0: false, _1: typeVariables1, _2: typeVariables2, _3: nextAnnotations};
 												case 'TypeApplication':
 													return {
 														ctor: '_Tuple4',
@@ -12752,7 +12754,7 @@ var _user$project$Indexer$areMatchingTypesRecur = F5(
 															nextAnnotations)
 													};
 												default:
-													break _v87_14;
+													break _v87_16;
 											}
 										case 'TypeConstructor':
 											switch (_p104._1.ctor) {
@@ -12767,10 +12769,10 @@ var _user$project$Indexer$areMatchingTypesRecur = F5(
 																		case 'Float':
 																			return {ctor: '_Tuple4', _0: true, _1: typeVariables1, _2: typeVariables2, _3: nextAnnotations};
 																		default:
-																			break _v87_11;
+																			break _v87_13;
 																	}
 																} else {
-																	break _v87_11;
+																	break _v87_13;
 																}
 															case 'appendable':
 																switch (_p104._0._0._0) {
@@ -12778,18 +12780,18 @@ var _user$project$Indexer$areMatchingTypesRecur = F5(
 																		if (_p104._0._1.ctor === '[]') {
 																			return {ctor: '_Tuple4', _0: true, _1: typeVariables1, _2: typeVariables2, _3: nextAnnotations};
 																		} else {
-																			break _v87_11;
+																			break _v87_13;
 																		}
 																	case 'List':
 																		return {ctor: '_Tuple4', _0: true, _1: typeVariables1, _2: typeVariables2, _3: nextAnnotations};
 																	default:
-																		break _v87_11;
+																		break _v87_13;
 																}
 															default:
-																break _v87_11;
+																break _v87_13;
 														}
 													} else {
-														break _v87_11;
+														break _v87_13;
 													}
 												case 'TypeConstructor':
 													var _p108 = _p104._1._1;
@@ -12814,17 +12816,17 @@ var _user$project$Indexer$areMatchingTypesRecur = F5(
 															nextAnnotations)
 													} : {ctor: '_Tuple4', _0: false, _1: typeVariables1, _2: typeVariables2, _3: nextAnnotations}) : {ctor: '_Tuple4', _0: false, _1: typeVariables1, _2: typeVariables2, _3: nextAnnotations};
 												default:
-													break _v87_14;
+													break _v87_16;
 											}
 										default:
 											if (_p104._1.ctor === 'TypeVariable') {
-												break _v87_11;
+												break _v87_13;
 											} else {
-												break _v87_14;
+												break _v87_16;
 											}
 									}
 								} else {
-									break _v87_14;
+									break _v87_16;
 								}
 							} while(false);
 							var _p105 = _p104._0._0;
@@ -14442,8 +14444,8 @@ var _user$project$Indexer$getTokenInfoSub = _elm_lang$core$Native_Platform.incom
 						_1: {ctor: '[]'}
 					}
 				}))));
-var _user$project$Indexer$getSymbolsMatchingTypeSub = _elm_lang$core$Native_Platform.incomingPort(
-	'getSymbolsMatchingTypeSub',
+var _user$project$Indexer$getFunctionsMatchingTypeSub = _elm_lang$core$Native_Platform.incomingPort(
+	'getFunctionsMatchingTypeSub',
 	A2(
 		_elm_lang$core$Json_Decode$andThen,
 		function (x0) {
@@ -14851,8 +14853,8 @@ var _user$project$Indexer$tokenInfoReceivedCmd = _elm_lang$core$Native_Platform.
 				};
 			});
 	});
-var _user$project$Indexer$symbolsMatchingTypeReceivedCmd = _elm_lang$core$Native_Platform.outgoingPort(
-	'symbolsMatchingTypeReceivedCmd',
+var _user$project$Indexer$functionsMatchingTypeReceivedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'functionsMatchingTypeReceivedCmd',
 	function (v) {
 		return _elm_lang$core$Native_List.toArray(v).map(
 			function (v) {
@@ -15049,8 +15051,8 @@ _user$project$Indexer_ops['=>'] = F2(
 			_1: A2(_user$project$Indexer$Import, _elm_lang$core$Maybe$Nothing, exposed)
 		};
 	});
-var _user$project$Indexer$GetSymbolsMatchingType = function (a) {
-	return {ctor: 'GetSymbolsMatchingType', _0: a};
+var _user$project$Indexer$GetFunctionsMatchingType = function (a) {
+	return {ctor: 'GetFunctionsMatchingType', _0: a};
 };
 var _user$project$Indexer$GetTokenInfo = function (a) {
 	return {ctor: 'GetTokenInfo', _0: a};
@@ -17449,7 +17451,7 @@ var _user$project$Indexer$addLoadedPackageDocs = F2(
 			model,
 			{packageDocs: updatedPackageDocs, activeFileTokens: updatedActiveFileTokens});
 	});
-var _user$project$Indexer$getSymbolsMatchingType = F6(
+var _user$project$Indexer$getFunctionsMatchingType = F6(
 	function (tipeString, maybeProjectDirectory, maybeFilePath, projectFileContentsDict, projectDependencies, packageDocs) {
 		var _p289 = {ctor: '_Tuple2', _0: maybeProjectDirectory, _1: maybeFilePath};
 		if (((_p289.ctor === '_Tuple2') && (_p289._0.ctor === 'Just')) && (_p289._1.ctor === 'Just')) {
@@ -17495,16 +17497,16 @@ var _user$project$Indexer$getSymbolsMatchingType = F6(
 			return {ctor: '[]'};
 		}
 	});
-var _user$project$Indexer$doGetSymbolsMatchingType = F4(
+var _user$project$Indexer$doGetFunctionsMatchingType = F4(
 	function (tipeString, maybeProjectDirectory, maybeFilePath, model) {
 		return {
 			ctor: '_Tuple2',
 			_0: model,
-			_1: _user$project$Indexer$symbolsMatchingTypeReceivedCmd(
+			_1: _user$project$Indexer$functionsMatchingTypeReceivedCmd(
 				A2(
 					_elm_lang$core$List$map,
 					A2(_user$project$Indexer$encodeHint, model.config.showAliasesOfType, _elm_lang$core$Dict$empty),
-					A6(_user$project$Indexer$getSymbolsMatchingType, tipeString, maybeProjectDirectory, maybeFilePath, model.projectFileContentsDict, model.projectDependencies, model.packageDocs)))
+					A6(_user$project$Indexer$getFunctionsMatchingType, tipeString, maybeProjectDirectory, maybeFilePath, model.projectFileContentsDict, model.projectDependencies, model.packageDocs)))
 		};
 	});
 var _user$project$Indexer$getSourcePathOfRecordFieldTokenRecur = F7(
@@ -18283,7 +18285,7 @@ var _user$project$Indexer$update = F2(
 			case 'GetTokenInfo':
 				return A5(_user$project$Indexer$doGetTokenInfo, _p350._0._0, _p350._0._1, _p350._0._2, _p350._0._3, model);
 			default:
-				return A4(_user$project$Indexer$doGetSymbolsMatchingType, _p350._0._0, _p350._0._1, _p350._0._2, model);
+				return A4(_user$project$Indexer$doGetFunctionsMatchingType, _p350._0._0, _p350._0._1, _p350._0._2, model);
 		}
 	});
 var _user$project$Indexer$toImportDict = function (rawImports) {
@@ -18402,7 +18404,7 @@ var _user$project$Indexer$subscriptions = function (model) {
 																										_0: _user$project$Indexer$getTokenInfoSub(_user$project$Indexer$GetTokenInfo),
 																										_1: {
 																											ctor: '::',
-																											_0: _user$project$Indexer$getSymbolsMatchingTypeSub(_user$project$Indexer$GetSymbolsMatchingType),
+																											_0: _user$project$Indexer$getFunctionsMatchingTypeSub(_user$project$Indexer$GetFunctionsMatchingType),
 																											_1: {ctor: '[]'}
 																										}
 																									}

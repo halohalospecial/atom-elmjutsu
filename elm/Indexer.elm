@@ -67,7 +67,7 @@ subscriptions model =
         , getAliasesOfTypeSub GetAliasesOfType
         , clearLocalHintsCacheSub (\_ -> ClearLocalHintsCache)
         , getTokenInfoSub GetTokenInfo
-        , getSymbolsMatchingTypeSub GetSymbolsMatchingType
+        , getFunctionsMatchingTypeSub GetFunctionsMatchingType
         ]
 
 
@@ -147,7 +147,7 @@ port clearLocalHintsCacheSub : (() -> msg) -> Sub msg
 port getTokenInfoSub : (( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTopLevel, Maybe Token ) -> msg) -> Sub msg
 
 
-port getSymbolsMatchingTypeSub : (( TipeString, Maybe ProjectDirectory, Maybe FilePath ) -> msg) -> Sub msg
+port getFunctionsMatchingTypeSub : (( TipeString, Maybe ProjectDirectory, Maybe FilePath ) -> msg) -> Sub msg
 
 
 
@@ -223,7 +223,7 @@ port aliasesOfTypeReceivedCmd : List TipeString -> Cmd msg
 port tokenInfoReceivedCmd : List EncodedHint -> Cmd msg
 
 
-port symbolsMatchingTypeReceivedCmd : List EncodedHint -> Cmd msg
+port functionsMatchingTypeReceivedCmd : List EncodedHint -> Cmd msg
 
 
 
@@ -398,7 +398,7 @@ type Msg
     | GetAliasesOfType Token
     | ClearLocalHintsCache
     | GetTokenInfo ( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTopLevel, Maybe Token )
-    | GetSymbolsMatchingType ( TipeString, Maybe ProjectDirectory, Maybe FilePath )
+    | GetFunctionsMatchingType ( TipeString, Maybe ProjectDirectory, Maybe FilePath )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -582,16 +582,16 @@ update msg model =
         GetTokenInfo ( maybeProjectDirectory, maybeFilePath, maybeActiveTopLevel, maybeToken ) ->
             doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeToken model
 
-        GetSymbolsMatchingType ( tipeString, maybeProjectDirectory, maybeFilePath ) ->
-            doGetSymbolsMatchingType tipeString maybeProjectDirectory maybeFilePath model
+        GetFunctionsMatchingType ( tipeString, maybeProjectDirectory, maybeFilePath ) ->
+            doGetFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath model
 
 
-doGetSymbolsMatchingType : TipeString -> Maybe ProjectDirectory -> Maybe FilePath -> Model -> ( Model, Cmd msg )
-doGetSymbolsMatchingType tipeString maybeProjectDirectory maybeFilePath model =
+doGetFunctionsMatchingType : TipeString -> Maybe ProjectDirectory -> Maybe FilePath -> Model -> ( Model, Cmd msg )
+doGetFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath model =
     ( model
-    , getSymbolsMatchingType tipeString maybeProjectDirectory maybeFilePath model.projectFileContentsDict model.projectDependencies model.packageDocs
+    , getFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath model.projectFileContentsDict model.projectDependencies model.packageDocs
         |> List.map (encodeHint model.config.showAliasesOfType Dict.empty)
-        |> symbolsMatchingTypeReceivedCmd
+        |> functionsMatchingTypeReceivedCmd
     )
 
 
@@ -1397,8 +1397,8 @@ areTipesCompatibleRecur tipe1 tipe2 =
                         False
 
 
-getSymbolsMatchingType : TipeString -> Maybe ProjectDirectory -> Maybe FilePath -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> List Hint
-getSymbolsMatchingType tipeString maybeProjectDirectory maybeFilePath projectFileContentsDict projectDependencies packageDocs =
+getFunctionsMatchingType : TipeString -> Maybe ProjectDirectory -> Maybe FilePath -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> List Hint
+getFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath projectFileContentsDict projectDependencies packageDocs =
     case ( maybeProjectDirectory, maybeFilePath ) of
         ( Just projectDirectory, Just filePath ) ->
             let
@@ -1472,6 +1472,8 @@ parseTipeString tipeString =
 
     areMatchingTypes "number -> String" "number" == False
     areMatchingTypes "number -> String" "a -> String" == False
+
+    areMatchingTypes "String -> a" "appendable -> appendable -> appendable" == False
     ```
 -}
 areMatchingTypes : String -> String -> Bool
@@ -1519,10 +1521,13 @@ areMatchingTypesRecur annotation1 annotation2 typeVariables1 typeVariables2 next
                     ( TypeVariable "number", TypeConstructor [ "Int" ] [] ) ->
                         ( True, typeVariables1, typeVariables2, nextAnnotations )
 
-                    ( TypeConstructor [ "Int" ] [], TypeVariable "number" ) ->
+                    ( TypeVariable "number", TypeConstructor [ "Float" ] [] ) ->
                         ( True, typeVariables1, typeVariables2, nextAnnotations )
 
-                    ( TypeVariable "number", TypeConstructor [ "Float" ] [] ) ->
+                    ( TypeVariable "number", TypeVariable variable ) ->
+                        checkTypeVariables2 variable (TypeVariable "number")
+
+                    ( TypeConstructor [ "Int" ] [], TypeVariable "number" ) ->
                         ( True, typeVariables1, typeVariables2, nextAnnotations )
 
                     ( TypeConstructor [ "Float" ] [], TypeVariable "number" ) ->
@@ -1531,23 +1536,26 @@ areMatchingTypesRecur annotation1 annotation2 typeVariables1 typeVariables2 next
                     ( TypeVariable variable, TypeVariable "number" ) ->
                         checkTypeVariables1 variable (TypeVariable "number")
 
-                    ( TypeVariable "number", TypeVariable variable ) ->
-                        checkTypeVariables2 variable (TypeVariable "number")
-
                     -- appendable (String, List)
                     ( TypeVariable "appendable", TypeConstructor [ "String" ] [] ) ->
                         ( True, typeVariables1, typeVariables2, nextAnnotations )
 
-                    ( TypeConstructor [ "String" ] [], TypeVariable "appendable" ) ->
+                    ( TypeVariable "appendable", TypeConstructor [ "List" ] anyType ) ->
                         ( True, typeVariables1, typeVariables2, nextAnnotations )
 
-                    ( TypeVariable "appendable", TypeConstructor [ "List" ] anyType ) ->
+                    ( TypeConstructor [ "String" ] [], TypeVariable "appendable" ) ->
                         ( True, typeVariables1, typeVariables2, nextAnnotations )
 
                     ( TypeConstructor [ "List" ] anyType, TypeVariable "appendable" ) ->
                         ( True, typeVariables1, typeVariables2, nextAnnotations )
 
                     -- generic type (e.g. a, b, c)
+                    ( TypeVariable variable, TypeApplication _ _ ) ->
+                        ( False, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeApplication _ _, TypeVariable variable ) ->
+                        ( False, typeVariables1, typeVariables2, nextAnnotations )
+
                     ( TypeVariable variable, anyType ) ->
                         if isTypeClass variable then
                             ( False, typeVariables1, typeVariables2, nextAnnotations )

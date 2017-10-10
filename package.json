@@ -38,9 +38,9 @@
         "1.0.0": "provideGoToDefinition"
       }
     },
-    "elmjutsu.getSymbolsMatchingType": {
+    "elmjutsu.getFunctionsMatchingType": {
       "versions": {
-        "1.0.0": "provideGetSymbolsMatchingType"
+        "1.0.0": "provideGetFunctionsMatchingType"
       }
     },
     "elmjutsu.addImport": {
