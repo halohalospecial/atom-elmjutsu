@@ -1,6 +1,7 @@
 port module Indexer exposing (..)
 
 import Ast
+import Ast.Statement exposing (..)
 import Dict
 import Dict.Extra
 import Helper
@@ -9,7 +10,6 @@ import Json.Decode as Decode
 import Regex
 import Set
 import Task
-import Ast.Statement exposing (..)
 
 
 main : Program Never Model Msg
@@ -1377,11 +1377,11 @@ areTipesCompatibleRecur tipe1 tipe2 =
                 False
             else if numParts1 == 1 && numParts2 == 1 then
                 (isTipeVariable tipe1 && isTipeVariable tipe2)
-                    || (Helper.isCapitalized tipe1 && isTipeVariable tipe2 && not (isSuperTipe tipe2))
+                    || (Helper.isCapitalized tipe1 && isTipeVariable tipe2 && not (isTypeClass tipe2))
                     || (isNumberTipe tipe1 && tipe2 == "number")
                     || (isAppendableTipe tipe1 && tipe2 == "appendable")
                     || (isComparableTipe tipe1 && tipe2 == "comparable")
-            else if numParts2 == 1 && isTipeVariable tipe2 && not (isSuperTipe tipe2) then
+            else if numParts2 == 1 && isTipeVariable tipe2 && not (isTypeClass tipe2) then
                 True
             else
                 case ( List.head parts1, List.head parts2 ) of
@@ -1469,6 +1469,9 @@ parseTipeString tipeString =
 
     areMatchingTypes "List String -> Int" "List a -> Int" == True
     areMatchingTypes "List String -> Int" "a -> a" == False
+
+    areMatchingTypes "number -> String" "number" == False
+    areMatchingTypes "number -> String" "a -> String" == False
     ```
 -}
 areMatchingTypes : String -> String -> Bool
@@ -1491,6 +1494,22 @@ areMatchingTypes tipeString1 tipeString2 =
 areMatchingTypesRecur : Type -> Type -> Dict.Dict String Type -> Dict.Dict String Type -> List ( Type, Type ) -> ( Bool, Dict.Dict String Type, Dict.Dict String Type )
 areMatchingTypesRecur annotation1 annotation2 typeVariables1 typeVariables2 nextAnnotations =
     let
+        checkTypeVariables1 variable annotation =
+            case Dict.get variable typeVariables1 of
+                Nothing ->
+                    ( True, Dict.insert variable annotation typeVariables1, typeVariables2, nextAnnotations )
+
+                Just variableAnnotation ->
+                    ( True, typeVariables1, typeVariables2, [ ( variableAnnotation, annotation ) ] ++ nextAnnotations )
+
+        checkTypeVariables2 variable annotation =
+            case Dict.get variable typeVariables2 of
+                Nothing ->
+                    ( True, typeVariables1, Dict.insert variable annotation typeVariables2, nextAnnotations )
+
+                Just variableAnnotation ->
+                    ( True, typeVariables1, typeVariables2, [ ( annotation, variableAnnotation ) ] ++ nextAnnotations )
+
         ( continueChecking, updatedTypeVariables1, updatedTypeVariables2, updatedNextAnnotations ) =
             if annotation1 == annotation2 then
                 ( True, typeVariables1, typeVariables2, nextAnnotations )
@@ -1509,6 +1528,12 @@ areMatchingTypesRecur annotation1 annotation2 typeVariables1 typeVariables2 next
                     ( TypeConstructor [ "Float" ] [], TypeVariable "number" ) ->
                         ( True, typeVariables1, typeVariables2, nextAnnotations )
 
+                    ( TypeVariable variable, TypeVariable "number" ) ->
+                        checkTypeVariables1 variable (TypeVariable "number")
+
+                    ( TypeVariable "number", TypeVariable variable ) ->
+                        checkTypeVariables2 variable (TypeVariable "number")
+
                     -- appendable (String, List)
                     ( TypeVariable "appendable", TypeConstructor [ "String" ] [] ) ->
                         ( True, typeVariables1, typeVariables2, nextAnnotations )
@@ -1524,26 +1549,16 @@ areMatchingTypesRecur annotation1 annotation2 typeVariables1 typeVariables2 next
 
                     -- generic type (e.g. a, b, c)
                     ( TypeVariable variable, anyType ) ->
-                        if isSuperTipe variable then
+                        if isTypeClass variable then
                             ( False, typeVariables1, typeVariables2, nextAnnotations )
                         else
-                            case Dict.get variable typeVariables1 of
-                                Nothing ->
-                                    ( True, Dict.insert variable anyType typeVariables1, typeVariables2, nextAnnotations )
-
-                                Just variableAnnotation ->
-                                    ( True, typeVariables1, typeVariables2, [ ( variableAnnotation, anyType ) ] ++ nextAnnotations )
+                            checkTypeVariables1 variable anyType
 
                     ( anyType, TypeVariable variable ) ->
-                        if isSuperTipe variable then
+                        if isTypeClass variable then
                             ( False, typeVariables1, typeVariables2, nextAnnotations )
                         else
-                            case Dict.get variable typeVariables2 of
-                                Nothing ->
-                                    ( True, typeVariables1, Dict.insert variable anyType typeVariables2, nextAnnotations )
-
-                                Just variableAnnotation ->
-                                    ( True, typeVariables1, typeVariables2, [ ( anyType, variableAnnotation ) ] ++ nextAnnotations )
+                            checkTypeVariables2 variable anyType
 
                     -- type application (e.g. String -> Int)
                     ( TypeApplication typeA1 typeB1, TypeApplication typeA2 typeB2 ) ->
@@ -1873,7 +1888,7 @@ getTipeDistance tipe1 tipe2 =
                 List.length parts2
 
             genericTipePenalty =
-                if numParts2 == 1 && isTipeVariable tipe2 && not (isSuperTipe tipe2) then
+                if numParts2 == 1 && isTipeVariable tipe2 && not (isTypeClass tipe2) then
                     numParts1
                 else
                     0
@@ -2560,8 +2575,8 @@ superTipes =
     ]
 
 
-isSuperTipe : TipeString -> Bool
-isSuperTipe tipeString =
+isTypeClass : TipeString -> Bool
+isTypeClass tipeString =
     List.member tipeString superTipes
 
 
