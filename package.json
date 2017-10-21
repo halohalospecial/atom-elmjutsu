@@ -1,12 +1,10 @@
 {
   "name": "elmjutsu",
   "main": "./lib/main",
-  "version": "5.6.3",
-  "description": "A bag of tricks for developing with Elm. (Autocompletion, Go To Definition, Find Usages, Rename Symbol, etc.)",
-  "keywords": [
-    "elm",
-    "ide"
-  ],
+  "version": "7.0.2",
+  "description":
+    "A bag of tricks for developing with Elm. (Autocompletion, Go To Definition, Find Usages, Rename Symbol, etc.)",
+  "keywords": ["elm", "ide"],
   "activationCommands": {},
   "repository": "https://github.com/halohalospecial/atom-elmjutsu",
   "license": "MIT",
@@ -16,19 +14,40 @@
   "dependencies": {
     "atom-linter": "8.0.0",
     "atom-space-pen-views": "^0.20.0",
-    "better-queue": "^3.8.4",
     "chokidar": "1.5.2",
     "fs-extra": "0.30.0",
     "fuzzaldrin-plus": "0.4.1",
     "tmp": "0.0.28",
     "underscore-plus": "1.6.6",
     "untildify": "3.0.2",
-    "atom-package-deps": "^4.6.0"
+    "atom-package-deps": "^4.6.0",
+    "atom-languageclient": "^0.6.1",
+    "react": "15.6.1",
+    "marked": "0.3.6",
+    "opn": "5.1.0"
   },
-  "package-deps": [
-    "language-elm"
-  ],
+  "package-deps": ["language-elm"],
   "providedServices": {
+    "elmjutsu.getTokenInfo": {
+      "versions": {
+        "1.0.0": "provideGetTokenInfo"
+      }
+    },
+    "elmjutsu.goToDefinition": {
+      "versions": {
+        "1.0.0": "provideGoToDefinition"
+      }
+    },
+    "elmjutsu.getFunctionsMatchingType": {
+      "versions": {
+        "1.0.0": "provideGetFunctionsMatchingType"
+      }
+    },
+    "elmjutsu.addImport": {
+      "versions": {
+        "1.0.0": "provideAddImport"
+      }
+    },
     "autocomplete.provider": {
       "versions": {
         "2.0.0": "provideAutocomplete"
@@ -44,6 +63,11 @@
     "status-bar": {
       "versions": {
         "^1.0.0": "consumeStatusBar"
+      }
+    },
+    "datatip": {
+      "versions": {
+        "0.1.0": "consumeDatatipService"
       }
     },
     "linter-elm-make.getWorkDirectory": {

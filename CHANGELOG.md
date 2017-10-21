@@ -1,3 +1,27 @@
+## 7.0.2
+* Fix `Go To Symbol` regression bug.
+
+## 7.0.1
+* Allow going to the definition of symbols in the form `<module>.<variable>` when editing `<module>`.  This is mainly for `linter-elm-make` since we're not allowed to do an `import <module>` inside `<module>` by the compiler (circular dependency).
+* Go To Symbol: Only disable `linter` when it's enabled.
+
+## 7.0.0
+* Fix case/of completion bug.
+* Change the default `Autocomplete Description Display` value to "markdown".
+* Datatips: Mousing over a symbol will display info about it in the Sidekick panel.  Clicking on a symbol will go to its definition.
+* Only start parsing when an Elm editor gets focus.  This will speed up startup time if the active editor is not an Elm file.
+
+## 6.0.0
+* Autocomplete is now enabled by default.  If the autocomplete feature of `language-elm` is also enabled, a notification will offer to disable it.
+* Hyperclick support is now enabled by default.  (Should still install `hyperclick` or `atom-ide-ui`.)
+
+## 5.7.0
+* Add [Datatips](https://github.com/facebook-atom/atom-ide-ui/blob/master/docs/datatips.md) integration.
+* Sidekick: Fix bug regarding source path links for project symbols.
+* Sidekick: Use monospace for code sections.
+* Sidekick and Datatip: Store jump point when clicking on source path link.
+* Use [`atom-linter`](https://www.npmjs.com/package/atom-linter)'s `uniqueKey` in lieu of the infer task queue.
+
 ## 5.6.3
 * Make autocomplete work with Atom 1.19.1 (#89).  Thanks to @MaximeRDY for reporting!
 

@@ -1,5 +1,7 @@
 port module Indexer exposing (..)
 
+import Ast
+import Ast.Statement exposing (..)
 import Dict
 import Dict.Extra
 import Helper
@@ -64,6 +66,8 @@ subscriptions model =
         , configChangedSub ConfigChanged
         , getAliasesOfTypeSub GetAliasesOfType
         , clearLocalHintsCacheSub (\_ -> ClearLocalHintsCache)
+        , getTokenInfoSub GetTokenInfo
+        , getFunctionsMatchingTypeSub GetFunctionsMatchingType
         ]
 
 
@@ -140,6 +144,12 @@ port getAliasesOfTypeSub : (Token -> msg) -> Sub msg
 port clearLocalHintsCacheSub : (() -> msg) -> Sub msg
 
 
+port getTokenInfoSub : (( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTopLevel, Maybe Token ) -> msg) -> Sub msg
+
+
+port getFunctionsMatchingTypeSub : (( TipeString, Maybe ProjectDirectory, Maybe FilePath ) -> msg) -> Sub msg
+
+
 
 -- OUTGOING PORTS
 
@@ -168,7 +178,7 @@ port showGoToSymbolViewCmd : ( Maybe String, Maybe ActiveFile, List EncodedSymbo
 port activeFileChangedCmd : Maybe ActiveFile -> Cmd msg
 
 
-port activeTokenHintsChangedCmd : List EncodedHint -> Cmd msg
+port activeTokenHintsChangedCmd : ( Token, List EncodedHint ) -> Cmd msg
 
 
 port readingPackageDocsCmd : () -> Cmd msg
@@ -208,6 +218,12 @@ port defaultArgumentsConstructedCmd : Maybe (List String) -> Cmd msg
 
 
 port aliasesOfTypeReceivedCmd : List TipeString -> Cmd msg
+
+
+port tokenInfoReceivedCmd : List EncodedHint -> Cmd msg
+
+
+port functionsMatchingTypeReceivedCmd : List EncodedHint -> Cmd msg
 
 
 
@@ -381,6 +397,8 @@ type Msg
     | ConfigChanged Config
     | GetAliasesOfType Token
     | ClearLocalHintsCache
+    | GetTokenInfo ( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTopLevel, Maybe Token )
+    | GetFunctionsMatchingType ( TipeString, Maybe ProjectDirectory, Maybe FilePath )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -533,9 +551,11 @@ update msg model =
 
         InferenceEntered inference ->
             ( model
-            , inferenceToHints inference
-                |> List.map (encodeHint model.config.showAliasesOfType model.activeFileTokens)
-                |> activeTokenHintsChangedCmd
+            , activeTokenHintsChangedCmd
+                ( inference.name
+                , inferenceToHints inference
+                    |> List.map (encodeHint model.config.showAliasesOfType model.activeFileTokens)
+                )
             )
 
         ConfigChanged config ->
@@ -559,6 +579,21 @@ update msg model =
             , Cmd.none
             )
 
+        GetTokenInfo ( maybeProjectDirectory, maybeFilePath, maybeActiveTopLevel, maybeToken ) ->
+            doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeToken model
+
+        GetFunctionsMatchingType ( tipeString, maybeProjectDirectory, maybeFilePath ) ->
+            doGetFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath model
+
+
+doGetFunctionsMatchingType : TipeString -> Maybe ProjectDirectory -> Maybe FilePath -> Model -> ( Model, Cmd msg )
+doGetFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath model =
+    ( model
+    , getFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath model.projectFileContentsDict model.projectDependencies model.packageDocs
+        |> List.map (encodeHint model.config.showAliasesOfType Dict.empty)
+        |> functionsMatchingTypeReceivedCmd
+    )
+
 
 inferenceToHints : Inference -> List Hint
 inferenceToHints inference =
@@ -573,13 +608,29 @@ doUpdateActiveTokenHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Mod
 doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
     let
         updatedActiveFileTokens =
-            if model.activeTopLevel /= maybeActiveTopLevel then
-                getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
-            else
-                model.activeFileTokens
+            case maybeToken of
+                Nothing ->
+                    model.activeFileTokens
+
+                Just "" ->
+                    model.activeFileTokens
+
+                Just token ->
+                    if model.activeTopLevel /= maybeActiveTopLevel then
+                        getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+                    else
+                        model.activeFileTokens
 
         updatedActiveTokenHints =
-            getHintsForToken maybeToken updatedActiveFileTokens
+            case maybeToken of
+                Nothing ->
+                    []
+
+                Just "" ->
+                    []
+
+                Just token ->
+                    getHintsForToken maybeToken updatedActiveFileTokens
     in
         ( { model
             | activeTopLevel = maybeActiveTopLevel
@@ -587,10 +638,43 @@ doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
             , activeToken = maybeToken
             , activeTokenHints = updatedActiveTokenHints
           }
-        , updatedActiveTokenHints
-            |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
-            |> activeTokenHintsChangedCmd
+        , activeTokenHintsChangedCmd
+            ( Maybe.withDefault "" maybeToken
+            , updatedActiveTokenHints
+                |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
+            )
         )
+
+
+doGetTokenInfo : Maybe ProjectDirectory -> Maybe FilePath -> Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
+doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeToken model =
+    case ( maybeProjectDirectory, maybeFilePath ) of
+        ( Just projectDirectory, Just filePath ) ->
+            let
+                fileTokens =
+                    case model.activeFile of
+                        Just activeFile ->
+                            if activeFile.filePath == filePath && model.activeTopLevel == maybeActiveTopLevel then
+                                model.activeFileTokens
+                            else
+                                getActiveFileTokens (Just { filePath = filePath, projectDirectory = projectDirectory }) maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+
+                        Nothing ->
+                            getActiveFileTokens (Just { filePath = filePath, projectDirectory = projectDirectory }) maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+
+                tokenHints =
+                    getHintsForToken maybeToken fileTokens
+            in
+                ( model
+                , tokenHints
+                    |> List.map (encodeHint model.config.showAliasesOfType fileTokens)
+                    |> tokenInfoReceivedCmd
+                )
+
+        _ ->
+            ( model
+            , tokenInfoReceivedCmd []
+            )
 
 
 doUpdateActiveFile : Maybe ActiveFile -> Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
@@ -615,9 +699,11 @@ doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model =
           }
         , Cmd.batch
             [ activeFileChangedCmd maybeActiveFile
-            , updatedActiveTokenHints
-                |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
-                |> activeTokenHintsChangedCmd
+            , activeTokenHintsChangedCmd
+                ( Maybe.withDefault "" maybeToken
+                , updatedActiveTokenHints
+                    |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
+                )
             ]
         )
 
@@ -747,12 +833,11 @@ doDownloadMissingPackageDocs dependencies model =
 doGoToDefinition : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
 doGoToDefinition maybeActiveTopLevel maybeToken model =
     let
-        activeFileTokens =
-            getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
-                |> computeVariableSourcePaths ( model.activeFile, maybeActiveTopLevel, model.projectFileContentsDict, model.projectDependencies, model.packageDocs )
+        ( tokenToCheck, activeFileTokens ) =
+            getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel maybeToken model
 
         requests =
-            getHintsForToken maybeToken activeFileTokens
+            getHintsForToken tokenToCheck activeFileTokens
                 |> List.map
                     (\hint ->
                         let
@@ -777,16 +862,53 @@ doGoToDefinition maybeActiveTopLevel maybeToken model =
 doAskCanGoToDefinition : Maybe ActiveTopLevel -> Token -> Model -> ( Model, Cmd Msg )
 doAskCanGoToDefinition maybeActiveTopLevel token model =
     let
+        ( tokenToCheck, activeFileTokens ) =
+            getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel (Just token) model
+    in
+        case tokenToCheck of
+            Nothing ->
+                ( model
+                , ( token, False ) |> canGoToDefinitionRepliedCmd
+                )
+
+            Just token2 ->
+                ( model
+                , ( token
+                  , Dict.member token2 activeFileTokens
+                  )
+                    |> canGoToDefinitionRepliedCmd
+                )
+
+
+getTokenAndActiveFileTokensForGoToDefinition : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Maybe Token, TokenDict )
+getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel maybeToken model =
+    let
+        tokenToCheck =
+            case ( maybeToken, model.activeFile ) of
+                ( Just token, Just { projectDirectory } ) ->
+                    let
+                        fileContentsDict =
+                            getFileContentsOfProject projectDirectory model.projectFileContentsDict
+
+                        activeFileContents =
+                            getActiveFileContents model.activeFile fileContentsDict
+                    in
+                        if activeFileContents.moduleDocs.name == getModuleName token then
+                            Just (getLastName token)
+                        else
+                            Just token
+
+                ( Just token, Nothing ) ->
+                    Just token
+
+                ( Nothing, _ ) ->
+                    Nothing
+
         activeFileTokens =
             getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
                 |> computeVariableSourcePaths ( model.activeFile, maybeActiveTopLevel, model.projectFileContentsDict, model.projectDependencies, model.packageDocs )
     in
-        ( model
-        , ( token
-          , Dict.member token activeFileTokens
-          )
-            |> canGoToDefinitionRepliedCmd
-        )
+        ( tokenToCheck, activeFileTokens )
 
 
 doShowGoToSymbolView : Maybe ProjectDirectory -> Maybe String -> Model -> ( Model, Cmd Msg )
@@ -1255,11 +1377,11 @@ areTipesCompatibleRecur tipe1 tipe2 =
                 False
             else if numParts1 == 1 && numParts2 == 1 then
                 (isTipeVariable tipe1 && isTipeVariable tipe2)
-                    || (Helper.isCapitalized tipe1 && isTipeVariable tipe2 && not (isSuperTipe tipe2))
+                    || (Helper.isCapitalized tipe1 && isTipeVariable tipe2 && not (isTypeClass tipe2))
                     || (isNumberTipe tipe1 && tipe2 == "number")
                     || (isAppendableTipe tipe1 && tipe2 == "appendable")
                     || (isComparableTipe tipe1 && tipe2 == "comparable")
-            else if numParts2 == 1 && isTipeVariable tipe2 && not (isSuperTipe tipe2) then
+            else if numParts2 == 1 && isTipeVariable tipe2 && not (isTypeClass tipe2) then
                 True
             else
                 case ( List.head parts1, List.head parts2 ) of
@@ -1273,6 +1395,208 @@ areTipesCompatibleRecur tipe1 tipe2 =
 
                     _ ->
                         False
+
+
+getFunctionsMatchingType : TipeString -> Maybe ProjectDirectory -> Maybe FilePath -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> List Hint
+getFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath projectFileContentsDict projectDependencies packageDocs =
+    case ( maybeProjectDirectory, maybeFilePath ) of
+        ( Just projectDirectory, Just filePath ) ->
+            let
+                activeFile =
+                    Just { projectDirectory = projectDirectory, filePath = filePath }
+
+                activeFileTokens =
+                    getActiveFileTokens activeFile Nothing projectFileContentsDict projectDependencies packageDocs
+
+                { external, local } =
+                    getExternalAndLocalHints True activeFile projectFileContentsDict projectDependencies packageDocs Nothing Nothing activeFileTokens
+
+                ( exposedAndTopLevelHints, unexposedHints, variableHints ) =
+                    case ( external, local ) of
+                        ( Just external, Just local ) ->
+                            ( external.importedHints ++ local.topLevelHints, external.unimportedHints, local.variableHints )
+
+                        _ ->
+                            ( [], [], [] )
+            in
+                (exposedAndTopLevelHints
+                    ++ unexposedHints
+                    ++ variableHints
+                )
+                    |> List.filter (\hint -> areMatchingTypes tipeString hint.tipe)
+
+        _ ->
+            []
+
+
+parseTipeString : String -> Maybe Type
+parseTipeString tipeString =
+    case Ast.parseStatement Dict.empty ("x : " ++ tipeString) of
+        Ok ( (), _, FunctionTypeDeclaration "x" typeAnnotation ) ->
+            Just typeAnnotation
+
+        _ ->
+            Nothing
+
+
+{-|
+
+    ```
+    areMatchingTypes "a" "b" == True
+    areMatchingTypes "number" "a" == True
+    areMatchingTypes "appendable" "a" == True
+    areMatchingTypes "comparable" "a" == True
+
+    areMatchingTypes "MyType" "a" == True
+    areMatchingTypes "MyType" "MyType" == True
+
+    areMatchingTypes "number" "number" == True
+    areMatchingTypes "Int" "number" == True
+    areMatchingTypes "Float" "number" == True
+    areMatchingTypes "List MyType" "List number" == False
+
+    areMatchingTypes "appendable" "appendable" == True
+    areMatchingTypes "String" "appendable" == True
+    areMatchingTypes "List a" "appendable" == True
+    areMatchingTypes "List Int" "appendable" == True
+
+    areMatchingTypes "List a" "a" == True
+    areMatchingTypes "List Int" "List a" == True
+    areMatchingTypes "List Int" "List Float" == False
+
+    areMatchingTypes "" "Int" == False
+    areMatchingTypes "Int" "" == False
+
+    areMatchingTypes "List String -> Int" "List a -> Int" == True
+    areMatchingTypes "List String -> Int" "a -> a" == False
+
+    areMatchingTypes "number -> String" "number" == False
+    areMatchingTypes "number -> String" "a -> String" == False
+
+    areMatchingTypes "String -> a" "appendable -> appendable -> appendable" == False
+    ```
+-}
+areMatchingTypes : String -> String -> Bool
+areMatchingTypes tipeString1 tipeString2 =
+    case ( parseTipeString tipeString1, parseTipeString tipeString2 ) of
+        ( Nothing, _ ) ->
+            False
+
+        ( _, Nothing ) ->
+            False
+
+        ( Just annotation1, Just annotation2 ) ->
+            let
+                ( result, typeVariables1, typeVariables2 ) =
+                    areMatchingTypesRecur annotation1 annotation2 Dict.empty Dict.empty []
+            in
+                result
+
+
+areMatchingTypesRecur : Type -> Type -> Dict.Dict String Type -> Dict.Dict String Type -> List ( Type, Type ) -> ( Bool, Dict.Dict String Type, Dict.Dict String Type )
+areMatchingTypesRecur annotation1 annotation2 typeVariables1 typeVariables2 nextAnnotations =
+    let
+        checkTypeVariables1 variable annotation =
+            case Dict.get variable typeVariables1 of
+                Nothing ->
+                    ( True, Dict.insert variable annotation typeVariables1, typeVariables2, nextAnnotations )
+
+                Just variableAnnotation ->
+                    ( True, typeVariables1, typeVariables2, [ ( variableAnnotation, annotation ) ] ++ nextAnnotations )
+
+        checkTypeVariables2 variable annotation =
+            case Dict.get variable typeVariables2 of
+                Nothing ->
+                    ( True, typeVariables1, Dict.insert variable annotation typeVariables2, nextAnnotations )
+
+                Just variableAnnotation ->
+                    ( True, typeVariables1, typeVariables2, [ ( annotation, variableAnnotation ) ] ++ nextAnnotations )
+
+        ( continueChecking, updatedTypeVariables1, updatedTypeVariables2, updatedNextAnnotations ) =
+            if annotation1 == annotation2 then
+                ( True, typeVariables1, typeVariables2, nextAnnotations )
+            else
+                case ( annotation1, annotation2 ) of
+                    -- number (Int, Float)
+                    ( TypeVariable "number", TypeConstructor [ "Int" ] [] ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeVariable "number", TypeConstructor [ "Float" ] [] ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeVariable "number", TypeVariable variable ) ->
+                        checkTypeVariables2 variable (TypeVariable "number")
+
+                    ( TypeConstructor [ "Int" ] [], TypeVariable "number" ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeConstructor [ "Float" ] [], TypeVariable "number" ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeVariable variable, TypeVariable "number" ) ->
+                        checkTypeVariables1 variable (TypeVariable "number")
+
+                    -- appendable (String, List)
+                    ( TypeVariable "appendable", TypeConstructor [ "String" ] [] ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeVariable "appendable", TypeConstructor [ "List" ] anyType ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeConstructor [ "String" ] [], TypeVariable "appendable" ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeConstructor [ "List" ] anyType, TypeVariable "appendable" ) ->
+                        ( True, typeVariables1, typeVariables2, nextAnnotations )
+
+                    -- generic type (e.g. a, b, c)
+                    ( TypeVariable variable, TypeApplication _ _ ) ->
+                        ( False, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeApplication _ _, TypeVariable variable ) ->
+                        ( False, typeVariables1, typeVariables2, nextAnnotations )
+
+                    ( TypeVariable variable, anyType ) ->
+                        if isTypeClass variable then
+                            ( False, typeVariables1, typeVariables2, nextAnnotations )
+                        else
+                            checkTypeVariables1 variable anyType
+
+                    ( anyType, TypeVariable variable ) ->
+                        if isTypeClass variable then
+                            ( False, typeVariables1, typeVariables2, nextAnnotations )
+                        else
+                            checkTypeVariables2 variable anyType
+
+                    -- type application (e.g. String -> Int)
+                    ( TypeApplication typeA1 typeB1, TypeApplication typeA2 typeB2 ) ->
+                        ( True, typeVariables1, typeVariables2, [ ( typeA1, typeA2 ), ( typeB1, typeB2 ) ] ++ nextAnnotations )
+
+                    -- type constructor (e.g. MyType String)
+                    ( TypeConstructor constructor1 children1, TypeConstructor constructor2 children2 ) ->
+                        if constructor1 == constructor2 then
+                            if List.length children1 == List.length children2 then
+                                ( True, typeVariables1, typeVariables2, (List.map2 (,) children1 children2) ++ nextAnnotations )
+                            else
+                                ( False, typeVariables1, typeVariables2, nextAnnotations )
+                        else
+                            ( False, typeVariables1, typeVariables2, nextAnnotations )
+
+                    -- TODO
+                    -- Comparable types includes numbers, characters, strings, lists of comparable things, and tuples of comparable things.
+                    -- Note that tuples with 7 or more elements are not comparable.
+                    _ ->
+                        ( False, typeVariables1, typeVariables2, nextAnnotations )
+    in
+        if continueChecking then
+            case updatedNextAnnotations of
+                ( head1, head2 ) :: tails ->
+                    areMatchingTypesRecur head1 head2 updatedTypeVariables1 updatedTypeVariables2 tails
+
+                [] ->
+                    ( True, updatedTypeVariables1, updatedTypeVariables2 )
+        else
+            ( False, updatedTypeVariables1, updatedTypeVariables2 )
 
 
 getExternalHints : Bool -> FilePath -> FileContents -> List ModuleDocs -> ExternalHints
@@ -1572,7 +1896,7 @@ getTipeDistance tipe1 tipe2 =
                 List.length parts2
 
             genericTipePenalty =
-                if numParts2 == 1 && isTipeVariable tipe2 && not (isSuperTipe tipe2) then
+                if numParts2 == 1 && isTipeVariable tipe2 && not (isTypeClass tipe2) then
                     numParts1
                 else
                     0
@@ -2259,8 +2583,8 @@ superTipes =
     ]
 
 
-isSuperTipe : TipeString -> Bool
-isSuperTipe tipeString =
+isTypeClass : TipeString -> Bool
+isTypeClass tipeString =
     List.member tipeString superTipes
 
 
@@ -4137,8 +4461,20 @@ defaultSuggestions =
         -- , "compappend"
         ]
         ++ [ { emptyHint
+                | name = "Int"
+                , comment = "Integer."
+             }
+           , { emptyHint
+                | name = "Float"
+                , comment = "Floating-point number."
+             }
+           , { emptyHint
+                | name = "Bool"
+                , comment = "`True` or `False`."
+             }
+           , { emptyHint
                 | name = "number"
-                , comment = "`Int` or `Float` depending on usage."
+                , comment = "Can be an `Int` or a `Float` depending on usage."
              }
            , { emptyHint
                 | name = "appendable"

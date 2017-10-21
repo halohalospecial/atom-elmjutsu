@@ -9,10 +9,12 @@ https://atom.io/packages/elmjutsu
 * Install [Elm](http://elm-lang.org/install).
 * Install [language-elm](https://atom.io/packages/language-elm) (no need to install `elm-oracle` or `goto`).
 * For `Go to Definition`:
-  * Install [hyperclick](https://atom.io/packages/hyperclick) (optional).
+  * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) or [hyperclick](https://atom.io/packages/hyperclick) (both optional).
 * For `Autocomplete`:
   * Install [autocomplete-plus](https://atom.io/packages/autocomplete-plus) (installed by default).
   * Install [snippets](https://atom.io/packages/snippets) (optional, installed by default).
+* For `Datatips`:
+  * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) (optional).
 * Add your [keybindings](#keybindings).
 
 Related Atom packages:
@@ -22,16 +24,18 @@ Related Atom packages:
 
 ## Features Overview
 
+Note: Features marked with `*` are disabled by default.  You may enable them in the Settings view.
+
 * [Autocomplete](#autocomplete)
-  * [Global Autocomplete](#global-autocomplete)
+  * [Global Autocomplete](#global-autocomplete) `*`
   * [Filtering suggestions](#autocomplete-filtering)
-    * [Fuzzy filtering](#autocomplete-fuzzy-filtering)
-    * [Regex filtering](#autocomplete-regex-filtering)
-    * [Type filtering](#autocomplete-type-filtering)
-  * [Autocomplete Snippets](#autocomplete-snippets)
-  * [Special completions](#special-completions)
-  * [Type-Aware Autocomplete](#type-aware-autocomplete)
-  * [Performance tuning](#autocomplete-performance-tuning)
+    * [Fuzzy Filtering](#autocomplete-fuzzy-filtering) `*`
+    * [Regex Filtering](#autocomplete-regex-filtering)
+    * [Type Filtering](#autocomplete-type-filtering)
+  * [Autocomplete Snippets](#autocomplete-snippets) `*`
+  * [Special Completions](#special-completions)
+  * [Type-Aware Autocomplete](#type-aware-autocomplete) `*`
+  * [Performance Tuning](#autocomplete-performance-tuning)
 
 * Navigation
   * [Go to Definition](#go-to-definition)
@@ -42,10 +46,12 @@ Related Atom packages:
   * [Go Back](#go-back)
 
 * Information
-  * [Show Types in Tooltip](#show-types-in-tooltip)
+  * [Datatips](#datatips)
+  * [Show Types in Tooltip](#show-types-in-tooltip) `*`
   * [Toggle Sidekick](#toggle-sidekick)
     * Show the type and documentation for the symbol at cursor position in a panel.
   * [Infer Type](#infer-type)
+  * [Infer Types on the Fly](#infer-types-on-the-fly) `*`
 
 * Imports Management
   * [Add Import](#add-import)
@@ -62,11 +68,9 @@ Related Atom packages:
 
 ## Feature Details
 
-By default, the only thing this package does is parse your project's source files to extract information, and download documentation of 3rd-party Elm packages.  You have to manually enable the features that you need.  The downloaded documentation files will be saved to the path set in `Cache Directory` in the settings view.  If `Cache Directory` is blank, a temporary directory will be used.  Take note that most operating systems delete temporary directories at bootup or at regular intervals.
+This package parses your projects' source files to extract information, and downloads documentation of 3rd-party Elm packages.  The downloaded documentation files will be saved to the path set in `Cache Directory` in the Settings view.  If `Cache Directory` is blank, a temporary directory will be used.  Take note that most operating systems delete temporary directories at bootup or at regular intervals.
 
 ### <a name="autocomplete"></a>Autocomplete
-
-Autocomplete is turned off by default.  To turn it on, check `Enable Autocomplete` in the package settings.
 
 This provides suggestions for imports, project symbols, and 3rd-party package symbols.
 
@@ -74,7 +78,7 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 ![autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete.gif?raw=true)
 
-#### <a name="global-autocomplete"></a>Global Autocomplete
+#### <a name="global-autocomplete"></a>Global Autocomplete `*`
 * Check `Enable Global Autocomplete` if you want to include unimported project symbols.
   * This will also allow :zap:`Auto import` completion (which works like [Add Import](#elmjutsu-add-import)).
   * Take note that you may experience lag if you have a large project.
@@ -83,19 +87,19 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 #### <a name="autocomplete-filtering"></a>Filtering suggestions
 
-* <a name="autocomplete-fuzzy-filtering"></a>Fuzzy filtering
+* <a name="autocomplete-fuzzy-filtering"></a>Fuzzy Filtering `*`
 
   You can check `Enable Autocomplete Fuzzy Filtering` to filter suggestions using [fuzz-aldrin-plus](https://github.com/jeancroy/fuzz-aldrin-plus).
 
   ![autocomplete-fuzzy-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-fuzzy-filtering.gif?raw=true)
 
-* <a name="autocomplete-regex-filtering"></a>Regex filtering
+* <a name="autocomplete-regex-filtering"></a>Regex Filtering
 
   If the typed text starts with a slash (`/`), the rest of the characters will be used as a regular expression to filter the suggestions by name.
 
   ![autocomplete-regex-filtering](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-regex-filtering.gif?raw=true)
 
-* <a name="autocomplete-type-filtering"></a>Type filtering
+* <a name="autocomplete-type-filtering"></a>Type Filtering
 
   If the typed text starts with a colon (`:`), the rest of the characters will be used as a regular expression to filter the suggestions by type signature.
 
@@ -107,12 +111,12 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
   * Remember to escape dots, vertical bars, braces (for records), parentheses (for tuples), etc.
 
-#### <a name="autocomplete-snippets"></a>Autocomplete Snippets
+#### <a name="autocomplete-snippets"></a>Autocomplete Snippets `*`
 * You can also check `Enable Autocomplete Snippets` if you prefer.
 
 ![autocomplete-snippet](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/autocomplete-snippet.gif?raw=true)
 
-#### <a name="special-completions"></a>Special completions :zap:
+#### <a name="special-completions"></a>Special Completions :zap:
 
 Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).  Special completions can be disabled individually in the package settings.
 
@@ -148,14 +152,16 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
 
   See [Type-Aware Autocomplete](#type-aware-autocomplete) for a screenshot.
 
-#### <a name="type-aware-autocomplete"></a>Type-Aware Autocomplete
+#### <a name="type-aware-autocomplete"></a>Type-Aware Autocomplete `*`
 * Check `Enable Type-Aware Autocomplete` if you want to prioritize suggestions matching the expected type at cursor position.
   * The type can be inferred via the `Infer Type` command, but it's recommended to check `Infer Expected Type At Cursor On The Fly` in the package settings instead.
   * WARNING: This is highly experimental and may cause lag, especially if `Enable Global Autocomplete` is also checked.
 
 ![type-aware-autocomplete](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/type-aware-autocomplete.gif?raw=true)
 
-#### <a name="autocomplete-performance-tuning"></a>Performance tuning
+#### <a name="autocomplete-performance-tuning"></a>Performance Tuning
+
+  * It's recommended to uncheck `Enable autocomplete` of the [language-elm](https://atom.io/packages/language-elm).  No need to install `elm-oracle`.
 
   * If you are experiencing lag while typing, you can set the value of `Max Number of Autocomplete Suggestions` to a small number such as `50` so that Atom will have less items to render.
 
@@ -192,6 +198,7 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
       * `Go To Symbol`
       * `Go To Next Usage`
       * `Go To Previous Usage`
+      * Clicking on a source path link (Sidekick and Datatip).
 
     Invoke this command to jump back to the previous position.
 
@@ -199,7 +206,12 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
 
     Closes the `Usages` panel (the panel is shown after invoking `Find Usages` or `Rename Symbol`).
 
-### <a name="show-types-in-tooltip"></a>Show Types in Tooltip
+### <a name="datatips"></a>Datatips
+Provides support for [Datatips](https://github.com/facebook-atom/atom-ide-ui/blob/master/docs/datatips.md).  The [atom-ide-ui](https://atom.io/packages/atom-ide-ui) package should be installed for this to work.
+
+![datatips](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/datatips.gif?raw=true)
+
+### <a name="show-types-in-tooltip"></a>Show Types in Tooltip `*`
 This is disabled by default.  To turn it on, check `Show Types in Tooltip` in the package settings.  You can also change the placement of the tooltip (`Types Tooltip Position`).
 
 ![show-types-in-tooltip](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/show-types-in-tooltip.gif?raw=true)
@@ -222,10 +234,18 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 ### <a name="infer-type"></a>`Elmjutsu: Infer Type`
 * Select some text or make sure that the cursor is between whitespaces or before a closing parenthesis before invoking this command.  If nothing is selected and the cursor is not between whitespaces, the word under the cursor will be selected.
 * Make sure that `Elm Make Path` is properly configured in the package settings.  The default works for most cases.
-* You should also have `Show Types in Tooltip` checked in the package settings (or the Sidekick panel visible) to be able to see the inferred types.
+* To be able to see the inferred types, at least one of these should be true:
+  - `Show Types in Tooltip` is checked
+  - `Show Datatips` is checked
+  - The Sidekick panel is visible
 * This uses similar tricks as those described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html), which may sometimes fail or give incorrect results.
+* WARNING: When using build tools such as [webpack](https://webpack.js.org/), you may sometimes see these in your output files:
+  - `Elmjutsu_DuMmY_tYp3_`
+  - `elmjutsu_dUmMy_VaR1AbL3_`
+  - `elmjutsu_duMMy_fuNct10n_`  
+There is a known bad interaction between Elmjutsu's type inference hack and the build tools because they both use `elm-make`.  You can either disable the infer features or delete your project's build artifacts (inside the `elm-stuff` directory) when you encounter the issue.  If you have [linter-elm-make](https://atom.io/packages/linter-elm-make) installed, you can invoke the `Linter Elm Make: Clear Project Build Artifacts` command.
 
-### <a name="infer-types-on-the-fly"></a>Infer types on the fly
+### <a name="infer-types-on-the-fly"></a>Infer Types on the Fly `*`
 * You can also check the `Infer Expected Type At Cursor On The Fly` and `Infer Type Of Selection On The Fly` options in the package settings.
 * WARNING: `Infer Type Of Selection On The Fly` currently has bad interactions with some packages that decorate the markers (e.g. `Find And Replace`) :cry: This will be fixed in the future.
 
@@ -339,6 +359,7 @@ Add them to your `keymap.cson` or bind them from `Settings` > `Keybindings`.
 * Be sure to check out the [settings](http://flight-manual.atom.io/using-atom/sections/atom-packages/#package-settings) for this package to find out about the available options.
 * It's highly recommended to read `CHANGELOG.md` before upgrading to a newer version to check for breaking changes.
 * The commands only work for top-level values for now.
+* This package may fail to activate (when starting Atom) if you don't have `elm-package.json` files in your Elm project directories.  This issue will be handled properly in the future.
 * You may encounter weird behaviors if multiple files are using the same module name in your project.
 * Major parts of this will be rewritten when a way to get the AST becomes available. Also, more features :)
 
