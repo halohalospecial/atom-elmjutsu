@@ -173,11 +173,13 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
 
     ![go-to-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-definition.gif?raw=true)
 
-    If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, you can also check `Enable Hyperclick` to jump to definition using `Ctrl` + click / `Cmd` + click (Mac).
+    - If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, you can also check `Enable Hyperclick` to jump to definition using `Ctrl` + click / `Cmd` + click (Mac).
 
   * #### <a name="go-to-symbol"></a>`Elmjutsu: Go To Symbol`
 
     ![go-to-symbol](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-symbol.gif?raw=true)
+
+    - You can type a `:` (colon) in the text box to also filter by type.
 
   * #### <a name="find-usages"></a>`Elmjutsu: Find Usages`
 

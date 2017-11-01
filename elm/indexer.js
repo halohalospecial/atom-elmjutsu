@@ -12089,6 +12089,7 @@ var _user$project$Indexer$encodeSymbol = function (symbol) {
 	return {
 		fullName: symbol.fullName,
 		sourcePath: symbol.sourcePath,
+		tipe: symbol.tipe,
 		caseTipe: symbol.caseTipe,
 		kind: _user$project$Indexer$symbolKindToString(symbol.kind)
 	};
@@ -14530,6 +14531,7 @@ var _user$project$Indexer$goToDefinitionCmd = _elm_lang$core$Native_Platform.out
 			{
 			fullName: v._1.fullName,
 			sourcePath: v._1.sourcePath,
+			tipe: v._1.tipe,
 			caseTipe: (v._1.caseTipe.ctor === 'Nothing') ? null : v._1.caseTipe._0,
 			kind: v._1.kind
 		}
@@ -14551,6 +14553,7 @@ var _user$project$Indexer$showGoToSymbolViewCmd = _elm_lang$core$Native_Platform
 				return {
 					fullName: v.fullName,
 					sourcePath: v.sourcePath,
+					tipe: v.tipe,
 					caseTipe: (v.caseTipe.ctor === 'Nothing') ? null : v.caseTipe._0,
 					kind: v.kind
 				};
@@ -14970,13 +14973,13 @@ var _user$project$Indexer$EncodedValue = F6(
 	function (a, b, c, d, e, f) {
 		return {name: a, comment: b, tipe: c, args: d, associativity: e, precedence: f};
 	});
-var _user$project$Indexer$Symbol = F4(
-	function (a, b, c, d) {
-		return {fullName: a, sourcePath: b, caseTipe: c, kind: d};
+var _user$project$Indexer$Symbol = F5(
+	function (a, b, c, d, e) {
+		return {fullName: a, sourcePath: b, tipe: c, caseTipe: d, kind: e};
 	});
-var _user$project$Indexer$EncodedSymbol = F4(
-	function (a, b, c, d) {
-		return {fullName: a, sourcePath: b, caseTipe: c, kind: d};
+var _user$project$Indexer$EncodedSymbol = F5(
+	function (a, b, c, d, e) {
+		return {fullName: a, sourcePath: b, tipe: c, caseTipe: d, kind: e};
 	});
 var _user$project$Indexer$Hint = function (a) {
 	return function (b) {
@@ -15779,7 +15782,7 @@ var _user$project$Indexer$getModuleSymbols = function (moduleDocs) {
 	var _p165 = moduleDocs;
 	var sourcePath = _p165.sourcePath;
 	var values = _p165.values;
-	var moduleDocsSymbol = {fullName: moduleDocs.name, sourcePath: sourcePath, caseTipe: _elm_lang$core$Maybe$Nothing, kind: _user$project$Indexer$KindModule};
+	var moduleDocsSymbol = {fullName: moduleDocs.name, sourcePath: sourcePath, tipe: '', caseTipe: _elm_lang$core$Maybe$Nothing, kind: _user$project$Indexer$KindModule};
 	var valueSymbols = A2(
 		_elm_lang$core$List$map,
 		function (value) {
@@ -15790,6 +15793,7 @@ var _user$project$Indexer$getModuleSymbols = function (moduleDocs) {
 					moduleDocs.name,
 					A2(_elm_lang$core$Basics_ops['++'], '.', value.name)),
 				sourcePath: A2(_user$project$Indexer$formatSourcePath, moduleDocs, value.name),
+				tipe: value.tipe,
 				caseTipe: _elm_lang$core$Maybe$Nothing,
 				kind: kind
 			};
@@ -15804,6 +15808,7 @@ var _user$project$Indexer$getModuleSymbols = function (moduleDocs) {
 					moduleDocs.name,
 					A2(_elm_lang$core$Basics_ops['++'], '.', alias.name)),
 				sourcePath: A2(_user$project$Indexer$formatSourcePath, moduleDocs, alias.name),
+				tipe: alias.tipe,
 				caseTipe: _elm_lang$core$Maybe$Nothing,
 				kind: _user$project$Indexer$KindTypeAlias
 			};
@@ -15818,6 +15823,7 @@ var _user$project$Indexer$getModuleSymbols = function (moduleDocs) {
 					moduleDocs.name,
 					A2(_elm_lang$core$Basics_ops['++'], '.', tipe.name)),
 				sourcePath: A2(_user$project$Indexer$formatSourcePath, moduleDocs, tipe.name),
+				tipe: tipe.tipe,
 				caseTipe: _elm_lang$core$Maybe$Nothing,
 				kind: _user$project$Indexer$KindType
 			};
@@ -15835,6 +15841,7 @@ var _user$project$Indexer$getModuleSymbols = function (moduleDocs) {
 							moduleDocs.name,
 							A2(_elm_lang$core$Basics_ops['++'], '.', tipeCase.name)),
 						sourcePath: A2(_user$project$Indexer$formatSourcePath, moduleDocs, tipeCase.name),
+						tipe: A2(_user$project$Indexer$getTipeCaseTypeAnnotation, tipeCase, tipe),
 						caseTipe: _elm_lang$core$Maybe$Just(tipe.name),
 						kind: _user$project$Indexer$KindTypeCase
 					};
@@ -17755,6 +17762,7 @@ var _user$project$Indexer$doGoToDefinition = F3(
 				var symbol = {
 					fullName: _user$project$Indexer$getHintFullName(hint),
 					sourcePath: hint.sourcePath,
+					tipe: hint.tipe,
 					caseTipe: hint.caseTipe,
 					kind: hint.kind
 				};

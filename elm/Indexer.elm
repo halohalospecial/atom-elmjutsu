@@ -844,6 +844,7 @@ doGoToDefinition maybeActiveTopLevel maybeToken model =
                             symbol =
                                 { fullName = getHintFullName hint
                                 , sourcePath = hint.sourcePath
+                                , tipe = hint.tipe
                                 , caseTipe = hint.caseTipe
                                 , kind = hint.kind
                                 }
@@ -1112,6 +1113,7 @@ getModuleSymbols moduleDocs =
         moduleDocsSymbol =
             { fullName = moduleDocs.name
             , sourcePath = sourcePath
+            , tipe = ""
             , caseTipe = Nothing
             , kind = KindModule
             }
@@ -1128,6 +1130,7 @@ getModuleSymbols moduleDocs =
                     in
                         { fullName = moduleDocs.name ++ "." ++ value.name
                         , sourcePath = formatSourcePath moduleDocs value.name
+                        , tipe = value.tipe
                         , caseTipe = Nothing
                         , kind = kind
                         }
@@ -1139,6 +1142,7 @@ getModuleSymbols moduleDocs =
                 (\alias ->
                     { fullName = moduleDocs.name ++ "." ++ alias.name
                     , sourcePath = formatSourcePath moduleDocs alias.name
+                    , tipe = alias.tipe
                     , caseTipe = Nothing
                     , kind = KindTypeAlias
                     }
@@ -1150,6 +1154,7 @@ getModuleSymbols moduleDocs =
                 (\tipe ->
                     { fullName = moduleDocs.name ++ "." ++ tipe.name
                     , sourcePath = formatSourcePath moduleDocs tipe.name
+                    , tipe = tipe.tipe
                     , caseTipe = Nothing
                     , kind = KindType
                     }
@@ -1163,6 +1168,7 @@ getModuleSymbols moduleDocs =
                         (\tipeCase ->
                             { fullName = moduleDocs.name ++ "." ++ tipeCase.name
                             , sourcePath = formatSourcePath moduleDocs tipeCase.name
+                            , tipe = getTipeCaseTypeAnnotation tipeCase tipe
                             , caseTipe = Just tipe.name
                             , kind = KindTypeCase
                             }
@@ -3300,6 +3306,7 @@ type SymbolKind
 type alias Symbol =
     { fullName : String
     , sourcePath : SourcePath
+    , tipe : TipeString
     , caseTipe : Maybe String
     , kind : SymbolKind
     }
@@ -3308,6 +3315,7 @@ type alias Symbol =
 type alias EncodedSymbol =
     { fullName : String
     , sourcePath : SourcePath
+    , tipe : TipeString
     , caseTipe : Maybe String
     , kind : String
     }
@@ -3317,6 +3325,7 @@ encodeSymbol : Symbol -> EncodedSymbol
 encodeSymbol symbol =
     { fullName = symbol.fullName
     , sourcePath = symbol.sourcePath
+    , tipe = symbol.tipe
     , caseTipe = symbol.caseTipe
     , kind = symbolKindToString symbol.kind
     }

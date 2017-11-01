@@ -1,3 +1,6 @@
+## 7.0.3
+* Go To Symbol: Show the types and allow typing `:` to also filter by type.
+
 ## 7.0.2
 * Fix `Go To Symbol` regression bug.
 
