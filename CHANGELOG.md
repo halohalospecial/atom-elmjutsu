@@ -1,3 +1,6 @@
+## 7.0.4
+* Check if there's an `elm-package.json` in the `.elm` file's project path first before looking elsewhere.  Thanks to @mbuscemi.
+
 ## 7.0.3
 * Go To Symbol: Show the types and allow typing `:` to also filter by type.
 
