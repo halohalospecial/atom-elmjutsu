@@ -1501,108 +1501,113 @@ areMatchingTypes tipeString1 tipeString2 =
 
 areMatchingTypesRecur : Type -> Type -> Dict.Dict String Type -> Dict.Dict String Type -> List ( Type, Type ) -> ( Bool, Dict.Dict String Type, Dict.Dict String Type )
 areMatchingTypesRecur annotation1 annotation2 typeVariables1 typeVariables2 nextAnnotations =
-    let
-        checkTypeVariables1 variable annotation =
-            case Dict.get variable typeVariables1 of
-                Nothing ->
-                    ( True, Dict.insert variable annotation typeVariables1, typeVariables2, nextAnnotations )
+    -- TODO: The code below is not yet finished and commented out for now since it causes long compile times.
+    ( False, Dict.empty, Dict.empty )
 
-                Just variableAnnotation ->
-                    ( True, typeVariables1, typeVariables2, [ ( variableAnnotation, annotation ) ] ++ nextAnnotations )
 
-        checkTypeVariables2 variable annotation =
-            case Dict.get variable typeVariables2 of
-                Nothing ->
-                    ( True, typeVariables1, Dict.insert variable annotation typeVariables2, nextAnnotations )
 
-                Just variableAnnotation ->
-                    ( True, typeVariables1, typeVariables2, [ ( annotation, variableAnnotation ) ] ++ nextAnnotations )
-
-        ( continueChecking, updatedTypeVariables1, updatedTypeVariables2, updatedNextAnnotations ) =
-            if annotation1 == annotation2 then
-                ( True, typeVariables1, typeVariables2, nextAnnotations )
-            else
-                case ( annotation1, annotation2 ) of
-                    -- number (Int, Float)
-                    ( TypeVariable "number", TypeConstructor [ "Int" ] [] ) ->
-                        ( True, typeVariables1, typeVariables2, nextAnnotations )
-
-                    ( TypeVariable "number", TypeConstructor [ "Float" ] [] ) ->
-                        ( True, typeVariables1, typeVariables2, nextAnnotations )
-
-                    ( TypeVariable "number", TypeVariable variable ) ->
-                        checkTypeVariables2 variable (TypeVariable "number")
-
-                    ( TypeConstructor [ "Int" ] [], TypeVariable "number" ) ->
-                        ( True, typeVariables1, typeVariables2, nextAnnotations )
-
-                    ( TypeConstructor [ "Float" ] [], TypeVariable "number" ) ->
-                        ( True, typeVariables1, typeVariables2, nextAnnotations )
-
-                    ( TypeVariable variable, TypeVariable "number" ) ->
-                        checkTypeVariables1 variable (TypeVariable "number")
-
-                    -- appendable (String, List)
-                    ( TypeVariable "appendable", TypeConstructor [ "String" ] [] ) ->
-                        ( True, typeVariables1, typeVariables2, nextAnnotations )
-
-                    ( TypeVariable "appendable", TypeConstructor [ "List" ] anyType ) ->
-                        ( True, typeVariables1, typeVariables2, nextAnnotations )
-
-                    ( TypeConstructor [ "String" ] [], TypeVariable "appendable" ) ->
-                        ( True, typeVariables1, typeVariables2, nextAnnotations )
-
-                    ( TypeConstructor [ "List" ] anyType, TypeVariable "appendable" ) ->
-                        ( True, typeVariables1, typeVariables2, nextAnnotations )
-
-                    -- generic type (e.g. a, b, c)
-                    ( TypeVariable variable, TypeApplication _ _ ) ->
-                        ( False, typeVariables1, typeVariables2, nextAnnotations )
-
-                    ( TypeApplication _ _, TypeVariable variable ) ->
-                        ( False, typeVariables1, typeVariables2, nextAnnotations )
-
-                    ( TypeVariable variable, anyType ) ->
-                        if isTypeClass variable then
-                            ( False, typeVariables1, typeVariables2, nextAnnotations )
-                        else
-                            checkTypeVariables1 variable anyType
-
-                    ( anyType, TypeVariable variable ) ->
-                        if isTypeClass variable then
-                            ( False, typeVariables1, typeVariables2, nextAnnotations )
-                        else
-                            checkTypeVariables2 variable anyType
-
-                    -- type application (e.g. String -> Int)
-                    ( TypeApplication typeA1 typeB1, TypeApplication typeA2 typeB2 ) ->
-                        ( True, typeVariables1, typeVariables2, [ ( typeA1, typeA2 ), ( typeB1, typeB2 ) ] ++ nextAnnotations )
-
-                    -- type constructor (e.g. MyType String)
-                    ( TypeConstructor constructor1 children1, TypeConstructor constructor2 children2 ) ->
-                        if constructor1 == constructor2 then
-                            if List.length children1 == List.length children2 then
-                                ( True, typeVariables1, typeVariables2, (List.map2 (,) children1 children2) ++ nextAnnotations )
-                            else
-                                ( False, typeVariables1, typeVariables2, nextAnnotations )
-                        else
-                            ( False, typeVariables1, typeVariables2, nextAnnotations )
-
-                    -- TODO
-                    -- Comparable types includes numbers, characters, strings, lists of comparable things, and tuples of comparable things.
-                    -- Note that tuples with 7 or more elements are not comparable.
-                    _ ->
-                        ( False, typeVariables1, typeVariables2, nextAnnotations )
-    in
-        if continueChecking then
-            case updatedNextAnnotations of
-                ( head1, head2 ) :: tails ->
-                    areMatchingTypesRecur head1 head2 updatedTypeVariables1 updatedTypeVariables2 tails
-
-                [] ->
-                    ( True, updatedTypeVariables1, updatedTypeVariables2 )
-        else
-            ( False, updatedTypeVariables1, updatedTypeVariables2 )
+-- let
+--     checkTypeVariables1 variable annotation =
+--         case Dict.get variable typeVariables1 of
+--             Nothing ->
+--                 ( True, Dict.insert variable annotation typeVariables1, typeVariables2, nextAnnotations )
+--
+--             Just variableAnnotation ->
+--                 ( True, typeVariables1, typeVariables2, [ ( variableAnnotation, annotation ) ] ++ nextAnnotations )
+--
+--     checkTypeVariables2 variable annotation =
+--         case Dict.get variable typeVariables2 of
+--             Nothing ->
+--                 ( True, typeVariables1, Dict.insert variable annotation typeVariables2, nextAnnotations )
+--
+--             Just variableAnnotation ->
+--                 ( True, typeVariables1, typeVariables2, [ ( annotation, variableAnnotation ) ] ++ nextAnnotations )
+--
+--     ( continueChecking, updatedTypeVariables1, updatedTypeVariables2, updatedNextAnnotations ) =
+--         if annotation1 == annotation2 then
+--             ( True, typeVariables1, typeVariables2, nextAnnotations )
+--         else
+--             case ( annotation1, annotation2 ) of
+--                 -- number (Int, Float)
+--                 ( TypeVariable "number", TypeConstructor [ "Int" ] [] ) ->
+--                     ( True, typeVariables1, typeVariables2, nextAnnotations )
+--
+--                 ( TypeVariable "number", TypeConstructor [ "Float" ] [] ) ->
+--                     ( True, typeVariables1, typeVariables2, nextAnnotations )
+--
+--                 ( TypeVariable "number", TypeVariable variable ) ->
+--                     checkTypeVariables2 variable (TypeVariable "number")
+--
+--                 ( TypeConstructor [ "Int" ] [], TypeVariable "number" ) ->
+--                     ( True, typeVariables1, typeVariables2, nextAnnotations )
+--
+--                 ( TypeConstructor [ "Float" ] [], TypeVariable "number" ) ->
+--                     ( True, typeVariables1, typeVariables2, nextAnnotations )
+--
+--                 ( TypeVariable variable, TypeVariable "number" ) ->
+--                     checkTypeVariables1 variable (TypeVariable "number")
+--
+--                 -- appendable (String, List)
+--                 ( TypeVariable "appendable", TypeConstructor [ "String" ] [] ) ->
+--                     ( True, typeVariables1, typeVariables2, nextAnnotations )
+--
+--                 ( TypeVariable "appendable", TypeConstructor [ "List" ] anyType ) ->
+--                     ( True, typeVariables1, typeVariables2, nextAnnotations )
+--
+--                 ( TypeConstructor [ "String" ] [], TypeVariable "appendable" ) ->
+--                     ( True, typeVariables1, typeVariables2, nextAnnotations )
+--
+--                 ( TypeConstructor [ "List" ] anyType, TypeVariable "appendable" ) ->
+--                     ( True, typeVariables1, typeVariables2, nextAnnotations )
+--
+--                 -- generic type (e.g. a, b, c)
+--                 ( TypeVariable variable, TypeApplication _ _ ) ->
+--                     ( False, typeVariables1, typeVariables2, nextAnnotations )
+--
+--                 ( TypeApplication _ _, TypeVariable variable ) ->
+--                     ( False, typeVariables1, typeVariables2, nextAnnotations )
+--
+--                 ( TypeVariable variable, anyType ) ->
+--                     if isTypeClass variable then
+--                         ( False, typeVariables1, typeVariables2, nextAnnotations )
+--                     else
+--                         checkTypeVariables1 variable anyType
+--
+--                 ( anyType, TypeVariable variable ) ->
+--                     if isTypeClass variable then
+--                         ( False, typeVariables1, typeVariables2, nextAnnotations )
+--                     else
+--                         checkTypeVariables2 variable anyType
+--
+--                 -- type application (e.g. String -> Int)
+--                 ( TypeApplication typeA1 typeB1, TypeApplication typeA2 typeB2 ) ->
+--                     ( True, typeVariables1, typeVariables2, [ ( typeA1, typeA2 ), ( typeB1, typeB2 ) ] ++ nextAnnotations )
+--
+--                 -- type constructor (e.g. MyType String)
+--                 ( TypeConstructor constructor1 children1, TypeConstructor constructor2 children2 ) ->
+--                     if constructor1 == constructor2 then
+--                         if List.length children1 == List.length children2 then
+--                             ( True, typeVariables1, typeVariables2, (List.map2 (,) children1 children2) ++ nextAnnotations )
+--                         else
+--                             ( False, typeVariables1, typeVariables2, nextAnnotations )
+--                     else
+--                         ( False, typeVariables1, typeVariables2, nextAnnotations )
+--
+--                 -- TODO
+--                 -- Comparable types includes numbers, characters, strings, lists of comparable things, and tuples of comparable things.
+--                 -- Note that tuples with 7 or more elements are not comparable.
+--                 _ ->
+--                     ( False, typeVariables1, typeVariables2, nextAnnotations )
+-- in
+--     if continueChecking then
+--         case updatedNextAnnotations of
+--             ( head1, head2 ) :: tails ->
+--                 areMatchingTypesRecur head1 head2 updatedTypeVariables1 updatedTypeVariables2 tails
+--
+--             [] ->
+--                 ( True, updatedTypeVariables1, updatedTypeVariables2 )
+--     else
+--         ( False, updatedTypeVariables1, updatedTypeVariables2 )
 
 
 getExternalHints : Bool -> FilePath -> FileContents -> List ModuleDocs -> ExternalHints
@@ -2599,10 +2604,148 @@ getDefaultValueForType activeFileTokens tipeString =
     getDefaultValueForTypeRecur activeFileTokens Set.empty tipeString
 
 
+isDecoderString : String -> Bool
+isDecoderString tipeString =
+    case List.head (String.split " " tipeString) of
+        Just headTipeString ->
+            -- TODO: Check that it's actually from `elm-lang/core` or `NoRedInk/elm-decode-pipeline`.
+            getLastName headTipeString == "Decoder"
+
+        Nothing ->
+            False
+
+
+getDefaultDecoderRecur : TokenDict -> Set.Set String -> TipeString -> String
+getDefaultDecoderRecur activeFileTokens visitedTypes tipeString =
+    if String.trim tipeString == "" then
+        "_"
+    else if isRecordString tipeString then
+        let
+            fieldAndValues =
+                getRecordTipeParts tipeString
+                    |> List.map
+                        (\( field, tipe ) ->
+                            field ++ " = " ++ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipe
+                        )
+                    |> String.join ", "
+        in
+            "{ " ++ fieldAndValues ++ " }"
+        -- else if isTupleString tipeString then
+        --     let
+        --         parts =
+        --             getTupleParts tipeString
+        --                 |> List.map
+        --                     (\part ->
+        --                         getDefaultValueForTypeRecur activeFileTokens visitedTypes part
+        --                     )
+        --     in
+        --         getTupleStringFromParts parts
+    else
+        case List.head (String.split " " tipeString) of
+            Just headTipeString ->
+                case headTipeString of
+                    -- Primitives
+                    "number" ->
+                        "0"
+
+                    "Int" ->
+                        "0"
+
+                    "Float" ->
+                        "0.0"
+
+                    "Bool" ->
+                        "False"
+
+                    "String" ->
+                        "\"\""
+
+                    -- Core
+                    "List" ->
+                        "[]"
+
+                    "Array.Array" ->
+                        "Array.empty"
+
+                    "Cmd" ->
+                        "Cmd.none"
+
+                    "Color.Color" ->
+                        "Color.black"
+
+                    "Dict.Dict" ->
+                        "Dict.empty"
+
+                    "Maybe" ->
+                        "Nothing"
+
+                    "Set.Set" ->
+                        "Set.empty"
+
+                    "Sub" ->
+                        "Sub.none"
+
+                    _ ->
+                        case getHintsForToken (Just headTipeString) activeFileTokens |> List.head of
+                            Just hint ->
+                                -- Avoid infinite recursion.
+                                if
+                                    (hint.kind /= KindType)
+                                        && (hint.tipe /= headTipeString)
+                                        && (hint.kind /= KindTypeAlias || (hint.kind == KindTypeAlias && List.length hint.args == 0))
+                                    -- TODO: ^ Make it work with aliases with type variables (e.g. `type alias AliasedType a b = ( a, b )`).
+                                then
+                                    if Set.member hint.name visitedTypes then
+                                        "_"
+                                    else
+                                        getDefaultValueForTypeRecur activeFileTokens (Set.insert hint.name visitedTypes) hint.tipe
+                                else if hint.kind == KindType then
+                                    case List.head hint.cases of
+                                        Just tipeCase ->
+                                            if Set.member hint.name visitedTypes then
+                                                "_"
+                                            else
+                                                let
+                                                    ( _, annotatedTipeArgs ) =
+                                                        typeConstructorToNameAndArgs tipeString
+
+                                                    alignedArgs =
+                                                        getTipeCaseAlignedArgTipes hint.args annotatedTipeArgs tipeCase.args
+                                                in
+                                                    tipeCase.name
+                                                        ++ (if List.length alignedArgs > 0 then
+                                                                " "
+                                                            else
+                                                                ""
+                                                           )
+                                                        ++ String.join " " (List.map (getDefaultValueForTypeRecur activeFileTokens (Set.insert hint.name visitedTypes)) alignedArgs)
+
+                                        Nothing ->
+                                            "_"
+                                else
+                                    "_"
+
+                            Nothing ->
+                                "_"
+
+            Nothing ->
+                "_"
+
+
 getDefaultValueForTypeRecur : TokenDict -> Set.Set String -> TipeString -> String
 getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
     if String.trim tipeString == "" then
         "_"
+    else if isDecoderString tipeString then
+        let
+            sansDecoder =
+                tipeString
+                    |> String.split " "
+                    |> List.tail
+                    |> Maybe.withDefault []
+                    |> String.join " "
+        in
+            getDefaultDecoder sansDecoder
     else if isRecordString tipeString then
         let
             fieldAndValues =
