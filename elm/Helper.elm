@@ -1,4 +1,4 @@
-module Helper exposing (holeToken, isInfix, isCapitalized, dropLast, last, decapitalize)
+module Helper exposing (holeToken, isInfix, isCapitalized, dropLast, last, decapitalize, indent)
 
 import Regex
 
@@ -55,3 +55,8 @@ decapitalize str =
 
         Nothing ->
             ""
+
+
+indent : String
+indent =
+    "    "
