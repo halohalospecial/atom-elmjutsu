@@ -1,3 +1,6 @@
+## 7.0.5
+* When searching for the `elm-package.json` for an `.elm` file, stop when we reach the root of the Atom project.
+
 ## 7.0.4
 * Check if there's an `elm-package.json` in the `.elm` file's project path first before looking elsewhere.  Thanks to @mbuscemi.
 
