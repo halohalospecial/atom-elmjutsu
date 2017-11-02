@@ -1,3 +1,6 @@
+## 7.0.6
+* Fix bug introduced by previous version (#96).  Thanks to @raffomania for reporting and debugging!
+
 ## 7.0.5
 * When searching for the `elm-package.json` for an `.elm` file, stop when we reach the root of the Atom project.
 
