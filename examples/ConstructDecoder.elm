@@ -48,7 +48,9 @@ decodeSessionInfo =
                                 (\v1 ->
                                     Decode.index 2 Decode.value
                                         |> Decode.andThen
-                                            (\v2 -> Decode.succeed ( v0, v1, v2 ))
+                                            (\v2 ->
+                                                Decode.succeed ( v0, v1, v2 )
+                                            )
                                 )
                     )
             )

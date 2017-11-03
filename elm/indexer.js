@@ -15320,7 +15320,7 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 										decoderModuleName,
 										A2(
 											_elm_lang$core$Basics_ops['++'],
-											'.map',
+											'map',
 											A2(
 												_elm_lang$core$Basics_ops['++'],
 												mapSuffix,
@@ -15345,7 +15345,7 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 														decoderModuleName,
 														A2(
 															_elm_lang$core$Basics_ops['++'],
-															'.field \"',
+															'field \"',
 															A2(
 																_elm_lang$core$Basics_ops['++'],
 																_p150._0,
@@ -15385,7 +15385,7 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 													decoderModuleName,
 													A2(
 														_elm_lang$core$Basics_ops['++'],
-														'.index ',
+														'index ',
 														A2(
 															_elm_lang$core$Basics_ops['++'],
 															_elm_lang$core$Basics$toString(index),
@@ -15403,7 +15403,7 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 																			decoderModuleName,
 																			A2(
 																				_elm_lang$core$Basics_ops['++'],
-																				'.andThen (\\v',
+																				'andThen (\\v',
 																				A2(
 																					_elm_lang$core$Basics_ops['++'],
 																					_elm_lang$core$Basics$toString(index),
@@ -15414,26 +15414,29 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 									_elm_lang$core$Basics_ops['++'],
 									A2(
 										_elm_lang$core$Basics_ops['++'],
-										decoderModuleName,
+										'\n',
 										A2(
 											_elm_lang$core$Basics_ops['++'],
-											'.succeed ( ',
+											decoderModuleName,
 											A2(
 												_elm_lang$core$Basics_ops['++'],
+												'succeed ( ',
 												A2(
-													_elm_lang$core$String$join,
-													', ',
+													_elm_lang$core$Basics_ops['++'],
 													A2(
-														_elm_lang$core$List$indexedMap,
-														F2(
-															function (index, _p151) {
-																return A2(
-																	_elm_lang$core$Basics_ops['++'],
-																	'v',
-																	_elm_lang$core$Basics$toString(index));
-															}),
-														parts)),
-												' )\n'))),
+														_elm_lang$core$String$join,
+														', ',
+														A2(
+															_elm_lang$core$List$indexedMap,
+															F2(
+																function (index, _p151) {
+																	return A2(
+																		_elm_lang$core$Basics_ops['++'],
+																		'v',
+																		_elm_lang$core$Basics$toString(index));
+																}),
+															parts)),
+													' )\n')))),
 									A2(
 										_elm_lang$core$Basics_ops['++'],
 										A2(
@@ -15459,15 +15462,15 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 							var _p153 = _p152._0;
 							switch (_p153) {
 								case 'number':
-									return A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, '.float');
+									return A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, 'float');
 								case 'Int':
-									return A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, '.int');
+									return A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, 'int');
 								case 'Float':
-									return A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, '.float');
+									return A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, 'float');
 								case 'Bool':
-									return A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, '.bool');
+									return A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, 'bool');
 								case 'String':
-									return A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, '.string');
+									return A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, 'string');
 								case 'List':
 									return A2(
 										_elm_lang$core$Basics_ops['++'],
@@ -15477,7 +15480,7 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 											decoderModuleName,
 											A2(
 												_elm_lang$core$Basics_ops['++'],
-												'.list ',
+												'list ',
 												A2(
 													_elm_lang$core$Basics_ops['++'],
 													A5(_user$project$Indexer$getDefaultDecoderRecur, activeFileTokens, visitedTypes, decoderModuleName, _elm_lang$core$Maybe$Nothing, tailTipe),
@@ -15491,7 +15494,7 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 											decoderModuleName,
 											A2(
 												_elm_lang$core$Basics_ops['++'],
-												'.array ',
+												'array ',
 												A2(
 													_elm_lang$core$Basics_ops['++'],
 													A5(_user$project$Indexer$getDefaultDecoderRecur, activeFileTokens, visitedTypes, decoderModuleName, _elm_lang$core$Maybe$Nothing, tailTipe),
@@ -15507,7 +15510,7 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 												decoderModuleName,
 												A2(
 													_elm_lang$core$Basics_ops['++'],
-													'.dict ',
+													'dict ',
 													A2(
 														_elm_lang$core$Basics_ops['++'],
 														A5(
@@ -15536,7 +15539,7 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 											decoderModuleName,
 											A2(
 												_elm_lang$core$Basics_ops['++'],
-												'.maybe ',
+												'maybe ',
 												A2(
 													_elm_lang$core$Basics_ops['++'],
 													A5(_user$project$Indexer$getDefaultDecoderRecur, activeFileTokens, visitedTypes, decoderModuleName, _elm_lang$core$Maybe$Nothing, tailTipe),
@@ -15544,11 +15547,16 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 								default:
 									var _p157 = _p153;
 									if (_elm_lang$core$Native_Utils.eq(
-										_user$project$Indexer$getModuleName(_p157),
-										decoderModuleName) && _elm_lang$core$Native_Utils.eq(
 										_user$project$Indexer$getLastName(_p157),
-										'Value')) {
-										return A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, '.value');
+										'Value') && (_elm_lang$core$Native_Utils.eq(
+										_user$project$Indexer$getModuleName(_p157),
+										decoderModuleName) || _elm_lang$core$Native_Utils.eq(
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											_user$project$Indexer$getModuleName(_p157),
+											'.'),
+										decoderModuleName))) {
+										return A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, 'value');
 									} else {
 										var _p155 = _elm_lang$core$List$head(
 											A2(
@@ -15582,13 +15590,13 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 														A2(
 															_elm_lang$core$Basics_ops['++'],
 															'(',
-															A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, '.string\n')),
+															A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, 'string\n')),
 														A2(
 															_elm_lang$core$Basics_ops['++'],
 															A2(
 																_elm_lang$core$Basics_ops['++'],
 																'|> ',
-																A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, '.andThen (\\string ->\n')),
+																A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, 'andThen (\\string ->\n')),
 															A2(
 																_elm_lang$core$Basics_ops['++'],
 																A2(
@@ -15621,7 +15629,7 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 																									A2(
 																										_elm_lang$core$Basics_ops['++'],
 																										decoderModuleName,
-																										A2(_elm_lang$core$Basics_ops['++'], '.succeed ', tipeCase.name)))))));
+																										A2(_elm_lang$core$Basics_ops['++'], 'succeed ', tipeCase.name)))))));
 																			},
 																			_p156.cases)),
 																	A2(
@@ -15643,7 +15651,7 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 																							decoderModuleName,
 																							A2(
 																								_elm_lang$core$Basics_ops['++'],
-																								'.fail \"Unknown ',
+																								'fail \"Unknown ',
 																								A2(_elm_lang$core$Basics_ops['++'], _p156.name, '\"'))))))),
 																		'\n))')))));
 												} else {
@@ -15676,6 +15684,7 @@ var _user$project$Indexer$getDefaultValueForTypeRecur = F3(
 					var tipeParts = A2(_elm_lang$core$String$split, ' ', tipeString);
 					var _p158 = _elm_lang$core$List$head(tipeParts);
 					if (_p158.ctor === 'Just') {
+						var decoderModuleName = _user$project$Indexer$getModuleName(_p158._0);
 						var tipeSansDecoder = A2(
 							_elm_lang$core$String$join,
 							' ',
@@ -15687,7 +15696,7 @@ var _user$project$Indexer$getDefaultValueForTypeRecur = F3(
 							_user$project$Indexer$getDefaultDecoderRecur,
 							activeFileTokens,
 							_elm_lang$core$Set$empty,
-							_user$project$Indexer$getModuleName(_p158._0),
+							_elm_lang$core$Native_Utils.eq(decoderModuleName, '') ? '' : A2(_elm_lang$core$Basics_ops['++'], decoderModuleName, '.'),
 							_elm_lang$core$Maybe$Nothing,
 							tipeSansDecoder);
 						return A2(

@@ -2623,8 +2623,19 @@ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
                                 |> Maybe.withDefault []
                                 |> String.join " "
 
+                        decoderModuleName =
+                            getModuleName decoderTipe
+
                         decoderValue =
-                            getDefaultDecoderRecur activeFileTokens Set.empty (getModuleName decoderTipe) Nothing tipeSansDecoder
+                            getDefaultDecoderRecur activeFileTokens
+                                Set.empty
+                                (if decoderModuleName == "" then
+                                    ""
+                                 else
+                                    decoderModuleName ++ "."
+                                )
+                                Nothing
+                                tipeSansDecoder
                     in
                         -- Remove empty lines, then indent lines after the first.
                         unencloseParentheses decoderValue
@@ -2791,11 +2802,11 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
                                     n ->
                                         toString n
                         in
-                            ("\n(" ++ decoderModuleName ++ ".map" ++ mapSuffix ++ " " ++ hintName ++ "\n")
+                            ("\n(" ++ decoderModuleName ++ "map" ++ mapSuffix ++ " " ++ hintName ++ "\n")
                                 ++ (fieldAndValues
                                         |> List.map
                                             (\( field, tipe ) ->
-                                                "(" ++ decoderModuleName ++ ".field \"" ++ field ++ "\" " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tipe ++ ")"
+                                                "(" ++ decoderModuleName ++ "field \"" ++ field ++ "\" " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tipe ++ ")"
                                             )
                                         |> String.join "\n"
                                    )
@@ -2813,12 +2824,12 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
             "\n("
                 ++ (List.indexedMap
                         (\index part ->
-                            decoderModuleName ++ ".index " ++ (toString index) ++ " " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing part ++ " |> " ++ decoderModuleName ++ ".andThen (\\v" ++ (toString index) ++ " ->"
+                            decoderModuleName ++ "index " ++ (toString index) ++ " " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing part ++ " |> " ++ decoderModuleName ++ "andThen (\\v" ++ (toString index) ++ " ->"
                         )
                         parts
                         |> String.join "\n"
                    )
-                ++ (decoderModuleName ++ ".succeed ( " ++ (List.indexedMap (\index _ -> "v" ++ (toString index)) parts |> String.join ", ") ++ " )\n")
+                ++ ("\n" ++ decoderModuleName ++ "succeed ( " ++ (List.indexedMap (\index _ -> "v" ++ (toString index)) parts |> String.join ", ") ++ " )\n")
                 ++ (List.repeat (List.length parts) ")" |> String.join "")
                 ++ ")"
     else
@@ -2838,41 +2849,44 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
                     case headTipeString of
                         -- Primitives
                         "number" ->
-                            decoderModuleName ++ ".float"
+                            decoderModuleName ++ "float"
 
                         "Int" ->
-                            decoderModuleName ++ ".int"
+                            decoderModuleName ++ "int"
 
                         "Float" ->
-                            decoderModuleName ++ ".float"
+                            decoderModuleName ++ "float"
 
                         "Bool" ->
-                            decoderModuleName ++ ".bool"
+                            decoderModuleName ++ "bool"
 
                         "String" ->
-                            decoderModuleName ++ ".string"
+                            decoderModuleName ++ "string"
 
                         -- Core
                         "List" ->
-                            "(" ++ decoderModuleName ++ ".list " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tailTipe ++ ")"
+                            "(" ++ decoderModuleName ++ "list " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tailTipe ++ ")"
 
                         "Array.Array" ->
-                            "(" ++ decoderModuleName ++ ".array " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tailTipe ++ ")"
+                            "(" ++ decoderModuleName ++ "array " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tailTipe ++ ")"
 
                         "Dict.Dict" ->
                             case List.head tailParts of
                                 Just "String" ->
-                                    "(" ++ decoderModuleName ++ ".dict " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing (List.tail tailParts |> Maybe.withDefault [] |> String.join " ") ++ ")"
+                                    "(" ++ decoderModuleName ++ "dict " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing (List.tail tailParts |> Maybe.withDefault [] |> String.join " ") ++ ")"
 
                                 _ ->
                                     "_"
 
                         "Maybe" ->
-                            "(" ++ decoderModuleName ++ ".maybe " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tailTipe ++ ")"
+                            "(" ++ decoderModuleName ++ "maybe " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tailTipe ++ ")"
 
                         headTipeString ->
-                            if getModuleName headTipeString == decoderModuleName && getLastName headTipeString == "Value" then
-                                decoderModuleName ++ ".value"
+                            if
+                                (getLastName headTipeString == "Value")
+                                    && (getModuleName headTipeString == decoderModuleName || getModuleName headTipeString ++ "." == decoderModuleName)
+                            then
+                                decoderModuleName ++ "value"
                             else
                                 case getHintsForToken (Just headTipeString) activeFileTokens |> List.head of
                                     Just hint ->
@@ -2889,11 +2903,11 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
                                                 getDefaultDecoderRecur activeFileTokens (Set.insert hint.name visitedTypes) decoderModuleName (Just hint.name) hint.tipe
                                         else if hint.kind == KindType then
                                             -- Decoder for union types.
-                                            ("(" ++ decoderModuleName ++ ".string\n")
-                                                ++ ("|> " ++ decoderModuleName ++ ".andThen (\\string ->\n")
+                                            ("(" ++ decoderModuleName ++ "string\n")
+                                                ++ ("|> " ++ decoderModuleName ++ "andThen (\\string ->\n")
                                                 ++ (Helper.indent 1 ++ "case string of\n")
-                                                ++ (List.map (\tipeCase -> Helper.indent 2 ++ "\"" ++ tipeCase.name ++ "\" ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ ".succeed " ++ tipeCase.name) hint.cases |> String.join "\n")
-                                                ++ ("\n" ++ Helper.indent 2 ++ "_ ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ ".fail \"Unknown " ++ hint.name ++ "\"")
+                                                ++ (List.map (\tipeCase -> Helper.indent 2 ++ "\"" ++ tipeCase.name ++ "\" ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ "succeed " ++ tipeCase.name) hint.cases |> String.join "\n")
+                                                ++ ("\n" ++ Helper.indent 2 ++ "_ ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ "fail \"Unknown " ++ hint.name ++ "\"")
                                                 ++ "\n))"
                                             -- TODO: Use `Json.Decode.lazy` for recursive types.
                                         else
