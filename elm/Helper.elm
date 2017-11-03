@@ -57,6 +57,7 @@ decapitalize str =
             ""
 
 
-indent : String
-indent =
-    "    "
+indent : Int -> String
+indent count =
+    List.repeat count "    "
+        |> String.join ""

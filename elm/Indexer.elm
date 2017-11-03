@@ -1379,7 +1379,7 @@ areTipesCompatibleRecur tipe1 tipe2 =
             numParts2 =
                 List.length parts2
         in
-            if (isFunctionTypeString tipe1 && not (isFunctionTypeString tipe2)) || (isFunctionTypeString tipe2 && not (isFunctionTypeString tipe1)) then
+            if (isFunctionTipe tipe1 && not (isFunctionTipe tipe2)) || (isFunctionTipe tipe2 && not (isFunctionTipe tipe1)) then
                 False
             else if numParts1 == 1 && numParts2 == 1 then
                 (isTipeVariable tipe1 && isTipeVariable tipe2)
@@ -2604,162 +2604,6 @@ getDefaultValueForType activeFileTokens tipeString =
     getDefaultValueForTypeRecur activeFileTokens Set.empty tipeString
 
 
-isDecoderTipe : String -> Bool
-isDecoderTipe tipeString =
-    case List.head (String.split " " tipeString) of
-        Just headTipeString ->
-            -- TODO: Check that it's actually from `elm-lang/core` or `NoRedInk/elm-decode-pipeline`.
-            getLastName headTipeString == "Decoder"
-
-        Nothing ->
-            False
-
-
-getDefaultDecoderRecur : TokenDict -> Set.Set String -> String -> Maybe String -> TipeString -> String
-getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHintName tipeString =
-    if String.trim tipeString == "" then
-        "_"
-    else if isRecordString tipeString then
-        case maybeHintName of
-            Just hintName ->
-                let
-                    fieldAndValues =
-                        getRecordTipeParts tipeString
-
-                    numFieldAndValues =
-                        List.length fieldAndValues
-                in
-                    if numFieldAndValues > 0 then
-                        let
-                            mapSuffix =
-                                case numFieldAndValues of
-                                    1 ->
-                                        ""
-
-                                    n ->
-                                        toString n
-                        in
-                            ("(" ++ decoderModuleName ++ ".map" ++ mapSuffix ++ " " ++ hintName ++ " ")
-                                ++ (fieldAndValues
-                                        |> List.map
-                                            (\( field, tipe ) ->
-                                                "(" ++ decoderModuleName ++ ".field \"" ++ field ++ "\" " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tipe ++ ")"
-                                            )
-                                        |> String.join " "
-                                   )
-                                ++ ")"
-                    else
-                        "_"
-
-            Nothing ->
-                "_"
-        -- else if isTupleString tipeString then
-        --     let
-        --         parts =
-        --             getTupleParts tipeString
-        --                 |> List.map
-        --                     (\part ->
-        --                         getDefaultValueForTypeRecur activeFileTokens visitedTypes part
-        --                     )
-        --     in
-        --         getTupleStringFromParts parts
-    else
-        let
-            tipeParts =
-                String.split " " tipeString
-
-            tailParts =
-                List.tail tipeParts
-                    |> Maybe.withDefault []
-
-            tailTipe =
-                tailParts |> String.join " "
-        in
-            case List.head tipeParts of
-                Just headTipeString ->
-                    case headTipeString of
-                        -- Primitives
-                        "number" ->
-                            decoderModuleName ++ ".float"
-
-                        "Int" ->
-                            decoderModuleName ++ ".int"
-
-                        "Float" ->
-                            decoderModuleName ++ ".float"
-
-                        "Bool" ->
-                            decoderModuleName ++ ".bool"
-
-                        "String" ->
-                            decoderModuleName ++ ".string"
-
-                        -- Core
-                        "List" ->
-                            "(" ++ decoderModuleName ++ ".list " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tailTipe ++ ")"
-
-                        "Array.Array" ->
-                            "(" ++ decoderModuleName ++ ".array " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tailTipe ++ ")"
-
-                        "Dict.Dict" ->
-                            case List.head tailParts of
-                                Just "String" ->
-                                    "(" ++ decoderModuleName ++ ".dict " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing (List.tail tailParts |> Maybe.withDefault [] |> String.join " ") ++ ")"
-
-                                _ ->
-                                    "_"
-
-                        "Maybe" ->
-                            "(" ++ decoderModuleName ++ ".maybe " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tailTipe ++ ")"
-
-                        -- TODO: Json.Decode.keyValuePairs
-                        _ ->
-                            case getHintsForToken (Just headTipeString) activeFileTokens |> List.head of
-                                Just hint ->
-                                    -- Avoid infinite recursion.
-                                    if
-                                        (hint.kind /= KindType)
-                                            && (hint.tipe /= headTipeString)
-                                            && (hint.kind /= KindTypeAlias || (hint.kind == KindTypeAlias && List.length hint.args == 0))
-                                        -- TODO: ^ Make it work with aliases with type variables (e.g. `type alias AliasedType a b = ( a, b )`).
-                                    then
-                                        if Set.member hint.name visitedTypes then
-                                            "_"
-                                        else
-                                            getDefaultDecoderRecur activeFileTokens (Set.insert hint.name visitedTypes) decoderModuleName (Just hint.name) hint.tipe
-                                    else if hint.kind == KindType then
-                                        case List.head hint.cases of
-                                            Just tipeCase ->
-                                                if Set.member hint.name visitedTypes then
-                                                    "_"
-                                                else
-                                                    let
-                                                        ( _, annotatedTipeArgs ) =
-                                                            typeConstructorToNameAndArgs tipeString
-
-                                                        alignedArgs =
-                                                            getTipeCaseAlignedArgTipes hint.args annotatedTipeArgs tipeCase.args
-                                                    in
-                                                        tipeCase.name
-                                                            ++ (if List.length alignedArgs > 0 then
-                                                                    " "
-                                                                else
-                                                                    ""
-                                                               )
-                                                            ++ String.join " " (List.map (getDefaultDecoderRecur activeFileTokens (Set.insert hint.name visitedTypes) decoderModuleName Nothing) alignedArgs)
-
-                                            Nothing ->
-                                                "_"
-                                    else
-                                        "_"
-
-                                Nothing ->
-                                    "_"
-
-                Nothing ->
-                    "_"
-
-
 getDefaultValueForTypeRecur : TokenDict -> Set.Set String -> TipeString -> String
 getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
     if String.trim tipeString == "" then
@@ -2781,16 +2625,19 @@ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
 
                         decoderValue =
                             getDefaultDecoderRecur activeFileTokens Set.empty (getModuleName decoderTipe) Nothing tipeSansDecoder
-
-                        dropLength =
-                            if String.startsWith "(" decoderValue && String.endsWith ")" decoderValue then
-                                1
-                            else
-                                0
                     in
-                        decoderValue
-                            |> String.dropLeft dropLength
-                            |> String.dropRight dropLength
+                        -- Remove empty lines, then indent lines after the first.
+                        unencloseParentheses decoderValue
+                            |> String.split "\n"
+                            |> List.filter (\line -> String.trim line /= "")
+                            |> List.indexedMap
+                                (\index line ->
+                                    if index == 0 then
+                                        line
+                                    else
+                                        Helper.indent 1 ++ line
+                                )
+                            |> String.join "\n"
 
                 Nothing ->
                     "_"
@@ -2815,7 +2662,7 @@ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
                         )
         in
             getTupleStringFromParts parts
-    else if isFunctionTypeString tipeString then
+    else if isFunctionTipe tipeString then
         let
             arguments =
                 getTipeParts tipeString
@@ -2918,6 +2765,137 @@ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
 
             Nothing ->
                 "_"
+
+
+getDefaultDecoderRecur : TokenDict -> Set.Set String -> String -> Maybe String -> TipeString -> String
+getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHintName tipeString =
+    if String.trim tipeString == "" then
+        "_"
+    else if isRecordString tipeString then
+        case maybeHintName of
+            Just hintName ->
+                let
+                    fieldAndValues =
+                        getRecordTipeParts tipeString
+
+                    numFieldAndValues =
+                        List.length fieldAndValues
+                in
+                    if numFieldAndValues > 0 then
+                        let
+                            mapSuffix =
+                                case numFieldAndValues of
+                                    1 ->
+                                        ""
+
+                                    n ->
+                                        toString n
+                        in
+                            ("\n(" ++ decoderModuleName ++ ".map" ++ mapSuffix ++ " " ++ hintName ++ "\n")
+                                ++ (fieldAndValues
+                                        |> List.map
+                                            (\( field, tipe ) ->
+                                                "(" ++ decoderModuleName ++ ".field \"" ++ field ++ "\" " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tipe ++ ")"
+                                            )
+                                        |> String.join "\n"
+                                   )
+                                ++ ")"
+                    else
+                        "_"
+
+            Nothing ->
+                "_"
+    else if isTupleString tipeString then
+        -- -- -- TODO
+        "_"
+        -- let
+        --     parts =
+        --         getTupleParts tipeString
+        --             |> List.map
+        --                 (\part ->
+        --                     getDefaultValueForTypeRecur activeFileTokens visitedTypes part
+        --                 )
+        -- in
+        --     getTupleStringFromParts parts
+    else
+        let
+            tipeParts =
+                String.split " " (unencloseParentheses tipeString)
+
+            tailParts =
+                List.tail tipeParts
+                    |> Maybe.withDefault []
+
+            tailTipe =
+                tailParts |> String.join " "
+        in
+            case List.head tipeParts of
+                Just headTipeString ->
+                    case headTipeString of
+                        -- Primitives
+                        "number" ->
+                            decoderModuleName ++ ".float"
+
+                        "Int" ->
+                            decoderModuleName ++ ".int"
+
+                        "Float" ->
+                            decoderModuleName ++ ".float"
+
+                        "Bool" ->
+                            decoderModuleName ++ ".bool"
+
+                        "String" ->
+                            decoderModuleName ++ ".string"
+
+                        -- Core
+                        "List" ->
+                            "(" ++ decoderModuleName ++ ".list " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tailTipe ++ ")"
+
+                        "Array.Array" ->
+                            "(" ++ decoderModuleName ++ ".array " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tailTipe ++ ")"
+
+                        "Dict.Dict" ->
+                            case List.head tailParts of
+                                Just "String" ->
+                                    "(" ++ decoderModuleName ++ ".dict " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing (List.tail tailParts |> Maybe.withDefault [] |> String.join " ") ++ ")"
+
+                                _ ->
+                                    "_"
+
+                        "Maybe" ->
+                            "(" ++ decoderModuleName ++ ".maybe " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tailTipe ++ ")"
+
+                        -- TODO: Json.Decode.keyValuePairs
+                        _ ->
+                            case getHintsForToken (Just headTipeString) activeFileTokens |> List.head of
+                                Just hint ->
+                                    -- Avoid infinite recursion.
+                                    if
+                                        (hint.kind /= KindType)
+                                            && (hint.tipe /= headTipeString)
+                                            && (hint.kind /= KindTypeAlias || (hint.kind == KindTypeAlias && List.length hint.args == 0))
+                                        -- TODO: ^ Make it work with aliases with type variables (e.g. `type alias AliasedType a b = ( a, b )`).
+                                    then
+                                        if Set.member hint.name visitedTypes then
+                                            "_"
+                                        else
+                                            getDefaultDecoderRecur activeFileTokens (Set.insert hint.name visitedTypes) decoderModuleName (Just hint.name) hint.tipe
+                                    else if hint.kind == KindType then
+                                        ("(" ++ decoderModuleName ++ ".string\n")
+                                            ++ ("|> " ++ decoderModuleName ++ ".andThen (\\string ->\n")
+                                            ++ (Helper.indent 1 ++ "case string of\n")
+                                            ++ (List.map (\tipeCase -> Helper.indent 2 ++ "\"" ++ tipeCase.name ++ "\" ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ ".succeed " ++ tipeCase.name) hint.cases |> String.join "\n")
+                                            ++ ("\n" ++ Helper.indent 2 ++ "_ ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ ".fail \"Unknown " ++ hint.name ++ "\"")
+                                            ++ "\n))"
+                                    else
+                                        "_"
+
+                                Nothing ->
+                                    "_"
+
+                Nothing ->
+                    "_"
 
 
 doConstructCaseOf : Token -> Model -> ( Model, Cmd Msg )
@@ -3153,7 +3131,7 @@ getFunctionArgNameRecur argString argNameCounters =
                 ( getTupleStringFromParts partNames
                 , updateArgNameCounters
                 )
-        else if isFunctionTypeString argString then
+        else if isFunctionTipe argString then
             updatePartNameAndArgNameCounters "function" argNameCounters
         else
             updatePartNameAndArgNameCounters (tipeToVar argString) argNameCounters
@@ -3932,11 +3910,8 @@ getTipeParts tipeString =
         tipeString ->
             let
                 tipe =
-                    if isFunctionTypeString tipeString then
-                        if isTupleString tipeString then
-                            String.slice 1 -1 tipeString
-                        else
-                            tipeString
+                    if isFunctionTipe tipeString then
+                        unencloseParentheses tipeString
                     else
                         tipeString
             in
@@ -4389,13 +4364,39 @@ isRecordString tipeString =
     String.startsWith "{" tipeString && String.endsWith "}" tipeString
 
 
+{-|
+
+    ```
+    isTupleString "()" == True
+    isTupleString "(String, Int)" == True
+    isTupleString "(List Int)" == False
+    isTupleString "(List (String, Int))" == False
+    isTupleString "(List {a : String, b : Int})" == False
+    isTupleString "(a -> b)" == False
+    ```
+-}
 isTupleString : String -> Bool
 isTupleString tipeString =
-    String.startsWith "(" tipeString && String.endsWith ")" tipeString
+    if tipeString == "()" then
+        True
+    else if String.startsWith "(" tipeString && String.endsWith ")" tipeString then
+        case parseTipeString tipeString of
+            Just (TypeTuple elements) ->
+                case elements of
+                    [ oneElement ] ->
+                        False
+
+                    _ ->
+                        True
+
+            _ ->
+                False
+    else
+        False
 
 
-isFunctionTypeString : String -> Bool
-isFunctionTypeString tipeString =
+isFunctionTipe : String -> Bool
+isFunctionTipe tipeString =
     let
         tipe =
             if isTupleString tipeString then
@@ -4404,6 +4405,17 @@ isFunctionTypeString tipeString =
                 tipeString
     in
         tipe /= "" && not (isRecordString tipe) && not (isTupleString tipe) && (String.contains "->" tipe) && List.length (getArgsParts tipe) == 1
+
+
+isDecoderTipe : String -> Bool
+isDecoderTipe tipeString =
+    case List.head (String.split " " tipeString) of
+        Just headTipeString ->
+            -- TODO: Check that it's actually from `elm-lang/core`.
+            getLastName headTipeString == "Decoder"
+
+        Nothing ->
+            False
 
 
 getTipeCaseTypeAnnotation : TipeCase -> Tipe -> String
@@ -4732,6 +4744,20 @@ getModuleAndSymbolName { fullName, caseTipe, kind } =
                   else
                     Nothing
                 )
+
+
+unencloseParentheses : String -> String
+unencloseParentheses str =
+    let
+        dropLength =
+            if String.startsWith "(" str && String.endsWith ")" str then
+                1
+            else
+                0
+    in
+        str
+            |> String.dropLeft dropLength
+            |> String.dropRight dropLength
 
 
 
