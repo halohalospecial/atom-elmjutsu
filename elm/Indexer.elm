@@ -2888,12 +2888,14 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
                                             else
                                                 getDefaultDecoderRecur activeFileTokens (Set.insert hint.name visitedTypes) decoderModuleName (Just hint.name) hint.tipe
                                         else if hint.kind == KindType then
+                                            -- Decoder for union types.
                                             ("(" ++ decoderModuleName ++ ".string\n")
                                                 ++ ("|> " ++ decoderModuleName ++ ".andThen (\\string ->\n")
                                                 ++ (Helper.indent 1 ++ "case string of\n")
                                                 ++ (List.map (\tipeCase -> Helper.indent 2 ++ "\"" ++ tipeCase.name ++ "\" ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ ".succeed " ++ tipeCase.name) hint.cases |> String.join "\n")
                                                 ++ ("\n" ++ Helper.indent 2 ++ "_ ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ ".fail \"Unknown " ++ hint.name ++ "\"")
                                                 ++ "\n))"
+                                            -- TODO: Use `Json.Decode.lazy` for recursive types.
                                         else
                                             "_"
 
