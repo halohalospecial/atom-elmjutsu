@@ -1230,7 +1230,7 @@ normalizeTipeRecur tokens visitedTipeAliases tipeString =
         tipeString
     else if isRecordString tipeString then
         let
-            fieldAndValues =
+            fieldsAndValues =
                 getRecordTipeParts tipeString
                     |> Dict.fromList
                     |> Dict.map
@@ -1240,7 +1240,7 @@ normalizeTipeRecur tokens visitedTipeAliases tipeString =
                     |> Dict.values
                     |> String.join ", "
         in
-            "{ " ++ fieldAndValues ++ " }"
+            "{ " ++ fieldsAndValues ++ " }"
     else if isTupleString tipeString then
         let
             parts =
@@ -2679,10 +2679,7 @@ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
                     "_"
     else if isRecordString tipeString then
         let
-            _ =
-                Debug.log "isRecordString" tipeString
-
-            fieldAndValues =
+            fieldsAndValues =
                 getRecordTipeParts tipeString
                     |> List.map
                         (\( field, tipe ) ->
@@ -2690,7 +2687,7 @@ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
                         )
                     |> String.join ", "
         in
-            "{ " ++ fieldAndValues ++ " }"
+            "{ " ++ fieldsAndValues ++ " }"
     else if isTupleString tipeString then
         let
             parts =
@@ -2830,11 +2827,11 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
         case maybeHintName of
             Just hintName ->
                 let
-                    fieldAndValues =
+                    fieldsAndValues =
                         getRecordTipeParts tipeString
 
                     numFieldAndValues =
-                        List.length fieldAndValues
+                        List.length fieldsAndValues
                 in
                     if numFieldAndValues > 0 then
                         let
@@ -2847,7 +2844,7 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
                                         toString n
                         in
                             ("\n(" ++ decoderModuleName ++ "map" ++ mapSuffix ++ " " ++ hintName ++ "\n")
-                                ++ (fieldAndValues
+                                ++ (fieldsAndValues
                                         |> List.map
                                             (\( field, tipe ) ->
                                                 "(" ++ decoderModuleName ++ "field \"" ++ field ++ "\" " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tipe ++ ")"
@@ -2972,15 +2969,15 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
         case maybeObjectName of
             Just objectName ->
                 let
-                    fieldAndValues =
+                    fieldsAndValues =
                         getRecordTipeParts tipeString
 
                     numFieldAndValues =
-                        List.length fieldAndValues
+                        List.length fieldsAndValues
                 in
                     if numFieldAndValues > 0 then
-                        ("\n(" ++ encoderModuleName ++ "object" ++ "\n" ++ Helper.indent 1)
-                            ++ (fieldAndValues
+                        ("\n(" ++ encoderModuleName ++ "object" ++ "\n")
+                            ++ (fieldsAndValues
                                     |> List.indexedMap
                                         (\index ( field, tipe ) ->
                                             let
@@ -2988,13 +2985,13 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
                                                     if index == 0 then
                                                         "[ "
                                                     else
-                                                        Helper.indent 1 ++ ", "
+                                                        ", "
                                             in
                                                 prefix ++ "( \"" ++ field ++ "\", " ++ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just <| objectName ++ "." ++ field) tipe ++ " )"
                                         )
                                     |> String.join "\n"
                                )
-                            ++ ("\n" ++ Helper.indent 1 ++ "]")
+                            ++ ("\n" ++ "]")
                             ++ "\n)"
                     else
                         "_"
@@ -3002,17 +2999,29 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
             Nothing ->
                 "_"
     else if isTupleString tipeString then
-        -- TODO
-        "_"
-        -- let
-        --     parts =
-        --         getTupleParts tipeString
-        --             |> List.map
-        --                 (\part ->
-        --                     getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName Nothing part
-        --                 )
-        -- in
-        --     getTupleStringFromParts parts
+        case maybeObjectName of
+            Just objectName ->
+                let
+                    parts =
+                        getTupleParts tipeString
+                            |> List.indexedMap
+                                (\index partTipe ->
+                                    getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just <| "v" ++ (toString index)) partTipe
+                                )
+                in
+                    "\nlet\n"
+                        ++ (Helper.indent 1 ++ "( " ++ (List.indexedMap (\index _ -> "v" ++ (toString index)) parts |> String.join ", ") ++ " ) =\n")
+                        ++ (Helper.indent 2 ++ objectName ++ "\n")
+                        ++ "in\n"
+                        ++ (Helper.indent 1
+                                ++ encoderModuleName
+                                ++ "list ["
+                           )
+                        ++ String.join ", " parts
+                        ++ "]"
+
+            Nothing ->
+                "_"
     else
         let
             tipeParts =
@@ -3031,14 +3040,14 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
             wrapWithMap moduleName =
                 ("(" ++ encoderModuleName ++ (String.toLower moduleName) ++ " ")
                     ++ ("\n(" ++ moduleName ++ ".map\n")
-                    ++ (Helper.indent 1 ++ "(\\v ->\n")
+                    ++ "(\\v ->\n"
                     ++ (getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just "v") tailTipe
                             |> String.split "\n"
-                            |> List.map (\line -> Helper.indent 2 ++ line)
+                            |> List.map (\line -> line)
                             |> String.join "\n"
                        )
-                    ++ ("\n" ++ Helper.indent 1 ++ ")")
-                    ++ ("\n" ++ Helper.indent 1 ++ objectName ++ "\n)")
+                    ++ ("\n" ++ ")")
+                    ++ ("\n" ++ objectName ++ "\n)")
                     ++ "\n)"
         in
             case List.head tipeParts of
@@ -3068,16 +3077,29 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
                             wrapWithMap "Array"
 
                         "Dict.Dict" ->
-                            "_"
+                            case List.head tailParts of
+                                Just "String" ->
+                                    let
+                                        dictValueTipe =
+                                            List.tail tailParts
+                                                |> Maybe.withDefault []
+                                                |> String.join " "
+                                    in
+                                        "(" ++ encoderModuleName ++ "object (List.map (\\( k, v ) -> ( k, " ++ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just "v") dictValueTipe ++ " )) (Dict.toList " ++ objectName ++ ")))"
+
+                                _ ->
+                                    "_"
 
                         "Maybe" ->
-                            "_"
+                            ("case " ++ objectName ++ " of\n")
+                                ++ (Helper.indent 1 ++ "Just v ->\n")
+                                ++ (Helper.indent 2 ++ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just "v") tailTipe ++ "\n")
+                                ++ (Helper.indent 1 ++ "Nothing ->\n")
+                                ++ (Helper.indent 2 ++ encoderModuleName ++ "null")
 
                         headTipeString ->
-                            if
-                                (getLastName headTipeString == "Value")
-                                    && (getModuleName headTipeString == encoderModuleName || getModuleName headTipeString ++ "." == encoderModuleName)
-                            then
+                            if getLastName headTipeString == "Value" then
+                                -- TODO: Check if `Value` is from `Json.Decode` of `elm-lang/core`.
                                 objectName
                             else
                                 case getHintsForToken (Just headTipeString) activeFileTokens |> List.head of
@@ -3092,12 +3114,18 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
                                             if Set.member hint.name visitedTypes then
                                                 "_"
                                             else
-                                                getDefaultEncoderRecur activeFileTokens (Set.insert hint.name visitedTypes) encoderModuleName (Just hint.name) hint.tipe
+                                                getDefaultEncoderRecur activeFileTokens (Set.insert hint.name visitedTypes) encoderModuleName (Just "v") hint.tipe
                                         else if hint.kind == KindType then
                                             -- Encoder for union types.
                                             ("case " ++ objectName ++ " of\n")
-                                                ++ (List.map (\tipeCase -> Helper.indent 1 ++ tipeCase.name ++ " ->\n" ++ Helper.indent 2 ++ encoderModuleName ++ "string " ++ "\"" ++ tipeCase.name ++ "\"") hint.cases |> String.join "\n")
-                                                ++ "\n))"
+                                                ++ (List.map
+                                                        (\tipeCase ->
+                                                            (Helper.indent 1 ++ tipeCase.name ++ " ->\n")
+                                                                ++ (Helper.indent 2 ++ encoderModuleName ++ "string " ++ "\"" ++ tipeCase.name ++ "\"")
+                                                        )
+                                                        hint.cases
+                                                        |> String.join "\n"
+                                                   )
                                         else
                                             "_"
 
