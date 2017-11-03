@@ -2979,15 +2979,26 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
                         ("\n(" ++ encoderModuleName ++ "object" ++ "\n")
                             ++ (fieldsAndValues
                                     |> List.indexedMap
-                                        (\index ( field, tipe ) ->
+                                        (\index ( fieldName, tipe ) ->
                                             let
                                                 prefix =
                                                     if index == 0 then
                                                         "[ "
                                                     else
                                                         ", "
+
+                                                fieldObjectName =
+                                                    case getHintsForToken (Just tipe) activeFileTokens |> List.head of
+                                                        Just hint ->
+                                                            if hint.kind == KindTypeAlias then
+                                                                objectName ++ "." ++ fieldName
+                                                            else
+                                                                objectName
+
+                                                        Nothing ->
+                                                            objectName
                                             in
-                                                prefix ++ "( \"" ++ field ++ "\", " ++ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just <| objectName ++ "." ++ field) tipe ++ " )"
+                                                prefix ++ "( \"" ++ fieldName ++ "\", " ++ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just <| fieldObjectName ++ "." ++ fieldName) tipe ++ " )"
                                         )
                                     |> String.join "\n"
                                )
