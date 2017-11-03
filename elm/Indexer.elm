@@ -2531,21 +2531,57 @@ constructFromTypeAnnotation typeAnnotation activeFileTokens =
                 getReturnTipe tipeString
 
             parameterTipes =
-                getTipeParts tipeString
-                    |> Helper.dropLast
+                getParameterTipes tipeString
 
             argNames =
                 getDefaultArgNames parameterTipes
         in
-            name
-                ++ (if List.length argNames > 0 then
-                        " "
-                    else
-                        ""
-                   )
-                ++ (String.join " " argNames)
-                ++ " =\n    "
-                ++ getDefaultValueForType activeFileTokens returnTipe
+            if isEncoderTipe tipeString then
+                name
+                    ++ " "
+                    -- ++ (String.join "" argNames)
+                    ++ "v"
+                    ++ " =\n"
+                    ++ Helper.indent 1
+                    ++ (case List.head parameterTipes of
+                            Just tipeSansValue ->
+                                let
+                                    encoderModuleName =
+                                        getModuleName returnTipe
+
+                                    encoderValue =
+                                        getDefaultEncoderRecur activeFileTokens
+                                            Set.empty
+                                            (if encoderModuleName == "" then
+                                                ""
+                                             else
+                                                encoderModuleName ++ "."
+                                            )
+                                            (Just "v")
+                                            tipeSansValue
+                                in
+                                    formatDecoderEncoderFunctionBody encoderValue
+
+                            Nothing ->
+                                "_"
+                       )
+            else
+                name
+                    ++ (if List.length argNames > 0 then
+                            " "
+                        else
+                            ""
+                       )
+                    ++ (String.join " " argNames)
+                    ++ " =\n"
+                    ++ Helper.indent 1
+                    ++ getDefaultValueForType activeFileTokens returnTipe
+
+
+getParameterTipes : TipeString -> List String
+getParameterTipes tipeString =
+    getTipeParts tipeString
+        |> Helper.dropLast
 
 
 getDefaultArgNames : List String -> List String
@@ -2637,23 +2673,15 @@ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
                                 Nothing
                                 tipeSansDecoder
                     in
-                        -- Remove empty lines, then indent lines after the first.
-                        unencloseParentheses decoderValue
-                            |> String.split "\n"
-                            |> List.filter (\line -> String.trim line /= "")
-                            |> List.indexedMap
-                                (\index line ->
-                                    if index == 0 then
-                                        line
-                                    else
-                                        Helper.indent 1 ++ line
-                                )
-                            |> String.join "\n"
+                        formatDecoderEncoderFunctionBody decoderValue
 
                 Nothing ->
                     "_"
     else if isRecordString tipeString then
         let
+            _ =
+                Debug.log "isRecordString" tipeString
+
             fieldAndValues =
                 getRecordTipeParts tipeString
                     |> List.map
@@ -2776,6 +2804,22 @@ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
 
             Nothing ->
                 "_"
+
+
+formatDecoderEncoderFunctionBody : String -> String
+formatDecoderEncoderFunctionBody str =
+    -- Remove empty lines, then indent lines after the first.
+    unencloseParentheses str
+        |> String.split "\n"
+        |> List.filter (\line -> String.trim line /= "")
+        |> List.indexedMap
+            (\index line ->
+                if index == 0 then
+                    line
+                else
+                    Helper.indent 1 ++ line
+            )
+        |> String.join "\n"
 
 
 getDefaultDecoderRecur : TokenDict -> Set.Set String -> String -> Maybe String -> TipeString -> String
@@ -2910,6 +2954,150 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
                                                 ++ ("\n" ++ Helper.indent 2 ++ "_ ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ "fail \"Unknown " ++ hint.name ++ "\"")
                                                 ++ "\n))"
                                             -- TODO: Use `Json.Decode.lazy` for recursive types.
+                                        else
+                                            "_"
+
+                                    Nothing ->
+                                        "_"
+
+                Nothing ->
+                    "_"
+
+
+getDefaultEncoderRecur : TokenDict -> Set.Set String -> String -> Maybe String -> TipeString -> String
+getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObjectName tipeString =
+    if String.trim tipeString == "" then
+        "_"
+    else if isRecordString tipeString then
+        case maybeObjectName of
+            Just objectName ->
+                let
+                    fieldAndValues =
+                        getRecordTipeParts tipeString
+
+                    numFieldAndValues =
+                        List.length fieldAndValues
+                in
+                    if numFieldAndValues > 0 then
+                        ("\n(" ++ encoderModuleName ++ "object" ++ "\n" ++ Helper.indent 1)
+                            ++ (fieldAndValues
+                                    |> List.indexedMap
+                                        (\index ( field, tipe ) ->
+                                            let
+                                                prefix =
+                                                    if index == 0 then
+                                                        "[ "
+                                                    else
+                                                        Helper.indent 1 ++ ", "
+                                            in
+                                                prefix ++ "( \"" ++ field ++ "\", " ++ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just <| objectName ++ "." ++ field) tipe ++ " )"
+                                        )
+                                    |> String.join "\n"
+                               )
+                            ++ ("\n" ++ Helper.indent 1 ++ "]")
+                            ++ "\n)"
+                    else
+                        "_"
+
+            Nothing ->
+                "_"
+    else if isTupleString tipeString then
+        -- TODO
+        "_"
+        -- let
+        --     parts =
+        --         getTupleParts tipeString
+        --             |> List.map
+        --                 (\part ->
+        --                     getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName Nothing part
+        --                 )
+        -- in
+        --     getTupleStringFromParts parts
+    else
+        let
+            tipeParts =
+                String.split " " (unencloseParentheses tipeString)
+
+            tailParts =
+                List.tail tipeParts
+                    |> Maybe.withDefault []
+
+            tailTipe =
+                tailParts |> String.join " "
+
+            objectName =
+                maybeObjectName |> Maybe.withDefault ""
+
+            wrapWithMap moduleName =
+                ("(" ++ encoderModuleName ++ (String.toLower moduleName) ++ " ")
+                    ++ ("\n(" ++ moduleName ++ ".map\n")
+                    ++ (Helper.indent 1 ++ "(\\v ->\n")
+                    ++ (getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just "v") tailTipe
+                            |> String.split "\n"
+                            |> List.map (\line -> Helper.indent 2 ++ line)
+                            |> String.join "\n"
+                       )
+                    ++ ("\n" ++ Helper.indent 1 ++ ")")
+                    ++ ("\n" ++ Helper.indent 1 ++ objectName ++ "\n)")
+                    ++ "\n)"
+        in
+            case List.head tipeParts of
+                Just headTipeString ->
+                    case headTipeString of
+                        -- Primitives
+                        "number" ->
+                            encoderModuleName ++ "float " ++ objectName
+
+                        "Int" ->
+                            encoderModuleName ++ "int " ++ objectName
+
+                        "Float" ->
+                            encoderModuleName ++ "float " ++ objectName
+
+                        "Bool" ->
+                            encoderModuleName ++ "bool " ++ objectName
+
+                        "String" ->
+                            encoderModuleName ++ "string " ++ objectName
+
+                        -- Core
+                        "List" ->
+                            wrapWithMap "List"
+
+                        "Array.Array" ->
+                            wrapWithMap "Array"
+
+                        "Dict.Dict" ->
+                            "_"
+
+                        "Maybe" ->
+                            "_"
+
+                        headTipeString ->
+                            if
+                                (getLastName headTipeString == "Value")
+                                    && (getModuleName headTipeString == encoderModuleName || getModuleName headTipeString ++ "." == encoderModuleName)
+                            then
+                                objectName
+                            else
+                                case getHintsForToken (Just headTipeString) activeFileTokens |> List.head of
+                                    Just hint ->
+                                        -- Avoid infinite recursion.
+                                        if
+                                            (hint.kind /= KindType)
+                                                && (hint.tipe /= headTipeString)
+                                                && (hint.kind /= KindTypeAlias || (hint.kind == KindTypeAlias && List.length hint.args == 0))
+                                            -- TODO: ^ Make it work with aliases with type variables (e.g. `type alias AliasedType a b = ( a, b )`).
+                                        then
+                                            if Set.member hint.name visitedTypes then
+                                                "_"
+                                            else
+                                                getDefaultEncoderRecur activeFileTokens (Set.insert hint.name visitedTypes) encoderModuleName (Just hint.name) hint.tipe
+                                        else if hint.kind == KindType then
+                                            -- Encoder for union types.
+                                            ("case " ++ objectName ++ " of\n")
+                                                ++ (List.map (\tipeCase -> Helper.indent 1 ++ tipeCase.name ++ " ->\n" ++ Helper.indent 2 ++ encoderModuleName ++ "string " ++ "\"" ++ tipeCase.name ++ "\"") hint.cases |> String.join "\n")
+                                                ++ "\n))"
                                         else
                                             "_"
 
@@ -4433,11 +4621,21 @@ isDecoderTipe : String -> Bool
 isDecoderTipe tipeString =
     case List.head (String.split " " tipeString) of
         Just headTipeString ->
-            -- TODO: Check that it's actually from `elm-lang/core`.
+            -- TODO: Check that it's actually from `Json.Decode` of `elm-lang/core`.
             getLastName headTipeString == "Decoder"
 
         Nothing ->
             False
+
+
+isEncoderTipe : String -> Bool
+isEncoderTipe tipeString =
+    -- Check that's in the form `Something -> Json.Encode.Value`.
+    if getLastName (getReturnTipe tipeString) == "Value" && List.length (getParameterTipes tipeString) == 1 then
+        -- TODO: Check that it's actually from `Json.Encode` of `elm-lang/core`.
+        True
+    else
+        False
 
 
 getTipeCaseTypeAnnotation : TipeCase -> Tipe -> String
