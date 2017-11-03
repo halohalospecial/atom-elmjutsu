@@ -2806,17 +2806,21 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
             Nothing ->
                 "_"
     else if isTupleString tipeString then
-        -- -- -- TODO
-        "_"
-        -- let
-        --     parts =
-        --         getTupleParts tipeString
-        --             |> List.map
-        --                 (\part ->
-        --                     getDefaultValueForTypeRecur activeFileTokens visitedTypes part
-        --                 )
-        -- in
-        --     getTupleStringFromParts parts
+        let
+            parts =
+                getTupleParts tipeString
+        in
+            "\n("
+                ++ (List.indexedMap
+                        (\index part ->
+                            decoderModuleName ++ ".index " ++ (toString index) ++ " " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing part ++ " |> " ++ decoderModuleName ++ ".andThen (\\v" ++ (toString index) ++ " ->"
+                        )
+                        parts
+                        |> String.join "\n"
+                   )
+                ++ (decoderModuleName ++ ".succeed ( " ++ (List.indexedMap (\index _ -> "v" ++ (toString index)) parts |> String.join ", ") ++ " )\n")
+                ++ (List.repeat (List.length parts) ")" |> String.join "")
+                ++ ")"
     else
         let
             tipeParts =
@@ -2866,33 +2870,35 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
                         "Maybe" ->
                             "(" ++ decoderModuleName ++ ".maybe " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing tailTipe ++ ")"
 
-                        -- TODO: Json.Decode.keyValuePairs
-                        _ ->
-                            case getHintsForToken (Just headTipeString) activeFileTokens |> List.head of
-                                Just hint ->
-                                    -- Avoid infinite recursion.
-                                    if
-                                        (hint.kind /= KindType)
-                                            && (hint.tipe /= headTipeString)
-                                            && (hint.kind /= KindTypeAlias || (hint.kind == KindTypeAlias && List.length hint.args == 0))
-                                        -- TODO: ^ Make it work with aliases with type variables (e.g. `type alias AliasedType a b = ( a, b )`).
-                                    then
-                                        if Set.member hint.name visitedTypes then
-                                            "_"
+                        headTipeString ->
+                            if getModuleName headTipeString == decoderModuleName && getLastName headTipeString == "Value" then
+                                decoderModuleName ++ ".value"
+                            else
+                                case getHintsForToken (Just headTipeString) activeFileTokens |> List.head of
+                                    Just hint ->
+                                        -- Avoid infinite recursion.
+                                        if
+                                            (hint.kind /= KindType)
+                                                && (hint.tipe /= headTipeString)
+                                                && (hint.kind /= KindTypeAlias || (hint.kind == KindTypeAlias && List.length hint.args == 0))
+                                            -- TODO: ^ Make it work with aliases with type variables (e.g. `type alias AliasedType a b = ( a, b )`).
+                                        then
+                                            if Set.member hint.name visitedTypes then
+                                                "_"
+                                            else
+                                                getDefaultDecoderRecur activeFileTokens (Set.insert hint.name visitedTypes) decoderModuleName (Just hint.name) hint.tipe
+                                        else if hint.kind == KindType then
+                                            ("(" ++ decoderModuleName ++ ".string\n")
+                                                ++ ("|> " ++ decoderModuleName ++ ".andThen (\\string ->\n")
+                                                ++ (Helper.indent 1 ++ "case string of\n")
+                                                ++ (List.map (\tipeCase -> Helper.indent 2 ++ "\"" ++ tipeCase.name ++ "\" ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ ".succeed " ++ tipeCase.name) hint.cases |> String.join "\n")
+                                                ++ ("\n" ++ Helper.indent 2 ++ "_ ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ ".fail \"Unknown " ++ hint.name ++ "\"")
+                                                ++ "\n))"
                                         else
-                                            getDefaultDecoderRecur activeFileTokens (Set.insert hint.name visitedTypes) decoderModuleName (Just hint.name) hint.tipe
-                                    else if hint.kind == KindType then
-                                        ("(" ++ decoderModuleName ++ ".string\n")
-                                            ++ ("|> " ++ decoderModuleName ++ ".andThen (\\string ->\n")
-                                            ++ (Helper.indent 1 ++ "case string of\n")
-                                            ++ (List.map (\tipeCase -> Helper.indent 2 ++ "\"" ++ tipeCase.name ++ "\" ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ ".succeed " ++ tipeCase.name) hint.cases |> String.join "\n")
-                                            ++ ("\n" ++ Helper.indent 2 ++ "_ ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ ".fail \"Unknown " ++ hint.name ++ "\"")
-                                            ++ "\n))"
-                                    else
-                                        "_"
+                                            "_"
 
-                                Nothing ->
-                                    "_"
+                                    Nothing ->
+                                        "_"
 
                 Nothing ->
                     "_"
