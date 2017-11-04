@@ -144,6 +144,8 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
 
 ![construct-from-type-annotation-2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-from-type-annotation-2.gif?raw=true)
 
+![construct-from-type-annotation-3](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-from-type-annotation-3.gif?raw=true)
+
 * :zap:`Auto import`
 
   See [Global Autocomplete](#global-autocomplete).
