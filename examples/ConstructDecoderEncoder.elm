@@ -42,7 +42,7 @@ decodeSession =
                                     Decode.succeed Stopped
 
                                 _ ->
-                                    Decode.fail "Unknown Status"
+                                    Decode.fail "Invalid Status"
                         )
                 )
             )
@@ -97,8 +97,8 @@ encodeSessions v =
                       )
                     , ( "kv"
                       , (Encode.object
-                            [ ( "key", Encode.string v.key )
-                            , ( "value", Encode.int v.value )
+                            [ ( "key", Encode.string v.kv.key )
+                            , ( "value", Encode.int v.kv.value )
                             ]
                         )
                       )

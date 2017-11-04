@@ -2948,7 +2948,7 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
                                                 ++ ("|> " ++ decoderModuleName ++ "andThen (\\string ->\n")
                                                 ++ (Helper.indent 1 ++ "case string of\n")
                                                 ++ (List.map (\tipeCase -> Helper.indent 2 ++ "\"" ++ tipeCase.name ++ "\" ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ "succeed " ++ tipeCase.name) hint.cases |> String.join "\n")
-                                                ++ ("\n" ++ Helper.indent 2 ++ "_ ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ "fail \"Unknown " ++ hint.name ++ "\"")
+                                                ++ ("\n" ++ Helper.indent 2 ++ "_ ->\n" ++ Helper.indent 3 ++ decoderModuleName ++ "fail \"Invalid " ++ hint.name ++ "\"")
                                                 ++ "\n))"
                                             -- TODO: Use `Json.Decode.lazy` for recursive types.
                                         else
@@ -2986,19 +2986,8 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
                                                         "[ "
                                                     else
                                                         ", "
-
-                                                fieldObjectName =
-                                                    case getHintsForToken (Just tipe) activeFileTokens |> List.head of
-                                                        Just hint ->
-                                                            if hint.kind == KindTypeAlias then
-                                                                objectName ++ "." ++ fieldName
-                                                            else
-                                                                objectName
-
-                                                        Nothing ->
-                                                            objectName
                                             in
-                                                prefix ++ "( \"" ++ fieldName ++ "\", " ++ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just <| fieldObjectName ++ "." ++ fieldName) tipe ++ " )"
+                                                prefix ++ "( \"" ++ fieldName ++ "\", " ++ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just (objectName ++ "." ++ fieldName)) tipe ++ " )"
                                         )
                                     |> String.join "\n"
                                )
@@ -3125,7 +3114,7 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
                                             if Set.member hint.name visitedTypes then
                                                 "_"
                                             else
-                                                getDefaultEncoderRecur activeFileTokens (Set.insert hint.name visitedTypes) encoderModuleName (Just "v") hint.tipe
+                                                getDefaultEncoderRecur activeFileTokens (Set.insert hint.name visitedTypes) encoderModuleName maybeObjectName hint.tipe
                                         else if hint.kind == KindType then
                                             -- Encoder for union types.
                                             ("case " ++ objectName ++ " of\n")

@@ -15689,7 +15689,7 @@ var _user$project$Indexer$getDefaultDecoderRecur = F5(
 																							decoderModuleName,
 																							A2(
 																								_elm_lang$core$Basics_ops['++'],
-																								'fail \"Unknown ',
+																								'fail \"Invalid ',
 																								A2(_elm_lang$core$Basics_ops['++'], _p156.name, '\"'))))))),
 																		'\n))')))));
 												} else {
@@ -16270,7 +16270,7 @@ var _user$project$Indexer$getDefaultEncoderRecur = F5(
 													var _v147 = activeFileTokens,
 														_v148 = A2(_elm_lang$core$Set$insert, _p181.name, visitedTypes),
 														_v149 = encoderModuleName,
-														_v150 = _elm_lang$core$Maybe$Just('v'),
+														_v150 = maybeObjectName,
 														_v151 = _p181.tipe;
 													activeFileTokens = _v147;
 													visitedTypes = _v148;
