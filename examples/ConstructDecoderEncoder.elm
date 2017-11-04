@@ -5,15 +5,6 @@ import Json.Encode as Encode
 import Dict
 
 
-type Status
-    = Started
-    | Stopped
-
-
-type alias KeyValue =
-    { key : String, value : Int }
-
-
 type alias Session =
     { startTime : String
     , endTime : Maybe String
@@ -22,6 +13,15 @@ type alias Session =
     , aDict : Dict.Dict String Int
     , aTuple : ( String, Float, Decode.Value )
     }
+
+
+type Status
+    = Started
+    | Stopped
+
+
+type alias KeyValue =
+    { key : String, value : Int }
 
 
 decodeSession : Decode.Decoder (List Session)

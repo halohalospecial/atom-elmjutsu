@@ -1,6 +1,7 @@
 ## 7.0.8
 * If the `.elm` file is not in an Atom project, search for `elm-package.json` until we reach the root.
 * Fix #97.  Thanks to @rupertlssmith for reporting!
+* Add naive autocomplete for core decoders and encoders (Json.Decode, Json.Encode).
 
 ## 7.0.7
 * This version was not released due to publish failure.
