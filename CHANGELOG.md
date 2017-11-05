@@ -1,3 +1,6 @@
+## 7.1.4
+* Fix #98.  Thanks to @zwilias!
+
 ## 7.1.3
 * Update encoder/decoder autocompletion screenshot.
 

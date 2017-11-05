@@ -2891,9 +2891,9 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
         let
             parts =
                 getTupleParts tipeString
-                    |> List.map
-                        (\partTipe ->
-                            Helper.indent (indents + 1) ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing (indents + 1) partTipe
+                    |> List.indexedMap
+                        (\index partTipe ->
+                            Helper.indent (indents + 1) ++ "(" ++ decoderModuleName ++ "index " ++ (toString index) ++ " " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing (indents + 1) partTipe ++ ")"
                         )
 
             numParts =

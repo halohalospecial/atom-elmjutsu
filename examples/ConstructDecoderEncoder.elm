@@ -11,7 +11,7 @@ type alias Session =
     , status : Status
     , kv : KeyValue
     , aDict : Dict.Dict String Int
-    , aTuple : ( String, Float, Decode.Value, Decode.Value )
+    , aTuple : ( String, Float, Decode.Value )
     }
 
 
@@ -24,6 +24,13 @@ type alias KeyValue =
     { key : String, value : Int }
 
 
+{-|
+
+    ```
+    Decode.decodeString decodeSessions """[{"startTime": "", "endTime": null, "status": "Started", "kv": {"key": "a", "value": 1}, "aDict": {"a": 1, "b": 2}, "aTuple": ["", 0.0, null]}]"""
+    == Ok [{ startTime = "", endTime = Nothing, status = Started, kv = { key = "a", value = 1 }, aDict = Dict.fromList [("a",1),("b",2)], aTuple = ("", 0, Encode.null) }]
+    ```
+-}
 decodeSessions : Decode.Decoder (List Session)
 decodeSessions =
     Decode.list
@@ -54,16 +61,22 @@ decodeSessions =
             )
             (Decode.field "aDict" (Decode.dict Decode.int))
             (Decode.field "aTuple"
-                (Decode.map4 (,,,)
-                    Decode.string
-                    Decode.float
-                    Decode.value
-                    Decode.value
+                (Decode.map3 (,,)
+                    (Decode.index 0 Decode.string)
+                    (Decode.index 1 Decode.float)
+                    (Decode.index 2 Decode.value)
                 )
             )
         )
 
 
+{-|
+
+    ```
+    Encode.encode 0 (encodeSessions [{ startTime = "", endTime = Nothing, status = Started, kv = { key = "a", value = 1 }, aDict = Dict.fromList [("a",1),("b",2)], aTuple = ("", 0, Encode.null) }])
+    == """[{"startTime":"","endTime":null,"status":"Started","kv":{"key":"a","value":1},"aDict":{"a":1,"b":2},"aTuple":["",0,null]}]"""
+    ```
+-}
 encodeSessions : List Session -> Encode.Value
 encodeSessions v =
     Encode.list
@@ -97,10 +110,10 @@ encodeSessions v =
                     , ( "aDict", Encode.object (List.map (\( k, v ) -> ( k, Encode.int v )) (Dict.toList v.aDict)) )
                     , ( "aTuple"
                       , let
-                            ( v0, v1, v2, v3 ) =
+                            ( v0, v1, v2 ) =
                                 v.aTuple
                         in
-                            Encode.list [ Encode.string v0, Encode.float v1, v2, v3 ]
+                            Encode.list [ Encode.string v0, Encode.float v1, v2 ]
                       )
                     ]
                 )

@@ -15441,13 +15441,32 @@ var _user$project$Indexer$getDefaultDecoderRecur = F6(
 				} else {
 					if (_user$project$Indexer$isTupleString(tipeString)) {
 						var parts = A2(
-							_elm_lang$core$List$map,
-							function (partTipe) {
-								return A2(
-									_elm_lang$core$Basics_ops['++'],
-									_user$project$Helper$indent(indents + 1),
-									A6(_user$project$Indexer$getDefaultDecoderRecur, activeFileTokens, visitedTypes, decoderModuleName, _elm_lang$core$Maybe$Nothing, indents + 1, partTipe));
-							},
+							_elm_lang$core$List$indexedMap,
+							F2(
+								function (index, partTipe) {
+									return A2(
+										_elm_lang$core$Basics_ops['++'],
+										_user$project$Helper$indent(indents + 1),
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											'(',
+											A2(
+												_elm_lang$core$Basics_ops['++'],
+												decoderModuleName,
+												A2(
+													_elm_lang$core$Basics_ops['++'],
+													'index ',
+													A2(
+														_elm_lang$core$Basics_ops['++'],
+														_elm_lang$core$Basics$toString(index),
+														A2(
+															_elm_lang$core$Basics_ops['++'],
+															' ',
+															A2(
+																_elm_lang$core$Basics_ops['++'],
+																A6(_user$project$Indexer$getDefaultDecoderRecur, activeFileTokens, visitedTypes, decoderModuleName, _elm_lang$core$Maybe$Nothing, indents + 1, partTipe),
+																')')))))));
+								}),
 							_user$project$Indexer$getTupleParts(tipeString));
 						var numParts = _elm_lang$core$List$length(parts);
 						return A2(
