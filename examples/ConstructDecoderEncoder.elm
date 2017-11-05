@@ -94,7 +94,7 @@ encodeSessions v =
                             ]
                         )
                       )
-                    , ( "aDict", (Encode.object (List.map (\( k, v ) -> ( k, Encode.int v )) (Dict.toList v.aDict))) )
+                    , ( "aDict", Encode.object (List.map (\( k, v ) -> ( k, Encode.int v )) (Dict.toList v.aDict)) )
                     , ( "aTuple"
                       , let
                             ( v0, v1, v2, v3 ) =

@@ -1,4 +1,4 @@
-module Helper exposing (holeToken, isInfix, isCapitalized, dropLast, last, decapitalize, indent)
+module Helper exposing (holeToken, isInfix, isCapitalized, dropLast, last, decapitalize, indent, indentLines)
 
 import Regex
 
@@ -61,3 +61,17 @@ indent : Int -> String
 indent count =
     List.repeat count "    "
         |> String.join ""
+
+
+indentLines : Int -> String -> String
+indentLines count str =
+    str
+        |> String.split "\n"
+        |> List.map
+            (\line ->
+                if String.trim line == "" then
+                    ""
+                else
+                    indent count ++ line
+            )
+        |> String.join "\n"
