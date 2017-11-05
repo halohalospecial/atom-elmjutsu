@@ -2562,6 +2562,7 @@ constructFromTypeAnnotation typeAnnotation activeFileTokens =
                                             tipeSansValue
                                 in
                                     formatDecoderEncoderFunctionBody encoderValue
+                                        |> String.trim
 
                             Nothing ->
                                 "_"

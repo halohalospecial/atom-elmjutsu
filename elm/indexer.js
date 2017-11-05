@@ -16516,7 +16516,8 @@ var _user$project$Indexer$constructFromTypeAnnotation = F2(
 										_elm_lang$core$Maybe$Just('v'),
 										0,
 										_p183._0);
-									return _user$project$Indexer$formatDecoderEncoderFunctionBody(encoderValue);
+									return _elm_lang$core$String$trim(
+										_user$project$Indexer$formatDecoderEncoderFunctionBody(encoderValue));
 								} else {
 									return '_';
 								}

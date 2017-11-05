@@ -1,3 +1,6 @@
+## 7.1.3
+* Update encoder/decoder autocompletion screenshot.
+
 ## 7.1.2
 * Improve decoder autocompletion for tuples (#98).  Thanks to @zwilias for the suggestion!
 * Improve indentation for decoder/encoder autocompletion.
