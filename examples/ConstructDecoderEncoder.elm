@@ -11,7 +11,7 @@ type alias Session =
     , status : Status
     , kv : KeyValue
     , aDict : Dict.Dict String Int
-    , aTuple : ( String, Float, Decode.Value )
+    , aTuple : ( String, Float, Decode.Value, Decode.Value )
     }
 
 
@@ -24,8 +24,8 @@ type alias KeyValue =
     { key : String, value : Int }
 
 
-decodeSession : Decode.Decoder (List Session)
-decodeSession =
+decodeSessions : Decode.Decoder (List Session)
+decodeSessions =
     Decode.list
         (Decode.map6 Session
             (Decode.field "startTime" Decode.string)
@@ -54,19 +54,11 @@ decodeSession =
             )
             (Decode.field "aDict" (Decode.dict Decode.int))
             (Decode.field "aTuple"
-                (Decode.index 0 Decode.string
-                    |> Decode.andThen
-                        (\v0 ->
-                            Decode.index 1 Decode.float
-                                |> Decode.andThen
-                                    (\v1 ->
-                                        Decode.index 2 Decode.value
-                                            |> Decode.andThen
-                                                (\v2 ->
-                                                    Decode.succeed ( v0, v1, v2 )
-                                                )
-                                    )
-                        )
+                (Decode.map4 (,,,)
+                    Decode.string
+                    Decode.float
+                    Decode.value
+                    Decode.value
                 )
             )
         )
@@ -105,10 +97,10 @@ encodeSessions v =
                     , ( "aDict", (Encode.object (List.map (\( k, v ) -> ( k, Encode.int v )) (Dict.toList v.aDict))) )
                     , ( "aTuple"
                       , let
-                            ( v0, v1, v2 ) =
+                            ( v0, v1, v2, v3 ) =
                                 v.aTuple
                         in
-                            Encode.list [ Encode.string v0, Encode.float v1, v2 ]
+                            Encode.list [ Encode.string v0, Encode.float v1, v2, v3 ]
                       )
                     ]
                 )

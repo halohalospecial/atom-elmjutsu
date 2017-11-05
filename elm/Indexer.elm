@@ -2861,17 +2861,13 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
         let
             parts =
                 getTupleParts tipeString
+                    |> List.map (getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing)
+
+            numParts =
+                List.length parts
         in
-            "\n("
-                ++ (List.indexedMap
-                        (\index part ->
-                            decoderModuleName ++ "index " ++ (toString index) ++ " " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing part ++ " |> " ++ decoderModuleName ++ "andThen (\\v" ++ (toString index) ++ " ->"
-                        )
-                        parts
-                        |> String.join "\n"
-                   )
-                ++ ("\n" ++ decoderModuleName ++ "succeed ( " ++ (List.indexedMap (\index _ -> "v" ++ (toString index)) parts |> String.join ", ") ++ " )\n")
-                ++ (List.repeat (List.length parts) ")" |> String.join "")
+            ("\n(" ++ decoderModuleName ++ "map" ++ (toString numParts) ++ " (" ++ (List.repeat (numParts - 1) "," |> String.join "") ++ ")\n")
+                ++ String.join "\n" parts
                 ++ ")"
     else
         let
