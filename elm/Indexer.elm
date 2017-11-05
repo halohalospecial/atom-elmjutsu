@@ -3020,7 +3020,6 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
                                             let
                                                 inner =
                                                     getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just (objectName ++ "." ++ fieldName)) (indents + 2) tipe
-                                                        |> Debug.log "inner"
 
                                                 innerLines =
                                                     inner |> String.split "\n"

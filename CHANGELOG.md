@@ -1,5 +1,6 @@
 ## 7.1.2
 * Improve decoder autocompletion for tuples (#98).  Thanks to @zwilias for the suggestion!
+* Improve indentation for decoder/encoder autocompletion.
 
 ## 7.1.1
 * Add encoder/decoder autocompletion screenshot to README.

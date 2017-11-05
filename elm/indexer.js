@@ -16021,21 +16021,18 @@ var _user$project$Indexer$getDefaultEncoderRecur = F6(
 												var _p173 = _p172;
 												var _p174 = _p173._0;
 												var prefix = _elm_lang$core$Native_Utils.eq(index, 0) ? '[ ' : ', ';
-												var inner = A2(
-													_elm_lang$core$Debug$log,
-													'inner',
-													A6(
-														_user$project$Indexer$getDefaultEncoderRecur,
-														activeFileTokens,
-														visitedTypes,
-														encoderModuleName,
-														_elm_lang$core$Maybe$Just(
-															A2(
-																_elm_lang$core$Basics_ops['++'],
-																_p171._0,
-																A2(_elm_lang$core$Basics_ops['++'], '.', _p174))),
-														indents + 2,
-														_p173._1));
+												var inner = A6(
+													_user$project$Indexer$getDefaultEncoderRecur,
+													activeFileTokens,
+													visitedTypes,
+													encoderModuleName,
+													_elm_lang$core$Maybe$Just(
+														A2(
+															_elm_lang$core$Basics_ops['++'],
+															_p171._0,
+															A2(_elm_lang$core$Basics_ops['++'], '.', _p174))),
+													indents + 2,
+													_p173._1);
 												var innerLines = A2(_elm_lang$core$String$split, '\n', inner);
 												var isMultiline = _elm_lang$core$Native_Utils.cmp(
 													_elm_lang$core$List$length(innerLines),
