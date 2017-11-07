@@ -1,3 +1,6 @@
+## 7.1.5
+* Rename active module when inferring types to attempt to fix #86.
+
 ## 7.1.4
 * Fix #98.  Thanks to @zwilias!
 
