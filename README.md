@@ -243,11 +243,6 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
   - `Show Datatips` is checked
   - The Sidekick panel is visible
 * This uses similar tricks as those described in [Type Bombs in Elm](http://blog.jenkster.com/2016/11/type-bombs-in-elm.html), which may sometimes fail or give incorrect results.
-* WARNING: When using build tools such as [webpack](https://webpack.js.org/), you may sometimes see these in your output files:
-  - `Elmjutsu_DuMmY_tYp3_`
-  - `elmjutsu_dUmMy_VaR1AbL3_`
-  - `elmjutsu_duMMy_fuNct10n_`  
-There is a known bad interaction between Elmjutsu's type inference hack and the build tools because they both use `elm-make`.  You can either disable the infer features or delete your project's build artifacts (inside the `elm-stuff` directory) when you encounter the issue.  If you have [linter-elm-make](https://atom.io/packages/linter-elm-make) installed, you can invoke the `Linter Elm Make: Clear Project Build Artifacts` command.
 
 ### <a name="infer-types-on-the-fly"></a>Infer Types on the Fly `*`
 * You can also check the `Infer Expected Type At Cursor On The Fly` and `Infer Type Of Selection On The Fly` options in the package settings.
