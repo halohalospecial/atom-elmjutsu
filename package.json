@@ -26,7 +26,8 @@
     "atom-languageclient": "^0.6.1",
     "react": "15.6.1",
     "marked": "0.3.6",
-    "opn": "5.1.0"
+    "opn": "5.1.0",
+    "semver-compare": "1.0.0"
   },
   "package-deps": [
     "language-elm"
