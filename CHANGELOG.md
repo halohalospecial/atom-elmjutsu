@@ -1,6 +1,6 @@
 ## 7.1.6
 * Revert to old behavior of searching for project directory.
-* Workaround: If the Atom version is 1.23.0 or higher, exclude Unicode characters in regular expressions to avoid PCRE error (#100).
+* Workaround: If the Atom version is 1.23.0 or higher, exclude Unicode characters in regular expressions to avoid PCRE error (#100).  Thanks to @xvw for reporting!
 
 ## 7.1.5
 * Rename active module when inferring types to attempt to fix #86.
