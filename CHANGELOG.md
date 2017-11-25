@@ -1,5 +1,5 @@
 ## 7.1.6
-* Revert to old behavior of searching for project directory.
+* Revert to old behavior of searching for project directory.  Thanks to @amitaibu for reporting!
 * Workaround: If the Atom version is 1.23.0 or higher, exclude Unicode characters in regular expressions to avoid PCRE error (#100).  Thanks to @xvw for reporting!
 
 ## 7.1.5
