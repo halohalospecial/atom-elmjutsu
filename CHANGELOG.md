@@ -1,3 +1,6 @@
+## 7.2.0
+* Add `Insert Html program` special completion.
+
 ## 7.1.7
 * Minor performance improvements.
 * Fix encoder/decoder autocompletion indentation for lists.
