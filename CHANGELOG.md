@@ -1,3 +1,6 @@
+## 7.2.1
+* Add `Insert Platform program` special completion.
+
 ## 7.2.0
 * Add `Insert Html program` special completion.
 

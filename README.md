@@ -120,7 +120,9 @@ This provides suggestions for imports, project symbols, and 3rd-party package sy
 
 Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work).  Special completions can be disabled individually in the package settings.
 
-* :zap:`Insert Html program`
+* :zap:`Insert program`
+
+  Type `"html"`, `"Html.program"`, `"platform"`, or `"Platform.program"` in an empty editor to insert skeleton code.
 
 ![construct-html-program](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/construct-html-program.gif?raw=true)
 
