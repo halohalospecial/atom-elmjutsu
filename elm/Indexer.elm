@@ -2918,8 +2918,15 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
                 let
                     inner =
                         getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing (indents + 1) tailTipe
+
+                    numLines =
+                        String.split "\n" inner |> List.length
                 in
-                    Helper.indent indents ++ "(" ++ decoderModuleName ++ decodeFunction ++ " " ++ inner ++ ")"
+                    if numLines > 1 then
+                        ("\n" ++ Helper.indent indents ++ "(" ++ decoderModuleName ++ decodeFunction ++ " " ++ inner)
+                            ++ ("\n" ++ Helper.indent indents ++ ")")
+                    else
+                        "(" ++ decoderModuleName ++ decodeFunction ++ " " ++ inner ++ ")"
         in
             case List.head tipeParts of
                 Just headTipeString ->
@@ -3107,7 +3114,7 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
                     ++ ("\n" ++ Helper.indent (indents + 2) ++ ")")
                     ++ ("\n" ++ Helper.indent (indents + 2) ++ objectName)
                     ++ ("\n" ++ Helper.indent (indents + 1) ++ ")")
-                    ++ (Helper.indent indents ++ "\n)")
+                    ++ ("\n" ++ Helper.indent indents ++ ")")
         in
             case List.head tipeParts of
                 Just headTipeString ->

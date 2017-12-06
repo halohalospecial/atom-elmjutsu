@@ -15521,22 +15521,45 @@ var _user$project$Indexer$getDefaultDecoderRecur = F6(
 						var tailTipe = A2(_elm_lang$core$String$join, ' ', tailParts);
 						var wrapWith = function (decodeFunction) {
 							var inner = A6(_user$project$Indexer$getDefaultDecoderRecur, activeFileTokens, visitedTypes, decoderModuleName, _elm_lang$core$Maybe$Nothing, indents + 1, tailTipe);
-							return A2(
+							var numLines = _elm_lang$core$List$length(
+								A2(_elm_lang$core$String$split, '\n', inner));
+							return (_elm_lang$core$Native_Utils.cmp(numLines, 1) > 0) ? A2(
 								_elm_lang$core$Basics_ops['++'],
-								_user$project$Helper$indent(indents),
 								A2(
 									_elm_lang$core$Basics_ops['++'],
-									'(',
+									'\n',
 									A2(
 										_elm_lang$core$Basics_ops['++'],
-										decoderModuleName,
+										_user$project$Helper$indent(indents),
 										A2(
 											_elm_lang$core$Basics_ops['++'],
-											decodeFunction,
+											'(',
 											A2(
 												_elm_lang$core$Basics_ops['++'],
-												' ',
-												A2(_elm_lang$core$Basics_ops['++'], inner, ')'))))));
+												decoderModuleName,
+												A2(
+													_elm_lang$core$Basics_ops['++'],
+													decodeFunction,
+													A2(_elm_lang$core$Basics_ops['++'], ' ', inner)))))),
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									'\n',
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										_user$project$Helper$indent(indents),
+										')'))) : A2(
+								_elm_lang$core$Basics_ops['++'],
+								'(',
+								A2(
+									_elm_lang$core$Basics_ops['++'],
+									decoderModuleName,
+									A2(
+										_elm_lang$core$Basics_ops['++'],
+										decodeFunction,
+										A2(
+											_elm_lang$core$Basics_ops['++'],
+											' ',
+											A2(_elm_lang$core$Basics_ops['++'], inner, ')')))));
 						};
 						var _p152 = _elm_lang$core$List$head(tipeParts);
 						if (_p152.ctor === 'Just') {
@@ -16282,8 +16305,11 @@ var _user$project$Indexer$getDefaultEncoderRecur = F6(
 																')')),
 														A2(
 															_elm_lang$core$Basics_ops['++'],
-															_user$project$Helper$indent(indents),
-															'\n)'))))))));
+															'\n',
+															A2(
+																_elm_lang$core$Basics_ops['++'],
+																_user$project$Helper$indent(indents),
+																')')))))))));
 						};
 						var _p177 = _elm_lang$core$List$head(tipeParts);
 						if (_p177.ctor === 'Just') {
