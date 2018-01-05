@@ -1,4 +1,4 @@
-## 7.2.3
+## 7.2.2
 * Update dependencies.
 
 ## 7.2.1
