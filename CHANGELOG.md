@@ -1,3 +1,6 @@
+## 7.2.3
+* Update dependencies.
+
 ## 7.2.1
 * Add `Insert Platform program` special completion.
 
