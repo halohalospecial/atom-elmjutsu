@@ -1,3 +1,6 @@
+## 7.2.5
+* Fix #88.  Thanks to @Namek for reporting!
+
 ## 7.2.4
 * Check first if the file is an Elm file before getting the project directory (optimization).
 
