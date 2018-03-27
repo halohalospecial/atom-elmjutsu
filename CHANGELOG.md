@@ -1,3 +1,6 @@
+## 7.2.6
+* When scanning a buffer range, check that `match` is not null.
+
 ## 7.2.5
 * Fix #88.  Thanks to @Namek for reporting!
 
