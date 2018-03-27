@@ -1,3 +1,7 @@
+## 7.2.3
+* Fix crashes related to symbolic links (#107).  Thanks to @AsaAyers for the fix!
+* Update dependencies.
+
 ## 7.2.2
 * Update dependencies.
 
