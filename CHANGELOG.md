@@ -1,3 +1,6 @@
+## 7.2.4
+* Check first if the file is an Elm file before getting the project directory (optimization).
+
 ## 7.2.3
 * Fix crashes related to symbolic links (#107).  Thanks to @AsaAyers for the fix!
 * Update dependencies.
