@@ -2,11 +2,9 @@
   "name": "elmjutsu",
   "main": "./lib/main",
   "version": "7.2.6",
-  "description": "A bag of tricks for developing with Elm. (Autocompletion, Go To Definition, Find Usages, Rename Symbol, etc.)",
-  "keywords": [
-    "elm",
-    "ide"
-  ],
+  "description":
+    "A bag of tricks for developing with Elm. (Autocompletion, Go To Definition, Find Usages, Rename Symbol, etc.)",
+  "keywords": ["elm", "ide"],
   "activationCommands": {},
   "repository": "https://github.com/halohalospecial/atom-elmjutsu",
   "license": "MIT",
@@ -29,9 +27,7 @@
     "opn": "5.3.0",
     "semver-compare": "1.0.0"
   },
-  "package-deps": [
-    "language-elm"
-  ],
+  "package-deps": ["language-elm"],
   "providedServices": {
     "elmjutsu.getTokenInfo": {
       "versions": {
@@ -73,6 +69,11 @@
     "datatip": {
       "versions": {
         "0.1.0": "consumeDatatipService"
+      }
+    },
+    "signature-help": {
+      "versions": {
+        "0.1.0": "consumeSignatureHelp"
       }
     },
     "linter-elm-make.getWorkDirectory": {

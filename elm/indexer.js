@@ -14316,6 +14316,32 @@ var _user$project$Indexer$getFunctionsMatchingTypeSub = _elm_lang$core$Native_Pl
 						})));
 		},
 		A2(_elm_lang$core$Json_Decode$index, 0, _elm_lang$core$Json_Decode$string)));
+var _user$project$Indexer$getSignatureHelpSub = _elm_lang$core$Native_Platform.incomingPort(
+	'getSignatureHelpSub',
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (x0) {
+			return A2(
+				_elm_lang$core$Json_Decode$andThen,
+				function (x1) {
+					return _elm_lang$core$Json_Decode$succeed(
+						{ctor: '_Tuple2', _0: x0, _1: x1});
+				},
+				A2(_elm_lang$core$Json_Decode$index, 1, _elm_lang$core$Json_Decode$string));
+		},
+		A2(
+			_elm_lang$core$Json_Decode$index,
+			0,
+			_elm_lang$core$Json_Decode$oneOf(
+				{
+					ctor: '::',
+					_0: _elm_lang$core$Json_Decode$null(_elm_lang$core$Maybe$Nothing),
+					_1: {
+						ctor: '::',
+						_0: A2(_elm_lang$core$Json_Decode$map, _elm_lang$core$Maybe$Just, _elm_lang$core$Json_Decode$string),
+						_1: {ctor: '[]'}
+					}
+				}))));
 var _user$project$Indexer$docsReadCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'docsReadCmd',
 	function (v) {
@@ -14721,6 +14747,17 @@ var _user$project$Indexer$functionsMatchingTypeReceivedCmd = _elm_lang$core$Nati
 				};
 			});
 	});
+var _user$project$Indexer$signatureHelpReceivedCmd = _elm_lang$core$Native_Platform.outgoingPort(
+	'signatureHelpReceivedCmd',
+	function (v) {
+		return _elm_lang$core$Native_List.toArray(v).map(
+			function (v) {
+				return _elm_lang$core$Native_List.toArray(v).map(
+					function (v) {
+						return v;
+					});
+			});
+	});
 var _user$project$Indexer$Model = function (a) {
 	return function (b) {
 		return function (c) {
@@ -14882,6 +14919,9 @@ _user$project$Indexer_ops['=>'] = F2(
 			_1: A2(_user$project$Indexer$Import, _elm_lang$core$Maybe$Nothing, exposed)
 		};
 	});
+var _user$project$Indexer$GetSignatureHelp = function (a) {
+	return {ctor: 'GetSignatureHelp', _0: a};
+};
 var _user$project$Indexer$GetFunctionsMatchingType = function (a) {
 	return {ctor: 'GetFunctionsMatchingType', _0: a};
 };
@@ -18096,6 +18136,31 @@ var _user$project$Indexer$getRecordFieldTokensRecur = F8(
 				_1: {ctor: '[]'}
 			} : {ctor: '[]'});
 	});
+var _user$project$Indexer$doGetSignatureHelp = F3(
+	function (maybeActiveTopLevel, token, model) {
+		var activeFileTokens = A5(_user$project$Indexer$getActiveFileTokens, model.activeFile, maybeActiveTopLevel, model.projectFileContentsDict, model.projectDependencies, model.packageDocs);
+		return {
+			ctor: '_Tuple2',
+			_0: model,
+			_1: _user$project$Indexer$signatureHelpReceivedCmd(
+				A2(
+					_elm_lang$core$List$filter,
+					function (parts) {
+						return !_elm_lang$core$Native_Utils.eq(
+							parts,
+							{ctor: '[]'});
+					},
+					A2(
+						_elm_lang$core$List$map,
+						function (hint) {
+							return _user$project$Indexer$getTipeParts(hint.tipe);
+						},
+						A2(
+							_user$project$Indexer$getHintsForToken,
+							_elm_lang$core$Maybe$Just(token),
+							activeFileTokens))))
+		};
+	});
 var _user$project$Indexer$doUpdateActiveTokenHints = F3(
 	function (maybeActiveTopLevel, maybeToken, model) {
 		var updatedActiveFileTokens = function () {
@@ -19134,8 +19199,10 @@ var _user$project$Indexer$update = F2(
 				};
 			case 'GetTokenInfo':
 				return A5(_user$project$Indexer$doGetTokenInfo, _p369._0._0, _p369._0._1, _p369._0._2, _p369._0._3, model);
-			default:
+			case 'GetFunctionsMatchingType':
 				return A4(_user$project$Indexer$doGetFunctionsMatchingType, _p369._0._0, _p369._0._1, _p369._0._2, model);
+			default:
+				return A3(_user$project$Indexer$doGetSignatureHelp, _p369._0._0, _p369._0._1, model);
 		}
 	});
 var _user$project$Indexer$toImportDict = function (rawImports) {
@@ -19255,7 +19322,11 @@ var _user$project$Indexer$subscriptions = function (model) {
 																										_1: {
 																											ctor: '::',
 																											_0: _user$project$Indexer$getFunctionsMatchingTypeSub(_user$project$Indexer$GetFunctionsMatchingType),
-																											_1: {ctor: '[]'}
+																											_1: {
+																												ctor: '::',
+																												_0: _user$project$Indexer$getSignatureHelpSub(_user$project$Indexer$GetSignatureHelp),
+																												_1: {ctor: '[]'}
+																											}
 																										}
 																									}
 																								}

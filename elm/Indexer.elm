@@ -68,6 +68,7 @@ subscriptions model =
         , clearLocalHintsCacheSub (\_ -> ClearLocalHintsCache)
         , getTokenInfoSub GetTokenInfo
         , getFunctionsMatchingTypeSub GetFunctionsMatchingType
+        , getSignatureHelpSub GetSignatureHelp
         ]
 
 
@@ -150,6 +151,9 @@ port getTokenInfoSub : (( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTo
 port getFunctionsMatchingTypeSub : (( TipeString, Maybe ProjectDirectory, Maybe FilePath ) -> msg) -> Sub msg
 
 
+port getSignatureHelpSub : (( Maybe ActiveTopLevel, Token ) -> msg) -> Sub msg
+
+
 
 -- OUTGOING PORTS
 
@@ -224,6 +228,9 @@ port tokenInfoReceivedCmd : List EncodedHint -> Cmd msg
 
 
 port functionsMatchingTypeReceivedCmd : List EncodedHint -> Cmd msg
+
+
+port signatureHelpReceivedCmd : List (List String) -> Cmd msg
 
 
 
@@ -399,6 +406,7 @@ type Msg
     | ClearLocalHintsCache
     | GetTokenInfo ( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTopLevel, Maybe Token )
     | GetFunctionsMatchingType ( TipeString, Maybe ProjectDirectory, Maybe FilePath )
+    | GetSignatureHelp ( Maybe ActiveTopLevel, Token )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -585,6 +593,9 @@ update msg model =
         GetFunctionsMatchingType ( tipeString, maybeProjectDirectory, maybeFilePath ) ->
             doGetFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath model
 
+        GetSignatureHelp ( maybeActiveTopLevel, token ) ->
+            doGetSignatureHelp maybeActiveTopLevel token model
+
 
 doGetFunctionsMatchingType : TipeString -> Maybe ProjectDirectory -> Maybe FilePath -> Model -> ( Model, Cmd msg )
 doGetFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath model =
@@ -593,6 +604,20 @@ doGetFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath model 
         |> List.map (encodeHint model.config.showAliasesOfType Dict.empty)
         |> functionsMatchingTypeReceivedCmd
     )
+
+
+doGetSignatureHelp : Maybe ActiveTopLevel -> Token -> Model -> ( Model, Cmd msg )
+doGetSignatureHelp maybeActiveTopLevel token model =
+    let
+        activeFileTokens =
+            getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+    in
+        ( model
+        , getHintsForToken (Just token) activeFileTokens
+            |> List.map (\hint -> getTipeParts hint.tipe)
+            |> List.filter (\parts -> parts /= [])
+            |> signatureHelpReceivedCmd
+        )
 
 
 inferenceToHints : Inference -> List Hint
