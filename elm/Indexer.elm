@@ -608,16 +608,12 @@ doGetFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath model 
 
 doGetSignatureHelp : Maybe ActiveTopLevel -> Token -> Model -> ( Model, Cmd msg )
 doGetSignatureHelp maybeActiveTopLevel token model =
-    let
-        activeFileTokens =
-            getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
-    in
-        ( model
-        , getHintsForToken (Just token) activeFileTokens
-            |> List.map (\hint -> getTipeParts hint.tipe)
-            |> List.filter (\parts -> parts /= [])
-            |> signatureHelpReceivedCmd
-        )
+    ( model
+    , getHintsForToken (Just token) model.activeFileTokens
+        |> List.map (\hint -> getTipeParts hint.tipe)
+        |> List.filter (\parts -> parts /= [])
+        |> signatureHelpReceivedCmd
+    )
 
 
 inferenceToHints : Inference -> List Hint

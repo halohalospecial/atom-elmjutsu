@@ -14758,6 +14758,30 @@ var _user$project$Indexer$signatureHelpReceivedCmd = _elm_lang$core$Native_Platf
 					});
 			});
 	});
+var _user$project$Indexer$doGetSignatureHelp = F3(
+	function (maybeActiveTopLevel, token, model) {
+		return {
+			ctor: '_Tuple2',
+			_0: model,
+			_1: _user$project$Indexer$signatureHelpReceivedCmd(
+				A2(
+					_elm_lang$core$List$filter,
+					function (parts) {
+						return !_elm_lang$core$Native_Utils.eq(
+							parts,
+							{ctor: '[]'});
+					},
+					A2(
+						_elm_lang$core$List$map,
+						function (hint) {
+							return _user$project$Indexer$getTipeParts(hint.tipe);
+						},
+						A2(
+							_user$project$Indexer$getHintsForToken,
+							_elm_lang$core$Maybe$Just(token),
+							model.activeFileTokens))))
+		};
+	});
 var _user$project$Indexer$Model = function (a) {
 	return function (b) {
 		return function (c) {
@@ -18135,31 +18159,6 @@ var _user$project$Indexer$getRecordFieldTokensRecur = F8(
 				_0: {ctor: '_Tuple2', _0: name, _1: tipeString},
 				_1: {ctor: '[]'}
 			} : {ctor: '[]'});
-	});
-var _user$project$Indexer$doGetSignatureHelp = F3(
-	function (maybeActiveTopLevel, token, model) {
-		var activeFileTokens = A5(_user$project$Indexer$getActiveFileTokens, model.activeFile, maybeActiveTopLevel, model.projectFileContentsDict, model.projectDependencies, model.packageDocs);
-		return {
-			ctor: '_Tuple2',
-			_0: model,
-			_1: _user$project$Indexer$signatureHelpReceivedCmd(
-				A2(
-					_elm_lang$core$List$filter,
-					function (parts) {
-						return !_elm_lang$core$Native_Utils.eq(
-							parts,
-							{ctor: '[]'});
-					},
-					A2(
-						_elm_lang$core$List$map,
-						function (hint) {
-							return _user$project$Indexer$getTipeParts(hint.tipe);
-						},
-						A2(
-							_user$project$Indexer$getHintsForToken,
-							_elm_lang$core$Maybe$Just(token),
-							activeFileTokens))))
-		};
 	});
 var _user$project$Indexer$doUpdateActiveTokenHints = F3(
 	function (maybeActiveTopLevel, maybeToken, model) {
