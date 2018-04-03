@@ -1,3 +1,6 @@
+## 7.3.1
+* Signature Help: Fix bug with nested parens.
+
 ## 7.3.0
 * Add [Signature Help](https://github.com/facebook-atom/atom-ide-ui/blob/master/docs/signature-help.md) integration.
 
