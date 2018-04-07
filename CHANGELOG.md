@@ -1,3 +1,6 @@
+## 7.3.2
+* Fix bug in getting the active top-level.
+
 ## 7.3.1
 * Signature Help: Fix bug with nested parens.
 
