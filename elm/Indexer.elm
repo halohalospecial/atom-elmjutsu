@@ -3,7 +3,6 @@ port module Indexer exposing (..)
 import Ast
 import Ast.Statement exposing (..)
 import Dict
-import Dict.Extra
 import Helper
 import Http
 import Json.Decode as Decode
@@ -1972,7 +1971,7 @@ sortHintsByScore tipeString preceedingToken hints =
                           )
                 }
             )
-        |> Dict.Extra.groupBy .distance
+        |> dictGroupBy .distance
         |> Dict.toList
         |> List.sortWith
             (\a b ->
@@ -5093,6 +5092,17 @@ unencloseParentheses str =
         str
             |> String.dropLeft dropLength
             |> String.dropRight dropLength
+
+
+dictGroupBy : (a -> comparable) -> List a -> Dict.Dict comparable (List a)
+dictGroupBy keyfn list =
+    -- From https://github.com/elm-community/dict-extra.
+    List.foldr
+        (\x acc ->
+            Dict.update (keyfn x) (Maybe.map ((::) x) >> Maybe.withDefault [ x ] >> Just) acc
+        )
+        Dict.empty
+        list
 
 
 
