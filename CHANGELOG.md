@@ -1,3 +1,6 @@
+## 7.3.3
+* Fix `Insert default arguments` bug.
+
 ## 7.3.2
 * Fix bug in getting the active top-level.
 
