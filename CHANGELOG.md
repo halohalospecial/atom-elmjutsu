@@ -1,3 +1,6 @@
+## 7.3.4
+* Fix `Define from type annotation` bug.
+
 ## 7.3.3
 * Fix `Insert default arguments` bug.
 
