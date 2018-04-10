@@ -17926,7 +17926,7 @@ var _user$project$Indexer$getRecordFieldTokens = F5(
 			_elm_lang$core$Set$empty);
 	});
 var _user$project$Indexer$getRecordFieldTokensRecur = F8(
-	function (name, tipeString, parentSourcePath, _p278, topLevelTokens, shouldAddSelf, maybeRootTipeString, visitedSourcePaths) {
+	function (name, tipeString, parentSourcePath, _p278, topLevelTokens, shouldAddSelf, maybeRootTipeString, visitedHints) {
 		var _p279 = _p278;
 		var _p294 = _p279._1;
 		var _p293 = _p279._2;
@@ -17953,7 +17953,7 @@ var _user$project$Indexer$getRecordFieldTokensRecur = F8(
 												topLevelTokens,
 												true,
 												maybeRootTipeString,
-												visitedSourcePaths);
+												visitedHints);
 										},
 										A2(
 											_elm_lang$core$Dict$get,
@@ -17995,7 +17995,7 @@ var _user$project$Indexer$getRecordFieldTokensRecur = F8(
 									topLevelTokens,
 									true,
 									maybeRootTipeString,
-									visitedSourcePaths);
+									visitedHints);
 							},
 							_user$project$Indexer$getRecordTipeParts(tipeString));
 					} else {
@@ -18014,7 +18014,7 @@ var _user$project$Indexer$getRecordFieldTokensRecur = F8(
 											topLevelTokens,
 											true,
 											maybeRootTipeString,
-											visitedSourcePaths);
+											visitedHints);
 									},
 									A3(
 										_elm_lang$core$List$map2,
@@ -18046,8 +18046,14 @@ var _user$project$Indexer$getRecordFieldTokensRecur = F8(
 											topLevelTokens))));
 							if (_p286.ctor === 'Just') {
 								var _p290 = _p286._0;
-								if ((!_elm_lang$core$Native_Utils.eq(_p290.kind, _user$project$Indexer$KindType)) && ((!_elm_lang$core$Native_Utils.eq(_p290.tipe, tipeString)) && (!A2(_elm_lang$core$Set$member, _p290.sourcePath, visitedSourcePaths)))) {
-									var updatedVisitedSourcePaths = A2(_elm_lang$core$Set$insert, _p290.sourcePath, visitedSourcePaths);
+								if ((!_elm_lang$core$Native_Utils.eq(_p290.kind, _user$project$Indexer$KindType)) && ((!_elm_lang$core$Native_Utils.eq(_p290.tipe, tipeString)) && (!A2(
+									_elm_lang$core$Set$member,
+									{ctor: '_Tuple2', _0: _p290.name, _1: _p290.sourcePath},
+									visitedHints)))) {
+									var updatedVisitedSourcePaths = A2(
+										_elm_lang$core$Set$insert,
+										{ctor: '_Tuple2', _0: _p290.name, _1: _p290.sourcePath},
+										visitedHints);
 									var maybeNewActiveFile = function () {
 										var _p287 = _p291;
 										if (_p287.ctor === 'Just') {

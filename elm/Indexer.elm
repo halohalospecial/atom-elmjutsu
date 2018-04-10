@@ -4551,8 +4551,8 @@ getRecordFieldTokens name tipeString parentSourcePath ( maybeActiveFile, project
     getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) topLevelTokens True Nothing Set.empty
 
 
-getRecordFieldTokensRecur : String -> TipeString -> SourcePath -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> Bool -> Maybe String -> Set.Set String -> List ( String, TipeString )
-getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) topLevelTokens shouldAddSelf maybeRootTipeString visitedSourcePaths =
+getRecordFieldTokensRecur : String -> TipeString -> SourcePath -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> Bool -> Maybe String -> Set.Set ( String, String ) -> List ( String, TipeString )
+getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) topLevelTokens shouldAddSelf maybeRootTipeString visitedHints =
     (if shouldAddSelf then
         [ ( name, tipeString ) ]
      else
@@ -4575,7 +4575,7 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                                                     topLevelTokens
                                                     True
                                                     maybeRootTipeString
-                                                    visitedSourcePaths
+                                                    visitedHints
                                             )
                                 )
                             |> List.concat
@@ -4600,7 +4600,7 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                                 topLevelTokens
                                 True
                                 maybeRootTipeString
-                                visitedSourcePaths
+                                visitedHints
                         )
              else if isTupleString name && isTupleString tipeString then
                 List.map2 (,) (getTupleParts name) (getTupleParts tipeString)
@@ -4613,7 +4613,7 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                                 topLevelTokens
                                 True
                                 maybeRootTipeString
-                                visitedSourcePaths
+                                visitedHints
                         )
                     |> List.concat
              else
@@ -4625,7 +4625,7 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                 of
                     Just hint ->
                         -- Avoid infinite recursion.
-                        if hint.kind /= KindType && hint.tipe /= tipeString && not (Set.member hint.sourcePath visitedSourcePaths) then
+                        if hint.kind /= KindType && hint.tipe /= tipeString && not (Set.member ( hint.name, hint.sourcePath ) visitedHints) then
                             let
                                 maybeNewActiveFile =
                                     case maybeActiveFile of
@@ -4644,7 +4644,7 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                                     )
 
                                 updatedVisitedSourcePaths =
-                                    Set.insert hint.sourcePath visitedSourcePaths
+                                    Set.insert ( hint.name, hint.sourcePath ) visitedHints
                             in
                                 case maybeRootTipeString of
                                     Just rootTipeString ->
