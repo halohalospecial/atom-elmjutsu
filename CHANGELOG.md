@@ -1,3 +1,6 @@
+## 7.3.5
+* Autocomplete: Handle nested record fields.
+
 ## 7.3.4
 * Fix `Define from type annotation` bug.
 
