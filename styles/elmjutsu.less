@@ -188,6 +188,12 @@ atom-text-editor.elmjutsu-pipe-selections.processing {
   .comment {
     margin: 15px 0;
   }
+  .elmjutsu-datatip-header {
+    font-size: @font-size;
+    strong {
+      color: @syntax-color-class
+    }
+  }
 }
 .elmjutsu-sidekick {
   .elmjutsu-hint-view;
@@ -247,6 +253,7 @@ atom-text-editor:not([mini])[data-grammar='source elm']
   max-width: 700px;
 }
 .elmjutsu-token-actionable {
+  color: @syntax-color-attribute;
   &:hover {
     background-color: rgba(0, 0, 0, 0.3);
     cursor: pointer;
