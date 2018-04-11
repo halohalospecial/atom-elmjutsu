@@ -53,6 +53,7 @@ subscriptions model =
         , askCanGoToDefinitionSub AskCanGoToDefinition
         , showGoToSymbolViewSub ShowGoToSymbolView
         , getHintsForPartialSub GetHintsForPartial
+        , getFieldsForRecordVariableSub GetFieldsForRecordVariable
         , getSuggestionsForImportSub GetSuggestionsForImport
         , getImportersForTokenSub GetImporterSourcePathsForToken
         , showAddImportViewSub ShowAddImportView
@@ -75,10 +76,10 @@ subscriptions model =
 -- INCOMING PORTS
 
 
-port activeTokenChangedSub : (( Maybe ActiveTopLevel, Maybe Token ) -> msg) -> Sub msg
+port activeTokenChangedSub : (( Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token ) -> msg) -> Sub msg
 
 
-port activeFileChangedSub : (( Maybe ActiveFile, Maybe ActiveTopLevel, Maybe Token ) -> msg) -> Sub msg
+port activeFileChangedSub : (( Maybe ActiveFile, Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token ) -> msg) -> Sub msg
 
 
 port fileContentsChangedSub : (( FilePath, ProjectDirectory, EncodedModuleDocs, List RawImport ) -> msg) -> Sub msg
@@ -96,16 +97,19 @@ port downloadMissingPackageDocsSub : (List Dependency -> msg) -> Sub msg
 port docsReadSub : (List ( Dependency, String ) -> msg) -> Sub msg
 
 
-port goToDefinitionSub : (( Maybe ActiveTopLevel, Maybe Token ) -> msg) -> Sub msg
+port goToDefinitionSub : (( Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token ) -> msg) -> Sub msg
 
 
-port askCanGoToDefinitionSub : (( Maybe ActiveTopLevel, Token ) -> msg) -> Sub msg
+port askCanGoToDefinitionSub : (( Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Token ) -> msg) -> Sub msg
 
 
 port showGoToSymbolViewSub : (( Maybe String, Maybe String ) -> msg) -> Sub msg
 
 
 port getHintsForPartialSub : (( String, Maybe TipeString, Maybe Token, Bool, Bool, Bool, Bool ) -> msg) -> Sub msg
+
+
+port getFieldsForRecordVariableSub : (( ActiveRecordVariable, String, Bool ) -> msg) -> Sub msg
 
 
 port getSuggestionsForImportSub : (( String, Bool ) -> msg) -> Sub msg
@@ -144,7 +148,7 @@ port getAliasesOfTypeSub : (Token -> msg) -> Sub msg
 port clearLocalHintsCacheSub : (() -> msg) -> Sub msg
 
 
-port getTokenInfoSub : (( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTopLevel, Maybe Token ) -> msg) -> Sub msg
+port getTokenInfoSub : (( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token ) -> msg) -> Sub msg
 
 
 port getFunctionsMatchingTypeSub : (( TipeString, Maybe ProjectDirectory, Maybe FilePath ) -> msg) -> Sub msg
@@ -194,6 +198,9 @@ port readPackageDocsCmd : List Dependency -> Cmd msg
 
 
 port hintsForPartialReceivedCmd : ( String, List EncodedHint ) -> Cmd msg
+
+
+port fieldsForRecordVariableReceivedCmd : ( String, List EncodedHint ) -> Cmd msg
 
 
 port suggestionsForImportReceivedCmd : ( String, List ImportSuggestion ) -> Cmd msg
@@ -262,6 +269,10 @@ type alias ActiveFile =
 
 
 type alias ActiveTopLevel =
+    String
+
+
+type alias ActiveRecordVariable =
     String
 
 
@@ -381,15 +392,16 @@ emptyFileContents =
 type Msg
     = MaybeDocsDownloaded (List Dependency) (Result Http.Error (List (Result Http.Error ( String, List ModuleDocs ))))
     | DocsRead (List ( Dependency, String ))
-    | UpdateActiveTokenHints ( Maybe ActiveTopLevel, Maybe Token )
-    | UpdateActiveFile ( Maybe ActiveFile, Maybe ActiveTopLevel, Maybe Token )
+    | UpdateActiveTokenHints ( Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token )
+    | UpdateActiveFile ( Maybe ActiveFile, Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token )
     | UpdateFileContents FilePath ProjectDirectory FileContents
     | RemoveFileContents ( FilePath, ProjectDirectory )
     | UpdateProjectDependencies ( String, List Dependency )
-    | GoToDefinition ( Maybe ActiveTopLevel, Maybe Token )
-    | AskCanGoToDefinition ( Maybe ActiveTopLevel, Token )
+    | GoToDefinition ( Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token )
+    | AskCanGoToDefinition ( Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Token )
     | ShowGoToSymbolView ( Maybe ProjectDirectory, Maybe String )
     | GetHintsForPartial ( String, Maybe TipeString, Maybe Token, Bool, Bool, Bool, Bool )
+    | GetFieldsForRecordVariable ( ActiveRecordVariable, String, Bool )
     | GetSuggestionsForImport ( String, Bool )
     | GetImporterSourcePathsForToken ( Maybe ProjectDirectory, Maybe Token, Maybe Bool )
     | DownloadMissingPackageDocs (List Dependency)
@@ -403,7 +415,7 @@ type Msg
     | ConfigChanged Config
     | GetAliasesOfType Token
     | ClearLocalHintsCache
-    | GetTokenInfo ( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTopLevel, Maybe Token )
+    | GetTokenInfo ( Maybe ProjectDirectory, Maybe FilePath, Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token )
     | GetFunctionsMatchingType ( TipeString, Maybe ProjectDirectory, Maybe FilePath )
     | GetSignatureHelp ( Maybe ActiveTopLevel, Token )
 
@@ -502,11 +514,11 @@ update msg model =
                 , docsReadCmd ()
                 )
 
-        UpdateActiveTokenHints ( maybeActiveTopLevel, maybeToken ) ->
-            doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model
+        UpdateActiveTokenHints ( maybeActiveTopLevel, maybeActiveRecordVariable, maybeToken ) ->
+            doUpdateActiveTokenHints maybeActiveTopLevel maybeActiveRecordVariable maybeToken model
 
-        UpdateActiveFile ( maybeActiveFile, maybeActiveTopLevel, maybeToken ) ->
-            doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model
+        UpdateActiveFile ( maybeActiveFile, maybeActiveTopLevel, maybeActiveRecordVariable, maybeToken ) ->
+            doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeActiveRecordVariable maybeToken model
 
         UpdateFileContents filePath projectDirectory fileContents ->
             doUpdateFileContents filePath projectDirectory fileContents model
@@ -520,17 +532,20 @@ update msg model =
         DownloadMissingPackageDocs dependencies ->
             doDownloadMissingPackageDocs dependencies model
 
-        GoToDefinition ( maybeActiveTopLevel, maybeToken ) ->
-            doGoToDefinition maybeActiveTopLevel maybeToken model
+        GoToDefinition ( maybeActiveTopLevel, maybeActiveRecordVariable, maybeToken ) ->
+            doGoToDefinition maybeActiveTopLevel maybeActiveRecordVariable maybeToken model
 
-        AskCanGoToDefinition ( maybeActiveTopLevel, token ) ->
-            doAskCanGoToDefinition maybeActiveTopLevel token model
+        AskCanGoToDefinition ( maybeActiveTopLevel, maybeActiveRecordVariable, token ) ->
+            doAskCanGoToDefinition maybeActiveTopLevel maybeActiveRecordVariable token model
 
         ShowGoToSymbolView ( maybeProjectDirectory, maybeToken ) ->
             doShowGoToSymbolView maybeProjectDirectory maybeToken model
 
         GetHintsForPartial ( partial, maybeInferredTipe, preceedingToken, isRegex, isTypeSignature, isFiltered, isGlobal ) ->
             doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSignature isFiltered isGlobal model
+
+        GetFieldsForRecordVariable ( activeRecordVariable, partial, isFiltered ) ->
+            doGetFieldsForRecordVariable activeRecordVariable partial isFiltered model
 
         GetSuggestionsForImport ( partial, isFiltered ) ->
             doGetSuggestionsForImport partial isFiltered model
@@ -586,8 +601,8 @@ update msg model =
             , Cmd.none
             )
 
-        GetTokenInfo ( maybeProjectDirectory, maybeFilePath, maybeActiveTopLevel, maybeToken ) ->
-            doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeToken model
+        GetTokenInfo ( maybeProjectDirectory, maybeFilePath, maybeActiveTopLevel, maybeActiveRecordVariable, maybeToken ) ->
+            doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeActiveRecordVariable maybeToken model
 
         GetFunctionsMatchingType ( tipeString, maybeProjectDirectory, maybeFilePath ) ->
             doGetFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath model
@@ -624,11 +639,24 @@ inferenceToHints inference =
     ]
 
 
-doUpdateActiveTokenHints : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
-doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
+prefixRecordVariableToToken : Maybe ActiveRecordVariable -> Maybe Token -> Maybe Token
+prefixRecordVariableToToken maybeActiveRecordVariable maybeToken =
+    case maybeActiveRecordVariable of
+        Just activeRecordVariable ->
+            Maybe.map (\token -> activeRecordVariable ++ "." ++ token) maybeToken
+
+        Nothing ->
+            maybeToken
+
+
+doUpdateActiveTokenHints : Maybe ActiveTopLevel -> Maybe ActiveRecordVariable -> Maybe Token -> Model -> ( Model, Cmd Msg )
+doUpdateActiveTokenHints maybeActiveTopLevel maybeActiveRecordVariable maybeToken model =
     let
+        prefixedToken =
+            prefixRecordVariableToToken maybeActiveRecordVariable maybeToken
+
         updatedActiveFileTokens =
-            case maybeToken of
+            case prefixedToken of
                 Nothing ->
                     model.activeFileTokens
 
@@ -642,7 +670,7 @@ doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
                         model.activeFileTokens
 
         updatedActiveTokenHints =
-            case maybeToken of
+            case prefixedToken of
                 Nothing ->
                     []
 
@@ -650,27 +678,30 @@ doUpdateActiveTokenHints maybeActiveTopLevel maybeToken model =
                     []
 
                 Just token ->
-                    getHintsForToken maybeToken updatedActiveFileTokens
+                    getHintsForToken prefixedToken updatedActiveFileTokens
     in
         ( { model
             | activeTopLevel = maybeActiveTopLevel
             , activeFileTokens = updatedActiveFileTokens
-            , activeToken = maybeToken
+            , activeToken = prefixedToken
             , activeTokenHints = updatedActiveTokenHints
           }
         , activeTokenHintsChangedCmd
-            ( Maybe.withDefault "" maybeToken
+            ( Maybe.withDefault "" prefixedToken
             , updatedActiveTokenHints
                 |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
             )
         )
 
 
-doGetTokenInfo : Maybe ProjectDirectory -> Maybe FilePath -> Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
-doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeToken model =
+doGetTokenInfo : Maybe ProjectDirectory -> Maybe FilePath -> Maybe ActiveTopLevel -> Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
+doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeActiveRecordVariable maybeToken model =
     case ( maybeProjectDirectory, maybeFilePath ) of
         ( Just projectDirectory, Just filePath ) ->
             let
+                prefixedToken =
+                    prefixRecordVariableToToken maybeActiveRecordVariable maybeToken
+
                 fileTokens =
                     case model.activeFile of
                         Just activeFile ->
@@ -683,7 +714,7 @@ doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeToke
                             getActiveFileTokens (Just { filePath = filePath, projectDirectory = projectDirectory }) maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
 
                 tokenHints =
-                    getHintsForToken maybeToken fileTokens
+                    getHintsForToken prefixedToken fileTokens
             in
                 ( model
                 , tokenHints
@@ -697,9 +728,12 @@ doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeToke
             )
 
 
-doUpdateActiveFile : Maybe ActiveFile -> Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
-doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model =
+doUpdateActiveFile : Maybe ActiveFile -> Maybe ActiveTopLevel -> Maybe ActiveRecordVariable -> Maybe Token -> Model -> ( Model, Cmd Msg )
+doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeActiveRecordVariable maybeToken model =
     let
+        prefixedToken =
+            prefixRecordVariableToToken maybeActiveRecordVariable maybeToken
+
         updatedActiveFileTokens =
             if model.activeFile /= maybeActiveFile || model.activeTopLevel /= maybeActiveTopLevel then
                 getActiveFileTokens maybeActiveFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
@@ -707,20 +741,20 @@ doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeToken model =
                 model.activeFileTokens
 
         updatedActiveTokenHints =
-            getHintsForToken maybeToken updatedActiveFileTokens
+            getHintsForToken prefixedToken updatedActiveFileTokens
     in
         ( { model
             | activeFile = maybeActiveFile
             , activeTopLevel = maybeActiveTopLevel
             , activeFileTokens = updatedActiveFileTokens
-            , activeToken = maybeToken
+            , activeToken = prefixedToken
             , activeTokenHints = updatedActiveTokenHints
             , hintsCache = Nothing
           }
         , Cmd.batch
             [ activeFileChangedCmd maybeActiveFile
             , activeTokenHintsChangedCmd
-                ( Maybe.withDefault "" maybeToken
+                ( Maybe.withDefault "" prefixedToken
                 , updatedActiveTokenHints
                     |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
                 )
@@ -850,11 +884,11 @@ doDownloadMissingPackageDocs dependencies model =
     )
 
 
-doGoToDefinition : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
-doGoToDefinition maybeActiveTopLevel maybeToken model =
+doGoToDefinition : Maybe ActiveTopLevel -> Maybe ActiveRecordVariable -> Maybe Token -> Model -> ( Model, Cmd Msg )
+doGoToDefinition maybeActiveTopLevel maybeActiveRecordVariable maybeToken model =
     let
         ( tokenToCheck, activeFileTokens ) =
-            getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel maybeToken model
+            getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel maybeActiveRecordVariable maybeToken model
 
         requests =
             getHintsForToken tokenToCheck activeFileTokens
@@ -880,11 +914,11 @@ doGoToDefinition maybeActiveTopLevel maybeToken model =
         )
 
 
-doAskCanGoToDefinition : Maybe ActiveTopLevel -> Token -> Model -> ( Model, Cmd Msg )
-doAskCanGoToDefinition maybeActiveTopLevel token model =
+doAskCanGoToDefinition : Maybe ActiveTopLevel -> Maybe ActiveRecordVariable -> Token -> Model -> ( Model, Cmd Msg )
+doAskCanGoToDefinition maybeActiveTopLevel maybeActiveRecordVariable token model =
     let
         ( tokenToCheck, activeFileTokens ) =
-            getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel (Just token) model
+            getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel maybeActiveRecordVariable (Just token) model
     in
         case tokenToCheck of
             Nothing ->
@@ -901,23 +935,31 @@ doAskCanGoToDefinition maybeActiveTopLevel token model =
                 )
 
 
-getTokenAndActiveFileTokensForGoToDefinition : Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Maybe Token, TokenDict )
-getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel maybeToken model =
+getTokenAndActiveFileTokensForGoToDefinition : Maybe ActiveTopLevel -> Maybe ActiveRecordVariable -> Maybe Token -> Model -> ( Maybe Token, TokenDict )
+getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel maybeActiveRecordVariable maybeToken model =
     let
         tokenToCheck =
             case ( maybeToken, model.activeFile ) of
                 ( Just token, Just { projectDirectory } ) ->
                     let
+                        token2 =
+                            case maybeActiveRecordVariable of
+                                Just activeRecordVariable ->
+                                    activeRecordVariable ++ "." ++ token
+
+                                Nothing ->
+                                    token
+
                         fileContentsDict =
                             getFileContentsOfProject projectDirectory model.projectFileContentsDict
 
                         activeFileContents =
                             getActiveFileContents model.activeFile fileContentsDict
                     in
-                        if activeFileContents.moduleDocs.name == getModuleName token then
-                            Just (getLastName token)
+                        if activeFileContents.moduleDocs.name == getModuleName token2 then
+                            Just (getLastName token2)
                         else
-                            Just token
+                            Just token2
 
                 ( Just token, Nothing ) ->
                     Just token
@@ -979,6 +1021,39 @@ doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSig
                 |> List.map (encodeHint model.config.showAliasesOfType model.activeFileTokens)
           )
             |> hintsForPartialReceivedCmd
+        )
+
+
+doGetFieldsForRecordVariable : ActiveRecordVariable -> String -> Bool -> Model -> ( Model, Cmd Msg )
+doGetFieldsForRecordVariable activeRecordVariable partial isFiltered model =
+    -- TODO: Do not use `getHintsForPartial` for optimization.  Get the fields of the record instead.
+    let
+        prefixedPartial =
+            prefixRecordVariableToToken (Just activeRecordVariable) (Just partial)
+                |> Maybe.withDefault ""
+
+        ( hints, updatedHintsCache ) =
+            getHintsForPartial prefixedPartial Nothing Nothing False False isFiltered False model.activeFile model.projectFileContentsDict model.projectDependencies model.packageDocs model.hintsCache model.activeFileTokens
+
+        fieldsHints =
+            hints
+                |> List.filter
+                    (\hint ->
+                        String.startsWith (activeRecordVariable ++ ".") hint.name
+                    )
+                |> List.filter
+                    (\hint ->
+                        String.dropLeft (String.length <| activeRecordVariable ++ ".") hint.name
+                            |> String.contains "."
+                            |> not
+                    )
+    in
+        ( { model | hintsCache = updatedHintsCache }
+        , ( partial
+          , fieldsHints
+                |> List.map (encodeHint model.config.showAliasesOfType model.activeFileTokens)
+          )
+            |> fieldsForRecordVariableReceivedCmd
         )
 
 
