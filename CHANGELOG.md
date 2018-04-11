@@ -1,4 +1,5 @@
-## 7.4.0
+## 8.0.0
+* Add record field completion and info.
 * Make text in Datatips follow style guide.  Thanks to @raqystyle for the PR!
 
 ## 7.3.5
