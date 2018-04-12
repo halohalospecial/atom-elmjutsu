@@ -1,5 +1,5 @@
-## 8.0.0
-* Add record field completion and info.
+## 7.3.6
+* Fix Signature Help infinite loop.
 * Make text in Datatips follow style guide.  Thanks to @raqystyle for the PR!
 
 ## 7.3.5
