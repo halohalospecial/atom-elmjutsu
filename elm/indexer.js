@@ -13329,8 +13329,8 @@ var _user$project$Indexer$emptyModel = {
 	hintsCache: _elm_lang$core$Maybe$Nothing
 };
 var _user$project$Indexer$init = {ctor: '_Tuple2', _0: _user$project$Indexer$emptyModel, _1: _elm_lang$core$Platform_Cmd$none};
-var _user$project$Indexer$activeTokenChangedSub = _elm_lang$core$Native_Platform.incomingPort(
-	'activeTokenChangedSub',
+var _user$project$Indexer$updateActiveTokenSub = _elm_lang$core$Native_Platform.incomingPort(
+	'updateActiveTokenSub',
 	A2(
 		_elm_lang$core$Json_Decode$andThen,
 		function (x0) {
@@ -13384,8 +13384,8 @@ var _user$project$Indexer$activeTokenChangedSub = _elm_lang$core$Native_Platform
 						_1: {ctor: '[]'}
 					}
 				}))));
-var _user$project$Indexer$activeFileChangedSub = _elm_lang$core$Native_Platform.incomingPort(
-	'activeFileChangedSub',
+var _user$project$Indexer$updateActiveFileSub = _elm_lang$core$Native_Platform.incomingPort(
+	'updateActiveFileSub',
 	A2(
 		_elm_lang$core$Json_Decode$andThen,
 		function (x0) {
@@ -19397,10 +19397,10 @@ var _user$project$Indexer$subscriptions = function (model) {
 	return _elm_lang$core$Platform_Sub$batch(
 		{
 			ctor: '::',
-			_0: _user$project$Indexer$activeTokenChangedSub(_user$project$Indexer$UpdateActiveTokenHints),
+			_0: _user$project$Indexer$updateActiveTokenSub(_user$project$Indexer$UpdateActiveTokenHints),
 			_1: {
 				ctor: '::',
-				_0: _user$project$Indexer$activeFileChangedSub(_user$project$Indexer$UpdateActiveFile),
+				_0: _user$project$Indexer$updateActiveFileSub(_user$project$Indexer$UpdateActiveFile),
 				_1: {
 					ctor: '::',
 					_0: _user$project$Indexer$fileContentsChangedSub(

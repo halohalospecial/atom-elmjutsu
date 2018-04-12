@@ -23,8 +23,8 @@ main =
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ activeTokenChangedSub UpdateActiveTokenHints
-        , activeFileChangedSub UpdateActiveFile
+        [ updateActiveTokenSub UpdateActiveTokenHints
+        , updateActiveFileSub UpdateActiveFile
         , fileContentsChangedSub
             (\( filePath, projectDirectory, encodedModuleDocs, rawImports ) ->
                 let
@@ -76,10 +76,10 @@ subscriptions model =
 -- INCOMING PORTS
 
 
-port activeTokenChangedSub : (( Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token ) -> msg) -> Sub msg
+port updateActiveTokenSub : (( Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token ) -> msg) -> Sub msg
 
 
-port activeFileChangedSub : (( Maybe ActiveFile, Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token ) -> msg) -> Sub msg
+port updateActiveFileSub : (( Maybe ActiveFile, Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token ) -> msg) -> Sub msg
 
 
 port fileContentsChangedSub : (( FilePath, ProjectDirectory, EncodedModuleDocs, List RawImport ) -> msg) -> Sub msg
