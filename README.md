@@ -47,7 +47,7 @@ Note: Features marked with `*` are disabled by default.  You may enable them in 
 
 * Information
   * [Datatips](#datatips)
-  * [Signature Help](#signature-help) `*`
+  * [Signature Help](#signature-help)
   * [Show Types in Tooltip](#show-types-in-tooltip) `*`
   * [Toggle Sidekick](#toggle-sidekick)
     * Show the type and documentation for the symbol at cursor position in a panel.
@@ -222,7 +222,7 @@ Provides support for [Datatips](https://github.com/facebook-atom/atom-ide-ui/blo
 
 ![datatips](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/datatips.gif?raw=true)
 
-### <a name="signature-help"></a>Signature Help `*`
+### <a name="signature-help"></a>Signature Help
 Provides support for [Signature Help](https://github.com/facebook-atom/atom-ide-ui/blob/master/docs/signature-help.md).  The [atom-ide-ui](https://atom.io/packages/atom-ide-ui) package should be installed for this to work.
 
 ![signature-help](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/signature-help.gif?raw=true)
