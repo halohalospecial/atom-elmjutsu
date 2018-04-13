@@ -15508,6 +15508,13 @@ var _user$project$Indexer$encodeHint = F3(
 			aliasesOfTipe: showAliasesOfType ? A3(_user$project$Indexer$getAliasesOfType, tokens, hint.name, hint.tipe) : {ctor: '[]'}
 		};
 	});
+var _user$project$Indexer$encodeHints = F3(
+	function (showAliasesOfType, activeFileTokens, hints) {
+		return A2(
+			_elm_lang$core$List$map,
+			A2(_user$project$Indexer$encodeHint, showAliasesOfType, activeFileTokens),
+			hints);
+	});
 var _user$project$Indexer$getDefaultDecoderRecur = F6(
 	function (activeFileTokens, visitedTypes, decoderModuleName, maybeHintName, indents, tipeString) {
 		getDefaultDecoderRecur:
@@ -17364,21 +17371,20 @@ var _user$project$Indexer$getExposedAndUnexposedHints = F4(
 							_elm_lang$core$Basics_ops['++'],
 							A2(_elm_lang$core$List$map, _user$project$Indexer$tipeToValue, moduleDocs.values.tipes),
 							moduleDocs.values.values));
-					var allNames = _elm_lang$core$Set$fromList(
+					var allNames = A2(
+						_elm_lang$core$Basics_ops['++'],
 						A2(
-							_elm_lang$core$Basics_ops['++'],
-							A2(
-								_elm_lang$core$List$map,
-								function (_) {
-									return _.name;
-								},
-								aliasesTipesAndValues),
-							A2(
-								_elm_lang$core$List$map,
-								function (_) {
-									return _.name;
-								},
-								tipeCases)));
+							_elm_lang$core$List$map,
+							function (_) {
+								return _.name;
+							},
+							aliasesTipesAndValues),
+						A2(
+							_elm_lang$core$List$map,
+							function (_) {
+								return _.name;
+							},
+							tipeCases));
 					var _p216 = function () {
 						var _p217 = A2(_elm_lang$core$Dict$get, moduleDocs.name, imports);
 						if (_p217.ctor === 'Just') {
@@ -17400,12 +17406,13 @@ var _user$project$Indexer$getExposedAndUnexposedHints = F4(
 										return _.name;
 									},
 									exposed));
-							var unexposedNames = A2(
-								_elm_lang$core$Set$filter,
-								function (name) {
-									return !A2(_elm_lang$core$Set$member, name, exposedNames);
-								},
-								allNames);
+							var unexposedNames = _elm_lang$core$Set$fromList(
+								A2(
+									_elm_lang$core$List$filter,
+									function (name) {
+										return !A2(_elm_lang$core$Set$member, name, exposedNames);
+									},
+									allNames));
 							return {
 								ctor: '_Tuple2',
 								_0: exposed,
@@ -17415,7 +17422,11 @@ var _user$project$Indexer$getExposedAndUnexposedHints = F4(
 							return {
 								ctor: '_Tuple2',
 								_0: {ctor: '[]'},
-								_1: includeUnexposed ? A3(_user$project$Indexer$getHintsForUnexposedNames, true, moduleDocs, allNames) : {ctor: '[]'}
+								_1: includeUnexposed ? A3(
+									_user$project$Indexer$getHintsForUnexposedNames,
+									true,
+									moduleDocs,
+									_elm_lang$core$Set$fromList(allNames)) : {ctor: '[]'}
 							};
 						}
 					}();
@@ -17873,10 +17884,7 @@ var _user$project$Indexer$doGetHintsForPartial = F8(
 				{
 					ctor: '_Tuple2',
 					_0: partial,
-					_1: A2(
-						_elm_lang$core$List$map,
-						A2(_user$project$Indexer$encodeHint, model.config.showAliasesOfType, model.activeFileTokens),
-						hints)
+					_1: A3(_user$project$Indexer$encodeHints, model.config.showAliasesOfType, model.activeFileTokens, hints)
 				})
 		};
 	});
@@ -17922,10 +17930,7 @@ var _user$project$Indexer$doGetFieldsForRecordVariable = F4(
 				{
 					ctor: '_Tuple2',
 					_0: partial,
-					_1: A2(
-						_elm_lang$core$List$map,
-						A2(_user$project$Indexer$encodeHint, model.config.showAliasesOfType, model.activeFileTokens),
-						fieldsHints)
+					_1: A3(_user$project$Indexer$encodeHints, model.config.showAliasesOfType, model.activeFileTokens, fieldsHints)
 				})
 		};
 	});
@@ -18361,10 +18366,7 @@ var _user$project$Indexer$doUpdateActiveTokenHints = F4(
 				{
 					ctor: '_Tuple2',
 					_0: A2(_elm_lang$core$Maybe$withDefault, '', prefixedToken),
-					_1: A2(
-						_elm_lang$core$List$map,
-						A2(_user$project$Indexer$encodeHint, model.config.showAliasesOfType, updatedActiveFileTokens),
-						updatedActiveTokenHints)
+					_1: A3(_user$project$Indexer$encodeHints, model.config.showAliasesOfType, updatedActiveFileTokens, updatedActiveTokenHints)
 				})
 		};
 	});
@@ -18402,10 +18404,7 @@ var _user$project$Indexer$doGetTokenInfo = F6(
 				ctor: '_Tuple2',
 				_0: model,
 				_1: _user$project$Indexer$tokenInfoReceivedCmd(
-					A2(
-						_elm_lang$core$List$map,
-						A2(_user$project$Indexer$encodeHint, model.config.showAliasesOfType, fileTokens),
-						tokenHints))
+					A3(_user$project$Indexer$encodeHints, model.config.showAliasesOfType, fileTokens, tokenHints))
 			};
 		} else {
 			return {
@@ -18436,10 +18435,7 @@ var _user$project$Indexer$doUpdateActiveFile = F5(
 							{
 								ctor: '_Tuple2',
 								_0: A2(_elm_lang$core$Maybe$withDefault, '', prefixedToken),
-								_1: A2(
-									_elm_lang$core$List$map,
-									A2(_user$project$Indexer$encodeHint, model.config.showAliasesOfType, updatedActiveFileTokens),
-									updatedActiveTokenHints)
+								_1: A3(_user$project$Indexer$encodeHints, model.config.showAliasesOfType, updatedActiveFileTokens, updatedActiveTokenHints)
 							}),
 						_1: {ctor: '[]'}
 					}
@@ -18584,9 +18580,10 @@ var _user$project$Indexer$doGetFunctionsMatchingType = F4(
 			ctor: '_Tuple2',
 			_0: model,
 			_1: _user$project$Indexer$functionsMatchingTypeReceivedCmd(
-				A2(
-					_elm_lang$core$List$map,
-					A2(_user$project$Indexer$encodeHint, model.config.showAliasesOfType, _elm_lang$core$Dict$empty),
+				A3(
+					_user$project$Indexer$encodeHints,
+					model.config.showAliasesOfType,
+					_elm_lang$core$Dict$empty,
 					A6(_user$project$Indexer$getFunctionsMatchingType, tipeString, maybeProjectDirectory, maybeFilePath, model.projectFileContentsDict, model.projectDependencies, model.packageDocs)))
 		};
 	});
@@ -19342,9 +19339,10 @@ var _user$project$Indexer$update = F2(
 						{
 							ctor: '_Tuple2',
 							_0: _p392.name,
-							_1: A2(
-								_elm_lang$core$List$map,
-								A2(_user$project$Indexer$encodeHint, model.config.showAliasesOfType, model.activeFileTokens),
+							_1: A3(
+								_user$project$Indexer$encodeHints,
+								model.config.showAliasesOfType,
+								model.activeFileTokens,
 								_user$project$Indexer$inferenceToHints(_p392))
 						})
 				};

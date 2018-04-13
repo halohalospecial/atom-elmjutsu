@@ -576,7 +576,7 @@ update msg model =
             , activeTokenHintsChangedCmd
                 ( inference.name
                 , inferenceToHints inference
-                    |> List.map (encodeHint model.config.showAliasesOfType model.activeFileTokens)
+                    |> encodeHints model.config.showAliasesOfType model.activeFileTokens
                 )
             )
 
@@ -615,7 +615,7 @@ doGetFunctionsMatchingType : TipeString -> Maybe ProjectDirectory -> Maybe FileP
 doGetFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath model =
     ( model
     , getFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath model.projectFileContentsDict model.projectDependencies model.packageDocs
-        |> List.map (encodeHint model.config.showAliasesOfType Dict.empty)
+        |> encodeHints model.config.showAliasesOfType Dict.empty
         |> functionsMatchingTypeReceivedCmd
     )
 
@@ -689,7 +689,7 @@ doUpdateActiveTokenHints maybeActiveTopLevel maybeActiveRecordVariable maybeToke
         , activeTokenHintsChangedCmd
             ( Maybe.withDefault "" prefixedToken
             , updatedActiveTokenHints
-                |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
+                |> encodeHints model.config.showAliasesOfType updatedActiveFileTokens
             )
         )
 
@@ -718,7 +718,7 @@ doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeActi
             in
                 ( model
                 , tokenHints
-                    |> List.map (encodeHint model.config.showAliasesOfType fileTokens)
+                    |> encodeHints model.config.showAliasesOfType fileTokens
                     |> tokenInfoReceivedCmd
                 )
 
@@ -756,7 +756,7 @@ doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeActiveRecordVariable
             , activeTokenHintsChangedCmd
                 ( Maybe.withDefault "" prefixedToken
                 , updatedActiveTokenHints
-                    |> List.map (encodeHint model.config.showAliasesOfType updatedActiveFileTokens)
+                    |> encodeHints model.config.showAliasesOfType updatedActiveFileTokens
                 )
             ]
         )
@@ -1009,6 +1009,11 @@ doShowGoToSymbolView maybeProjectDirectory maybeToken model =
             )
 
 
+encodeHints : Bool -> TokenDict -> List Hint -> List EncodedHint
+encodeHints showAliasesOfType activeFileTokens hints =
+    List.map (encodeHint showAliasesOfType activeFileTokens) hints
+
+
 doGetHintsForPartial : String -> Maybe TipeString -> Maybe Token -> Bool -> Bool -> Bool -> Bool -> Model -> ( Model, Cmd Msg )
 doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSignature isFiltered isGlobal model =
     let
@@ -1018,7 +1023,7 @@ doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSig
         ( { model | hintsCache = updatedHintsCache }
         , ( partial
           , hints
-                |> List.map (encodeHint model.config.showAliasesOfType model.activeFileTokens)
+                |> encodeHints model.config.showAliasesOfType model.activeFileTokens
           )
             |> hintsForPartialReceivedCmd
         )
@@ -1051,7 +1056,7 @@ doGetFieldsForRecordVariable activeRecordVariable partial isFiltered model =
         ( { model | hintsCache = updatedHintsCache }
         , ( partial
           , fieldsHints
-                |> List.map (encodeHint model.config.showAliasesOfType model.activeFileTokens)
+                |> encodeHints model.config.showAliasesOfType model.activeFileTokens
           )
             |> fieldsForRecordVariableReceivedCmd
         )
@@ -2136,7 +2141,6 @@ getExposedAndUnexposedHints includeUnexposed activeFilePath imports moduleDocsLi
                             allNames =
                                 (List.map .name aliasesTipesAndValues)
                                     ++ (List.map .name tipeCases)
-                                    |> Set.fromList
 
                             ( exposedHints, unexposedHints ) =
                                 case Dict.get moduleDocs.name imports of
@@ -2163,10 +2167,11 @@ getExposedAndUnexposedHints includeUnexposed activeFilePath imports moduleDocsLi
 
                                             unexposedNames =
                                                 allNames
-                                                    |> Set.filter
+                                                    |> List.filter
                                                         (\name ->
                                                             not (Set.member name exposedNames)
                                                         )
+                                                    |> Set.fromList
                                         in
                                             ( exposed
                                             , if includeUnexposed then
@@ -2178,7 +2183,7 @@ getExposedAndUnexposedHints includeUnexposed activeFilePath imports moduleDocsLi
                                     Nothing ->
                                         ( []
                                         , if includeUnexposed then
-                                            getHintsForUnexposedNames True moduleDocs allNames
+                                            getHintsForUnexposedNames True moduleDocs (Set.fromList allNames)
                                           else
                                             []
                                         )
@@ -4107,11 +4112,6 @@ computeVariableSourcePaths ( maybeActiveFile, maybeActiveTopLevel, projectFileCo
             tokens
 
 
-filePathSeparator : String
-filePathSeparator =
-    " > "
-
-
 getSourcePathOfRecordFieldToken : String -> FilePath -> Maybe ActiveTopLevel -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> SourcePath
 getSourcePathOfRecordFieldToken name filePath maybeActiveTopLevel ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) tokens =
     let
@@ -4222,6 +4222,11 @@ getSourcePathOfRecordFieldTokenRecur parentPartName parentName parentSourcePath 
 
         Nothing ->
             parentSourcePath
+
+
+filePathSeparator : String
+filePathSeparator =
+    " > "
 
 
 {-|
