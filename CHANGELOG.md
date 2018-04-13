@@ -1,5 +1,6 @@
 ## 8.0.0
 * Disable Hyperclick integration by default.  This might be enabled by default in the future, but it's causing some performance issues right now.
+* Signature Help integration is not enabled by default.
 
 ## 7.3.6
 * Fix Signature Help infinite loop.
