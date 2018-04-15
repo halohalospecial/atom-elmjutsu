@@ -897,7 +897,7 @@ doGoToDefinition maybeActiveTopLevel maybeActiveRecordVariable maybeToken model 
                         let
                             symbol =
                                 { fullName = getHintFullName hint
-                                , sourcePath = hint.sourcePath
+                                , sourcePath = computeHintSourcePath ( model.activeFile, maybeActiveTopLevel, model.projectFileContentsDict, model.projectDependencies, model.packageDocs ) activeFileTokens hint
                                 , tipe = hint.tipe
                                 , caseTipe = hint.caseTipe
                                 , kind = hint.kind
@@ -969,7 +969,6 @@ getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel maybeActiveReco
 
         activeFileTokens =
             getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
-                |> computeVariableSourcePaths ( model.activeFile, maybeActiveTopLevel, model.projectFileContentsDict, model.projectDependencies, model.packageDocs )
     in
         ( tokenToCheck, activeFileTokens )
 
@@ -1031,7 +1030,7 @@ doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSig
 
 doGetFieldsForRecordVariable : ActiveRecordVariable -> String -> Bool -> Model -> ( Model, Cmd Msg )
 doGetFieldsForRecordVariable activeRecordVariable partial isFiltered model =
-    -- TODO: Do not use `getHintsForPartial` for optimization.  Get the fields of the record instead.
+    -- TODO: Do not use `getHintsForPartial`.  Get the fields of the record instead.
     let
         prefixedPartial =
             prefixRecordVariableToToken (Just activeRecordVariable) (Just partial)
@@ -1053,7 +1052,8 @@ doGetFieldsForRecordVariable activeRecordVariable partial isFiltered model =
                             |> not
                     )
     in
-        ( { model | hintsCache = updatedHintsCache }
+        ( -- { model | hintsCache = updatedHintsCache }
+          model
         , ( partial
           , fieldsHints
                 |> encodeHints model.config.showAliasesOfType model.activeFileTokens
@@ -4079,37 +4079,25 @@ getActiveFileTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict 
             in
                 activeFileTokens
 
-        -- |> computeVariableSourcePaths ( maybeActiveFile, maybeActiveTopLevel, projectFileContentsDict, projectDependencies, packageDocs )
         Nothing ->
             Dict.empty
 
 
-computeVariableSourcePaths : ( Maybe ActiveFile, Maybe ActiveTopLevel, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> TokenDict
-computeVariableSourcePaths ( maybeActiveFile, maybeActiveTopLevel, projectFileContentsDict, projectDependencies, packageDocs ) tokens =
+computeHintSourcePath : ( Maybe ActiveFile, Maybe ActiveTopLevel, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> Hint -> String
+computeHintSourcePath ( maybeActiveFile, maybeActiveTopLevel, projectFileContentsDict, projectDependencies, packageDocs ) tokens hint =
     case maybeActiveFile of
         Just { filePath } ->
-            tokens
-                |> Dict.map
-                    (\_ hints ->
-                        hints
-                            |> List.map
-                                (\hint ->
-                                    if hint.kind == KindVariable then
-                                        { hint
-                                            | sourcePath =
-                                                getSourcePathOfRecordFieldToken hint.name
-                                                    filePath
-                                                    maybeActiveTopLevel
-                                                    ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
-                                                    tokens
-                                        }
-                                    else
-                                        hint
-                                )
-                    )
+            if hint.kind == KindVariable then
+                getSourcePathOfRecordFieldToken hint.name
+                    filePath
+                    maybeActiveTopLevel
+                    ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                    tokens
+            else
+                hint.sourcePath
 
         Nothing ->
-            tokens
+            ""
 
 
 getSourcePathOfRecordFieldToken : String -> FilePath -> Maybe ActiveTopLevel -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> SourcePath

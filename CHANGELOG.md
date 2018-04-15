@@ -1,6 +1,7 @@
 ## 8.0.0
-* Disable Hyperclick integration by default.  This might be enabled by default in the future, but it's causing some performance issues right now.
-* Signature Help integration is not enabled by default.
+* Greatly improve `Go to Definition` / `Hyperclick` performance.
+* Signature Help integration is now enabled by default.
+* Add basic record fields completion.
 
 ## 7.3.6
 * Fix Signature Help infinite loop.
