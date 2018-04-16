@@ -3,6 +3,7 @@
 * Greatly improve `Go to Definition` / `Hyperclick` performance.
 * Signature Help integration is now enabled by default.
 * Add basic record fields completion (disabled by default).
+* Add `Log Debug Messages` option.
 
 ## 7.3.6
 * Fix Signature Help infinite loop.
