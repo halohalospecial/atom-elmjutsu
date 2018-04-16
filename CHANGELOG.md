@@ -1,6 +1,6 @@
 ## 8.0.0
 * Improve typing performance.
-* Greatly improve `Go to Definition` / `Hyperclick` performance.
+* Greatly improve `Go to Definition` / `Hyperclick` performance (#115).  Thanks to @smucode for reporting and debugging!
 * Signature Help integration is now enabled by default.
 * Add basic record fields completion (disabled by default).
 * Add `Log Debug Messages` option.
