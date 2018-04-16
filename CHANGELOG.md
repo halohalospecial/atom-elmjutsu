@@ -1,3 +1,6 @@
+## 8.1.0
+* Completion of record fields is now enabled by default.
+
 ## 8.0.0
 * Improve typing performance.
 * Greatly improve `Go to Definition` / `Hyperclick` performance (#115).  Thanks to @smucode for reporting and debugging!

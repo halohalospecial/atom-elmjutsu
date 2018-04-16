@@ -581,7 +581,7 @@ update msg model =
             )
 
         ConfigChanged config ->
-            ( { model | config = config }
+            ( { model | config = config, activeFile = Nothing }
             , Cmd.none
             )
 
