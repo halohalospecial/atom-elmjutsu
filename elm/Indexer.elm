@@ -1929,6 +1929,8 @@ filterHintsFunction : Bool -> Bool -> String -> String -> String -> Bool
 filterHintsFunction isRegex isTypeSignature testString name fieldValue =
     let
         startsWithName =
+            -- -- Case-insensitive comparison
+            -- String.startsWith (String.toLower testString) (String.toLower name)
             String.startsWith testString name
     in
         if (isRegex && String.startsWith "/" testString) || (isTypeSignature && String.startsWith ":" testString) then
