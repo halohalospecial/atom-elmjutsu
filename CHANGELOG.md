@@ -1,3 +1,6 @@
+## 8.1.1
+* Do not process files when editing remotely via Atom Teletype (for now).
+
 ## 8.1.0
 * Completion of record fields is now enabled by default.
 
