@@ -1,3 +1,6 @@
+## 8.1.2
+* Fix Signature Help infinite loop.
+
 ## 8.1.1
 * Do not process files when editing remotely via Atom Teletype (for now).
 

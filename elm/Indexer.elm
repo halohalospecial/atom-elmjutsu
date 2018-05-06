@@ -779,9 +779,6 @@ doUpdateFileContents filePath projectDirectory fileContents model =
                             case model.activeFile of
                                 Just activeFile ->
                                     let
-                                        projectPackageDocs =
-                                            getProjectPackageDocs model.activeFile model.projectDependencies model.packageDocs
-
                                         oldFileContentsDict =
                                             getFileContentsOfProject activeFile.projectDirectory model.projectFileContentsDict
 
@@ -1155,11 +1152,12 @@ getProjectPackageDocs maybeActiveFile projectDependencies packageDocs =
                     let
                         packageUris =
                             List.map toPackageUri dependencies
+                                |> Set.fromList
                     in
                         packageDocs
                             |> List.filter
                                 (\moduleDocs ->
-                                    List.member moduleDocs.sourcePath packageUris
+                                    Set.member moduleDocs.sourcePath packageUris
                                 )
 
                 Nothing ->
@@ -4028,26 +4026,29 @@ getActiveFileTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict 
     case maybeActiveFile of
         Just { projectDirectory, filePath } ->
             let
-                projectPackageDocs =
-                    getProjectPackageDocs maybeActiveFile projectDependencies packageDocs
-
                 fileContentsDict =
                     getFileContentsOfProject projectDirectory projectFileContentsDict
+
+                importsPlusActiveModule =
+                    getImportsPlusActiveModuleForActiveFile maybeActiveFile fileContentsDict
 
                 getHints moduleDocs =
                     Maybe.map
                         (getFilteredHints filePath moduleDocs)
-                        (Dict.get moduleDocs.name (getImportsPlusActiveModuleForActiveFile maybeActiveFile fileContentsDict))
+                        (Dict.get moduleDocs.name importsPlusActiveModule)
 
-                insert ( token, hint ) dict =
+                insertTokenAndHint ( token, hint ) dict =
                     Dict.update token (\value -> Just (hint :: Maybe.withDefault [] value)) dict
+
+                projectPackageDocs =
+                    getProjectPackageDocs maybeActiveFile projectDependencies packageDocs
 
                 topLevelTokens =
                     projectPackageDocs
                         ++ getProjectModuleDocs projectDirectory projectFileContentsDict
                         |> List.filterMap getHints
                         |> List.concat
-                        |> List.foldl insert Dict.empty
+                        |> List.foldl insertTokenAndHint Dict.empty
 
                 topLevelArgTipePairs =
                     getHintsForToken maybeActiveTopLevel topLevelTokens
@@ -4077,7 +4078,7 @@ getActiveFileTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict 
                                 |> List.map (\hint -> ( hint.name, hint ))
                            )
                     )
-                        |> List.foldl insert topLevelTokens
+                        |> List.foldl insertTokenAndHint topLevelTokens
             in
                 activeFileTokens
 

@@ -13242,11 +13242,12 @@ var _user$project$Indexer$getProjectPackageDocs = F3(
 		if (_p133.ctor === 'Just') {
 			var _p134 = A2(_elm_lang$core$Dict$get, _p133._0.projectDirectory, projectDependencies);
 			if (_p134.ctor === 'Just') {
-				var packageUris = A2(_elm_lang$core$List$map, _user$project$Indexer$toPackageUri, _p134._0);
+				var packageUris = _elm_lang$core$Set$fromList(
+					A2(_elm_lang$core$List$map, _user$project$Indexer$toPackageUri, _p134._0));
 				return A2(
 					_elm_lang$core$List$filter,
 					function (moduleDocs) {
-						return A2(_elm_lang$core$List$member, moduleDocs.sourcePath, packageUris);
+						return A2(_elm_lang$core$Set$member, moduleDocs.sourcePath, packageUris);
 					},
 					packageDocs);
 			} else {
@@ -17943,7 +17944,8 @@ var _user$project$Indexer$getActiveFileTokens = F5(
 		if (_p255.ctor === 'Just') {
 			var _p262 = _p255._0.projectDirectory;
 			var _p261 = _p255._0.filePath;
-			var insert = F2(
+			var projectPackageDocs = A3(_user$project$Indexer$getProjectPackageDocs, maybeActiveFile, projectDependencies, packageDocs);
+			var insertTokenAndHint = F2(
 				function (_p256, dict) {
 					var _p257 = _p256;
 					return A3(
@@ -17963,19 +17965,16 @@ var _user$project$Indexer$getActiveFileTokens = F5(
 						dict);
 				});
 			var fileContentsDict = A2(_user$project$Indexer$getFileContentsOfProject, _p262, projectFileContentsDict);
+			var importsPlusActiveModule = A2(_user$project$Indexer$getImportsPlusActiveModuleForActiveFile, maybeActiveFile, fileContentsDict);
 			var getHints = function (moduleDocs) {
 				return A2(
 					_elm_lang$core$Maybe$map,
 					A2(_user$project$Indexer$getFilteredHints, _p261, moduleDocs),
-					A2(
-						_elm_lang$core$Dict$get,
-						moduleDocs.name,
-						A2(_user$project$Indexer$getImportsPlusActiveModuleForActiveFile, maybeActiveFile, fileContentsDict)));
+					A2(_elm_lang$core$Dict$get, moduleDocs.name, importsPlusActiveModule));
 			};
-			var projectPackageDocs = A3(_user$project$Indexer$getProjectPackageDocs, maybeActiveFile, projectDependencies, packageDocs);
 			var topLevelTokens = A3(
 				_elm_lang$core$List$foldl,
-				insert,
+				insertTokenAndHint,
 				_elm_lang$core$Dict$empty,
 				_elm_lang$core$List$concat(
 					A2(
@@ -18016,7 +18015,7 @@ var _user$project$Indexer$getActiveFileTokens = F5(
 			}();
 			var activeFileTokens = A3(
 				_elm_lang$core$List$foldl,
-				insert,
+				insertTokenAndHint,
 				topLevelTokens,
 				A2(
 					_elm_lang$core$Basics_ops['++'],
@@ -18457,7 +18456,6 @@ var _user$project$Indexer$doUpdateFileContents = F4(
 						var newActiveFileContents = A2(_user$project$Indexer$getActiveFileContents, model.activeFile, newFileContentsDict);
 						var oldFileContentsDict = A2(_user$project$Indexer$getFileContentsOfProject, _p306.projectDirectory, model.projectFileContentsDict);
 						var oldActiveFileContents = A2(_user$project$Indexer$getActiveFileContents, model.activeFile, oldFileContentsDict);
-						var projectPackageDocs = A3(_user$project$Indexer$getProjectPackageDocs, model.activeFile, model.projectDependencies, model.packageDocs);
 						return (_elm_lang$core$Native_Utils.eq(_p306.filePath, filePath) && (!_elm_lang$core$Native_Utils.eq(oldActiveFileContents.imports, newActiveFileContents.imports))) ? _elm_lang$core$Maybe$Just(
 							_elm_lang$core$Native_Utils.update(
 								_p307,
@@ -19335,7 +19333,7 @@ var _user$project$Indexer$update = F2(
 					ctor: '_Tuple2',
 					_0: _elm_lang$core$Native_Utils.update(
 						model,
-						{config: _p372._0}),
+						{config: _p372._0, activeFile: _elm_lang$core$Maybe$Nothing}),
 					_1: _elm_lang$core$Platform_Cmd$none
 				};
 			case 'GetAliasesOfType':
