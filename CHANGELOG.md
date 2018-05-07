@@ -1,3 +1,6 @@
+## 8.1.3
+* Fix Signature Help infinite loop again.  Thanks to @SidneyNemzer for reporting and debugging!
+
 ## 8.1.2
 * Fix Signature Help infinite loop.
 
