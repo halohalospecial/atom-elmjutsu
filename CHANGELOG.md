@@ -1,4 +1,4 @@
-## 8.1.3
+## 8.1.4, 8.1.3
 * Fix Signature Help infinite loop again.  Thanks to @SidneyNemzer for reporting and debugging!
 
 ## 8.1.2
