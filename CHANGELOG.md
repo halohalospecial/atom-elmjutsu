@@ -1,3 +1,6 @@
+## 8.2.0
+* Add some support for Elm 0.19.  `Install Package`, `Uninstall Package`, and inferring features are not yet supported.
+
 ## 8.1.4, 8.1.3
 * Fix Signature Help infinite loop again.  Thanks to @SidneyNemzer for reporting and debugging!
 
