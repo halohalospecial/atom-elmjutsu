@@ -88,13 +88,13 @@ port fileContentsChangedSub : (( FilePath, ProjectDirectory, EncodedModuleDocs, 
 port fileContentsRemovedSub : (( FilePath, ProjectDirectory ) -> msg) -> Sub msg
 
 
-port projectDependenciesChangedSub : (( String, List Dependency ) -> msg) -> Sub msg
+port projectDependenciesChangedSub : (( String, List Dependency, ElmVersion ) -> msg) -> Sub msg
 
 
 port downloadMissingPackageDocsSub : (List Dependency -> msg) -> Sub msg
 
 
-port docsReadSub : (List ( Dependency, String ) -> msg) -> Sub msg
+port docsReadSub : (( List ( Dependency, String ), ElmVersion ) -> msg) -> Sub msg
 
 
 port goToDefinitionSub : (( Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token ) -> msg) -> Sub msg
@@ -194,7 +194,7 @@ port readingPackageDocsCmd : () -> Cmd msg
 port downloadingPackageDocsCmd : () -> Cmd msg
 
 
-port readPackageDocsCmd : List Dependency -> Cmd msg
+port readPackageDocsCmd : ( List Dependency, ElmVersion ) -> Cmd msg
 
 
 port hintsForPartialReceivedCmd : ( String, List EncodedHint ) -> Cmd msg
@@ -338,6 +338,10 @@ type alias LocalHints =
     }
 
 
+type alias ElmVersion =
+    String
+
+
 init : ( Model, Cmd Msg )
 init =
     ( emptyModel
@@ -391,12 +395,12 @@ emptyFileContents =
 
 type Msg
     = MaybeDocsDownloaded (List Dependency) (Result Http.Error (List (Result Http.Error ( String, List ModuleDocs ))))
-    | DocsRead (List ( Dependency, String ))
+    | DocsRead ( List ( Dependency, String ), ElmVersion )
     | UpdateActiveTokenHints ( Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token )
     | UpdateActiveFile ( Maybe ActiveFile, Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token )
     | UpdateFileContents FilePath ProjectDirectory FileContents
     | RemoveFileContents ( FilePath, ProjectDirectory )
-    | UpdateProjectDependencies ( String, List Dependency )
+    | UpdateProjectDependencies ( String, List Dependency, ElmVersion )
     | GoToDefinition ( Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token )
     | AskCanGoToDefinition ( Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Token )
     | ShowGoToSymbolView ( Maybe ProjectDirectory, Maybe String )
@@ -505,10 +509,11 @@ update msg model =
                     )
                 )
 
-        DocsRead result ->
+        DocsRead ( result, elmVersion ) ->
             let
                 loadedPackageDocs =
-                    List.concatMap (\( dependency, jsonString ) -> toModuleDocs (toPackageUri dependency) jsonString) result
+                    result
+                        |> List.concatMap (\( dependency, jsonString ) -> toModuleDocs (toPackageUri dependency) jsonString)
             in
                 ( addLoadedPackageDocs loadedPackageDocs model
                 , docsReadCmd ()
@@ -526,8 +531,8 @@ update msg model =
         RemoveFileContents ( filePath, projectDirectory ) ->
             doRemoveFileContents filePath projectDirectory model
 
-        UpdateProjectDependencies ( projectDirectory, dependencies ) ->
-            doUpdateProjectDependencies projectDirectory dependencies model
+        UpdateProjectDependencies ( projectDirectory, dependencies, elmVersion ) ->
+            doUpdateProjectDependencies projectDirectory dependencies elmVersion model
 
         DownloadMissingPackageDocs dependencies ->
             doDownloadMissingPackageDocs dependencies model
@@ -851,8 +856,8 @@ doRemoveFileContents filePath projectDirectory model =
         )
 
 
-doUpdateProjectDependencies : ProjectDirectory -> List Dependency -> Model -> ( Model, Cmd Msg )
-doUpdateProjectDependencies projectDirectory dependencies model =
+doUpdateProjectDependencies : ProjectDirectory -> List Dependency -> ElmVersion -> Model -> ( Model, Cmd Msg )
+doUpdateProjectDependencies projectDirectory dependencies elmVersion model =
     let
         existingPackages =
             List.map .sourcePath model.packageDocs
@@ -866,7 +871,7 @@ doUpdateProjectDependencies projectDirectory dependencies model =
           }
         , Cmd.batch
             [ readingPackageDocsCmd ()
-            , readPackageDocsCmd missingDependencies
+            , readPackageDocsCmd ( missingDependencies, elmVersion )
             ]
         )
 
@@ -3796,25 +3801,10 @@ downloadPackageDocs dependency =
 
 toModuleDocs : String -> String -> List ModuleDocs
 toModuleDocs packageUri jsonString =
-    Decode.decodeString (Decode.list (decodeModuleDocs packageUri)) jsonString
+    jsonString
+        |> Decode.decodeString (Decode.list (decodeModuleDocs packageUri))
         |> Result.toMaybe
         |> Maybe.withDefault []
-
-
-decodeAssociativity : Maybe String -> Maybe Associativity
-decodeAssociativity maybeString =
-    case maybeString of
-        Just "left" ->
-            Just LeftAssociative
-
-        Just "right" ->
-            Just RightAssociative
-
-        Just "non" ->
-            Just NonAssociative
-
-        _ ->
-            Nothing
 
 
 decodeModuleDocs : SourcePath -> Decode.Decoder ModuleDocs
@@ -3861,6 +3851,22 @@ decodeModuleDocs sourcePath =
             name
             values
             comment
+
+
+decodeAssociativity : Maybe String -> Maybe Associativity
+decodeAssociativity maybeString =
+    case maybeString of
+        Just "left" ->
+            Just LeftAssociative
+
+        Just "right" ->
+            Just RightAssociative
+
+        Just "non" ->
+            Just NonAssociative
+
+        _ ->
+            Nothing
 
 
 type alias TokenDict =
