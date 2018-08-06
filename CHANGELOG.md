@@ -1,3 +1,6 @@
+## 8.2.1
+* Fix #121.  Thanks to @CharlonTank and @MethodGrab for reporting!
+
 ## 8.2.0
 * Add some support for Elm 0.19.  `Install Package`, `Uninstall Package`, and inferring features are not yet supported.
 
