@@ -1,3 +1,6 @@
+## 8.3.0
+* Add `Run elm make` option for Elm 0.19 (experimental).  Runs `elm make` on save by default.  If you're still using Elm 0.18, you should set this option to "never".
+
 ## 8.2.1
 * Fix #121.  Thanks to @CharlonTank and @MethodGrab for reporting!
 

@@ -14,20 +14,21 @@
     "atom": ">=1.0.0 <2.0.0"
   },
   "dependencies": {
+    "atom-languageclient": "0.9.4",
     "atom-linter": "10.0.0",
+    "atom-package-deps": "4.6.2",
     "atom-space-pen-views": "2.2.0",
-    "chokidar": "2.0.3",
+    "chokidar": "^2.0.4",
     "fs-extra": "5.0.0",
     "fuzzaldrin-plus": "0.6.0",
-    "tmp": "0.0.33",
-    "underscore-plus": "1.6.6",
-    "untildify": "3.0.2",
-    "atom-package-deps": "4.6.2",
-    "atom-languageclient": "0.9.4",
-    "react": "16.2.0",
     "marked": "0.3.19",
     "opn": "5.3.0",
-    "semver-compare": "1.0.0"
+    "react": "16.4.0",
+    "react-dom": "16.4.0",
+    "semver-compare": "1.0.0",
+    "tmp": "0.0.33",
+    "underscore-plus": "1.6.6",
+    "untildify": "3.0.2"
   },
   "package-deps": [
     "language-elm"
@@ -61,6 +62,11 @@
     "hyperclick.provider": {
       "versions": {
         "0.0.0": "provideHyperclick"
+      }
+    },
+    "linter": {
+      "versions": {
+        "1.0.0": "provideLinter"
       }
     }
   },
