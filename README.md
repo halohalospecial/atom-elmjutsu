@@ -8,6 +8,8 @@ https://atom.io/packages/elmjutsu
 
 * Install [Elm](http://elm-lang.org/install).
 * Install [language-elm](https://atom.io/packages/language-elm) (no need to install `elm-oracle` or `goto`).
+* For `Error Highlighting`:
+  * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) or [linter](https://atom.io/packages/linter).
 * For `Go to Definition`:
   * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) or [hyperclick](https://atom.io/packages/hyperclick) (both optional).
 * For `Autocomplete`:
@@ -17,14 +19,11 @@ https://atom.io/packages/elmjutsu
   * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) (optional).
 * Add your [keybindings](#keybindings).
 
-Related Atom packages:
-- [linter-elm-make](https://atom.io/packages/linter-elm-make) for error highlighting and quick fixes
-- [elm-format](https://atom.io/packages/elm-format) to format your Elm source code on save
-- More here: https://atom.io/packages/search?q=elm
-
 ## Features Overview
 
 Note: Features marked with `*` are disabled by default.  You may enable them in the Settings view.
+
+* [Error Highlighting](#error-highlighting)
 
 * [Autocomplete](#autocomplete)
   * [Global Autocomplete](#global-autocomplete) `*`
@@ -70,6 +69,14 @@ Note: Features marked with `*` are disabled by default.  You may enable them in 
 ## Feature Details
 
 This package parses your projects' source files to extract information, and downloads documentation of 3rd-party Elm packages.  The downloaded documentation files will be saved to the path set in `Cache Directory` in the Settings view.  If `Cache Directory` is blank, a temporary directory will be used.  Take note that most operating systems delete temporary directories at bootup or at regular intervals.
+
+### <a name="error-highlighting"></a>Error Highlighting
+* This only works for Elm 0.19 onwards.
+* Make sure that `Elm Path` is properly configured in the package settings.  The default works for most cases.
+* If you are using Elm 0.18, it's better to disable this option by setting `Run elm make` to "never" and use [linter-elm-make](https://atom.io/packages/linter-elm-make) instead.
+* If you want to change the appearance of the error messages, look into [error-highlighting.less](https://github.com/halohalospecial/atom-elmjutsu/blob/master/styles/error-highlighting.less) and copy the styles to your `~/.atom/styles.less` (where `~/.atom` is your Atom directory).
+
+![error-highlighting](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/error-highlighting.png?raw=true)
 
 ### <a name="autocomplete"></a>Autocomplete
 
