@@ -1,3 +1,6 @@
+## 8.3.2
+* Make inferring features work with Elm 0.19.
+
 ## 8.3.1
 * Add Error Highlighting to README.
 
