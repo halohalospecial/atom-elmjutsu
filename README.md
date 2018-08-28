@@ -71,7 +71,7 @@ Note: Features marked with `*` are disabled by default.  You may enable them in 
 This package parses your projects' source files to extract information, and downloads documentation of 3rd-party Elm packages.  The downloaded documentation files will be saved to the path set in `Cache Directory` in the Settings view.  If `Cache Directory` is blank, a temporary directory will be used.  Take note that most operating systems delete temporary directories at bootup or at regular intervals.
 
 ### <a name="error-highlighting"></a>Error Highlighting
-* This only works for Elm 0.19 onwards.
+* This only works for Elm 0.19 onwards.  It's recommended to disable [linter-elm-make](https://atom.io/packages/linter-elm-make).
 * Make sure that `Elm Path` is properly configured in the package settings.  The default works for most cases.
 * If you are using Elm 0.18, it's better to disable this option by setting `Run elm make` to "never" and use [linter-elm-make](https://atom.io/packages/linter-elm-make) instead.
 * If you want to change the appearance of the error messages, look into [error-highlighting.less](https://github.com/halohalospecial/atom-elmjutsu/blob/master/styles/error-highlighting.less) and copy the styles to your `~/.atom/styles.less` (where `~/.atom` is your Atom directory).
