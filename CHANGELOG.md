@@ -1,3 +1,6 @@
+## 8.3.3
+* Display elm make errors in notification popups.
+
 ## 8.3.2
 * Make inferring features work with Elm 0.19.
 
