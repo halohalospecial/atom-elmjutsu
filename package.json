@@ -68,6 +68,11 @@
       "versions": {
         "1.0.0": "provideLinter"
       }
+    },
+    "code-actions": {
+      "versions": {
+        "0.1.0": "provideCodeActions"
+      }
     }
   },
   "consumedServices": {

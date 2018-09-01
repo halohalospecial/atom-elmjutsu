@@ -1,3 +1,7 @@
+## 8.4.0
+* Add `Replace with` quick fix.
+* Add `Add missing patterns` quick fix.
+
 ## 8.3.3
 * Display elm make errors in notification popups.
 

@@ -9,7 +9,7 @@ https://atom.io/packages/elmjutsu
 * Install [Elm](http://elm-lang.org/install).
 * Install [language-elm](https://atom.io/packages/language-elm) (no need to install `elm-oracle` or `goto`).
 * For `Error Highlighting`:
-  * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) or [linter](https://atom.io/packages/linter).
+  * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) or [linter](https://atom.io/packages/linter) + [linter-ui-default](https://atom.io/packages/linter-ui-default).
 * For `Go to Definition`:
   * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) or [hyperclick](https://atom.io/packages/hyperclick) (both optional).
 * For `Autocomplete`:
@@ -24,6 +24,7 @@ https://atom.io/packages/elmjutsu
 Note: Features marked with `*` are disabled by default.  You may enable them in the Settings view.
 
 * [Error Highlighting](#error-highlighting)
+  * [Quick Fixes](#quick-fixes)
 
 * [Autocomplete](#autocomplete)
   * [Global Autocomplete](#global-autocomplete) `*`
@@ -77,6 +78,16 @@ This package parses your projects' source files to extract information, and down
 * If you want to change the appearance of the error messages, look into [error-highlighting.less](https://github.com/halohalospecial/atom-elmjutsu/blob/master/styles/error-highlighting.less) and copy the styles to your `~/.atom/styles.less` (where `~/.atom` is your Atom directory).
 
 ![error-highlighting](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/error-highlighting.png?raw=true)
+
+#### <a name="quick-fixes"></a>Quick Fixes
+
+* If you have [atom-ide-ui](https://atom.io/packages/atom-ide-ui) installed, you can invoke the `Diagnostics: Show Actions At Position` command or click on the appropriate button from the panel. You can uncheck `Enable Code Actions` in the Settings view if you do not want to show the buttons.
+
+![quick-fix-replace-with](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/quick-fix-replace-with.gif?raw=true)
+
+* Available Quick Fixes:
+  * Replace with
+  * Add missing patterns
 
 ### <a name="autocomplete"></a>Autocomplete
 
