@@ -79,6 +79,20 @@ This package parses your projects' source files to extract information, and down
 
 ![error-highlighting](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/error-highlighting.png?raw=true)
 
+* Useful Commands
+  * Atom IDE
+    * `Diagnostics: Go To Next Diagnostic`
+    * `Diagnostics: Go To Previous Diagnostic`
+    * `Diagnostics: Toggle Table`
+  * Linter v2
+    * `Linter Ui Default: Next`
+    * `Linter Ui Default: Previous`
+    * `Linter Ui Default: Toggle Active Editor`
+  * Linter v1
+    * `Linter: Next Error`
+    * `Linter: Previous Error`
+    * `Linter: Toggle`
+
 #### <a name="quick-fixes"></a>Quick Fixes
 
 * If you have [atom-ide-ui](https://atom.io/packages/atom-ide-ui) installed, you can invoke the `Diagnostics: Show Actions At Position` command or click on the appropriate button from the panel. You can uncheck `Enable Code Actions` in the Settings view if you do not want to show the buttons.
