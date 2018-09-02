@@ -1,3 +1,6 @@
+## 8.5.0
+* Add `Enhanced Elm Make Messages` option.  This applies additional styling to Elm Make messages and removes code snippets to save space.
+
 ## 8.4.0
 * Add `Replace with` quick fix.
 * Add `Add missing patterns` quick fix.

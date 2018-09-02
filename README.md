@@ -366,6 +366,7 @@ Here is an example:
   'alt-l': 'elmjutsu:lift-to-let'
   'alt-t': 'elmjutsu:lift-to-top-level'
   'alt-i': 'elmjutsu:infer-type'
+  'f6': 'diagnostics:show-actions-at-position'
 
 'atom-workspace':
   'f1': 'elmjutsu:toggle-sidekick'
