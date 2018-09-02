@@ -1,4 +1,5 @@
 ## 8.5.0
+* Make autocomplete work with `package` type Elm 0.19 projects.  Thanks to @miyamoen for reporting!
 * Add `Enhanced Elm Make Messages` option.  This applies additional styling to Elm Make messages and removes code snippets to save space.
 
 ## 8.4.0

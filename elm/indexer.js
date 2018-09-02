@@ -17566,82 +17566,100 @@ var _user$project$Indexer$defaultImports = _elm_lang$core$Dict$fromList(
 		_0: A2(_user$project$Indexer_ops['=>'], 'Basics', _user$project$Indexer$All),
 		_1: {
 			ctor: '::',
-			_0: A2(_user$project$Indexer_ops['=>'], 'Debug', _user$project$Indexer$None),
+			_0: A2(
+				_user$project$Indexer_ops['=>'],
+				'Char',
+				_user$project$Indexer$Some(
+					_elm_lang$core$Set$fromList(
+						{
+							ctor: '::',
+							_0: 'Char',
+							_1: {ctor: '[]'}
+						}))),
 			_1: {
 				ctor: '::',
-				_0: A2(
-					_user$project$Indexer_ops['=>'],
-					'List',
-					_user$project$Indexer$Some(
-						_elm_lang$core$Set$fromList(
-							{
-								ctor: '::',
-								_0: 'List',
-								_1: {
-									ctor: '::',
-									_0: '::',
-									_1: {ctor: '[]'}
-								}
-							}))),
+				_0: A2(_user$project$Indexer_ops['=>'], 'Debug', _user$project$Indexer$None),
 				_1: {
 					ctor: '::',
 					_0: A2(
 						_user$project$Indexer_ops['=>'],
-						'Maybe',
+						'List',
 						_user$project$Indexer$Some(
-							_elm_lang$core$Set$singleton('Maybe'))),
+							_elm_lang$core$Set$fromList(
+								{
+									ctor: '::',
+									_0: 'List',
+									_1: {
+										ctor: '::',
+										_0: '::',
+										_1: {ctor: '[]'}
+									}
+								}))),
 					_1: {
 						ctor: '::',
 						_0: A2(
 							_user$project$Indexer_ops['=>'],
-							'Result',
+							'Maybe',
 							_user$project$Indexer$Some(
-								_elm_lang$core$Set$singleton('Result'))),
+								_elm_lang$core$Set$singleton('Maybe'))),
 						_1: {
 							ctor: '::',
 							_0: A2(
 								_user$project$Indexer_ops['=>'],
-								'Platform',
+								'Result',
 								_user$project$Indexer$Some(
-									_elm_lang$core$Set$singleton('Program'))),
+									_elm_lang$core$Set$singleton('Result'))),
 							_1: {
 								ctor: '::',
-								_0: {
-									ctor: '_Tuple2',
-									_0: 'Platform.Cmd',
-									_1: A2(
-										_user$project$Indexer$Import,
-										_elm_lang$core$Maybe$Just('Cmd'),
-										_user$project$Indexer$Some(
-											_elm_lang$core$Set$fromList(
-												{
-													ctor: '::',
-													_0: 'Cmd',
-													_1: {
-														ctor: '::',
-														_0: '!',
-														_1: {ctor: '[]'}
-													}
-												})))
-								},
+								_0: A2(
+									_user$project$Indexer_ops['=>'],
+									'Platform',
+									_user$project$Indexer$Some(
+										_elm_lang$core$Set$singleton('Program'))),
 								_1: {
 									ctor: '::',
 									_0: {
 										ctor: '_Tuple2',
-										_0: 'Platform.Sub',
+										_0: 'Platform.Cmd',
 										_1: A2(
 											_user$project$Indexer$Import,
-											_elm_lang$core$Maybe$Just('Sub'),
+											_elm_lang$core$Maybe$Just('Cmd'),
 											_user$project$Indexer$Some(
-												_elm_lang$core$Set$singleton('Sub')))
+												_elm_lang$core$Set$fromList(
+													{
+														ctor: '::',
+														_0: 'Cmd',
+														_1: {ctor: '[]'}
+													})))
 									},
 									_1: {
 										ctor: '::',
-										_0: A2(_user$project$Indexer_ops['=>'], 'String', _user$project$Indexer$None),
+										_0: {
+											ctor: '_Tuple2',
+											_0: 'Platform.Sub',
+											_1: A2(
+												_user$project$Indexer$Import,
+												_elm_lang$core$Maybe$Just('Sub'),
+												_user$project$Indexer$Some(
+													_elm_lang$core$Set$singleton('Sub')))
+										},
 										_1: {
 											ctor: '::',
-											_0: A2(_user$project$Indexer_ops['=>'], 'Tuple', _user$project$Indexer$None),
-											_1: {ctor: '[]'}
+											_0: A2(
+												_user$project$Indexer_ops['=>'],
+												'String',
+												_user$project$Indexer$Some(
+													_elm_lang$core$Set$fromList(
+														{
+															ctor: '::',
+															_0: 'String',
+															_1: {ctor: '[]'}
+														}))),
+											_1: {
+												ctor: '::',
+												_0: A2(_user$project$Indexer_ops['=>'], 'Tuple', _user$project$Indexer$None),
+												_1: {ctor: '[]'}
+											}
 										}
 									}
 								}

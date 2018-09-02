@@ -1,4 +1,4 @@
-port module Indexer exposing (..)
+port module Indexer exposing (ActiveFile, ActiveRecordVariable, ActiveTopLevel, Associativity(..), Config, Dependency, ElmVersion, EncodedHint, EncodedModuleDocs, EncodedSymbol, EncodedValue, EncodedValues, Exposed(..), ExternalHints, FileContents, FileContentsDict, FilePath, Hint, HintsCache, Import, ImportDict, ImportSuggestion, Inference, LocalHints, Model, ModuleDocs, Msg(..), ProjectDependencies, ProjectDirectory, ProjectFileContentsDict, RawImport, SourcePath, Symbol, SymbolKind(..), Tipe, TipeCase, TipeString, Token, TokenDict, Value, Values, Version, activeFileChangedCmd, activeTokenHintsChangedCmd, addImportSub, addLoadedPackageDocs, aliasesOfTypeReceivedCmd, areMatchingTypes, areMatchingTypesRecur, areTipesCompatibleRecur, argSeparatorRegex, askCanGoToDefinitionSub, canGoToDefinitionRepliedCmd, caseOfConstructedCmd, clearLocalHintsCacheSub, compressTipeRegex, compressTipeString, computeHintSourcePath, configChangedSub, constructCaseOf, constructCaseOfSub, constructDefaultArguments, constructDefaultArgumentsSub, constructDefaultValueForType, constructDefaultValueForTypeSub, constructFromTypeAnnotation, constructFromTypeAnnotationSub, decodeAssociativity, decodeModuleDocs, defaultArgumentsConstructedCmd, defaultImports, defaultSuggestions, defaultValueForTypeConstructedCmd, dependenciesNotFoundCmd, dictGroupBy, doAddImport, doAskCanGoToDefinition, doConstructCaseOf, doConstructDefaultArguments, doConstructDefaultValueForType, doConstructFromTypeAnnotation, doDownloadMissingPackageDocs, doGetAliasesOfType, doGetFieldsForRecordVariable, doGetFunctionsMatchingType, doGetHintsForPartial, doGetImporterSourcePathsForToken, doGetSignatureHelp, doGetSuggestionsForImport, doGetTokenInfo, doGoToDefinition, doRemoveFileContents, doShowAddImportView, doShowGoToSymbolView, doUpdateActiveFile, doUpdateActiveTokenHints, doUpdateFileContents, doUpdateProjectDependencies, docsDownloadedCmd, docsReadCmd, docsReadSub, dotToHyphen, downloadDocsFailedCmd, downloadMissingPackageDocsSub, downloadPackageDocs, downloadPackageDocsList, downloadingPackageDocsCmd, emptyConfig, emptyFileContents, emptyHint, emptyModel, emptyModuleDocs, encodeAssociativity, encodeHint, encodeHints, encodeSymbol, fieldsForRecordVariableReceivedCmd, fileContentsChangedSub, fileContentsRemovedSub, filePathSeparator, filterHintsByPartial, filterHintsFunction, filterTypeIncompatibleHints, formatDecoderEncoderFunctionBody, formatSourcePath, fromTypeAnnotationConstructedCmd, functionsMatchingTypeReceivedCmd, getActiveFileContents, getActiveFileTokens, getAliasesOfType, getAliasesOfTypeSub, getArgsParts, getArgsPartsRecur, getCharAndRest, getDefaultArgNames, getDefaultDecoderRecur, getDefaultEncoderRecur, getDefaultValueForType, getDefaultValueForTypeRecur, getExposedAndUnexposedHints, getExternalAndLocalHints, getExternalHints, getFieldsForRecordVariableSub, getFileContentsOfProject, getFilteredHints, getFunctionArgNameRecur, getFunctionsMatchingType, getFunctionsMatchingTypeSub, getHintFullName, getHintsForPartial, getHintsForPartialSub, getHintsForToken, getHintsForUnexposedNames, getImportersForToken, getImportersForTokenSub, getImportsPlusActiveModule, getImportsPlusActiveModuleForActiveFile, getLastName, getLocalHints, getModuleAndSymbolName, getModuleLocalName, getModuleName, getModuleSymbols, getParameterTipes, getProjectDependencySymbols, getProjectFileSymbols, getProjectModuleDocs, getProjectPackageDocs, getProjectSymbols, getRecordArgParts, getRecordFieldTokens, getRecordFieldTokensRecur, getRecordTipeFieldNames, getRecordTipeFieldTipes, getRecordTipeParts, getRecordTipePartsRecur, getReturnTipe, getSignatureHelpSub, getSourcePathOfRecordFieldToken, getSourcePathOfRecordFieldTokenRecur, getSuggestionsForImport, getSuggestionsForImportSub, getTipeCaseAlignedArgTipes, getTipeCaseTypeAnnotation, getTipeDistance, getTipeParts, getTipePartsRecur, getTokenAndActiveFileTokensForGoToDefinition, getTokenInfoSub, getTupleParts, getTuplePartsRecur, getTupleStringFromParts, goToDefinitionCmd, goToDefinitionSub, hintsForPartialReceivedCmd, importersForTokenReceivedCmd, importsToString, inferenceEnteredSub, inferenceToHints, init, isAppendableTipe, isComparableTipe, isDecoderTipe, isEncoderTipe, isExposed, isFunctionTipe, isNumberTipe, isPackageSourcePath, isPrimitiveTipe, isProjectSourcePath, isRecordString, isTipeVariable, isTupleString, isTypeClass, lastParameterTipe, main, moduleToHints, nameToHints, normalizeTipe, normalizeTipeRecur, optionalTaskSequence, packageDocsPrefix, parseTipeString, partitionByTipe, prefixRecordVariableToToken, primitiveTipes, projectDependenciesChangedSub, readPackageDocsCmd, readingPackageDocsCmd, showAddImportViewCmd, showAddImportViewSub, showGoToSymbolViewCmd, showGoToSymbolViewSub, signatureHelpReceivedCmd, sortHintsByName, sortHintsByScore, subscriptions, suggestionsForImportReceivedCmd, superTipes, symbolKindToString, tipeToHintable, tipeToValue, tipeToVar, toImport, toImportDict, toModuleDocs, toPackageUri, tokenInfoReceivedCmd, topLevelArgToHints, truncateModuleComment, typeConstructorToNameAndArgs, unencloseParentheses, unionTagsToHints, update, updateActiveFileSub, updateActiveTokenSub, updateFileContents, updateImportsCmd, valueToHintable)
 
 import Ast
 import Ast.Statement exposing (..)
@@ -43,7 +43,7 @@ subscriptions model =
                                 }
                         }
                 in
-                    UpdateFileContents filePath projectDirectory (FileContents moduleDocs (toImportDict rawImports))
+                UpdateFileContents filePath projectDirectory (FileContents moduleDocs (toImportDict rawImports))
             )
         , fileContentsRemovedSub RemoveFileContents
         , projectDependenciesChangedSub UpdateProjectDependencies
@@ -460,7 +460,7 @@ update msg model =
                                                 Http.BadPayload _ { status } ->
                                                     "BadPayload " ++ toString status.code ++ " " ++ status.message
                                     in
-                                        ( successes, failures ++ [ ( dependency, errorDetails ) ] )
+                                    ( successes, failures ++ [ ( dependency, errorDetails ) ] )
                         )
                         ( [], [] )
                         (List.map2 (,) dependencies result)
@@ -473,41 +473,43 @@ update msg model =
                     successes
                         |> List.map Tuple.second
             in
-                ( addLoadedPackageDocs loadedPackageDocs model
-                , Cmd.batch
-                    ([ docsDownloadedCmd loadedDependenciesAndJson ]
-                        ++ (if List.length failures > 0 then
-                                [ downloadDocsFailedCmd
-                                    (failures
-                                        |> List.map
-                                            (\( dependency, errorDetails ) ->
-                                                toPackageUri dependency ++ "documentation.json (" ++ errorDetails ++ ")"
-                                            )
-                                        |> String.join "\n"
-                                    )
-                                ]
-                                    ++ (let
-                                            notFoundDependencies =
-                                                failures
-                                                    |> List.filter
-                                                        (\( _, errorDetails ) ->
-                                                            errorDetails == "BadStatus 404 Not found"
-                                                        )
-                                                    |> List.map Tuple.first
+            ( addLoadedPackageDocs loadedPackageDocs model
+            , Cmd.batch
+                ([ docsDownloadedCmd loadedDependenciesAndJson ]
+                    ++ (if List.length failures > 0 then
+                            [ downloadDocsFailedCmd
+                                (failures
+                                    |> List.map
+                                        (\( dependency, errorDetails ) ->
+                                            toPackageUri dependency ++ "documentation.json (" ++ errorDetails ++ ")"
+                                        )
+                                    |> String.join "\n"
+                                )
+                            ]
+                                ++ (let
+                                        notFoundDependencies =
+                                            failures
+                                                |> List.filter
+                                                    (\( _, errorDetails ) ->
+                                                        errorDetails == "BadStatus 404 Not found"
+                                                    )
+                                                |> List.map Tuple.first
 
-                                            projectDirectories =
-                                                Dict.keys model.projectFileContentsDict
-                                        in
-                                            if List.length notFoundDependencies > 0 then
-                                                [ dependenciesNotFoundCmd ( projectDirectories, notFoundDependencies ) ]
-                                            else
-                                                []
-                                       )
-                            else
-                                []
-                           )
-                    )
+                                        projectDirectories =
+                                            Dict.keys model.projectFileContentsDict
+                                    in
+                                    if List.length notFoundDependencies > 0 then
+                                        [ dependenciesNotFoundCmd ( projectDirectories, notFoundDependencies ) ]
+
+                                    else
+                                        []
+                                   )
+
+                        else
+                            []
+                       )
                 )
+            )
 
         DocsRead ( result, elmVersion ) ->
             let
@@ -515,9 +517,9 @@ update msg model =
                     result
                         |> List.concatMap (\( dependency, jsonString ) -> toModuleDocs (toPackageUri dependency) jsonString)
             in
-                ( addLoadedPackageDocs loadedPackageDocs model
-                , docsReadCmd ()
-                )
+            ( addLoadedPackageDocs loadedPackageDocs model
+            , docsReadCmd ()
+            )
 
         UpdateActiveTokenHints ( maybeActiveTopLevel, maybeActiveRecordVariable, maybeToken ) ->
             doUpdateActiveTokenHints maybeActiveTopLevel maybeActiveRecordVariable maybeToken model
@@ -671,6 +673,7 @@ doUpdateActiveTokenHints maybeActiveTopLevel maybeActiveRecordVariable maybeToke
                 Just token ->
                     if model.activeTopLevel /= maybeActiveTopLevel then
                         getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+
                     else
                         model.activeFileTokens
 
@@ -685,18 +688,18 @@ doUpdateActiveTokenHints maybeActiveTopLevel maybeActiveRecordVariable maybeToke
                 Just token ->
                     getHintsForToken prefixedToken updatedActiveFileTokens
     in
-        ( { model
-            | activeTopLevel = maybeActiveTopLevel
-            , activeFileTokens = updatedActiveFileTokens
-            , activeToken = prefixedToken
-            , activeTokenHints = updatedActiveTokenHints
-          }
-        , activeTokenHintsChangedCmd
-            ( Maybe.withDefault "" prefixedToken
-            , updatedActiveTokenHints
-                |> encodeHints model.config.showAliasesOfType updatedActiveFileTokens
-            )
+    ( { model
+        | activeTopLevel = maybeActiveTopLevel
+        , activeFileTokens = updatedActiveFileTokens
+        , activeToken = prefixedToken
+        , activeTokenHints = updatedActiveTokenHints
+      }
+    , activeTokenHintsChangedCmd
+        ( Maybe.withDefault "" prefixedToken
+        , updatedActiveTokenHints
+            |> encodeHints model.config.showAliasesOfType updatedActiveFileTokens
         )
+    )
 
 
 doGetTokenInfo : Maybe ProjectDirectory -> Maybe FilePath -> Maybe ActiveTopLevel -> Maybe ActiveTopLevel -> Maybe Token -> Model -> ( Model, Cmd Msg )
@@ -712,6 +715,7 @@ doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeActi
                         Just activeFile ->
                             if activeFile.filePath == filePath && model.activeTopLevel == maybeActiveTopLevel then
                                 model.activeFileTokens
+
                             else
                                 getActiveFileTokens (Just { filePath = filePath, projectDirectory = projectDirectory }) maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
 
@@ -721,11 +725,11 @@ doGetTokenInfo maybeProjectDirectory maybeFilePath maybeActiveTopLevel maybeActi
                 tokenHints =
                     getHintsForToken prefixedToken fileTokens
             in
-                ( model
-                , tokenHints
-                    |> encodeHints model.config.showAliasesOfType fileTokens
-                    |> tokenInfoReceivedCmd
-                )
+            ( model
+            , tokenHints
+                |> encodeHints model.config.showAliasesOfType fileTokens
+                |> tokenInfoReceivedCmd
+            )
 
         _ ->
             ( model
@@ -742,29 +746,30 @@ doUpdateActiveFile maybeActiveFile maybeActiveTopLevel maybeActiveRecordVariable
         updatedActiveFileTokens =
             if model.activeFile /= maybeActiveFile || model.activeTopLevel /= maybeActiveTopLevel then
                 getActiveFileTokens maybeActiveFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
+
             else
                 model.activeFileTokens
 
         updatedActiveTokenHints =
             getHintsForToken prefixedToken updatedActiveFileTokens
     in
-        ( { model
-            | activeFile = maybeActiveFile
-            , activeTopLevel = maybeActiveTopLevel
-            , activeFileTokens = updatedActiveFileTokens
-            , activeToken = prefixedToken
-            , activeTokenHints = updatedActiveTokenHints
-            , hintsCache = Nothing
-          }
-        , Cmd.batch
-            [ activeFileChangedCmd maybeActiveFile
-            , activeTokenHintsChangedCmd
-                ( Maybe.withDefault "" prefixedToken
-                , updatedActiveTokenHints
-                    |> encodeHints model.config.showAliasesOfType updatedActiveFileTokens
-                )
-            ]
-        )
+    ( { model
+        | activeFile = maybeActiveFile
+        , activeTopLevel = maybeActiveTopLevel
+        , activeFileTokens = updatedActiveFileTokens
+        , activeToken = prefixedToken
+        , activeTokenHints = updatedActiveTokenHints
+        , hintsCache = Nothing
+      }
+    , Cmd.batch
+        [ activeFileChangedCmd maybeActiveFile
+        , activeTokenHintsChangedCmd
+            ( Maybe.withDefault "" prefixedToken
+            , updatedActiveTokenHints
+                |> encodeHints model.config.showAliasesOfType updatedActiveFileTokens
+            )
+        ]
+    )
 
 
 doUpdateFileContents : FilePath -> ProjectDirectory -> FileContents -> Model -> ( Model, Cmd Msg )
@@ -796,10 +801,11 @@ doUpdateFileContents filePath projectDirectory fileContents model =
                                         newActiveFileContents =
                                             getActiveFileContents model.activeFile newFileContentsDict
                                     in
-                                        if activeFile.filePath == filePath && oldActiveFileContents.imports /= newActiveFileContents.imports then
-                                            Just { hintsCache | external = Nothing }
-                                        else
-                                            model.hintsCache
+                                    if activeFile.filePath == filePath && oldActiveFileContents.imports /= newActiveFileContents.imports then
+                                        Just { hintsCache | external = Nothing }
+
+                                    else
+                                        model.hintsCache
 
                                 Nothing ->
                                     model.hintsCache
@@ -810,13 +816,13 @@ doUpdateFileContents filePath projectDirectory fileContents model =
                 Nothing ->
                     model.hintsCache
     in
-        ( { model
-            | projectFileContentsDict = updatedProjectFileContentsDict
-            , activeFileTokens = updatedActiveFileTokens
-            , hintsCache = updatedHintsCache
-          }
-        , activeFileChangedCmd model.activeFile
-        )
+    ( { model
+        | projectFileContentsDict = updatedProjectFileContentsDict
+        , activeFileTokens = updatedActiveFileTokens
+        , hintsCache = updatedHintsCache
+      }
+    , activeFileChangedCmd model.activeFile
+    )
 
 
 updateFileContents : FilePath -> ProjectDirectory -> FileContents -> ProjectFileContentsDict -> ProjectFileContentsDict
@@ -828,7 +834,7 @@ updateFileContents filePath projectDirectory fileContents projectFileContentsDic
         updatedFileContentsDict =
             Dict.update filePath (\_ -> Just fileContents) fileContentsDict
     in
-        Dict.update projectDirectory (\_ -> Just updatedFileContentsDict) projectFileContentsDict
+    Dict.update projectDirectory (\_ -> Just updatedFileContentsDict) projectFileContentsDict
 
 
 doRemoveFileContents : FilePath -> ProjectDirectory -> Model -> ( Model, Cmd Msg )
@@ -842,18 +848,18 @@ doRemoveFileContents filePath projectDirectory model =
                 updatedFileContentsDict =
                     Dict.remove filePath fileContentsDict
             in
-                Dict.update projectDirectory (\_ -> Just updatedFileContentsDict) model.projectFileContentsDict
+            Dict.update projectDirectory (\_ -> Just updatedFileContentsDict) model.projectFileContentsDict
 
         updatedActiveFileTokens =
             getActiveFileTokens model.activeFile model.activeTopLevel updatedProjectFileContentsDict model.projectDependencies model.packageDocs
     in
-        ( { model
-            | projectFileContentsDict = updatedProjectFileContentsDict
-            , activeFileTokens = updatedActiveFileTokens
-            , hintsCache = Nothing
-          }
-        , activeFileChangedCmd model.activeFile
-        )
+    ( { model
+        | projectFileContentsDict = updatedProjectFileContentsDict
+        , activeFileTokens = updatedActiveFileTokens
+        , hintsCache = Nothing
+      }
+    , activeFileChangedCmd model.activeFile
+    )
 
 
 doUpdateProjectDependencies : ProjectDirectory -> List Dependency -> ElmVersion -> Model -> ( Model, Cmd Msg )
@@ -865,15 +871,15 @@ doUpdateProjectDependencies projectDirectory dependencies elmVersion model =
         missingDependencies =
             List.filter (\dependency -> not <| List.member (toPackageUri dependency) existingPackages) dependencies
     in
-        ( { model
-            | projectDependencies = Dict.update projectDirectory (\_ -> Just dependencies) model.projectDependencies
-            , hintsCache = Nothing
-          }
-        , Cmd.batch
-            [ readingPackageDocsCmd ()
-            , readPackageDocsCmd ( missingDependencies, elmVersion )
-            ]
-        )
+    ( { model
+        | projectDependencies = Dict.update projectDirectory (\_ -> Just dependencies) model.projectDependencies
+        , hintsCache = Nothing
+      }
+    , Cmd.batch
+        [ readingPackageDocsCmd ()
+        , readPackageDocsCmd ( missingDependencies, elmVersion )
+        ]
+    )
 
 
 doDownloadMissingPackageDocs : List Dependency -> Model -> ( Model, Cmd Msg )
@@ -905,15 +911,15 @@ doGoToDefinition maybeActiveTopLevel maybeActiveRecordVariable maybeToken model 
                                 , kind = hint.kind
                                 }
                         in
-                            symbol
-                                |> encodeSymbol
-                                |> (,) model.activeFile
-                                |> goToDefinitionCmd
+                        symbol
+                            |> encodeSymbol
+                            |> (,) model.activeFile
+                            |> goToDefinitionCmd
                     )
     in
-        ( model
-        , Cmd.batch requests
-        )
+    ( model
+    , Cmd.batch requests
+    )
 
 
 doAskCanGoToDefinition : Maybe ActiveTopLevel -> Maybe ActiveRecordVariable -> Token -> Model -> ( Model, Cmd Msg )
@@ -922,19 +928,19 @@ doAskCanGoToDefinition maybeActiveTopLevel maybeActiveRecordVariable token model
         ( tokenToCheck, activeFileTokens ) =
             getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel maybeActiveRecordVariable (Just token) model
     in
-        case tokenToCheck of
-            Nothing ->
-                ( model
-                , ( token, False ) |> canGoToDefinitionRepliedCmd
-                )
+    case tokenToCheck of
+        Nothing ->
+            ( model
+            , ( token, False ) |> canGoToDefinitionRepliedCmd
+            )
 
-            Just token2 ->
-                ( model
-                , ( token
-                  , Dict.member token2 activeFileTokens
-                  )
-                    |> canGoToDefinitionRepliedCmd
-                )
+        Just token2 ->
+            ( model
+            , ( token
+              , Dict.member token2 activeFileTokens
+              )
+                |> canGoToDefinitionRepliedCmd
+            )
 
 
 getTokenAndActiveFileTokensForGoToDefinition : Maybe ActiveTopLevel -> Maybe ActiveRecordVariable -> Maybe Token -> Model -> ( Maybe Token, TokenDict )
@@ -958,10 +964,11 @@ getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel maybeActiveReco
                         activeFileContents =
                             getActiveFileContents model.activeFile fileContentsDict
                     in
-                        if activeFileContents.moduleDocs.name == getModuleName token2 then
-                            Just (getLastName token2)
-                        else
-                            Just token2
+                    if activeFileContents.moduleDocs.name == getModuleName token2 then
+                        Just (getLastName token2)
+
+                    else
+                        Just token2
 
                 ( Just token, Nothing ) ->
                     Just token
@@ -972,7 +979,7 @@ getTokenAndActiveFileTokensForGoToDefinition maybeActiveTopLevel maybeActiveReco
         activeFileTokens =
             getActiveFileTokens model.activeFile maybeActiveTopLevel model.projectFileContentsDict model.projectDependencies model.packageDocs
     in
-        ( tokenToCheck, activeFileTokens )
+    ( tokenToCheck, activeFileTokens )
 
 
 doShowGoToSymbolView : Maybe ProjectDirectory -> Maybe String -> Model -> ( Model, Cmd Msg )
@@ -990,6 +997,7 @@ doShowGoToSymbolView maybeProjectDirectory maybeToken model =
                                 Just activeFile ->
                                     if activeFile.filePath == hint.sourcePath then
                                         Just (getLastName hint.name)
+
                                     else
                                         Just hint.name
 
@@ -999,10 +1007,10 @@ doShowGoToSymbolView maybeProjectDirectory maybeToken model =
                         Nothing ->
                             maybeToken
             in
-                ( model
-                , ( defaultSymbolName, model.activeFile, List.map encodeSymbol (getProjectFileSymbols projectDirectory model.projectFileContentsDict) )
-                    |> showGoToSymbolViewCmd
-                )
+            ( model
+            , ( defaultSymbolName, model.activeFile, List.map encodeSymbol (getProjectFileSymbols projectDirectory model.projectFileContentsDict) )
+                |> showGoToSymbolViewCmd
+            )
 
         Nothing ->
             ( model
@@ -1021,13 +1029,13 @@ doGetHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSig
         ( hints, updatedHintsCache ) =
             getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSignature isFiltered isGlobal model.activeFile model.projectFileContentsDict model.projectDependencies model.packageDocs model.hintsCache model.activeFileTokens
     in
-        ( { model | hintsCache = updatedHintsCache }
-        , ( partial
-          , hints
-                |> encodeHints model.config.showAliasesOfType model.activeFileTokens
-          )
-            |> hintsForPartialReceivedCmd
-        )
+    ( { model | hintsCache = updatedHintsCache }
+    , ( partial
+      , hints
+            |> encodeHints model.config.showAliasesOfType model.activeFileTokens
+      )
+        |> hintsForPartialReceivedCmd
+    )
 
 
 doGetFieldsForRecordVariable : ActiveRecordVariable -> String -> Bool -> Model -> ( Model, Cmd Msg )
@@ -1054,14 +1062,14 @@ doGetFieldsForRecordVariable activeRecordVariable partial isFiltered model =
                             |> not
                     )
     in
-        ( -- { model | hintsCache = updatedHintsCache }
-          model
-        , ( partial
-          , fieldsHints
-                |> encodeHints model.config.showAliasesOfType model.activeFileTokens
-          )
-            |> fieldsForRecordVariableReceivedCmd
-        )
+    ( -- { model | hintsCache = updatedHintsCache }
+      model
+    , ( partial
+      , fieldsHints
+            |> encodeHints model.config.showAliasesOfType model.activeFileTokens
+      )
+        |> fieldsForRecordVariableReceivedCmd
+    )
 
 
 doGetSuggestionsForImport : String -> Bool -> Model -> ( Model, Cmd Msg )
@@ -1088,22 +1096,25 @@ doGetImporterSourcePathsForToken maybeProjectDirectory maybeToken maybeIsCursorA
                 ( token, willUseFullToken ) =
                     if rawToken == activeFileContents.moduleDocs.name then
                         ( rawToken, True )
+
                     else if Dict.get rawToken activeFileContents.imports /= Nothing then
                         ( rawToken, True )
+
                     else if isCursorAtLastPartOfToken then
                         ( rawToken, False )
+
                     else
                         ( getModuleName rawToken, False )
             in
-                ( model
-                , ( projectDirectory
-                  , rawToken
-                  , willUseFullToken
-                  , isCursorAtLastPartOfToken
-                  , getImportersForToken token isCursorAtLastPartOfToken model.activeFile model.activeFileTokens activeFileContents model.projectFileContentsDict
-                  )
-                    |> importersForTokenReceivedCmd
-                )
+            ( model
+            , ( projectDirectory
+              , rawToken
+              , willUseFullToken
+              , isCursorAtLastPartOfToken
+              , getImportersForToken token isCursorAtLastPartOfToken model.activeFile model.activeFileTokens activeFileContents model.projectFileContentsDict
+              )
+                |> importersForTokenReceivedCmd
+            )
 
         _ ->
             ( model
@@ -1128,10 +1139,10 @@ addLoadedPackageDocs loadedPackageDocs model =
         updatedActiveFileTokens =
             getActiveFileTokens model.activeFile model.activeTopLevel model.projectFileContentsDict model.projectDependencies updatedPackageDocs
     in
-        { model
-            | packageDocs = updatedPackageDocs
-            , activeFileTokens = updatedActiveFileTokens
-        }
+    { model
+        | packageDocs = updatedPackageDocs
+        , activeFileTokens = updatedActiveFileTokens
+    }
 
 
 truncateModuleComment : ModuleDocs -> ModuleDocs
@@ -1145,7 +1156,7 @@ truncateModuleComment moduleDocs =
                 Nothing ->
                     ""
     in
-        { moduleDocs | comment = truncatedComment }
+    { moduleDocs | comment = truncatedComment }
 
 
 getProjectPackageDocs : Maybe ActiveFile -> Dict.Dict String (List Dependency) -> List ModuleDocs -> List ModuleDocs
@@ -1159,11 +1170,11 @@ getProjectPackageDocs maybeActiveFile projectDependencies packageDocs =
                             List.map toPackageUri dependencies
                                 |> Set.fromList
                     in
-                        packageDocs
-                            |> List.filter
-                                (\moduleDocs ->
-                                    Set.member moduleDocs.sourcePath packageUris
-                                )
+                    packageDocs
+                        |> List.filter
+                            (\moduleDocs ->
+                                Set.member moduleDocs.sourcePath packageUris
+                            )
 
                 Nothing ->
                     []
@@ -1194,11 +1205,11 @@ getProjectFileSymbols projectDirectory projectFileContentsDict =
             Dict.values fileContentsDict
                 |> List.concatMap (\{ moduleDocs } -> getModuleSymbols moduleDocs)
     in
-        allFileSymbols
-            |> List.filter
-                (\{ sourcePath } ->
-                    isProjectSourcePath sourcePath
-                )
+    allFileSymbols
+        |> List.filter
+            (\{ sourcePath } ->
+                isProjectSourcePath sourcePath
+            )
 
 
 getProjectDependencySymbols : Maybe ActiveFile -> ProjectDependencies -> List ModuleDocs -> List Symbol
@@ -1228,15 +1239,16 @@ getModuleSymbols moduleDocs =
                         kind =
                             if Helper.isCapitalized value.name then
                                 KindTypeAlias
+
                             else
                                 KindDefault
                     in
-                        { fullName = moduleDocs.name ++ "." ++ value.name
-                        , sourcePath = formatSourcePath moduleDocs value.name
-                        , tipe = value.tipe
-                        , caseTipe = Nothing
-                        , kind = kind
-                        }
+                    { fullName = moduleDocs.name ++ "." ++ value.name
+                    , sourcePath = formatSourcePath moduleDocs value.name
+                    , tipe = value.tipe
+                    , caseTipe = Nothing
+                    , kind = kind
+                    }
                 )
                 values.values
 
@@ -1280,7 +1292,7 @@ getModuleSymbols moduleDocs =
                 )
                 values.tipes
     in
-        valueSymbols ++ aliasSymbols ++ tipeSymbols ++ tipeCaseSymbols ++ [ moduleDocsSymbol ]
+    valueSymbols ++ aliasSymbols ++ tipeSymbols ++ tipeCaseSymbols ++ [ moduleDocsSymbol ]
 
 
 getAliasesOfType : TokenDict -> String -> TipeString -> List TipeString
@@ -1288,38 +1300,39 @@ getAliasesOfType tokens name tipeString =
     -- TODO: Handle type variables.
     if tipeString == "" then
         []
+
     else
         let
             normalizedTipeString =
                 normalizeTipe tokens tipeString
         in
-            (primitiveTipes
-                |> List.filter
-                    (\primitiveTipe ->
-                        (tipeString /= primitiveTipe)
-                            && (normalizedTipeString == primitiveTipe)
-                    )
-            )
-                ++ (Dict.values tokens
-                        |> List.concat
-                        |> List.filter
-                            (\hint ->
-                                let
-                                    normalizedHintTipe =
-                                        normalizeTipe tokens hint.tipe
-                                in
-                                    (hint.tipe /= "")
-                                        && (hint.kind == KindTypeAlias)
-                                        && (tipeString /= hint.name)
-                                        -- && (name /= hint.tipe)
-                                        && (name /= hint.name)
-                                        && ((name == normalizedHintTipe)
-                                                || (normalizedTipeString == normalizedHintTipe)
-                                            -- || (normalizedTipeString == normalizeTipe tokens hint.name)
-                                           )
-                            )
-                        |> List.map .name
-                   )
+        (primitiveTipes
+            |> List.filter
+                (\primitiveTipe ->
+                    (tipeString /= primitiveTipe)
+                        && (normalizedTipeString == primitiveTipe)
+                )
+        )
+            ++ (Dict.values tokens
+                    |> List.concat
+                    |> List.filter
+                        (\hint ->
+                            let
+                                normalizedHintTipe =
+                                    normalizeTipe tokens hint.tipe
+                            in
+                            (hint.tipe /= "")
+                                && (hint.kind == KindTypeAlias)
+                                && (tipeString /= hint.name)
+                                -- && (name /= hint.tipe)
+                                && (name /= hint.name)
+                                && ((name == normalizedHintTipe)
+                                        || (normalizedTipeString == normalizedHintTipe)
+                                    -- || (normalizedTipeString == normalizeTipe tokens hint.name)
+                                   )
+                        )
+                    |> List.map .name
+               )
 
 
 normalizeTipe : TokenDict -> TipeString -> TipeString
@@ -1331,6 +1344,7 @@ normalizeTipeRecur : TokenDict -> Set.Set TipeString -> TipeString -> TipeString
 normalizeTipeRecur tokens visitedTipeAliases tipeString =
     if isPrimitiveTipe tipeString then
         tipeString
+
     else if isRecordString tipeString then
         let
             fieldsAndValues =
@@ -1343,7 +1357,8 @@ normalizeTipeRecur tokens visitedTipeAliases tipeString =
                     |> Dict.values
                     |> String.join ", "
         in
-            "{ " ++ fieldsAndValues ++ " }"
+        "{ " ++ fieldsAndValues ++ " }"
+
     else if isTupleString tipeString then
         let
             parts =
@@ -1353,15 +1368,18 @@ normalizeTipeRecur tokens visitedTipeAliases tipeString =
                             normalizeTipeRecur tokens visitedTipeAliases part
                         )
         in
-            getTupleStringFromParts parts
+        getTupleStringFromParts parts
+
     else
         case getHintsForToken (Just tipeString) tokens |> List.head of
             Just hint ->
                 -- Avoid infinite recursion.
                 if Set.member hint.tipe visitedTipeAliases then
                     tipeString
+
                 else if hint.kind == KindTypeAlias then
                     normalizeTipeRecur tokens (Set.insert hint.tipe visitedTipeAliases) hint.tipe
+
                 else
                     hint.tipe
 
@@ -1389,6 +1407,7 @@ getHintsForToken maybeToken tokens =
 
     isTipeVariable "MyType" == False
     ```
+
 -}
 isTipeVariable : String -> Bool
 isTipeVariable tipeString =
@@ -1404,6 +1423,7 @@ isTipeVariable tipeString =
 
     isNumberTipe "a" == False
     ```
+
 -}
 isNumberTipe : String -> Bool
 isNumberTipe tipeString =
@@ -1421,6 +1441,7 @@ isNumberTipe tipeString =
 
     isAppendableTipe "number" == False
     ```
+
 -}
 isAppendableTipe : String -> Bool
 isAppendableTipe tipeString =
@@ -1461,13 +1482,16 @@ isComparableTipe tipeString =
     areTipesCompatibleRecur "" "Int" == False
     areTipesCompatibleRecur "Int" "" == False
     ```
+
 -}
 areTipesCompatibleRecur : String -> String -> Bool
 areTipesCompatibleRecur tipe1 tipe2 =
     if tipe1 == tipe2 then
         True
+
     else if tipe1 == "" || tipe2 == "" then
         False
+
     else
         let
             parts1 =
@@ -1482,28 +1506,32 @@ areTipesCompatibleRecur tipe1 tipe2 =
             numParts2 =
                 List.length parts2
         in
-            if (isFunctionTipe tipe1 && not (isFunctionTipe tipe2)) || (isFunctionTipe tipe2 && not (isFunctionTipe tipe1)) then
-                False
-            else if numParts1 == 1 && numParts2 == 1 then
-                (isTipeVariable tipe1 && isTipeVariable tipe2)
-                    || (Helper.isCapitalized tipe1 && isTipeVariable tipe2 && not (isTypeClass tipe2))
-                    || (isNumberTipe tipe1 && tipe2 == "number")
-                    || (isAppendableTipe tipe1 && tipe2 == "appendable")
-                    || (isComparableTipe tipe1 && tipe2 == "comparable")
-            else if numParts2 == 1 && isTipeVariable tipe2 && not (isTypeClass tipe2) then
-                True
-            else
-                case ( List.head parts1, List.head parts2 ) of
-                    ( Just head1, Just head2 ) ->
-                        if head1 == head2 then
-                            areTipesCompatibleRecur
-                                (List.tail parts1 |> Maybe.withDefault [] |> String.join "")
-                                (List.tail parts2 |> Maybe.withDefault [] |> String.join "")
-                        else
-                            False
+        if (isFunctionTipe tipe1 && not (isFunctionTipe tipe2)) || (isFunctionTipe tipe2 && not (isFunctionTipe tipe1)) then
+            False
 
-                    _ ->
+        else if numParts1 == 1 && numParts2 == 1 then
+            (isTipeVariable tipe1 && isTipeVariable tipe2)
+                || (Helper.isCapitalized tipe1 && isTipeVariable tipe2 && not (isTypeClass tipe2))
+                || (isNumberTipe tipe1 && tipe2 == "number")
+                || (isAppendableTipe tipe1 && tipe2 == "appendable")
+                || (isComparableTipe tipe1 && tipe2 == "comparable")
+
+        else if numParts2 == 1 && isTipeVariable tipe2 && not (isTypeClass tipe2) then
+            True
+
+        else
+            case ( List.head parts1, List.head parts2 ) of
+                ( Just head1, Just head2 ) ->
+                    if head1 == head2 then
+                        areTipesCompatibleRecur
+                            (List.tail parts1 |> Maybe.withDefault [] |> String.join "")
+                            (List.tail parts2 |> Maybe.withDefault [] |> String.join "")
+
+                    else
                         False
+
+                _ ->
+                    False
 
 
 getFunctionsMatchingType : TipeString -> Maybe ProjectDirectory -> Maybe FilePath -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> List Hint
@@ -1528,11 +1556,11 @@ getFunctionsMatchingType tipeString maybeProjectDirectory maybeFilePath projectF
                         _ ->
                             ( [], [], [] )
             in
-                (exposedAndTopLevelHints
-                    ++ unexposedHints
-                    ++ variableHints
-                )
-                    |> List.filter (\hint -> areMatchingTypes tipeString hint.tipe)
+            (exposedAndTopLevelHints
+                ++ unexposedHints
+                ++ variableHints
+            )
+                |> List.filter (\hint -> areMatchingTypes tipeString hint.tipe)
 
         _ ->
             []
@@ -1584,6 +1612,7 @@ parseTipeString tipeString =
 
     areMatchingTypes "String -> a" "appendable -> appendable -> appendable" == False
     ```
+
 -}
 areMatchingTypes : String -> String -> Bool
 areMatchingTypes tipeString1 tipeString2 =
@@ -1599,7 +1628,7 @@ areMatchingTypes tipeString1 tipeString2 =
                 ( result, typeVariables1, typeVariables2 ) =
                     areMatchingTypesRecur annotation1 annotation2 Dict.empty Dict.empty []
             in
-                result
+            result
 
 
 areMatchingTypesRecur : Type -> Type -> Dict.Dict String Type -> Dict.Dict String Type -> List ( Type, Type ) -> ( Bool, Dict.Dict String Type, Dict.Dict String Type )
@@ -1723,6 +1752,7 @@ getExternalHints isGlobal filePath activeFileContents allModuleDocs =
                         (\moduleDocs ->
                             moduleDocs.sourcePath /= filePath
                         )
+
             else
                 allModuleDocs
                     |> List.filter
@@ -1734,9 +1764,9 @@ getExternalHints isGlobal filePath activeFileContents allModuleDocs =
         ( importedHints, unimportedHints ) =
             getExposedAndUnexposedHints isGlobal filePath activeFileContents.imports moduleDocsToCheck
     in
-        { importedHints = importedHints
-        , unimportedHints = unimportedHints
-        }
+    { importedHints = importedHints
+    , unimportedHints = unimportedHints
+    }
 
 
 getLocalHints : FilePath -> FileContents -> TokenDict -> LocalHints
@@ -1745,15 +1775,15 @@ getLocalHints filePath activeFileContents activeFileTokens =
         selfImport =
             Dict.singleton activeFileContents.moduleDocs.name { alias = Nothing, exposed = All }
     in
-        { topLevelHints =
-            getExposedAndUnexposedHints False filePath selfImport [ activeFileContents.moduleDocs ]
-                |> Tuple.first
-        , variableHints =
-            activeFileTokens
-                |> Dict.values
-                |> List.concat
-                |> List.filter (\hint -> hint.moduleName == "")
-        }
+    { topLevelHints =
+        getExposedAndUnexposedHints False filePath selfImport [ activeFileContents.moduleDocs ]
+            |> Tuple.first
+    , variableHints =
+        activeFileTokens
+            |> Dict.values
+            |> List.concat
+            |> List.filter (\hint -> hint.moduleName == "")
+    }
 
 
 getExternalAndLocalHints : Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> ProjectDependencies -> List ModuleDocs -> Maybe ExternalHints -> Maybe LocalHints -> TokenDict -> HintsCache
@@ -1789,7 +1819,7 @@ getExternalAndLocalHints isGlobal maybeActiveFile projectFileContentsDict projec
                         Nothing ->
                             getExternalHints isGlobal filePath activeFileContents allModuleDocs
             in
-                { external = Just external, local = Just local }
+            { external = Just external, local = Just local }
 
         Nothing ->
             { external = Just { importedHints = [], unimportedHints = [] }
@@ -1857,17 +1887,17 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSigna
                                 ( unexposedHintsCompatible, unexposedHintsNotCompatible ) =
                                     partitionHints filteredUnexposedHints
                             in
-                                sortHintsByScore tipeString preceedingToken variableHintsCompatible
-                                    ++ sortHintsByScore tipeString preceedingToken defaultHintsCompatible
-                                    ++ sortHintsByScore tipeString preceedingToken exposedHintsCompatible
-                                    ++ sortHintsByScore tipeString preceedingToken unexposedHintsCompatible
-                                    ++ (sortHintsByName
-                                            (filterTypeIncompatibleHints partial isFiltered isRegex variableHintsNotCompatible
-                                                ++ filterTypeIncompatibleHints partial isFiltered isRegex defaultHintsNotCompatible
-                                                ++ filterTypeIncompatibleHints partial isFiltered isRegex exposedHintsNotCompatible
-                                            )
-                                            ++ sortHintsByName (filterTypeIncompatibleHints partial isFiltered isRegex unexposedHintsNotCompatible)
-                                       )
+                            sortHintsByScore tipeString preceedingToken variableHintsCompatible
+                                ++ sortHintsByScore tipeString preceedingToken defaultHintsCompatible
+                                ++ sortHintsByScore tipeString preceedingToken exposedHintsCompatible
+                                ++ sortHintsByScore tipeString preceedingToken unexposedHintsCompatible
+                                ++ (sortHintsByName
+                                        (filterTypeIncompatibleHints partial isFiltered isRegex variableHintsNotCompatible
+                                            ++ filterTypeIncompatibleHints partial isFiltered isRegex defaultHintsNotCompatible
+                                            ++ filterTypeIncompatibleHints partial isFiltered isRegex exposedHintsNotCompatible
+                                        )
+                                        ++ sortHintsByName (filterTypeIncompatibleHints partial isFiltered isRegex unexposedHintsNotCompatible)
+                                   )
 
                         Nothing ->
                             (filteredVariableHints
@@ -1878,11 +1908,12 @@ getHintsForPartial partial maybeInferredTipe preceedingToken isRegex isTypeSigna
                                 |> (\hints ->
                                         if isFiltered then
                                             sortHintsByName hints
+
                                         else
                                             hints
                                    )
             in
-                ( hints, Just { external = external, local = local } )
+            ( hints, Just { external = external, local = local } )
 
         Nothing ->
             ( [], maybeHintsCache )
@@ -1899,21 +1930,24 @@ filterHintsByPartial partial maybeInferredTipe isFiltered isRegex isTypeSignatur
                             fieldValue =
                                 if isTypeSignature then
                                     hint.tipe
+
                                 else
                                     hint.name
                         in
-                            filterHintsFunction isRegex isTypeSignature partial hint.name fieldValue
+                        filterHintsFunction isRegex isTypeSignature partial hint.name fieldValue
                     )
         in
-            case maybeInferredTipe of
-                Just _ ->
-                    if partial == "" then
-                        hints
-                    else
-                        filter hints
+        case maybeInferredTipe of
+            Just _ ->
+                if partial == "" then
+                    hints
 
-                Nothing ->
+                else
                     filter hints
+
+            Nothing ->
+                filter hints
+
     else
         hints
 
@@ -1936,59 +1970,65 @@ filterHintsFunction isRegex isTypeSignature testString name fieldValue =
             -- String.startsWith (String.toLower testString) (String.toLower name)
             String.startsWith testString name
     in
-        if (isRegex && String.startsWith "/" testString) || (isTypeSignature && String.startsWith ":" testString) then
-            let
-                strippedTestString =
-                    testString
-                        |> String.dropLeft 1
+    if (isRegex && String.startsWith "/" testString) || (isTypeSignature && String.startsWith ":" testString) then
+        let
+            strippedTestString =
+                testString
+                    |> String.dropLeft 1
 
-                -- NOTE: The regex expressions should be pre-validated outside of Elm to prevent crashing.
-                ( fieldValueExpression, nameExpression ) =
-                    if isTypeSignature then
-                        let
-                            ( testString1, maybeTestString2 ) =
-                                case String.split "__" strippedTestString of
-                                    [ namePart, typeSignaturePart ] ->
-                                        ( typeSignaturePart, Just namePart )
+            -- NOTE: The regex expressions should be pre-validated outside of Elm to prevent crashing.
+            ( fieldValueExpression, nameExpression ) =
+                if isTypeSignature then
+                    let
+                        ( testString1, maybeTestString2 ) =
+                            case String.split "__" strippedTestString of
+                                [ namePart, typeSignaturePart ] ->
+                                    ( typeSignaturePart, Just namePart )
 
-                                    _ ->
-                                        ( strippedTestString, Nothing )
-                        in
-                            ( testString1
-                                |> Regex.replace Regex.All (Regex.regex "_") (\_ -> " ")
-                                |> compressTipeString
-                            , maybeTestString2
-                            )
-                    else
-                        ( strippedTestString, Nothing )
+                                _ ->
+                                    ( strippedTestString, Nothing )
+                    in
+                    ( testString1
+                        |> Regex.replace Regex.All (Regex.regex "_") (\_ -> " ")
+                        |> compressTipeString
+                    , maybeTestString2
+                    )
 
-                formattedFieldValue =
-                    if isTypeSignature then
-                        compressTipeString fieldValue
-                    else
-                        fieldValue
-            in
-                if fieldValueExpression == "" then
-                    startsWithName
                 else
-                    startsWithName
-                        || (Regex.contains (Regex.regex fieldValueExpression) formattedFieldValue
-                                && (nameExpression == Nothing || Regex.contains (Regex.regex (Maybe.withDefault "" nameExpression)) name)
-                           )
+                    ( strippedTestString, Nothing )
+
+            formattedFieldValue =
+                if isTypeSignature then
+                    compressTipeString fieldValue
+
+                else
+                    fieldValue
+        in
+        if fieldValueExpression == "" then
+            startsWithName
+
         else
             startsWithName
+                || (Regex.contains (Regex.regex fieldValueExpression) formattedFieldValue
+                        && (nameExpression == Nothing || Regex.contains (Regex.regex (Maybe.withDefault "" nameExpression)) name)
+                   )
+
+    else
+        startsWithName
 
 
 filterTypeIncompatibleHints : String -> Bool -> Bool -> List Hint -> List Hint
 filterTypeIncompatibleHints partial isFiltered isRegex hints =
     if partial == "" then
         []
+
     else if isFiltered || isRegex then
         hints
             |> List.filter
                 (\{ name } ->
                     filterHintsFunction isRegex False partial name name
                 )
+
     else
         hints
 
@@ -1997,6 +2037,7 @@ getTipeDistance : String -> String -> Int
 getTipeDistance tipe1 tipe2 =
     if tipe1 == tipe2 then
         0
+
     else
         let
             parts1 =
@@ -2014,24 +2055,27 @@ getTipeDistance tipe1 tipe2 =
             genericTipePenalty =
                 if numParts2 == 1 && isTipeVariable tipe2 && not (isTypeClass tipe2) then
                     numParts1
+
                 else
                     0
         in
-            (if numParts1 == numParts2 then
-                List.map2
-                    (\part1 part2 ->
-                        if part1 == part2 then
-                            0
-                        else
-                            1
-                    )
-                    parts1
-                    parts2
-                    |> List.sum
-             else
-                max numParts1 numParts2
-            )
-                + genericTipePenalty
+        (if numParts1 == numParts2 then
+            List.map2
+                (\part1 part2 ->
+                    if part1 == part2 then
+                        0
+
+                    else
+                        1
+                )
+                parts1
+                parts2
+                |> List.sum
+
+         else
+            max numParts1 numParts2
+        )
+            + genericTipePenalty
 
 
 sortHintsByScore : TipeString -> Maybe String -> List Hint -> List Hint
@@ -2083,30 +2127,30 @@ partitionByTipe tipeString preceedingToken hint =
         returnTipe2 =
             getReturnTipe hint.tipe
     in
-        (List.length (getTipeParts tipeString) <= List.length (getTipeParts hint.tipe))
-            && (areTipesCompatibleRecur returnTipe1 returnTipe2
-                    || areTipesCompatibleRecur returnTipe2 returnTipe1
-               )
-            && (case preceedingToken of
-                    Just token ->
-                        case token of
-                            "|>" ->
-                                let
-                                    parameterTipe1 =
-                                        lastParameterTipe tipeString
+    (List.length (getTipeParts tipeString) <= List.length (getTipeParts hint.tipe))
+        && (areTipesCompatibleRecur returnTipe1 returnTipe2
+                || areTipesCompatibleRecur returnTipe2 returnTipe1
+           )
+        && (case preceedingToken of
+                Just token ->
+                    case token of
+                        "|>" ->
+                            let
+                                parameterTipe1 =
+                                    lastParameterTipe tipeString
 
-                                    parameterTipe2 =
-                                        lastParameterTipe hint.tipe
-                                in
-                                    areTipesCompatibleRecur parameterTipe1 parameterTipe2
-                                        || areTipesCompatibleRecur parameterTipe2 parameterTipe1
+                                parameterTipe2 =
+                                    lastParameterTipe hint.tipe
+                            in
+                            areTipesCompatibleRecur parameterTipe1 parameterTipe2
+                                || areTipesCompatibleRecur parameterTipe2 parameterTipe1
 
-                            _ ->
-                                True
+                        _ ->
+                            True
 
-                    Nothing ->
-                        True
-               )
+                Nothing ->
+                    True
+           )
 
 
 lastParameterTipe : TipeString -> String
@@ -2115,15 +2159,15 @@ lastParameterTipe tipeString =
         parts =
             getTipeParts tipeString
     in
-        case List.tail parts of
-            Just _ ->
-                parts
-                    |> Helper.dropLast
-                    |> Helper.last
-                    |> Maybe.withDefault ""
+    case List.tail parts of
+        Just _ ->
+            parts
+                |> Helper.dropLast
+                |> Helper.last
+                |> Maybe.withDefault ""
 
-            Nothing ->
-                ""
+        Nothing ->
+            ""
 
 
 getExposedAndUnexposedHints : Bool -> FilePath -> ImportDict -> List ModuleDocs -> ( List Hint, List Hint )
@@ -2135,17 +2179,16 @@ getExposedAndUnexposedHints includeUnexposed activeFilePath imports moduleDocsLi
                     (\moduleDocs ( accExposedHints, accUnexposedHints ) ->
                         let
                             aliasesTipesAndValues =
-                                (moduleDocs.values.aliases
-                                    ++ (List.map tipeToValue moduleDocs.values.tipes)
+                                moduleDocs.values.aliases
+                                    ++ List.map tipeToValue moduleDocs.values.tipes
                                     ++ moduleDocs.values.values
-                                )
 
                             tipeCases =
                                 List.concatMap .cases moduleDocs.values.tipes
 
                             allNames =
-                                (List.map .name aliasesTipesAndValues)
-                                    ++ (List.map .name tipeCases)
+                                List.map .name aliasesTipesAndValues
+                                    ++ List.map .name tipeCases
 
                             ( exposedHints, unexposedHints ) =
                                 case Dict.get moduleDocs.name imports of
@@ -2159,10 +2202,11 @@ getExposedAndUnexposedHints includeUnexposed activeFilePath imports moduleDocsLi
                                                                 moduleNameToShow =
                                                                     if hint.moduleName == "" || activeFilePath == hint.sourcePath then
                                                                         ""
+
                                                                     else
                                                                         hint.moduleName
                                                             in
-                                                                { hint | moduleName = moduleNameToShow, name = name }
+                                                            { hint | moduleName = moduleNameToShow, name = name }
                                                         )
 
                                             exposedNames =
@@ -2178,30 +2222,32 @@ getExposedAndUnexposedHints includeUnexposed activeFilePath imports moduleDocsLi
                                                         )
                                                     |> Set.fromList
                                         in
-                                            ( exposed
-                                            , if includeUnexposed then
-                                                getHintsForUnexposedNames False moduleDocs unexposedNames
-                                              else
-                                                []
-                                            )
+                                        ( exposed
+                                        , if includeUnexposed then
+                                            getHintsForUnexposedNames False moduleDocs unexposedNames
+
+                                          else
+                                            []
+                                        )
 
                                     Nothing ->
                                         ( []
                                         , if includeUnexposed then
                                             getHintsForUnexposedNames True moduleDocs (Set.fromList allNames)
+
                                           else
                                             []
                                         )
                         in
-                            ( exposedHints :: accExposedHints
-                            , unexposedHints :: accUnexposedHints
-                            )
+                        ( exposedHints :: accExposedHints
+                        , unexposedHints :: accUnexposedHints
+                        )
                     )
                     ( [], [] )
     in
-        ( List.concat exposedLists
-        , List.concat unexposedLists
-        )
+    ( List.concat exposedLists
+    , List.concat unexposedLists
+    )
 
 
 getHintsForUnexposedNames : Bool -> ModuleDocs -> Set.Set String -> List Hint
@@ -2210,6 +2256,7 @@ getHintsForUnexposedNames includeQualified moduleDocs unexposedNames =
         qualifiedAndUnqualified hint =
             if includeQualified then
                 [ { hint | name = moduleDocs.name ++ "." ++ hint.name }, hint ]
+
             else
                 [ hint ]
 
@@ -2265,20 +2312,20 @@ getHintsForUnexposedNames includeQualified moduleDocs unexposedNames =
                                                 hintTipe =
                                                     getTipeCaseTypeAnnotation tipeCase tipe
                                             in
-                                                { name = tipeCase.name
-                                                , moduleName = moduleDocs.name
-                                                , sourcePath = moduleDocs.sourcePath
-                                                , comment = ""
-                                                , tipe = hintTipe
-                                                , args = tipeCase.args
-                                                , caseTipe = Just tipe.name
-                                                , cases = []
-                                                , associativity = Nothing
-                                                , precedence = Nothing
-                                                , kind = KindTypeCase
-                                                , isImported = False
-                                                }
-                                                    |> qualifiedAndUnqualified
+                                            { name = tipeCase.name
+                                            , moduleName = moduleDocs.name
+                                            , sourcePath = moduleDocs.sourcePath
+                                            , comment = ""
+                                            , tipe = hintTipe
+                                            , args = tipeCase.args
+                                            , caseTipe = Just tipe.name
+                                            , cases = []
+                                            , associativity = Nothing
+                                            , precedence = Nothing
+                                            , kind = KindTypeCase
+                                            , isImported = False
+                                            }
+                                                |> qualifiedAndUnqualified
                                         )
                                )
                     )
@@ -2288,9 +2335,9 @@ getHintsForUnexposedNames includeQualified moduleDocs unexposedNames =
                 |> List.filter filter
                 |> List.concatMap (valueToHints KindDefault)
     in
-        tipeAliasHints
-            ++ tipeAndTipeCaseHints
-            ++ valueHints
+    tipeAliasHints
+        ++ tipeAndTipeCaseHints
+        ++ valueHints
 
 
 getSuggestionsForImport : String -> Bool -> Maybe ActiveFile -> ProjectFileContentsDict -> List ModuleDocs -> List ImportSuggestion
@@ -2307,20 +2354,22 @@ getSuggestionsForImport partial isFiltered maybeActiveFile projectFileContentsDi
                                 , sourcePath =
                                     if isPackageSourcePath sourcePath then
                                         sourcePath ++ dotToHyphen name
+
                                     else
                                         ""
                                 }
                             )
             in
-                if isFiltered then
-                    suggestions
-                        |> List.filter
-                            (\{ name } ->
-                                String.startsWith partial name
-                            )
-                        |> List.sortBy .name
-                else
-                    suggestions
+            if isFiltered then
+                suggestions
+                    |> List.filter
+                        (\{ name } ->
+                            String.startsWith partial name
+                        )
+                    |> List.sortBy .name
+
+            else
+                suggestions
 
         Nothing ->
             []
@@ -2334,78 +2383,83 @@ getImportersForToken token isCursorAtLastPartOfToken maybeActiveFile tokens acti
                 isImportAlias =
                     List.member token (List.filterMap .alias (Dict.values activeFileContents.imports))
             in
-                if isImportAlias then
-                    [ ( activeFileContents.moduleDocs.sourcePath, True, True, [ token ] ) ]
-                else
-                    let
-                        hints =
-                            getHintsForToken (Just token) tokens
+            if isImportAlias then
+                [ ( activeFileContents.moduleDocs.sourcePath, True, True, [ token ] ) ]
 
-                        fileContentsDict =
-                            getFileContentsOfProject projectDirectory projectFileContentsDict
-                    in
-                        Dict.values fileContentsDict
-                            |> List.concatMap
-                                (\{ moduleDocs, imports } ->
+            else
+                let
+                    hints =
+                        getHintsForToken (Just token) tokens
+
+                    fileContentsDict =
+                        getFileContentsOfProject projectDirectory projectFileContentsDict
+                in
+                Dict.values fileContentsDict
+                    |> List.concatMap
+                        (\{ moduleDocs, imports } ->
+                            let
+                                getSourcePathAndLocalNames hint =
                                     let
-                                        getSourcePathAndLocalNames hint =
-                                            let
-                                                isHintAModule hint =
-                                                    hint.moduleName == "" && Helper.isCapitalized hint.name
+                                        isHintAModule hint =
+                                            hint.moduleName == "" && Helper.isCapitalized hint.name
 
-                                                isHintThisModule =
-                                                    isHintAModule hint && hint.name == moduleDocs.name
+                                        isHintThisModule =
+                                            isHintAModule hint && hint.name == moduleDocs.name
 
-                                                isHintAnImport =
-                                                    isHintAModule hint && Dict.get token imports /= Nothing
-                                            in
-                                                if isHintThisModule then
-                                                    Just ( moduleDocs.sourcePath, True, False, [ token ] )
-                                                else if isHintAnImport then
-                                                    Just ( moduleDocs.sourcePath, True, False, [ hint.name ] )
-                                                else
-                                                    case Dict.get hint.moduleName imports of
-                                                        Just { alias, exposed } ->
-                                                            let
-                                                                localNames =
-                                                                    case ( alias, exposed ) of
-                                                                        ( Nothing, None ) ->
-                                                                            [ hint.moduleName ++ "." ++ hint.name ]
-
-                                                                        ( Just alias, None ) ->
-                                                                            [ alias ++ "." ++ hint.name ]
-
-                                                                        ( _, All ) ->
-                                                                            [ hint.name, getModuleLocalName hint.moduleName alias hint.name ]
-
-                                                                        ( _, Some exposedSet ) ->
-                                                                            if Set.member hint.name exposedSet then
-                                                                                [ hint.name, getModuleLocalName hint.moduleName alias hint.name ]
-                                                                            else
-                                                                                [ getModuleLocalName hint.moduleName alias hint.name ]
-
-                                                                names =
-                                                                    localNames |> Set.fromList |> Set.toList
-                                                            in
-                                                                case names of
-                                                                    [] ->
-                                                                        Nothing
-
-                                                                    _ ->
-                                                                        Just ( moduleDocs.sourcePath, False, False, names )
-
-                                                        Nothing ->
-                                                            let
-                                                                isHintInThisModule =
-                                                                    hint.moduleName == moduleDocs.name
-                                                            in
-                                                                if isHintInThisModule then
-                                                                    Just ( moduleDocs.sourcePath, False, False, [ hint.name ] )
-                                                                else
-                                                                    Nothing
+                                        isHintAnImport =
+                                            isHintAModule hint && Dict.get token imports /= Nothing
                                     in
-                                        List.filterMap getSourcePathAndLocalNames hints
-                                )
+                                    if isHintThisModule then
+                                        Just ( moduleDocs.sourcePath, True, False, [ token ] )
+
+                                    else if isHintAnImport then
+                                        Just ( moduleDocs.sourcePath, True, False, [ hint.name ] )
+
+                                    else
+                                        case Dict.get hint.moduleName imports of
+                                            Just { alias, exposed } ->
+                                                let
+                                                    localNames =
+                                                        case ( alias, exposed ) of
+                                                            ( Nothing, None ) ->
+                                                                [ hint.moduleName ++ "." ++ hint.name ]
+
+                                                            ( Just alias, None ) ->
+                                                                [ alias ++ "." ++ hint.name ]
+
+                                                            ( _, All ) ->
+                                                                [ hint.name, getModuleLocalName hint.moduleName alias hint.name ]
+
+                                                            ( _, Some exposedSet ) ->
+                                                                if Set.member hint.name exposedSet then
+                                                                    [ hint.name, getModuleLocalName hint.moduleName alias hint.name ]
+
+                                                                else
+                                                                    [ getModuleLocalName hint.moduleName alias hint.name ]
+
+                                                    names =
+                                                        localNames |> Set.fromList |> Set.toList
+                                                in
+                                                case names of
+                                                    [] ->
+                                                        Nothing
+
+                                                    _ ->
+                                                        Just ( moduleDocs.sourcePath, False, False, names )
+
+                                            Nothing ->
+                                                let
+                                                    isHintInThisModule =
+                                                        hint.moduleName == moduleDocs.name
+                                                in
+                                                if isHintInThisModule then
+                                                    Just ( moduleDocs.sourcePath, False, False, [ hint.name ] )
+
+                                                else
+                                                    Nothing
+                            in
+                            List.filterMap getSourcePathAndLocalNames hints
+                        )
 
         _ ->
             []
@@ -2455,7 +2509,7 @@ doShowAddImportView filePath maybeToken model =
                                                 ""
                                        )
                         in
-                            compare (filterKey moduleA symbolA) (filterKey moduleB symbolB)
+                        compare (filterKey moduleA symbolA) (filterKey moduleB symbolB)
                     )
 
         defaultSymbolName =
@@ -2471,10 +2525,10 @@ doShowAddImportView filePath maybeToken model =
                 Nothing ->
                     Nothing
     in
-        ( model
-        , ( defaultSymbolName, model.activeFile, moduleAndSymbolsAndAllExposed )
-            |> showAddImportViewCmd
-        )
+    ( model
+    , ( defaultSymbolName, model.activeFile, moduleAndSymbolsAndAllExposed )
+        |> showAddImportViewCmd
+    )
 
 
 doAddImport : FilePath -> ProjectDirectory -> String -> Maybe String -> Model -> ( Model, Cmd Msg )
@@ -2496,6 +2550,7 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
                                 Some exposed ->
                                     if symbolName == ".." then
                                         Dict.update moduleName (\_ -> Just { moduleImport | exposed = All }) fileContents.imports
+
                                     else
                                         Dict.update moduleName (\_ -> Just { moduleImport | exposed = Some (Set.insert symbolName exposed) }) fileContents.imports
 
@@ -2515,7 +2570,7 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
                                 Nothing ->
                                     { alias = Nothing, exposed = None }
                     in
-                        Dict.insert moduleName importToAdd fileContents.imports
+                    Dict.insert moduleName importToAdd fileContents.imports
             )
                 -- Remove default imports.
                 |> Dict.filter
@@ -2526,10 +2581,10 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
         updatedFileContents =
             { fileContents | imports = updatedImports }
     in
-        ( { model | projectFileContentsDict = updateFileContents filePath projectDirectory updatedFileContents model.projectFileContentsDict }
-        , ( filePath, importsToString updatedImports model.activeFileTokens )
-            |> updateImportsCmd
-        )
+    ( { model | projectFileContentsDict = updateFileContents filePath projectDirectory updatedFileContents model.projectFileContentsDict }
+    , ( filePath, importsToString updatedImports model.activeFileTokens )
+        |> updateImportsCmd
+    )
 
 
 importsToString : ImportDict -> TokenDict -> String
@@ -2551,6 +2606,7 @@ importsToString imports tokens =
                             formatSymbol token =
                                 if token /= ".." && Helper.isInfix token then
                                     "(" ++ token ++ ")"
+
                                 else
                                     token
 
@@ -2560,17 +2616,17 @@ importsToString imports tokens =
                                     |> List.partition (.moduleName >> (==) moduleName)
                                     |> uncurry (++)
                         in
-                            case List.head hints of
-                                Just { caseTipe } ->
-                                    case caseTipe of
-                                        Just caseTipeString ->
-                                            caseTipeString ++ "(" ++ formatSymbol token ++ ")"
+                        case List.head hints of
+                            Just { caseTipe } ->
+                                case caseTipe of
+                                    Just caseTipeString ->
+                                        caseTipeString ++ "(" ++ formatSymbol token ++ ")"
 
-                                        Nothing ->
-                                            formatSymbol token
+                                    Nothing ->
+                                        formatSymbol token
 
-                                Nothing ->
-                                    formatSymbol token
+                            Nothing ->
+                                formatSymbol token
 
                     exposingPart =
                         case exposed of
@@ -2601,9 +2657,9 @@ importsToString imports tokens =
                                                             True
                                                 )
                                 in
-                                    " exposing (" ++ (Set.toList nonDefaultExposedSymbols |> List.map formatExposedSymbol |> String.join ", ") ++ ")"
+                                " exposing (" ++ (Set.toList nonDefaultExposedSymbols |> List.map formatExposedSymbol |> String.join ", ") ++ ")"
                 in
-                    importPart ++ exposingPart
+                importPart ++ exposingPart
             )
         |> String.join "\n"
 
@@ -2627,61 +2683,64 @@ constructFromTypeAnnotation typeAnnotation activeFileTokens =
                 |> Maybe.withDefault []
                 |> String.join " :"
     in
-        let
-            name =
-                List.head parts
-                    |> Maybe.withDefault typeAnnotation
+    let
+        name =
+            List.head parts
+                |> Maybe.withDefault typeAnnotation
 
-            returnTipe =
-                getReturnTipe tipeString
+        returnTipe =
+            getReturnTipe tipeString
 
-            parameterTipes =
-                getParameterTipes tipeString
+        parameterTipes =
+            getParameterTipes tipeString
 
-            argNames =
-                getDefaultArgNames parameterTipes
-        in
-            if isEncoderTipe tipeString then
-                name
-                    ++ " "
-                    -- ++ (String.join "" argNames)
-                    ++ "v"
-                    ++ " =\n"
-                    ++ Helper.indentLines 1
-                        (case List.head parameterTipes of
-                            Just tipeSansValue ->
-                                let
-                                    encoderModuleName =
-                                        getModuleName returnTipe
+        argNames =
+            getDefaultArgNames parameterTipes
+    in
+    if isEncoderTipe tipeString then
+        name
+            ++ " "
+            -- ++ (String.join "" argNames)
+            ++ "v"
+            ++ " =\n"
+            ++ Helper.indentLines 1
+                (case List.head parameterTipes of
+                    Just tipeSansValue ->
+                        let
+                            encoderModuleName =
+                                getModuleName returnTipe
 
-                                    encoderValue =
-                                        getDefaultEncoderRecur activeFileTokens
-                                            Set.empty
-                                            (if encoderModuleName == "" then
-                                                ""
-                                             else
-                                                encoderModuleName ++ "."
-                                            )
-                                            (Just "v")
-                                            0
-                                            tipeSansValue
-                                in
-                                    formatDecoderEncoderFunctionBody encoderValue
-                                        |> String.trim
+                            encoderValue =
+                                getDefaultEncoderRecur activeFileTokens
+                                    Set.empty
+                                    (if encoderModuleName == "" then
+                                        ""
 
-                            Nothing ->
-                                "_"
-                        )
-            else
-                name
-                    ++ (if List.length argNames > 0 then
-                            " "
-                        else
-                            ""
-                       )
-                    ++ (String.join " " argNames)
-                    ++ " =\n"
-                    ++ Helper.indentLines 1 (getDefaultValueForType activeFileTokens returnTipe)
+                                     else
+                                        encoderModuleName ++ "."
+                                    )
+                                    (Just "v")
+                                    0
+                                    tipeSansValue
+                        in
+                        formatDecoderEncoderFunctionBody encoderValue
+                            |> String.trim
+
+                    Nothing ->
+                        "_"
+                )
+
+    else
+        name
+            ++ (if List.length argNames > 0 then
+                    " "
+
+                else
+                    ""
+               )
+            ++ String.join " " argNames
+            ++ " =\n"
+            ++ Helper.indentLines 1 (getDefaultValueForType activeFileTokens returnTipe)
 
 
 getParameterTipes : TipeString -> List String
@@ -2701,13 +2760,13 @@ getDefaultArgNames args =
                             ( partName, updatedArgNameCounters ) =
                                 getFunctionArgNameRecur part argNameCounters
                         in
-                            ( args ++ [ partName ]
-                            , updatedArgNameCounters
-                            )
+                        ( args ++ [ partName ]
+                        , updatedArgNameCounters
+                        )
                     )
                     ( [], Dict.empty )
     in
-        argNames
+    argNames
 
 
 isPrimitiveTipe : TipeString -> Bool
@@ -2750,40 +2809,43 @@ getDefaultValueForTypeRecur : TokenDict -> Set.Set String -> TipeString -> Strin
 getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
     if String.trim tipeString == "" then
         "_"
+
     else if isDecoderTipe tipeString then
         let
             tipeParts =
                 tipeString
                     |> String.split " "
         in
-            case List.head tipeParts of
-                Just decoderTipe ->
-                    let
-                        tipeSansDecoder =
-                            tipeParts
-                                |> List.tail
-                                |> Maybe.withDefault []
-                                |> String.join " "
+        case List.head tipeParts of
+            Just decoderTipe ->
+                let
+                    tipeSansDecoder =
+                        tipeParts
+                            |> List.tail
+                            |> Maybe.withDefault []
+                            |> String.join " "
 
-                        decoderModuleName =
-                            getModuleName decoderTipe
+                    decoderModuleName =
+                        getModuleName decoderTipe
 
-                        decoderValue =
-                            getDefaultDecoderRecur activeFileTokens
-                                Set.empty
-                                (if decoderModuleName == "" then
-                                    ""
-                                 else
-                                    decoderModuleName ++ "."
-                                )
-                                Nothing
-                                0
-                                tipeSansDecoder
-                    in
-                        formatDecoderEncoderFunctionBody decoderValue
+                    decoderValue =
+                        getDefaultDecoderRecur activeFileTokens
+                            Set.empty
+                            (if decoderModuleName == "" then
+                                ""
 
-                Nothing ->
-                    "_"
+                             else
+                                decoderModuleName ++ "."
+                            )
+                            Nothing
+                            0
+                            tipeSansDecoder
+                in
+                formatDecoderEncoderFunctionBody decoderValue
+
+            Nothing ->
+                "_"
+
     else if isRecordString tipeString then
         let
             fieldsAndValues =
@@ -2794,7 +2856,8 @@ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
                         )
                     |> String.join ", "
         in
-            "{ " ++ fieldsAndValues ++ " }"
+        "{ " ++ fieldsAndValues ++ " }"
+
     else if isTupleString tipeString then
         let
             parts =
@@ -2804,7 +2867,8 @@ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
                             getDefaultValueForTypeRecur activeFileTokens visitedTypes part
                         )
         in
-            getTupleStringFromParts parts
+        getTupleStringFromParts parts
+
     else if isFunctionTipe tipeString then
         let
             arguments =
@@ -2817,7 +2881,8 @@ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
                 getReturnTipe tipeString
                     |> getDefaultValueForTypeRecur activeFileTokens visitedTypes
         in
-            "\\" ++ arguments ++ " -> " ++ returnValue
+        "\\" ++ arguments ++ " -> " ++ returnValue
+
     else
         case List.head (String.split " " tipeString) of
             Just headTipeString ->
@@ -2875,13 +2940,16 @@ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
                                 then
                                     if Set.member hint.name visitedTypes then
                                         "_"
+
                                     else
                                         getDefaultValueForTypeRecur activeFileTokens (Set.insert hint.name visitedTypes) hint.tipe
+
                                 else if hint.kind == KindType then
                                     case List.head hint.cases of
                                         Just tipeCase ->
                                             if Set.member hint.name visitedTypes then
                                                 "_"
+
                                             else
                                                 let
                                                     ( _, annotatedTipeArgs ) =
@@ -2890,16 +2958,18 @@ getDefaultValueForTypeRecur activeFileTokens visitedTypes tipeString =
                                                     alignedArgs =
                                                         getTipeCaseAlignedArgTipes hint.args annotatedTipeArgs tipeCase.args
                                                 in
-                                                    tipeCase.name
-                                                        ++ (if List.length alignedArgs > 0 then
-                                                                " "
-                                                            else
-                                                                ""
-                                                           )
-                                                        ++ String.join " " (List.map (getDefaultValueForTypeRecur activeFileTokens (Set.insert hint.name visitedTypes)) alignedArgs)
+                                                tipeCase.name
+                                                    ++ (if List.length alignedArgs > 0 then
+                                                            " "
+
+                                                        else
+                                                            ""
+                                                       )
+                                                    ++ String.join " " (List.map (getDefaultValueForTypeRecur activeFileTokens (Set.insert hint.name visitedTypes)) alignedArgs)
 
                                         Nothing ->
                                             "_"
+
                                 else
                                     "_"
 
@@ -2919,24 +2989,26 @@ formatDecoderEncoderFunctionBody str =
             str
                 |> String.split "\n"
     in
-        (case List.head lines of
-            Just firstLine ->
-                if String.trim firstLine == "" then
-                    List.drop 1 lines
-                        |> String.join "\n"
-                else
-                    str
+    (case List.head lines of
+        Just firstLine ->
+            if String.trim firstLine == "" then
+                List.drop 1 lines
+                    |> String.join "\n"
 
-            Nothing ->
+            else
                 str
-        )
-            |> unencloseParentheses
+
+        Nothing ->
+            str
+    )
+        |> unencloseParentheses
 
 
 getDefaultDecoderRecur : TokenDict -> Set.Set String -> String -> Maybe String -> Int -> TipeString -> String
 getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHintName indents tipeString =
     if String.trim tipeString == "" then
         "_"
+
     else if isRecordString tipeString then
         case maybeHintName of
             Just hintName ->
@@ -2947,66 +3019,70 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
                     numFieldAndValues =
                         List.length fieldsAndValues
                 in
-                    if numFieldAndValues > 0 then
-                        let
-                            mapSuffix =
-                                case numFieldAndValues of
-                                    1 ->
-                                        ""
+                if numFieldAndValues > 0 then
+                    let
+                        mapSuffix =
+                            case numFieldAndValues of
+                                1 ->
+                                    ""
 
-                                    n ->
-                                        toString n
-                        in
-                            ("\n" ++ Helper.indent indents ++ "(" ++ decoderModuleName ++ "map" ++ mapSuffix ++ " " ++ hintName ++ "\n")
-                                ++ (fieldsAndValues
-                                        |> List.map
-                                            (\( field, tipe ) ->
-                                                let
-                                                    inner =
-                                                        getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing (indents + 2) tipe
+                                n ->
+                                    toString n
+                    in
+                    ("\n" ++ Helper.indent indents ++ "(" ++ decoderModuleName ++ "map" ++ mapSuffix ++ " " ++ hintName ++ "\n")
+                        ++ (fieldsAndValues
+                                |> List.map
+                                    (\( field, tipe ) ->
+                                        let
+                                            inner =
+                                                getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing (indents + 2) tipe
 
-                                                    innerLines =
-                                                        inner |> String.split "\n"
+                                            innerLines =
+                                                inner |> String.split "\n"
 
-                                                    isMultiline =
-                                                        List.length innerLines > 1
-                                                in
-                                                    Helper.indent (indents + 1)
-                                                        ++ "("
-                                                        ++ decoderModuleName
-                                                        ++ "field \""
-                                                        ++ field
-                                                        ++ "\" "
-                                                        ++ inner
-                                                        ++ (if isMultiline then
-                                                                "\n" ++ Helper.indent (indents + 1) ++ ")"
-                                                            else
-                                                                ")"
-                                                           )
-                                            )
-                                        |> String.join "\n"
-                                   )
-                                ++ ("\n" ++ Helper.indent indents ++ ")")
-                    else
-                        "_"
+                                            isMultiline =
+                                                List.length innerLines > 1
+                                        in
+                                        Helper.indent (indents + 1)
+                                            ++ "("
+                                            ++ decoderModuleName
+                                            ++ "field \""
+                                            ++ field
+                                            ++ "\" "
+                                            ++ inner
+                                            ++ (if isMultiline then
+                                                    "\n" ++ Helper.indent (indents + 1) ++ ")"
+
+                                                else
+                                                    ")"
+                                               )
+                                    )
+                                |> String.join "\n"
+                           )
+                        ++ ("\n" ++ Helper.indent indents ++ ")")
+
+                else
+                    "_"
 
             Nothing ->
                 "_"
+
     else if isTupleString tipeString then
         let
             parts =
                 getTupleParts tipeString
                     |> List.indexedMap
                         (\index partTipe ->
-                            Helper.indent (indents + 1) ++ "(" ++ decoderModuleName ++ "index " ++ (toString index) ++ " " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing (indents + 1) partTipe ++ ")"
+                            Helper.indent (indents + 1) ++ "(" ++ decoderModuleName ++ "index " ++ toString index ++ " " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing (indents + 1) partTipe ++ ")"
                         )
 
             numParts =
                 List.length parts
         in
-            ("\n" ++ Helper.indent indents ++ "(" ++ decoderModuleName ++ "map" ++ (toString numParts) ++ " (" ++ (List.repeat (numParts - 1) "," |> String.join "") ++ ")\n")
-                ++ String.join "\n" parts
-                ++ ("\n" ++ Helper.indent indents ++ ")")
+        ("\n" ++ Helper.indent indents ++ "(" ++ decoderModuleName ++ "map" ++ toString numParts ++ " (" ++ (List.repeat (numParts - 1) "," |> String.join "") ++ ")\n")
+            ++ String.join "\n" parts
+            ++ ("\n" ++ Helper.indent indents ++ ")")
+
     else
         let
             tipeParts =
@@ -3027,94 +3103,100 @@ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName maybeHint
                     numLines =
                         String.split "\n" inner |> List.length
                 in
-                    if numLines > 1 then
-                        ("\n" ++ Helper.indent indents ++ "(" ++ decoderModuleName ++ decodeFunction ++ " " ++ inner)
-                            ++ ("\n" ++ Helper.indent indents ++ ")")
-                    else
-                        "(" ++ decoderModuleName ++ decodeFunction ++ " " ++ inner ++ ")"
+                if numLines > 1 then
+                    ("\n" ++ Helper.indent indents ++ "(" ++ decoderModuleName ++ decodeFunction ++ " " ++ inner)
+                        ++ ("\n" ++ Helper.indent indents ++ ")")
+
+                else
+                    "(" ++ decoderModuleName ++ decodeFunction ++ " " ++ inner ++ ")"
         in
-            case List.head tipeParts of
-                Just headTipeString ->
-                    case headTipeString of
-                        -- Primitives
-                        "number" ->
-                            decoderModuleName ++ "float"
+        case List.head tipeParts of
+            Just headTipeString ->
+                case headTipeString of
+                    -- Primitives
+                    "number" ->
+                        decoderModuleName ++ "float"
 
-                        "Int" ->
-                            decoderModuleName ++ "int"
+                    "Int" ->
+                        decoderModuleName ++ "int"
 
-                        "Float" ->
-                            decoderModuleName ++ "float"
+                    "Float" ->
+                        decoderModuleName ++ "float"
 
-                        "Bool" ->
-                            decoderModuleName ++ "bool"
+                    "Bool" ->
+                        decoderModuleName ++ "bool"
 
-                        "String" ->
-                            decoderModuleName ++ "string"
+                    "String" ->
+                        decoderModuleName ++ "string"
 
-                        -- Core
-                        "List" ->
-                            wrapWith "list"
+                    -- Core
+                    "List" ->
+                        wrapWith "list"
 
-                        "Array.Array" ->
-                            wrapWith "array"
+                    "Array.Array" ->
+                        wrapWith "array"
 
-                        "Dict.Dict" ->
-                            case List.head tailParts of
-                                Just "String" ->
-                                    "(" ++ decoderModuleName ++ "dict " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing indents (List.tail tailParts |> Maybe.withDefault [] |> String.join " ") ++ ")"
+                    "Dict.Dict" ->
+                        case List.head tailParts of
+                            Just "String" ->
+                                "(" ++ decoderModuleName ++ "dict " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing indents (List.tail tailParts |> Maybe.withDefault [] |> String.join " ") ++ ")"
 
-                                _ ->
-                                    "_"
+                            _ ->
+                                "_"
 
-                        "Maybe" ->
-                            "(" ++ decoderModuleName ++ "maybe " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing indents tailTipe ++ ")"
+                    "Maybe" ->
+                        "(" ++ decoderModuleName ++ "maybe " ++ getDefaultDecoderRecur activeFileTokens visitedTypes decoderModuleName Nothing indents tailTipe ++ ")"
 
-                        headTipeString ->
-                            if
-                                (getLastName headTipeString == "Value")
-                                    && (getModuleName headTipeString == decoderModuleName || getModuleName headTipeString ++ "." == decoderModuleName)
-                            then
-                                decoderModuleName ++ "value"
-                            else
-                                case getHintsForToken (Just headTipeString) activeFileTokens |> List.head of
-                                    Just hint ->
-                                        -- Avoid infinite recursion.
-                                        if
-                                            (hint.kind /= KindType)
-                                                && (hint.tipe /= headTipeString)
-                                                && (hint.kind /= KindTypeAlias || (hint.kind == KindTypeAlias && List.length hint.args == 0))
-                                            -- TODO: ^ Make it work with aliases with type variables (e.g. `type alias AliasedType a b = ( a, b )`).
-                                        then
-                                            if Set.member hint.name visitedTypes then
-                                                "_"
-                                            else
-                                                getDefaultDecoderRecur activeFileTokens (Set.insert hint.name visitedTypes) decoderModuleName (Just hint.name) indents hint.tipe
-                                        else if hint.kind == KindType then
-                                            -- Decoder for union types.
-                                            ("\n" ++ Helper.indent indents ++ "(" ++ decoderModuleName ++ "string")
-                                                ++ ("\n" ++ Helper.indent (indents + 1) ++ "|> " ++ decoderModuleName ++ "andThen")
-                                                ++ ("\n" ++ Helper.indent (indents + 2) ++ "(\\string ->")
-                                                ++ ("\n" ++ Helper.indent (indents + 3) ++ "case string of\n")
-                                                ++ (List.map (\tipeCase -> Helper.indent (indents + 4) ++ "\"" ++ tipeCase.name ++ "\" ->\n" ++ Helper.indent (indents + 5) ++ decoderModuleName ++ "succeed " ++ tipeCase.name) hint.cases |> String.join "\n\n")
-                                                ++ ("\n\n" ++ Helper.indent (indents + 4) ++ "_ ->\n" ++ Helper.indent (indents + 5) ++ decoderModuleName ++ "fail \"Invalid " ++ hint.name ++ "\"")
-                                                ++ ("\n" ++ Helper.indent (indents + 2) ++ ")")
-                                                ++ ("\n" ++ Helper.indent indents ++ ")")
-                                            -- TODO: Use `Json.Decode.lazy` for recursive types.
-                                        else
+                    headTipeString ->
+                        if
+                            (getLastName headTipeString == "Value")
+                                && (getModuleName headTipeString == decoderModuleName || getModuleName headTipeString ++ "." == decoderModuleName)
+                        then
+                            decoderModuleName ++ "value"
+
+                        else
+                            case getHintsForToken (Just headTipeString) activeFileTokens |> List.head of
+                                Just hint ->
+                                    -- Avoid infinite recursion.
+                                    if
+                                        (hint.kind /= KindType)
+                                            && (hint.tipe /= headTipeString)
+                                            && (hint.kind /= KindTypeAlias || (hint.kind == KindTypeAlias && List.length hint.args == 0))
+                                        -- TODO: ^ Make it work with aliases with type variables (e.g. `type alias AliasedType a b = ( a, b )`).
+                                    then
+                                        if Set.member hint.name visitedTypes then
                                             "_"
 
-                                    Nothing ->
+                                        else
+                                            getDefaultDecoderRecur activeFileTokens (Set.insert hint.name visitedTypes) decoderModuleName (Just hint.name) indents hint.tipe
+
+                                    else if hint.kind == KindType then
+                                        -- Decoder for union types.
+                                        ("\n" ++ Helper.indent indents ++ "(" ++ decoderModuleName ++ "string")
+                                            ++ ("\n" ++ Helper.indent (indents + 1) ++ "|> " ++ decoderModuleName ++ "andThen")
+                                            ++ ("\n" ++ Helper.indent (indents + 2) ++ "(\\string ->")
+                                            ++ ("\n" ++ Helper.indent (indents + 3) ++ "case string of\n")
+                                            ++ (List.map (\tipeCase -> Helper.indent (indents + 4) ++ "\"" ++ tipeCase.name ++ "\" ->\n" ++ Helper.indent (indents + 5) ++ decoderModuleName ++ "succeed " ++ tipeCase.name) hint.cases |> String.join "\n\n")
+                                            ++ ("\n\n" ++ Helper.indent (indents + 4) ++ "_ ->\n" ++ Helper.indent (indents + 5) ++ decoderModuleName ++ "fail \"Invalid " ++ hint.name ++ "\"")
+                                            ++ ("\n" ++ Helper.indent (indents + 2) ++ ")")
+                                            ++ ("\n" ++ Helper.indent indents ++ ")")
+                                        -- TODO: Use `Json.Decode.lazy` for recursive types.
+
+                                    else
                                         "_"
 
-                Nothing ->
-                    "_"
+                                Nothing ->
+                                    "_"
+
+            Nothing ->
+                "_"
 
 
 getDefaultEncoderRecur : TokenDict -> Set.Set String -> String -> Maybe String -> Int -> TipeString -> String
 getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObjectName indents tipeString =
     if String.trim tipeString == "" then
         "_"
+
     else if isRecordString tipeString then
         case maybeObjectName of
             Just objectName ->
@@ -3125,53 +3207,58 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
                     numFieldAndValues =
                         List.length fieldsAndValues
                 in
-                    if numFieldAndValues > 0 then
-                        ("\n" ++ Helper.indent indents ++ "(" ++ encoderModuleName ++ "object" ++ "\n")
-                            ++ (fieldsAndValues
-                                    |> List.indexedMap
-                                        (\index ( fieldName, tipe ) ->
-                                            let
-                                                inner =
-                                                    getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just (objectName ++ "." ++ fieldName)) (indents + 2) tipe
+                if numFieldAndValues > 0 then
+                    ("\n" ++ Helper.indent indents ++ "(" ++ encoderModuleName ++ "object" ++ "\n")
+                        ++ (fieldsAndValues
+                                |> List.indexedMap
+                                    (\index ( fieldName, tipe ) ->
+                                        let
+                                            inner =
+                                                getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just (objectName ++ "." ++ fieldName)) (indents + 2) tipe
 
-                                                innerLines =
-                                                    inner |> String.split "\n"
+                                            innerLines =
+                                                inner |> String.split "\n"
 
-                                                isMultiline =
-                                                    List.length innerLines > 1
+                                            isMultiline =
+                                                List.length innerLines > 1
 
-                                                prefix =
-                                                    if index == 0 then
-                                                        "[ "
-                                                    else
-                                                        ", "
-                                            in
-                                                Helper.indent (indents + 1)
-                                                    ++ prefix
-                                                    ++ "( \""
-                                                    ++ fieldName
-                                                    ++ "\""
-                                                    ++ (if isMultiline then
-                                                            "\n" ++ Helper.indent (indents + 1) ++ "  , "
-                                                        else
-                                                            ", "
-                                                       )
-                                                    ++ (formatDecoderEncoderFunctionBody inner |> String.trim)
-                                                    ++ (if isMultiline then
-                                                            "\n" ++ Helper.indent (indents + 1) ++ "  )"
-                                                        else
-                                                            " )"
-                                                       )
-                                        )
-                                    |> String.join "\n"
-                               )
-                            ++ ("\n" ++ Helper.indent (indents + 1) ++ "]")
-                            ++ ("\n" ++ Helper.indent indents ++ ")")
-                    else
-                        "_"
+                                            prefix =
+                                                if index == 0 then
+                                                    "[ "
+
+                                                else
+                                                    ", "
+                                        in
+                                        Helper.indent (indents + 1)
+                                            ++ prefix
+                                            ++ "( \""
+                                            ++ fieldName
+                                            ++ "\""
+                                            ++ (if isMultiline then
+                                                    "\n" ++ Helper.indent (indents + 1) ++ "  , "
+
+                                                else
+                                                    ", "
+                                               )
+                                            ++ (formatDecoderEncoderFunctionBody inner |> String.trim)
+                                            ++ (if isMultiline then
+                                                    "\n" ++ Helper.indent (indents + 1) ++ "  )"
+
+                                                else
+                                                    " )"
+                                               )
+                                    )
+                                |> String.join "\n"
+                           )
+                        ++ ("\n" ++ Helper.indent (indents + 1) ++ "]")
+                        ++ ("\n" ++ Helper.indent indents ++ ")")
+
+                else
+                    "_"
 
             Nothing ->
                 "_"
+
     else if isTupleString tipeString then
         case maybeObjectName of
             Just objectName ->
@@ -3180,22 +3267,23 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
                         getTupleParts tipeString
                             |> List.indexedMap
                                 (\index partTipe ->
-                                    getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just <| "v" ++ (toString index)) indents partTipe
+                                    getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just <| "v" ++ toString index) indents partTipe
                                 )
                 in
-                    ("\n" ++ Helper.indent indents ++ "let\n")
-                        ++ (Helper.indent (indents + 1) ++ "( " ++ (List.indexedMap (\index _ -> "v" ++ (toString index)) parts |> String.join ", ") ++ " ) =\n")
-                        ++ (Helper.indent (indents + 2) ++ objectName)
-                        ++ ("\n" ++ Helper.indent indents ++ "in\n")
-                        ++ (Helper.indent (indents + 1)
-                                ++ encoderModuleName
-                                ++ "list [ "
-                           )
-                        ++ String.join ", " parts
-                        ++ " ]"
+                ("\n" ++ Helper.indent indents ++ "let\n")
+                    ++ (Helper.indent (indents + 1) ++ "( " ++ (List.indexedMap (\index _ -> "v" ++ toString index) parts |> String.join ", ") ++ " ) =\n")
+                    ++ (Helper.indent (indents + 2) ++ objectName)
+                    ++ ("\n" ++ Helper.indent indents ++ "in\n")
+                    ++ (Helper.indent (indents + 1)
+                            ++ encoderModuleName
+                            ++ "list [ "
+                       )
+                    ++ String.join ", " parts
+                    ++ " ]"
 
             Nothing ->
                 "_"
+
     else
         let
             tipeParts =
@@ -3212,7 +3300,7 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
                 maybeObjectName |> Maybe.withDefault ""
 
             wrapWithMap moduleName =
-                (Helper.indent indents ++ "(" ++ encoderModuleName ++ (String.toLower moduleName) ++ " ")
+                (Helper.indent indents ++ "(" ++ encoderModuleName ++ String.toLower moduleName ++ " ")
                     ++ ("\n" ++ Helper.indent (indents + 1) ++ "(" ++ moduleName ++ ".map")
                     ++ ("\n" ++ Helper.indent (indents + 2) ++ "(\\v -> ")
                     ++ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just "v") (indents + 3) tailTipe
@@ -3221,90 +3309,94 @@ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName maybeObje
                     ++ ("\n" ++ Helper.indent (indents + 1) ++ ")")
                     ++ ("\n" ++ Helper.indent indents ++ ")")
         in
-            case List.head tipeParts of
-                Just headTipeString ->
-                    case headTipeString of
-                        -- Primitives
-                        "number" ->
-                            encoderModuleName ++ "float " ++ objectName
+        case List.head tipeParts of
+            Just headTipeString ->
+                case headTipeString of
+                    -- Primitives
+                    "number" ->
+                        encoderModuleName ++ "float " ++ objectName
 
-                        "Int" ->
-                            encoderModuleName ++ "int " ++ objectName
+                    "Int" ->
+                        encoderModuleName ++ "int " ++ objectName
 
-                        "Float" ->
-                            encoderModuleName ++ "float " ++ objectName
+                    "Float" ->
+                        encoderModuleName ++ "float " ++ objectName
 
-                        "Bool" ->
-                            encoderModuleName ++ "bool " ++ objectName
+                    "Bool" ->
+                        encoderModuleName ++ "bool " ++ objectName
 
-                        "String" ->
-                            encoderModuleName ++ "string " ++ objectName
+                    "String" ->
+                        encoderModuleName ++ "string " ++ objectName
 
-                        -- Core
-                        "List" ->
-                            wrapWithMap "List"
+                    -- Core
+                    "List" ->
+                        wrapWithMap "List"
 
-                        "Array.Array" ->
-                            wrapWithMap "Array"
+                    "Array.Array" ->
+                        wrapWithMap "Array"
 
-                        "Dict.Dict" ->
-                            case List.head tailParts of
-                                Just "String" ->
-                                    let
-                                        dictValueTipe =
-                                            List.tail tailParts
-                                                |> Maybe.withDefault []
-                                                |> String.join " "
-                                    in
-                                        "(" ++ encoderModuleName ++ "object (List.map (\\( k, v ) -> ( k, " ++ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just "v") indents dictValueTipe ++ " )) (Dict.toList " ++ objectName ++ ")))"
+                    "Dict.Dict" ->
+                        case List.head tailParts of
+                            Just "String" ->
+                                let
+                                    dictValueTipe =
+                                        List.tail tailParts
+                                            |> Maybe.withDefault []
+                                            |> String.join " "
+                                in
+                                "(" ++ encoderModuleName ++ "object (List.map (\\( k, v ) -> ( k, " ++ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just "v") indents dictValueTipe ++ " )) (Dict.toList " ++ objectName ++ ")))"
 
-                                _ ->
-                                    "_"
+                            _ ->
+                                "_"
 
-                        "Maybe" ->
-                            ("\n" ++ Helper.indent indents ++ "case " ++ objectName ++ " of\n")
-                                ++ (Helper.indent (indents + 1) ++ "Just v ->\n")
-                                ++ (Helper.indent (indents + 2) ++ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just "v") (indents + 2) tailTipe ++ "\n\n")
-                                ++ (Helper.indent (indents + 1) ++ "Nothing ->\n")
-                                ++ (Helper.indent (indents + 2) ++ encoderModuleName ++ "null")
+                    "Maybe" ->
+                        ("\n" ++ Helper.indent indents ++ "case " ++ objectName ++ " of\n")
+                            ++ (Helper.indent (indents + 1) ++ "Just v ->\n")
+                            ++ (Helper.indent (indents + 2) ++ getDefaultEncoderRecur activeFileTokens visitedTypes encoderModuleName (Just "v") (indents + 2) tailTipe ++ "\n\n")
+                            ++ (Helper.indent (indents + 1) ++ "Nothing ->\n")
+                            ++ (Helper.indent (indents + 2) ++ encoderModuleName ++ "null")
 
-                        headTipeString ->
-                            if getLastName headTipeString == "Value" then
-                                -- TODO: Check if `Value` is from `Json.Decode` of `elm-lang/core`.
-                                objectName
-                            else
-                                case getHintsForToken (Just headTipeString) activeFileTokens |> List.head of
-                                    Just hint ->
-                                        -- Avoid infinite recursion.
-                                        if
-                                            (hint.kind /= KindType)
-                                                && (hint.tipe /= headTipeString)
-                                                && (hint.kind /= KindTypeAlias || (hint.kind == KindTypeAlias && List.length hint.args == 0))
-                                            -- TODO: ^ Make it work with aliases with type variables (e.g. `type alias AliasedType a b = ( a, b )`).
-                                        then
-                                            if Set.member hint.name visitedTypes then
-                                                "_"
-                                            else
-                                                getDefaultEncoderRecur activeFileTokens (Set.insert hint.name visitedTypes) encoderModuleName maybeObjectName indents hint.tipe
-                                        else if hint.kind == KindType then
-                                            -- Encoder for union types.
-                                            ("\n" ++ Helper.indent indents ++ "case " ++ objectName ++ " of\n")
-                                                ++ (List.map
-                                                        (\tipeCase ->
-                                                            (Helper.indent (indents + 1) ++ tipeCase.name ++ " ->\n")
-                                                                ++ (Helper.indent (indents + 2) ++ encoderModuleName ++ "string " ++ "\"" ++ tipeCase.name ++ "\"")
-                                                        )
-                                                        hint.cases
-                                                        |> String.join "\n\n"
-                                                   )
-                                        else
+                    headTipeString ->
+                        if getLastName headTipeString == "Value" then
+                            -- TODO: Check if `Value` is from `Json.Decode` of `elm-lang/core`.
+                            objectName
+
+                        else
+                            case getHintsForToken (Just headTipeString) activeFileTokens |> List.head of
+                                Just hint ->
+                                    -- Avoid infinite recursion.
+                                    if
+                                        (hint.kind /= KindType)
+                                            && (hint.tipe /= headTipeString)
+                                            && (hint.kind /= KindTypeAlias || (hint.kind == KindTypeAlias && List.length hint.args == 0))
+                                        -- TODO: ^ Make it work with aliases with type variables (e.g. `type alias AliasedType a b = ( a, b )`).
+                                    then
+                                        if Set.member hint.name visitedTypes then
                                             "_"
 
-                                    Nothing ->
+                                        else
+                                            getDefaultEncoderRecur activeFileTokens (Set.insert hint.name visitedTypes) encoderModuleName maybeObjectName indents hint.tipe
+
+                                    else if hint.kind == KindType then
+                                        -- Encoder for union types.
+                                        ("\n" ++ Helper.indent indents ++ "case " ++ objectName ++ " of\n")
+                                            ++ (List.map
+                                                    (\tipeCase ->
+                                                        (Helper.indent (indents + 1) ++ tipeCase.name ++ " ->\n")
+                                                            ++ (Helper.indent (indents + 2) ++ encoderModuleName ++ "string " ++ "\"" ++ tipeCase.name ++ "\"")
+                                                    )
+                                                    hint.cases
+                                                    |> String.join "\n\n"
+                                               )
+
+                                    else
                                         "_"
 
-                Nothing ->
-                    "_"
+                                Nothing ->
+                                    "_"
+
+            Nothing ->
+                "_"
 
 
 doConstructCaseOf : Token -> Model -> ( Model, Cmd Msg )
@@ -3347,7 +3439,7 @@ typeConstructorToNameAndArgs tipeString =
                 |> List.tail
                 |> Maybe.withDefault []
     in
-        ( tipeName, tipeArgs )
+    ( tipeName, tipeArgs )
 
 
 constructCaseOf : Token -> TokenDict -> Maybe String
@@ -3360,17 +3452,17 @@ constructCaseOf token activeFileTokens =
                         ( name, args ) =
                             typeConstructorToNameAndArgs tokenHint.tipe
                     in
-                        case List.head args of
-                            Just "->" ->
-                                ( getReturnTipe tokenHint.tipe
-                                , []
-                                )
+                    case List.head args of
+                        Just "->" ->
+                            ( getReturnTipe tokenHint.tipe
+                            , []
+                            )
 
-                            Just _ ->
-                                ( name, args )
+                        Just _ ->
+                            ( name, args )
 
-                            Nothing ->
-                                ( name, args )
+                        Nothing ->
+                            ( name, args )
 
                 ( tipeCases, tipeArgs ) =
                     case tokenTipeName of
@@ -3388,12 +3480,14 @@ constructCaseOf token activeFileTokens =
                                   ]
                                 , []
                                 )
+
                             else if List.member tokenTipeName [ "String" ] then
                                 ( [ { name = "\"|\"", args = [] }
                                   , { name = "_", args = [] }
                                   ]
                                 , []
                                 )
+
                             else
                                 case
                                     getHintsForToken (Just tokenTipeName) activeFileTokens
@@ -3406,28 +3500,30 @@ constructCaseOf token activeFileTokens =
                                     Nothing ->
                                         ( [], [] )
             in
-                if List.length tipeCases > 0 then
-                    tipeCases
-                        |> List.map
-                            (\tipeCase ->
-                                let
-                                    alignedArgs =
-                                        getTipeCaseAlignedArgTipes tipeArgs tokenTipeArgs tipeCase.args
-                                in
-                                    tipeCase.name
-                                        ++ (if List.length alignedArgs > 0 then
-                                                " "
-                                            else
-                                                ""
-                                           )
-                                        ++ String.join " " (getDefaultArgNames alignedArgs)
-                                        ++ " ->\n    |"
-                             -- Vertical bars are placeholders for the tab stops.
-                            )
-                        |> String.join "\n\n"
-                        |> Just
-                else
-                    Nothing
+            if List.length tipeCases > 0 then
+                tipeCases
+                    |> List.map
+                        (\tipeCase ->
+                            let
+                                alignedArgs =
+                                    getTipeCaseAlignedArgTipes tipeArgs tokenTipeArgs tipeCase.args
+                            in
+                            tipeCase.name
+                                ++ (if List.length alignedArgs > 0 then
+                                        " "
+
+                                    else
+                                        ""
+                                   )
+                                ++ String.join " " (getDefaultArgNames alignedArgs)
+                                ++ " ->\n    |"
+                         -- Vertical bars are placeholders for the tab stops.
+                        )
+                    |> String.join "\n\n"
+                    |> Just
+
+            else
+                Nothing
 
         Nothing ->
             Nothing
@@ -3446,6 +3542,7 @@ constructDefaultValueForType token activeFileTokens =
     then
         getDefaultValueForType activeFileTokens token
             |> Just
+
     else
         Nothing
 
@@ -3458,28 +3555,30 @@ constructDefaultArguments token activeFileTokens =
                 parts =
                     if isRecordString hint.tipe then
                         getRecordTipeFieldTipes hint.tipe
+
                     else
                         -- Remove return type.
                         getTipeParts hint.tipe
                             |> Helper.dropLast
             in
-                parts
-                    |> List.map
-                        (\tipeString ->
-                            let
-                                value =
-                                    getDefaultValueForType activeFileTokens tipeString
-                            in
-                                if
-                                    String.contains " " value
-                                        && not (isRecordString value)
-                                        && not (isTupleString value)
-                                then
-                                    "(" ++ value ++ ")"
-                                else
-                                    value
-                        )
-                    |> Just
+            parts
+                |> List.map
+                    (\tipeString ->
+                        let
+                            value =
+                                getDefaultValueForType activeFileTokens tipeString
+                        in
+                        if
+                            String.contains " " value
+                                && not (isRecordString value)
+                                && not (isTupleString value)
+                        then
+                            "(" ++ value ++ ")"
+
+                        else
+                            value
+                    )
+                |> Just
 
         Nothing ->
             Nothing
@@ -3492,16 +3591,16 @@ getTipeCaseAlignedArgTipes tipeArgs tipeAnnotationArgs tipeCaseArgs =
             List.map2 (,) tipeArgs tipeAnnotationArgs
                 |> Dict.fromList
     in
-        tipeCaseArgs
-            |> List.map
-                (\argTipe ->
-                    case Dict.get argTipe tipeArgsDict of
-                        Just a ->
-                            a
+    tipeCaseArgs
+        |> List.map
+            (\argTipe ->
+                case Dict.get argTipe tipeArgsDict of
+                    Just a ->
+                        a
 
-                        Nothing ->
-                            argTipe
-                )
+                    Nothing ->
+                        argTipe
+            )
 
 
 getFunctionArgNameRecur : String -> Dict.Dict String Int -> ( String, Dict.Dict String Int )
@@ -3510,7 +3609,7 @@ getFunctionArgNameRecur argString argNameCounters =
         updatePartNameAndArgNameCounters partName2 argNameCounters2 =
             case Dict.get partName2 argNameCounters2 of
                 Just count ->
-                    ( partName2 ++ (toString (count + 1))
+                    ( partName2 ++ toString (count + 1)
                     , Dict.update partName2 (\_ -> Just (count + 1)) argNameCounters2
                     )
 
@@ -3519,31 +3618,34 @@ getFunctionArgNameRecur argString argNameCounters =
                     , Dict.insert partName2 1 argNameCounters2
                     )
     in
-        if isRecordString argString then
-            updatePartNameAndArgNameCounters "record" argNameCounters
-        else if isTupleString argString then
-            let
-                ( partNames, updateArgNameCounters ) =
-                    getTupleParts argString
-                        |> List.foldl
-                            (\part ( partNames, argNameCounters2 ) ->
-                                let
-                                    ( partName, updateArgNameCounters2 ) =
-                                        getFunctionArgNameRecur part argNameCounters2
-                                in
-                                    ( partNames ++ [ partName ]
-                                    , updateArgNameCounters2
-                                    )
+    if isRecordString argString then
+        updatePartNameAndArgNameCounters "record" argNameCounters
+
+    else if isTupleString argString then
+        let
+            ( partNames, updateArgNameCounters ) =
+                getTupleParts argString
+                    |> List.foldl
+                        (\part ( partNames, argNameCounters2 ) ->
+                            let
+                                ( partName, updateArgNameCounters2 ) =
+                                    getFunctionArgNameRecur part argNameCounters2
+                            in
+                            ( partNames ++ [ partName ]
+                            , updateArgNameCounters2
                             )
-                            ( [], argNameCounters )
-            in
-                ( getTupleStringFromParts partNames
-                , updateArgNameCounters
-                )
-        else if isFunctionTipe argString then
-            updatePartNameAndArgNameCounters "function" argNameCounters
-        else
-            updatePartNameAndArgNameCounters (tipeToVar argString) argNameCounters
+                        )
+                        ( [], argNameCounters )
+        in
+        ( getTupleStringFromParts partNames
+        , updateArgNameCounters
+        )
+
+    else if isFunctionTipe argString then
+        updatePartNameAndArgNameCounters "function" argNameCounters
+
+    else
+        updatePartNameAndArgNameCounters (tipeToVar argString) argNameCounters
 
 
 doGetAliasesOfType : Token -> Model -> ( Model, Cmd Msg )
@@ -3577,7 +3679,7 @@ getTupleStringFromParts parts =
             String.concat parts
 
         _ ->
-            "( " ++ (String.join ", " parts) ++ " )"
+            "( " ++ String.join ", " parts ++ " )"
 
 
 getHintFullName : Hint -> String
@@ -3713,13 +3815,15 @@ formatSourcePath { sourcePath, name } valueName =
         anchor =
             if valueName == "" then
                 ""
+
             else
                 "#" ++ valueName
     in
-        if isPackageSourcePath sourcePath then
-            sourcePath ++ dotToHyphen name ++ anchor
-        else
-            sourcePath
+    if isPackageSourcePath sourcePath then
+        sourcePath ++ dotToHyphen name ++ anchor
+
+    else
+        sourcePath
 
 
 isPackageSourcePath : String -> Bool
@@ -3738,6 +3842,7 @@ dotToHyphen string =
         (\ch ->
             if ch == '.' then
                 '-'
+
             else
                 ch
         )
@@ -3787,16 +3892,16 @@ downloadPackageDocs dependency =
         url =
             packageUri ++ "documentation.json"
     in
-        Http.getString url
-            |> Http.toTask
-            |> Task.map
-                (\jsonString ->
-                    ( jsonString
-                    , Decode.decodeString (Decode.list (decodeModuleDocs packageUri)) jsonString
-                        |> Result.toMaybe
-                        |> Maybe.withDefault []
-                    )
+    Http.getString url
+        |> Http.toTask
+        |> Task.map
+            (\jsonString ->
+                ( jsonString
+                , Decode.decodeString (Decode.list (decodeModuleDocs packageUri)) jsonString
+                    |> Result.toMaybe
+                    |> Maybe.withDefault []
                 )
+            )
 
 
 toModuleDocs : String -> String -> List ModuleDocs
@@ -3847,10 +3952,10 @@ decodeModuleDocs sourcePath =
                 (Decode.field "types" (Decode.list tipe))
                 (Decode.field "values" (Decode.list value))
     in
-        Decode.map3 (ModuleDocs sourcePath)
-            name
-            values
-            comment
+    Decode.map3 (ModuleDocs sourcePath)
+        name
+        values
+        comment
 
 
 decodeAssociativity : Maybe String -> Maybe Associativity
@@ -3977,6 +4082,7 @@ encodeHint showAliasesOfType tokens hint =
     , aliasesOfTipe =
         if showAliasesOfType then
             getAliasesOfType tokens hint.name hint.tipe
+
         else
             []
     }
@@ -4086,7 +4192,7 @@ getActiveFileTokens maybeActiveFile maybeActiveTopLevel projectFileContentsDict 
                     )
                         |> List.foldl insertTokenAndHint topLevelTokens
             in
-                activeFileTokens
+            activeFileTokens
 
         Nothing ->
             Dict.empty
@@ -4102,6 +4208,7 @@ computeHintSourcePath ( maybeActiveFile, maybeActiveTopLevel, projectFileContent
                     maybeActiveTopLevel
                     ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
                     tokens
+
             else
                 hint.sourcePath
 
@@ -4115,27 +4222,28 @@ getSourcePathOfRecordFieldToken name filePath maybeActiveTopLevel ( maybeActiveF
         parts =
             String.split "." name
     in
-        if List.length parts == 1 then
-            case maybeActiveTopLevel of
-                Just activeTopLevel ->
-                    filePath ++ filePathSeparator ++ activeTopLevel
+    if List.length parts == 1 then
+        case maybeActiveTopLevel of
+            Just activeTopLevel ->
+                filePath ++ filePathSeparator ++ activeTopLevel
 
-                Nothing ->
-                    ""
-        else
-            case List.head parts of
-                Just parentName ->
-                    getSourcePathOfRecordFieldTokenRecur
-                        parentName
-                        parentName
-                        filePath
-                        (List.tail parts |> Maybe.withDefault [])
-                        ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
-                        tokens
-                        tokens
+            Nothing ->
+                ""
 
-                Nothing ->
-                    ""
+    else
+        case List.head parts of
+            Just parentName ->
+                getSourcePathOfRecordFieldTokenRecur
+                    parentName
+                    parentName
+                    filePath
+                    (List.tail parts |> Maybe.withDefault [])
+                    ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                    tokens
+                    tokens
+
+            Nothing ->
+                ""
 
 
 getSourcePathOfRecordFieldTokenRecur : String -> String -> SourcePath -> List String -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> TokenDict -> String
@@ -4146,6 +4254,7 @@ getSourcePathOfRecordFieldTokenRecur parentPartName parentName parentSourcePath 
                 doDefault parentHint =
                     if parentHint.sourcePath == "" then
                         parentSourcePath ++ filePathSeparator ++ parentHint.tipe
+
                     else
                         parentHint.sourcePath ++ filePathSeparator ++ parentHint.tipe
 
@@ -4154,11 +4263,13 @@ getSourcePathOfRecordFieldTokenRecur parentPartName parentName parentSourcePath 
                         Just parentHint ->
                             if isRecordString parentHint.tipe then
                                 parentSourcePath ++ filePathSeparator ++ parentPartName
+
                             else
                                 case getHintsForToken (Just parentHint.tipe) tokens |> List.head of
                                     Just tipeHint ->
                                         if tipeHint.sourcePath /= parentSourcePath then
                                             tipeHint.sourcePath ++ filePathSeparator ++ tipeHint.name
+
                                         else
                                             doDefault parentHint
 
@@ -4172,6 +4283,7 @@ getSourcePathOfRecordFieldTokenRecur parentPartName parentName parentSourcePath 
                                         Just tipeHint ->
                                             if tipeHint.sourcePath /= parentSourcePath then
                                                 tipeHint.sourcePath ++ filePathSeparator ++ tipeHint.name
+
                                             else
                                                 doDefault parentHint
 
@@ -4193,29 +4305,30 @@ getSourcePathOfRecordFieldTokenRecur parentPartName parentName parentSourcePath 
                                         Nothing ->
                                             Nothing
                             in
-                                case maybeNewActiveFile of
-                                    Just newActiveFile ->
-                                        if parentFilePath /= prefixFilePath && isProjectSourcePath prefixFilePath then
-                                            ( maybeNewActiveFile
-                                            , getActiveFileTokens maybeNewActiveFile Nothing projectFileContentsDict projectDependencies packageDocs
-                                            )
-                                        else
-                                            ( maybeActiveFile, tokens )
+                            case maybeNewActiveFile of
+                                Just newActiveFile ->
+                                    if parentFilePath /= prefixFilePath && isProjectSourcePath prefixFilePath then
+                                        ( maybeNewActiveFile
+                                        , getActiveFileTokens maybeNewActiveFile Nothing projectFileContentsDict projectDependencies packageDocs
+                                        )
 
-                                    Nothing ->
+                                    else
                                         ( maybeActiveFile, tokens )
+
+                                Nothing ->
+                                    ( maybeActiveFile, tokens )
 
                         _ ->
                             ( maybeActiveFile, tokens )
             in
-                getSourcePathOfRecordFieldTokenRecur
-                    headName
-                    (parentName ++ "." ++ headName)
-                    newPrefixSourcePath
-                    (List.tail tailParts |> Maybe.withDefault [])
-                    ( updatedActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
-                    rootTokens
-                    updatedTokens
+            getSourcePathOfRecordFieldTokenRecur
+                headName
+                (parentName ++ "." ++ headName)
+                newPrefixSourcePath
+                (List.tail tailParts |> Maybe.withDefault [])
+                ( updatedActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                rootTokens
+                updatedTokens
 
         Nothing ->
             parentSourcePath
@@ -4231,6 +4344,7 @@ filePathSeparator =
     ```
     getArgsParts "a b c" == [ "a", "b", "c" ]
     ```
+
 -}
 getArgsParts : String -> List String
 getArgsParts argsString =
@@ -4243,10 +4357,11 @@ getArgsParts argsString =
                 args =
                     getArgsPartsRecur argsString "" [] ( 0, 0 )
             in
-                if List.member "->" args then
-                    [ argsString ]
-                else
-                    args
+            if List.member "->" args then
+                [ argsString ]
+
+            else
+                args
 
 
 getArgsPartsRecur : String -> String -> List String -> ( Int, Int ) -> List String
@@ -4260,79 +4375,9 @@ getArgsPartsRecur str acc parts ( openParentheses, openBraces ) =
                 ( thisChar, thisRest ) =
                     getCharAndRest str
             in
-                if openParentheses == 0 && openBraces == 0 && thisChar == " " then
-                    getArgsPartsRecur thisRest "" (parts ++ [ String.trim acc ]) ( 0, 0 )
-                else
-                    let
-                        ( updatedOpenParentheses, updatedOpenBraces ) =
-                            case thisChar of
-                                "(" ->
-                                    ( openParentheses + 1, openBraces )
+            if openParentheses == 0 && openBraces == 0 && thisChar == " " then
+                getArgsPartsRecur thisRest "" (parts ++ [ String.trim acc ]) ( 0, 0 )
 
-                                ")" ->
-                                    ( openParentheses - 1, openBraces )
-
-                                "{" ->
-                                    ( openParentheses, openBraces + 1 )
-
-                                "}" ->
-                                    ( openParentheses, openBraces - 1 )
-
-                                _ ->
-                                    ( openParentheses, openBraces )
-                    in
-                        if updatedOpenParentheses < 0 || updatedOpenBraces < 0 then
-                            []
-                        else
-                            getArgsPartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
-
-
-getReturnTipe : TipeString -> String
-getReturnTipe tipeString =
-    getTipeParts tipeString
-        |> Helper.last
-        |> Maybe.withDefault ""
-
-
-{-|
-
-    ```
-    getTipeParts "Int -> Int -> Int" == [ "Int", "Int" ]
-    getTipeParts "a -> b" == [ "a -> b" ]
-    getTipeParts "(a -> b)" == [ "a", "b" ]
-    ```
--}
-getTipeParts : TipeString -> List String
-getTipeParts tipeString =
-    case tipeString of
-        "" ->
-            []
-
-        tipeString ->
-            let
-                tipe =
-                    if isFunctionTipe tipeString then
-                        unencloseParentheses tipeString
-                    else
-                        tipeString
-            in
-                getTipePartsRecur tipe "" [] ( 0, 0 )
-
-
-getTipePartsRecur : String -> String -> List String -> ( Int, Int ) -> List String
-getTipePartsRecur str acc parts ( openParentheses, openBraces ) =
-    if str == "" then
-        parts ++ [ String.trim acc ]
-    else
-        let
-            ( thisChar, thisRest ) =
-                getCharAndRest str
-
-            ( nextChar, nextRest ) =
-                getCharAndRest thisRest
-        in
-            if openParentheses == 0 && openBraces == 0 && thisChar == "-" && nextChar == ">" then
-                getTipePartsRecur nextRest "" (parts ++ [ String.trim acc ]) ( 0, 0 )
             else
                 let
                     ( updatedOpenParentheses, updatedOpenBraces ) =
@@ -4352,10 +4397,87 @@ getTipePartsRecur str acc parts ( openParentheses, openBraces ) =
                             _ ->
                                 ( openParentheses, openBraces )
                 in
-                    if updatedOpenParentheses < 0 || updatedOpenBraces < 0 then
-                        []
+                if updatedOpenParentheses < 0 || updatedOpenBraces < 0 then
+                    []
+
+                else
+                    getArgsPartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
+
+
+getReturnTipe : TipeString -> String
+getReturnTipe tipeString =
+    getTipeParts tipeString
+        |> Helper.last
+        |> Maybe.withDefault ""
+
+
+{-|
+
+    ```
+    getTipeParts "Int -> Int -> Int" == [ "Int", "Int" ]
+    getTipeParts "a -> b" == [ "a -> b" ]
+    getTipeParts "(a -> b)" == [ "a", "b" ]
+    ```
+
+-}
+getTipeParts : TipeString -> List String
+getTipeParts tipeString =
+    case tipeString of
+        "" ->
+            []
+
+        tipeString ->
+            let
+                tipe =
+                    if isFunctionTipe tipeString then
+                        unencloseParentheses tipeString
+
                     else
-                        getTipePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
+                        tipeString
+            in
+            getTipePartsRecur tipe "" [] ( 0, 0 )
+
+
+getTipePartsRecur : String -> String -> List String -> ( Int, Int ) -> List String
+getTipePartsRecur str acc parts ( openParentheses, openBraces ) =
+    if str == "" then
+        parts ++ [ String.trim acc ]
+
+    else
+        let
+            ( thisChar, thisRest ) =
+                getCharAndRest str
+
+            ( nextChar, nextRest ) =
+                getCharAndRest thisRest
+        in
+        if openParentheses == 0 && openBraces == 0 && thisChar == "-" && nextChar == ">" then
+            getTipePartsRecur nextRest "" (parts ++ [ String.trim acc ]) ( 0, 0 )
+
+        else
+            let
+                ( updatedOpenParentheses, updatedOpenBraces ) =
+                    case thisChar of
+                        "(" ->
+                            ( openParentheses + 1, openBraces )
+
+                        ")" ->
+                            ( openParentheses - 1, openBraces )
+
+                        "{" ->
+                            ( openParentheses, openBraces + 1 )
+
+                        "}" ->
+                            ( openParentheses, openBraces - 1 )
+
+                        _ ->
+                            ( openParentheses, openBraces )
+            in
+            if updatedOpenParentheses < 0 || updatedOpenBraces < 0 then
+                []
+
+            else
+                getTipePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
 getCharAndRest : String -> ( String, String )
@@ -4373,6 +4495,7 @@ getCharAndRest str =
     ```
     getTupleParts "( Int, String )" == [ "Int", "String" ]
     ```
+
 -}
 getTupleParts : String -> List String
 getTupleParts tupleString =
@@ -4396,31 +4519,33 @@ getTuplePartsRecur str acc parts ( openParentheses, openBraces ) =
                 ( thisChar, thisRest ) =
                     getCharAndRest str
             in
-                if openParentheses == 0 && openBraces == 0 && thisChar == "," then
-                    getTuplePartsRecur thisRest "" (parts ++ [ String.trim acc ]) ( 0, 0 )
+            if openParentheses == 0 && openBraces == 0 && thisChar == "," then
+                getTuplePartsRecur thisRest "" (parts ++ [ String.trim acc ]) ( 0, 0 )
+
+            else
+                let
+                    ( updatedOpenParentheses, updatedOpenBraces ) =
+                        case thisChar of
+                            "(" ->
+                                ( openParentheses + 1, openBraces )
+
+                            ")" ->
+                                ( openParentheses - 1, openBraces )
+
+                            "{" ->
+                                ( openParentheses, openBraces + 1 )
+
+                            "}" ->
+                                ( openParentheses, openBraces - 1 )
+
+                            _ ->
+                                ( openParentheses, openBraces )
+                in
+                if updatedOpenParentheses < 0 || updatedOpenBraces < 0 then
+                    []
+
                 else
-                    let
-                        ( updatedOpenParentheses, updatedOpenBraces ) =
-                            case thisChar of
-                                "(" ->
-                                    ( openParentheses + 1, openBraces )
-
-                                ")" ->
-                                    ( openParentheses - 1, openBraces )
-
-                                "{" ->
-                                    ( openParentheses, openBraces + 1 )
-
-                                "}" ->
-                                    ( openParentheses, openBraces - 1 )
-
-                                _ ->
-                                    ( openParentheses, openBraces )
-                    in
-                        if updatedOpenParentheses < 0 || updatedOpenBraces < 0 then
-                            []
-                        else
-                            getTuplePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
+                    getTuplePartsRecur thisRest (acc ++ thisChar) parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
 {-|
@@ -4428,6 +4553,7 @@ getTuplePartsRecur str acc parts ( openParentheses, openBraces ) =
     ```
     getRecordArgParts "{ a, b }" == [ "a", "b" ]
     ```
+
 -}
 getRecordArgParts : String -> List String
 getRecordArgParts recordString =
@@ -4446,6 +4572,7 @@ getRecordArgParts recordString =
     ```
     getRecordTipeParts "{ a : Int, b : String }" == [ ("a", "Int"), ("b", "String") ]
     ```
+
 -}
 getRecordTipeParts : TipeString -> List ( String, String )
 getRecordTipeParts tipeString =
@@ -4469,39 +4596,43 @@ getRecordTipePartsRecur str ( fieldAcc, tipeAcc ) lookingForTipe parts ( openPar
                 ( thisChar, thisRest ) =
                     getCharAndRest str
             in
-                if openParentheses == 0 && openBraces == 0 && thisChar == "," then
-                    getRecordTipePartsRecur thisRest ( "", "" ) False (parts ++ [ ( String.trim fieldAcc, String.trim tipeAcc ) ]) ( 0, 0 )
-                else if openParentheses == 0 && openBraces == 0 && thisChar == ":" then
-                    getRecordTipePartsRecur thisRest ( fieldAcc, "" ) True parts ( 0, 0 )
-                else
-                    let
-                        ( updatedOpenParentheses, updatedOpenBraces ) =
-                            case thisChar of
-                                "(" ->
-                                    ( openParentheses + 1, openBraces )
+            if openParentheses == 0 && openBraces == 0 && thisChar == "," then
+                getRecordTipePartsRecur thisRest ( "", "" ) False (parts ++ [ ( String.trim fieldAcc, String.trim tipeAcc ) ]) ( 0, 0 )
 
-                                ")" ->
-                                    ( openParentheses - 1, openBraces )
+            else if openParentheses == 0 && openBraces == 0 && thisChar == ":" then
+                getRecordTipePartsRecur thisRest ( fieldAcc, "" ) True parts ( 0, 0 )
 
-                                "{" ->
-                                    ( openParentheses, openBraces + 1 )
+            else
+                let
+                    ( updatedOpenParentheses, updatedOpenBraces ) =
+                        case thisChar of
+                            "(" ->
+                                ( openParentheses + 1, openBraces )
 
-                                "}" ->
-                                    ( openParentheses, openBraces - 1 )
+                            ")" ->
+                                ( openParentheses - 1, openBraces )
 
-                                _ ->
-                                    ( openParentheses, openBraces )
+                            "{" ->
+                                ( openParentheses, openBraces + 1 )
 
-                        ( updatedFieldAcc, updatedTipeAcc ) =
-                            if lookingForTipe then
-                                ( fieldAcc, tipeAcc ++ thisChar )
-                            else
-                                ( fieldAcc ++ thisChar, tipeAcc )
-                    in
-                        if updatedOpenParentheses < 0 || updatedOpenBraces < 0 then
-                            []
+                            "}" ->
+                                ( openParentheses, openBraces - 1 )
+
+                            _ ->
+                                ( openParentheses, openBraces )
+
+                    ( updatedFieldAcc, updatedTipeAcc ) =
+                        if lookingForTipe then
+                            ( fieldAcc, tipeAcc ++ thisChar )
+
                         else
-                            getRecordTipePartsRecur thisRest ( updatedFieldAcc, updatedTipeAcc ) lookingForTipe parts ( updatedOpenParentheses, updatedOpenBraces )
+                            ( fieldAcc ++ thisChar, tipeAcc )
+                in
+                if updatedOpenParentheses < 0 || updatedOpenBraces < 0 then
+                    []
+
+                else
+                    getRecordTipePartsRecur thisRest ( updatedFieldAcc, updatedTipeAcc ) lookingForTipe parts ( updatedOpenParentheses, updatedOpenBraces )
 
 
 {-|
@@ -4509,6 +4640,7 @@ getRecordTipePartsRecur str ( fieldAcc, tipeAcc ) lookingForTipe parts ( openPar
     ```
     getRecordTipeFieldNames "{ a : Int, b : String }" == [ "a", "b" ]
     ```
+
 -}
 getRecordTipeFieldNames : TipeString -> List String
 getRecordTipeFieldNames tipeString =
@@ -4521,6 +4653,7 @@ getRecordTipeFieldNames tipeString =
     ```
     getRecordTipeFieldTipes "{ a : Int, b : String }" == [ "Int", "String" ]
     ```
+
 -}
 getRecordTipeFieldTipes : TipeString -> List String
 getRecordTipeFieldTipes tipeString =
@@ -4580,7 +4713,7 @@ topLevelArgToHints parentSourcePath ( maybeActiveFile, projectFileContentsDict, 
                     , isImported = True
                     }
             in
-                [ ( name, hint ) ]
+            [ ( name, hint ) ]
 
         tipes =
             let
@@ -4600,27 +4733,27 @@ topLevelArgToHints parentSourcePath ( maybeActiveFile, projectFileContentsDict, 
                             )
                         |> List.concat
             in
-                case ( isRecordString name, isRecordString tipeString ) of
-                    ( True, True ) ->
-                        getRecordFields tipeString
+            case ( isRecordString name, isRecordString tipeString ) of
+                ( True, True ) ->
+                    getRecordFields tipeString
 
-                    ( True, False ) ->
-                        case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
-                            Just { tipe } ->
-                                getRecordFields tipe
+                ( True, False ) ->
+                    case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
+                        Just { tipe } ->
+                            getRecordFields tipe
 
-                            Nothing ->
-                                []
+                        Nothing ->
+                            []
 
-                    ( False, _ ) ->
-                        getRecordFieldTokens name
-                            tipeString
-                            parentSourcePath
-                            ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
-                            topLevelTokens
+                ( False, _ ) ->
+                    getRecordFieldTokens name
+                        tipeString
+                        parentSourcePath
+                        ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                        topLevelTokens
     in
-        tipes
-            |> List.concatMap getHint
+    tipes
+        |> List.concatMap getHint
 
 
 getRecordFieldTokens : String -> TipeString -> SourcePath -> ( Maybe ActiveFile, ProjectFileContentsDict, ProjectDependencies, List ModuleDocs ) -> TokenDict -> List ( String, TipeString )
@@ -4632,6 +4765,7 @@ getRecordFieldTokensRecur : String -> TipeString -> SourcePath -> ( Maybe Active
 getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, projectFileContentsDict, projectDependencies, packageDocs ) topLevelTokens shouldAddSelf maybeRootTipeString visitedHints =
     (if shouldAddSelf then
         [ ( name, tipeString ) ]
+
      else
         []
     )
@@ -4657,15 +4791,17 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                                 )
                             |> List.concat
                 in
-                    if isRecordString tipeString then
-                        getRecordFields tipeString
-                    else
-                        case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
-                            Just { tipe } ->
-                                getRecordFields tipe
+                if isRecordString tipeString then
+                    getRecordFields tipeString
 
-                            Nothing ->
-                                []
+                else
+                    case getHintsForToken (Just tipeString) topLevelTokens |> List.head of
+                        Just { tipe } ->
+                            getRecordFields tipe
+
+                        Nothing ->
+                            []
+
              else if isRecordString tipeString then
                 getRecordTipeParts tipeString
                     |> List.concatMap
@@ -4679,6 +4815,7 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                                 maybeRootTipeString
                                 visitedHints
                         )
+
              else if isTupleString name && isTupleString tipeString then
                 List.map2 (,) (getTupleParts name) (getTupleParts tipeString)
                     |> List.map
@@ -4693,6 +4830,7 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                                 visitedHints
                         )
                     |> List.concat
+
              else
                 case
                     getHintsForToken (Just tipeString) topLevelTokens
@@ -4716,6 +4854,7 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                                     ( hint.sourcePath
                                     , if hint.sourcePath /= parentSourcePath && isProjectSourcePath hint.sourcePath then
                                         getActiveFileTokens maybeNewActiveFile Nothing projectFileContentsDict projectDependencies packageDocs
+
                                       else
                                         topLevelTokens
                                     )
@@ -4723,21 +4862,9 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                                 updatedVisitedSourcePaths =
                                     Set.insert ( hint.name, hint.sourcePath ) visitedHints
                             in
-                                case maybeRootTipeString of
-                                    Just rootTipeString ->
-                                        if hint.name /= rootTipeString then
-                                            getRecordFieldTokensRecur name
-                                                hint.tipe
-                                                newParentSourcePath
-                                                ( maybeNewActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
-                                                newTokens
-                                                False
-                                                (Just hint.name)
-                                                updatedVisitedSourcePaths
-                                        else
-                                            []
-
-                                    Nothing ->
+                            case maybeRootTipeString of
+                                Just rootTipeString ->
+                                    if hint.name /= rootTipeString then
                                         getRecordFieldTokensRecur name
                                             hint.tipe
                                             newParentSourcePath
@@ -4746,6 +4873,20 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
                                             False
                                             (Just hint.name)
                                             updatedVisitedSourcePaths
+
+                                    else
+                                        []
+
+                                Nothing ->
+                                    getRecordFieldTokensRecur name
+                                        hint.tipe
+                                        newParentSourcePath
+                                        ( maybeNewActiveFile, projectFileContentsDict, projectDependencies, packageDocs )
+                                        newTokens
+                                        False
+                                        (Just hint.name)
+                                        updatedVisitedSourcePaths
+
                         else
                             []
 
@@ -4759,6 +4900,7 @@ getRecordFieldTokensRecur name tipeString parentSourcePath ( maybeActiveFile, pr
     ```
     isRecordString "{ x : Int , y : Int , ab : { a : Int , b : Int } , cd : Aaa.Cd }" == True
     ```
+
 -}
 isRecordString : String -> Bool
 isRecordString tipeString =
@@ -4775,11 +4917,13 @@ isRecordString tipeString =
     isTupleString "(List {a : String, b : Int})" == False
     isTupleString "(a -> b)" == False
     ```
+
 -}
 isTupleString : String -> Bool
 isTupleString tipeString =
     if tipeString == "()" then
         True
+
     else if String.startsWith "(" tipeString && String.endsWith ")" tipeString then
         case parseTipeString tipeString of
             Just (TypeTuple elements) ->
@@ -4792,6 +4936,7 @@ isTupleString tipeString =
 
             _ ->
                 False
+
     else
         False
 
@@ -4802,10 +4947,11 @@ isFunctionTipe tipeString =
         tipe =
             if isTupleString tipeString then
                 getTupleParts tipeString |> List.head |> Maybe.withDefault ""
+
             else
                 tipeString
     in
-        tipe /= "" && not (isRecordString tipe) && not (isTupleString tipe) && (String.contains "->" tipe) && List.length (getArgsParts tipe) == 1
+    tipe /= "" && not (isRecordString tipe) && not (isTupleString tipe) && String.contains "->" tipe && List.length (getArgsParts tipe) == 1
 
 
 isDecoderTipe : String -> Bool
@@ -4825,6 +4971,7 @@ isEncoderTipe tipeString =
     if getLastName (getReturnTipe tipeString) == "Value" && List.length (getParameterTipes tipeString) == 1 then
         -- TODO: Check that it's actually from `Json.Encode` of `elm-lang/core`.
         True
+
     else
         False
 
@@ -4834,6 +4981,7 @@ getTipeCaseTypeAnnotation tipeCase tipe =
     tipeCase.args
         ++ [ if List.length tipe.args > 0 then
                 tipe.tipe ++ " " ++ String.join " " tipe.args
+
              else
                 tipe.tipe
            ]
@@ -4853,19 +5001,19 @@ unionTagsToHints moduleDocs { alias, exposed } activeFilePath tipe =
                         hintTipe =
                             getTipeCaseTypeAnnotation tipeCase tipe
                     in
-                        { name = tag
-                        , moduleName = moduleDocs.name
-                        , sourcePath = formatSourcePath moduleDocs tipe.name
-                        , comment = tipe.comment
-                        , tipe = hintTipe
-                        , args = tipeCase.args
-                        , caseTipe = Just tipe.name
-                        , cases = []
-                        , associativity = Nothing
-                        , precedence = Nothing
-                        , kind = KindTypeCase
-                        , isImported = True
-                        }
+                    { name = tag
+                    , moduleName = moduleDocs.name
+                    , sourcePath = formatSourcePath moduleDocs tipe.name
+                    , comment = tipe.comment
+                    , tipe = hintTipe
+                    , args = tipeCase.args
+                    , caseTipe = Just tipe.name
+                    , cases = []
+                    , associativity = Nothing
+                    , precedence = Nothing
+                    , kind = KindTypeCase
+                    , isImported = True
+                    }
 
                 moduleLocalName =
                     getModuleLocalName moduleDocs.name alias tag
@@ -4873,16 +5021,18 @@ unionTagsToHints moduleDocs { alias, exposed } activeFilePath tipe =
                 isInActiveModule =
                     activeFilePath == hint.sourcePath
             in
-                hints
-                    ++ (if isInActiveModule then
-                            [ ( tag, hint ) ]
-                        else if isExposed tag exposed || isExposed tipe.name exposed then
-                            [ ( moduleLocalName, hint ), ( tag, hint ) ]
-                        else
-                            [ ( moduleLocalName, hint ) ]
-                       )
+            hints
+                ++ (if isInActiveModule then
+                        [ ( tag, hint ) ]
+
+                    else if isExposed tag exposed || isExposed tipe.name exposed then
+                        [ ( moduleLocalName, hint ), ( tag, hint ) ]
+
+                    else
+                        [ ( moduleLocalName, hint ) ]
+                   )
     in
-        List.foldl addHints [] tipe.cases
+    List.foldl addHints [] tipe.cases
 
 
 nameToHints : ModuleDocs -> Import -> FilePath -> SymbolKind -> ( Value, List TipeCase ) -> List ( String, Hint )
@@ -4915,12 +5065,14 @@ nameToHints moduleDocs { alias, exposed } activeFilePath kind ( { name, comment,
         isInActiveModule =
             activeFilePath == hint.sourcePath
     in
-        if isInActiveModule then
-            [ ( name, hint ) ]
-        else if isExposed name exposed then
-            [ ( name, hint ), ( moduleLocalName, hint ) ]
-        else
-            [ ( moduleLocalName, hint ) ]
+    if isInActiveModule then
+        [ ( name, hint ) ]
+
+    else if isExposed name exposed then
+        [ ( name, hint ), ( moduleLocalName, hint ) ]
+
+    else
+        [ ( moduleLocalName, hint ) ]
 
 
 moduleToHints : ModuleDocs -> Import -> List ( String, Hint )
@@ -4944,12 +5096,12 @@ moduleToHints moduleDocs { alias, exposed } =
             , isImported = True
             }
     in
-        case alias of
-            Just alias ->
-                [ ( name, hint ), ( alias, hint ) ]
+    case alias of
+        Just alias ->
+            [ ( name, hint ), ( alias, hint ) ]
 
-            Nothing ->
-                [ ( name, hint ) ]
+        Nothing ->
+            [ ( name, hint ) ]
 
 
 type alias RawImport =
@@ -5017,7 +5169,7 @@ toImport { name, alias, exposed } =
                 Nothing ->
                     None
     in
-        ( name, Import alias exposedSet )
+    ( name, Import alias exposedSet )
 
 
 (=>) : a -> Exposed -> ( a, Import )
@@ -5029,14 +5181,15 @@ defaultImports : ImportDict
 defaultImports =
     Dict.fromList
         [ "Basics" => All
+        , "Char" => Some (Set.fromList [ "Char" ])
         , "Debug" => None
         , "List" => Some (Set.fromList [ "List", "::" ])
         , "Maybe" => Some (Set.singleton "Maybe")
         , "Result" => Some (Set.singleton "Result")
         , "Platform" => Some (Set.singleton "Program")
-        , ( "Platform.Cmd", Import (Just "Cmd") (Some (Set.fromList [ "Cmd", "!" ])) )
+        , ( "Platform.Cmd", Import (Just "Cmd") (Some (Set.fromList [ "Cmd" ])) )
         , ( "Platform.Sub", Import (Just "Sub") (Some (Set.singleton "Sub")) )
-        , "String" => None
+        , "String" => Some (Set.fromList [ "String" ])
         , "Tuple" => None
         ]
 
@@ -5140,21 +5293,22 @@ getModuleAndSymbolName { fullName, caseTipe, kind } =
                 moduleName =
                     List.tail parts |> Maybe.withDefault [] |> List.reverse |> String.join "."
             in
-                ( if moduleName /= "" then
-                    moduleName
-                  else
-                    symbolName
-                , if moduleName /= "" then
-                    (case caseTipe of
-                        Just caseTipe ->
-                            Just (caseTipe ++ "(" ++ symbolName ++ ")")
+            ( if moduleName /= "" then
+                moduleName
 
-                        Nothing ->
-                            Just symbolName
-                    )
-                  else
-                    Nothing
-                )
+              else
+                symbolName
+            , if moduleName /= "" then
+                case caseTipe of
+                    Just caseTipe ->
+                        Just (caseTipe ++ "(" ++ symbolName ++ ")")
+
+                    Nothing ->
+                        Just symbolName
+
+              else
+                Nothing
+            )
 
 
 unencloseParentheses : String -> String
@@ -5163,12 +5317,13 @@ unencloseParentheses str =
         dropLength =
             if String.startsWith "(" str && String.endsWith ")" str then
                 1
+
             else
                 0
     in
-        str
-            |> String.dropLeft dropLength
-            |> String.dropRight dropLength
+    str
+        |> String.dropLeft dropLength
+        |> String.dropRight dropLength
 
 
 dictGroupBy : (a -> comparable) -> List a -> Dict.Dict comparable (List a)
