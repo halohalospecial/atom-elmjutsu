@@ -2,7 +2,7 @@
 * Fix #130.  Thanks to @ababup1192 for reporting!
 
 ## 8.6.0
-* Add `Always Compile Main` option and `Elmjutsu: Set Main Paths` command.
+* Add `Always Compile Main` option and `Elmjutsu: Set Main Paths` command (#129).  Thanks to @mm-tfx for reporting and help in debugging!
 
 ## 8.5.1
 * Fix issue with relative paths in Elm Make messages.
