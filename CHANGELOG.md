@@ -1,3 +1,6 @@
+## 8.6.2
+* Follow Elm Make message line length for now.
+
 ## 8.6.1
 * Fix #130.  Thanks to @ababup1192 for reporting!
 
