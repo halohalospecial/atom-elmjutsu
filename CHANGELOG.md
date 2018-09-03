@@ -1,3 +1,6 @@
+## 8.5.1
+* Fix issue with relative paths in Elm Make messages.
+
 ## 8.5.0
 * Make autocomplete work with `package` type Elm 0.19 projects.  Thanks to @miyamoen for reporting!
 * Add `Enhanced Elm Make Messages` option.  This applies additional styling to Elm Make messages and removes code snippets to save space.
