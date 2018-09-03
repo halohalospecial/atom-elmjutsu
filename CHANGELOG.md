@@ -1,3 +1,6 @@
+## 8.6.1
+* Fix #130.  Thanks to @ababup1192 for reporting!
+
 ## 8.6.0
 * Add `Always Compile Main` option and `Elmjutsu: Set Main Paths` command.
 
