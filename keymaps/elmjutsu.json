@@ -7,5 +7,9 @@
     "ctrl-enter": "elmjutsu:apply-pipe-selections",
     "cmd-enter": "elmjutsu:apply-pipe-selections",
     "escape": "elmjutsu:cancel-pipe-selections"
+  },
+  "atom-text-editor.elmjutsu-set-main-paths": {
+    "escape": "elmjutsu:cancel-set-main-paths",
+    "enter": "elmjutsu:confirm-set-main-paths"
   }
 }

@@ -24,6 +24,8 @@ https://atom.io/packages/elmjutsu
 Note: Features marked with `*` are disabled by default.  You may enable them in the Settings view.
 
 * [Error Highlighting](#error-highlighting)
+  * [Always Compile Main](#always-compile-main)
+  * [Set Main Paths](#set-main-paths)
   * [Quick Fixes](#quick-fixes)
 
 * [Autocomplete](#autocomplete)
@@ -92,6 +94,20 @@ This package parses your projects' source files to extract information, and down
     * `Linter: Next Error`
     * `Linter: Previous Error`
     * `Linter: Toggle`
+
+#### <a name="always-compile-main"></a>Always Compile Main
+If enabled, the main file(s) will always be compiled instead of the active file.  The main files can be set using `Elmjutsu: Set Main Paths`.  If not set, the linter will look for `Main.elm` files in the source directories.  Take note that if this is enabled, modules unreachable from the main modules will not be linted.  Disabled by default.
+
+#### <a name="set-main-paths"></a>`Elmjutsu: Set Main Paths`
+Sets the main paths of the project and saves them to `elmjutsu-config.json`.
+
+Example:
+```
+{
+  "mainPaths": ["Todo.elm", "Test.elm"]
+}
+```
+The main paths are only relevant if `Always Compile Main` is enabled.  See [Always Compile Main](#always-compile-main).
 
 #### <a name="quick-fixes"></a>Quick Fixes
 
