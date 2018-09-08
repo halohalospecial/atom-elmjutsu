@@ -1,3 +1,6 @@
+## 8.6.3
+* Fix issue with relative paths in Elm Make messages.  Thanks to @ymtszw for reporting!
+
 ## 8.6.2
 * Follow Elm Make message line length for now.
 
