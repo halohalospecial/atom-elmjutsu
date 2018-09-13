@@ -1,3 +1,6 @@
+## 8.6.4
+* Change the default error message color to white.
+
 ## 8.6.3
 * Fix issue with relative paths in Elm Make messages.  Thanks to @ymtszw for reporting!
 
