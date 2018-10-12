@@ -76,6 +76,7 @@ This package parses your projects' source files to extract information, and down
 ### <a name="error-highlighting"></a>Error Highlighting
 * This only works for Elm 0.19 onwards.  It's recommended to disable [linter-elm-make](https://atom.io/packages/linter-elm-make).
 * Make sure that `Elm Path` is properly configured in the package settings.  The default works for most cases.
+* You can configure the `Elm Test Path` setting to use [`elm-test`](https://github.com/rtfeldman/node-test-runner) to check for compile errors in test files (`.elm` files inside the `tests` directory).
 * If you are using Elm 0.18, it's better to disable this option by setting `Run elm make` to "never" and use [linter-elm-make](https://atom.io/packages/linter-elm-make) instead.
 * If you want to change the appearance of the error messages, look into [error-highlighting.less](https://github.com/halohalospecial/atom-elmjutsu/blob/master/styles/error-highlighting.less) and copy the styles to your `~/.atom/styles.less` (where `~/.atom` is your Atom directory).
 
