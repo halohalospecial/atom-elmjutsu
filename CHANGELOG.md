@@ -1,3 +1,6 @@
+## 9.0.0
+* Add `Elm Test Path` setting.  Allow relative paths for `Elm Path` and `Elm Test Path`.
+
 ## 8.6.4
 * Change the default error message color to white.
 
