@@ -1,3 +1,6 @@
+## 9.0.1
+* Fix autocompletion in test files in `"type":"package"` projects.  Thanks to @ymtszw for reporting!
+
 ## 9.0.0
 * Add `Elm Test Path` setting.  Allow relative paths for `Elm Path` and `Elm Test Path`.
 
