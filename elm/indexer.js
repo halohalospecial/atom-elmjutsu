@@ -15246,7 +15246,7 @@ var _user$project$Indexer$decodeModuleDocs = function (sourcePath) {
 };
 var _user$project$Indexer$downloadPackageDocs = function (dependency) {
 	var packageUri = _user$project$Indexer$toPackageUri(dependency);
-	var url = A2(_elm_lang$core$Basics_ops['++'], packageUri, 'documentation.json');
+	var url = A2(_elm_lang$core$Basics_ops['++'], packageUri, 'docs.json');
 	return A2(
 		_elm_lang$core$Task$map,
 		function (jsonString) {
@@ -19269,7 +19269,7 @@ var _user$project$Indexer$update = F2(
 															_user$project$Indexer$toPackageUri(_p386._0),
 															A2(
 																_elm_lang$core$Basics_ops['++'],
-																'documentation.json (',
+																'docs.json (',
 																A2(_elm_lang$core$Basics_ops['++'], _p386._1, ')')));
 													},
 													failures))),
