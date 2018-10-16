@@ -481,7 +481,7 @@ update msg model =
                                 (failures
                                     |> List.map
                                         (\( dependency, errorDetails ) ->
-                                            toPackageUri dependency ++ "documentation.json (" ++ errorDetails ++ ")"
+                                            toPackageUri dependency ++ "docs.json (" ++ errorDetails ++ ")"
                                         )
                                     |> String.join "\n"
                                 )
@@ -3890,7 +3890,7 @@ downloadPackageDocs dependency =
             toPackageUri dependency
 
         url =
-            packageUri ++ "documentation.json"
+            packageUri ++ "docs.json"
     in
     Http.getString url
         |> Http.toTask
