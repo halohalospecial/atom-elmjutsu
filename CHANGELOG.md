@@ -1,3 +1,7 @@
+## 9.0.2
+* Add `node_modules` to the ignored directories (#135).  Thanks to @anagrius for the PR!
+* Fix URL for documentation files.  Thanks to @anagrius for the PR!
+
 ## 9.0.1
 * Fix autocompletion in test files in `"type":"package"` projects.  Thanks to @ymtszw for reporting!
 

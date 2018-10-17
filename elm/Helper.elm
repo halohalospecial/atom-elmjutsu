@@ -1,4 +1,4 @@
-module Helper exposing (holeToken, isInfix, isCapitalized, dropLast, last, decapitalize, indent, indentLines)
+module Helper exposing (decapitalize, dropLast, holeToken, indent, indentLines, isCapitalized, isInfix, last)
 
 import Regex
 
@@ -25,10 +25,11 @@ isCapitalized str =
         firstChar =
             String.slice 0 1 str
     in
-        if firstChar == "" then
-            False
-        else
-            firstChar == String.slice 0 1 (String.toUpper str)
+    if firstChar == "" then
+        False
+
+    else
+        firstChar == String.slice 0 1 (String.toUpper str)
 
 
 dropLast : List a -> List a
@@ -71,6 +72,7 @@ indentLines count str =
             (\line ->
                 if String.trim line == "" then
                     ""
+
                 else
                     indent count ++ line
             )
