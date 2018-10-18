@@ -1,3 +1,6 @@
+## 9.0.3
+* Fix autocompletion and `Go To Definition` for Elm 0.18 projects (#138).  Thanks to @anagrius for reporting!
+
 ## 9.0.2
 * Add `node_modules` to the ignored directories (#135).  Thanks to @anagrius for the PR!
 * Fix URL for documentation files.  Thanks to @anagrius for the PR!
