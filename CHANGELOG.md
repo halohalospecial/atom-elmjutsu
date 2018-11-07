@@ -1,3 +1,6 @@
+## 9.0.4
+* Offer to run `elm init` when there's no `elm.json` or `elm-package.json` file.
+
 ## 9.0.3
 * Fix autocompletion and `Go To Definition` for Elm 0.18 projects (#138).  Thanks to @anagrius for reporting!
 
