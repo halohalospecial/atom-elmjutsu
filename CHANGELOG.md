@@ -1,5 +1,6 @@
 ## 9.0.4
 * Offer to run `elm init` when there's no `elm.json` or `elm-package.json` file.
+* Add action buttons to compile error notifications.
 * Fix `Install Package` and `Uninstall Package`.
 * Make `Install Package` work with Elm 0.19.
 
