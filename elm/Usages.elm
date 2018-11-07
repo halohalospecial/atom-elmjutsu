@@ -1,10 +1,10 @@
-port module Usages exposing (..)
+port module Usages exposing (Model, Msg(..), Point, Range, Usage, checkedUsages, checkedUsagesReceivedCmd, emptyModel, getCheckedUsagesSub, init, main, maybeViewInEditor, normalizeIndex, selectDelta, selectNextUsageSub, selectPreviousUsageSub, setContentsSub, subscriptions, update, usageView, view, viewInEditorCmd)
 
-import Html exposing (..)
-import Html.Attributes exposing (class, type_, checked)
-import Html.Events exposing (onClick, onCheck)
-import String
 import Array
+import Html exposing (..)
+import Html.Attributes exposing (checked, class, type_)
+import Html.Events exposing (onCheck, onClick)
+import String
 
 
 main : Program Never Model Msg
@@ -130,12 +130,13 @@ update msg model =
                         , willShowRenamePanel = willShowRenamePanel
                     }
             in
-                ( updatedModel
-                , if willShowRenamePanel then
-                    Cmd.none
-                  else
-                    maybeViewInEditor updatedModel.selectedIndex updatedModel.usages
-                )
+            ( updatedModel
+            , if willShowRenamePanel then
+                Cmd.none
+
+              else
+                maybeViewInEditor updatedModel.selectedIndex updatedModel.usages
+            )
 
         SelectNextUsage ->
             selectDelta 1 model
@@ -177,12 +178,13 @@ selectDelta delta model =
         updatedSelectedIndex =
             normalizeIndex (model.selectedIndex + delta) model.usages
     in
-        ( { model | selectedIndex = updatedSelectedIndex }
-        , if model.selectedIndex /= updatedSelectedIndex then
-            maybeViewInEditor updatedSelectedIndex model.usages
-          else
-            Cmd.none
-        )
+    ( { model | selectedIndex = updatedSelectedIndex }
+    , if model.selectedIndex /= updatedSelectedIndex then
+        maybeViewInEditor updatedSelectedIndex model.usages
+
+      else
+        Cmd.none
+    )
 
 
 normalizeIndex : Int -> Array.Array Usage -> Int
@@ -191,10 +193,11 @@ normalizeIndex index usages =
         n =
             Array.length usages
     in
-        if n > 0 then
-            index % (Array.length usages)
-        else
-            -1
+    if n > 0 then
+        index % Array.length usages
+
+    else
+        -1
 
 
 maybeViewInEditor : Int -> Array.Array Usage -> Cmd Msg
@@ -220,24 +223,26 @@ view { usages, token, projectDirectory, selectedIndex, willShowRenamePanel } =
                     usageOrUsages =
                         if Array.length usages == 1 then
                             " usage"
+
                         else
                             " usages"
                 in
-                    "Will rename " ++ (toString <| Array.length (checkedUsages usages)) ++ " out of " ++ (toString <| Array.length usages) ++ usageOrUsages
+                "Will rename " ++ (toString <| Array.length (checkedUsages usages)) ++ " out of " ++ (toString <| Array.length usages) ++ usageOrUsages
+
             else
                 "Usages for `" ++ token ++ "`: " ++ (toString <| Array.length usages)
     in
-        div []
-            [ div [ class "header" ]
-                [ text headerText ]
-            , div []
-                [ ul
-                    []
-                    ((Array.indexedMap (usageView projectDirectory selectedIndex willShowRenamePanel) usages)
-                        |> Array.toList
-                    )
-                ]
+    div []
+        [ div [ class "header" ]
+            [ text headerText ]
+        , div []
+            [ ul
+                []
+                (Array.indexedMap (usageView projectDirectory selectedIndex willShowRenamePanel) usages
+                    |> Array.toList
+                )
             ]
+        ]
 
 
 usageView : String -> Int -> Bool -> Int -> Usage -> Html Msg
@@ -253,11 +258,12 @@ usageView projectDirectory selectedIndex willShowRenamePanel index usage =
             (String.dropLeft range.start.column >> String.left (range.end.column - range.start.column)) lineText
 
         postSymbolText =
-            String.right ((String.length lineText) - range.end.column) lineText
+            String.right (String.length lineText - range.end.column) lineText
 
         listItemClass =
             if selectedIndex == index then
                 "selected"
+
             else
                 ""
 
@@ -266,24 +272,26 @@ usageView projectDirectory selectedIndex willShowRenamePanel index usage =
                 [ div []
                     [ input [ type_ "checkbox", checked usage.checked, onCheck (SetUsageChecked index) ] [] ]
                 ]
+
             else
                 []
 
         usageTextClass =
             if usage.checked then
                 "usage-text"
+
             else
                 "usage-text-unchecked"
     in
-        li [ class listItemClass ]
-            (maybeRenamePanelView
-                ++ [ div [ onClick (SelectIndex index), class usageTextClass ]
-                        [ div []
-                            [ span [] [ text preSymbolText ]
-                            , span [ class "symbol" ] [ text symbolText ]
-                            , span [] [ text postSymbolText ]
-                            ]
-                        , div [ class "source-path" ] [ text (String.dropLeft (String.length projectDirectory) sourcePath ++ " (" ++ (toString <| range.start.row + 1) ++ "," ++ (toString <| range.start.column + 1) ++ ")") ]
+    li [ class listItemClass ]
+        (maybeRenamePanelView
+            ++ [ div [ onClick (SelectIndex index), class usageTextClass ]
+                    [ div []
+                        [ span [] [ text preSymbolText ]
+                        , span [ class "symbol" ] [ text symbolText ]
+                        , span [] [ text postSymbolText ]
                         ]
-                   ]
-            )
+                    , div [ class "source-path" ] [ text (String.dropLeft (String.length projectDirectory) sourcePath ++ " (" ++ (toString <| range.start.row + 1) ++ "," ++ (toString <| range.start.column + 1) ++ ")") ]
+                    ]
+               ]
+        )

@@ -1,4 +1,4 @@
-port module PackageManager exposing (..)
+port module PackageManager exposing (Model, Msg(..), Package, ProjectDirectory, Version, decodePackages, emptyModel, getPackageList, getPackageListFailedCmd, getPackageListSub, init, main, showPackageListCmd, subscriptions, update)
 
 import Http
 import Json.Decode as Decode
@@ -24,14 +24,14 @@ subscriptions model =
 -- INCOMING PORTS
 
 
-port getPackageListSub : (ProjectDirectory -> msg) -> Sub msg
+port getPackageListSub : (( ProjectDirectory, Bool ) -> msg) -> Sub msg
 
 
 
 -- OUTGOING PORTS
 
 
-port showPackageListCmd : ( ProjectDirectory, List Package ) -> Cmd msg
+port showPackageListCmd : ( ProjectDirectory, Bool, List Package ) -> Cmd msg
 
 
 port getPackageListFailedCmd : () -> Cmd msg
@@ -43,6 +43,7 @@ port getPackageListFailedCmd : () -> Cmd msg
 
 type alias Model =
     { projectDirectory : String
+    , usingPre0_19ElmVersion : Bool
     }
 
 
@@ -71,6 +72,7 @@ init =
 emptyModel : Model
 emptyModel =
     { projectDirectory = ""
+    , usingPre0_19ElmVersion = False
     }
 
 
@@ -79,21 +81,21 @@ emptyModel =
 
 
 type Msg
-    = GetPackageList String
+    = GetPackageList ( String, Bool )
     | PackageListReceived (Result Http.Error (List Package))
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GetPackageList projectDirectory ->
-            ( { model | projectDirectory = projectDirectory }
-            , getPackageList
+        GetPackageList ( projectDirectory, usingPre0_19ElmVersion ) ->
+            ( { model | projectDirectory = projectDirectory, usingPre0_19ElmVersion = usingPre0_19ElmVersion }
+            , getPackageList usingPre0_19ElmVersion
             )
 
         PackageListReceived (Ok packages) ->
             ( model
-            , ( model.projectDirectory, packages )
+            , ( model.projectDirectory, model.usingPre0_19ElmVersion, packages )
                 |> showPackageListCmd
             )
 
@@ -103,9 +105,13 @@ update msg model =
             )
 
 
-getPackageList : Cmd Msg
-getPackageList =
-    Http.send PackageListReceived (Http.get "http://package.elm-lang.org/all-packages" decodePackages)
+getPackageList : Bool -> Cmd Msg
+getPackageList usingPre0_19ElmVersion =
+    if usingPre0_19ElmVersion then
+        Http.send PackageListReceived (Http.get "http://package.elm-lang.org/all-packages?elm-package-version=0.18" decodePackages)
+
+    else
+        Http.send PackageListReceived (Http.get "http://package.elm-lang.org/search.json" decodePackages)
 
 
 decodePackages : Decode.Decoder (List Package)

@@ -1,7 +1,7 @@
-module EvalPrelude exposing (..)
+module EvalPrelude exposing (aggregateFloat, append, linesToFloat, max, min, prepend, product, strRepeat, strReverse, sum, toFloat, toInt)
 
 import List exposing (drop, filter, head, indexedMap, intersperse, map, range, repeat, reverse, sort, tail, take)
-import String exposing (words, lines, toLower, toUpper, split, join, left, right, slice, dropLeft, dropRight, pad, padLeft, padRight, trim, trimLeft, trimRight)
+import String exposing (dropLeft, dropRight, join, left, lines, pad, padLeft, padRight, right, slice, split, toLower, toUpper, trim, trimLeft, trimRight, words)
 
 
 append : String -> String -> String
@@ -42,12 +42,12 @@ max selectedLines =
         floats =
             linesToFloat 0 selectedLines
     in
-        case List.maximum floats of
-            Just max ->
-                max
+    case List.maximum floats of
+        Just max ->
+            max
 
-            Nothing ->
-                0
+        Nothing ->
+            0
 
 
 min : List String -> Float
@@ -56,12 +56,12 @@ min selectedLines =
         floats =
             linesToFloat 0 selectedLines
     in
-        case List.minimum floats of
-            Just min ->
-                min
+    case List.minimum floats of
+        Just min ->
+            min
 
-            Nothing ->
-                0
+        Nothing ->
+            0
 
 
 strReverse : String -> String

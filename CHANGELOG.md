@@ -1,5 +1,7 @@
 ## 9.0.4
 * Offer to run `elm init` when there's no `elm.json` or `elm-package.json` file.
+* Fix `Install Package` and `Uninstall Package`.
+* Make `Install Package` work with Elm 0.19.
 
 ## 9.0.3
 * Fix autocompletion and `Go To Definition` for Elm 0.18 projects (#138).  Thanks to @anagrius for reporting!

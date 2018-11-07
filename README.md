@@ -332,20 +332,32 @@ Quickly adds an import without scrolling to the top of the file.  Also sorts the
 
 ### Package Management
 
-  * Note: These are broken since the Elm 0.19 release.
-
   * #### <a name="install-package"></a>`Elmjutsu: Install Package`
 
     Quickly installs a package.
 
-    - This runs `elm-package install --yes <name> <version>` (or `elm-package install --yes <name>` if the selected version is "Auto").
-    - Make sure that `Elm Package Path` is properly configured in the package settings.  The default works for most cases.
+    - Elm 0.19 and above
+
+      - Runs `elm install <name>`.
+      - Does not support installing a specific version yet.
+      - Make sure that `Elm Path` is properly configured in the package settings.  The default works for most cases.
+
+    - Elm 0.18
+
+      - Runs `elm-package install --yes <name> <version>` (or `elm-package install --yes <name>` if the selected version is "Auto").
+      - Make sure that `Elm Package Path` is properly configured in the package settings.  The default works for most cases.
 
   * ### <a name="uninstall-package"></a>`Elmjutsu: Uninstall Package`
 
     Removes an installed package.
 
-    - This removes the dependency from `elm-package.json`, then runs `elm-package install --yes` to clean up.
+    - Elm 0.19 and above
+
+      - Not yet supported.
+
+    - Elm 0.18
+
+      - This removes the dependency from `elm-package.json`, then runs `elm-package install --yes` to clean up.
 
 ### Refactoring
 

@@ -1,4 +1,4 @@
-port module Sidekick exposing (..)
+port module Sidekick exposing (ActiveFile, Config, Hint, Model, Msg(..), TipeCase, activeFileChangedSub, activeTokenHintsChangedSub, configChangedSub, docsDownloadedSub, docsReadSub, downloadingPackageDocsSub, emptyModel, goToDefinitionCmd, init, main, packageDocsPrefix, readingPackageDocsSub, removePrefix, subscriptions, update, view, viewHint)
 
 import Helper
 import Html exposing (..)
@@ -206,6 +206,7 @@ view { note, activeTokenHints, activeFile, config } =
                         [ span [ class "icon-link-external" ] []
                         , a [ title ("Open in browser:\n" ++ hint.sourcePath), href hint.sourcePath ] [ text (removePrefix packageDocsPrefix hint.sourcePath) ]
                         ]
+
                     else
                         [ a
                             [ title ("Go to definition in\n" ++ hint.sourcePath)
@@ -222,6 +223,7 @@ view { note, activeTokenHints, activeFile, config } =
                                  ]
                                     ++ (if config.showSourcePaths then
                                             [ div [ class "source-path" ] (sourcePathView hint) ]
+
                                         else
                                             []
                                        )
@@ -229,7 +231,7 @@ view { note, activeTokenHints, activeFile, config } =
                         )
                         activeTokenHints
             in
-                div [] <| hintsView ++ [ span [ class "note" ] [ text note ] ]
+            div [] <| hintsView ++ [ span [ class "note" ] [ text note ] ]
 
 
 viewHint : Config -> String -> Hint -> String
@@ -238,14 +240,17 @@ viewHint config activeFilePath hint =
         formattedModuleName =
             if hint.moduleName == "" || activeFilePath == hint.sourcePath then
                 ""
+
             else
                 hint.moduleName ++ "."
 
         formattedName =
             if hint.name == Helper.holeToken then
                 hint.name
+
             else if Helper.isInfix hint.name then
                 "(" ++ hint.name ++ ")"
+
             else
                 hint.name
 
@@ -253,10 +258,13 @@ viewHint config activeFilePath hint =
             if hint.tipe == "" then
                 if List.length hint.args > 0 then
                     "*" ++ String.join " " hint.args ++ "*"
+
                 else
                     ""
+
             else if formattedName /= "" then
                 ": " ++ hint.tipe
+
             else
                 hint.tipe
 
@@ -264,6 +272,7 @@ viewHint config activeFilePath hint =
             if config.showAliasesOfType then
                 List.map (\tipeAlias -> " *a.k.a.* " ++ tipeAlias) hint.aliasesOfTipe
                     |> String.join ""
+
             else
                 ""
 
@@ -273,11 +282,13 @@ viewHint config activeFilePath hint =
                     ++ formattedModuleName
                     ++ (if String.length (String.trim formattedName) > 0 then
                             "**" ++ formattedName ++ "** "
+
                         else
                             ""
                        )
                     ++ formattedTipe
                     ++ maybeAliasesOfType
+
             else
                 ""
 
@@ -288,6 +299,7 @@ viewHint config activeFilePath hint =
                     caseToString { name, args } =
                         if List.length args > 0 then
                             name ++ " " ++ String.join " " args
+
                         else
                             name
 
@@ -297,17 +309,19 @@ viewHint config activeFilePath hint =
                     tailCases =
                         List.tail hint.cases |> Maybe.withDefault []
                 in
-                    "\n<br>= "
-                        ++ caseToString headCase
-                        ++ "\n<br>"
-                        ++ (List.map (\kase -> "| " ++ (caseToString kase)) tailCases
-                                |> String.join "\n<br>"
-                           )
-                        ++ (if List.length tailCases > 0 then
-                                "\n<br>"
-                            else
-                                ""
-                           )
+                "\n<br>= "
+                    ++ caseToString headCase
+                    ++ "\n<br>"
+                    ++ (List.map (\kase -> "| " ++ caseToString kase) tailCases
+                            |> String.join "\n<br>"
+                       )
+                    ++ (if List.length tailCases > 0 then
+                            "\n<br>"
+
+                        else
+                            ""
+                       )
+
             else
                 ""
 
@@ -320,6 +334,7 @@ viewHint config activeFilePath hint =
                     _ ->
                         "\n<br>"
                             ++ hint.comment
+
             else
                 ""
 
@@ -331,6 +346,7 @@ viewHint config activeFilePath hint =
 
                     Nothing ->
                         ""
+
             else
                 ""
 
@@ -342,14 +358,15 @@ viewHint config activeFilePath hint =
 
                     Nothing ->
                         ""
+
             else
                 ""
     in
-        maybeType
-            ++ maybeTypeCases
-            ++ maybeComment
-            ++ maybeAssociativity
-            ++ maybePrecedence
+    maybeType
+        ++ maybeTypeCases
+        ++ maybeComment
+        ++ maybeAssociativity
+        ++ maybePrecedence
 
 
 type alias Hint =
