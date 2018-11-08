@@ -1,3 +1,7 @@
+## 9.2.0
+* Add `Define top-level` quick fix.
+* Add `Install package` quick fix.
+
 ## 9.1.0
 * Add `Add import` quick fix.
 
