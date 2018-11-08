@@ -119,6 +119,7 @@ The main paths are only relevant if `Always Compile Main` is enabled.  See [Alwa
 * Available Quick Fixes:
   * Replace with
   * Add missing patterns
+  * Add import
 
 ### <a name="autocomplete"></a>Autocomplete
 

@@ -1,3 +1,6 @@
+## 9.1.0
+* Add `Add import` quick fix.
+
 ## 9.0.4
 * Offer to run `elm init` when there's no `elm.json` or `elm-package.json` file.
 * Add action buttons to compile error notifications.
