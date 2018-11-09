@@ -5179,16 +5179,30 @@ toImport { name, alias, exposed } =
 
 defaultImports : ImportDict
 defaultImports =
+    -- TODO: Handle different Elm versions.
+    -- -- Elm 0.18:
+    -- [ "Basics" => All
+    -- , "Debug" => None
+    -- , "List" => Some (Set.fromList [ "List", "::" ])
+    -- , "Maybe" => Some (Set.fromList ["Maybe"])
+    -- , "Result" => Some (Set.fromList ["Result"])
+    -- , "Platform" => Some (Set.fromList ["Program"])
+    -- , ( "Platform.Cmd", Import (Just "Cmd") (Some (Set.fromList [ "Cmd", "!" ])) )
+    -- , ( "Platform.Sub", Import (Just "Sub") (Some (Set.fromList ["Sub"])) )
+    -- , "String" => None
+    -- , "Tuple" => None
+    -- ]
+    -- Elm 0.19:
     Dict.fromList
         [ "Basics" => All
         , "Char" => Some (Set.fromList [ "Char" ])
         , "Debug" => None
         , "List" => Some (Set.fromList [ "List", "::" ])
-        , "Maybe" => Some (Set.singleton "Maybe")
-        , "Result" => Some (Set.singleton "Result")
-        , "Platform" => Some (Set.singleton "Program")
+        , "Maybe" => Some (Set.fromList [ "Maybe" ])
+        , "Result" => Some (Set.fromList [ "Result" ])
+        , "Platform" => Some (Set.fromList [ "Program" ])
         , ( "Platform.Cmd", Import (Just "Cmd") (Some (Set.fromList [ "Cmd" ])) )
-        , ( "Platform.Sub", Import (Just "Sub") (Some (Set.singleton "Sub")) )
+        , ( "Platform.Sub", Import (Just "Sub") (Some (Set.fromList [ "Sub" ])) )
         , "String" => Some (Set.fromList [ "String" ])
         , "Tuple" => None
         ]

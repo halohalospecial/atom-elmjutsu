@@ -1,3 +1,8 @@
+## 9.3.0
+* Add `Report Warnings` and `Show Inferred Type Annotations` options.
+* Add `Add type annotation` quick fix.
+* Make `Eval` work in Elm 0.19.
+
 ## 9.2.0
 * Add `Define top-level` quick fix.
 * Add `Install package` quick fix.
