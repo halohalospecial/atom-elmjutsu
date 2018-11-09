@@ -133,6 +133,9 @@ The main paths are only relevant if `Always Compile Main` is enabled.  See [Alwa
   * Replace with
   * Add missing patterns
   * Add import
+  * Define top-level
+  * Install package
+  * Add type annotation
 
 ### <a name="autocomplete"></a>Autocomplete
 
