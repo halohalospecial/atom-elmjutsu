@@ -1,3 +1,6 @@
+## 9.3.1
+* Fix issue with `Report Warnings` not working in submodules.  Thanks to @z5h for reporting! 
+
 ## 9.3.0
 * Add `Report Warnings` and `Show Inferred Type Annotations` options.
 * Add `Add type annotation` quick fix.
