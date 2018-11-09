@@ -26,6 +26,8 @@ Note: Features marked with `*` are disabled by default.  You may enable them in 
 * [Error Highlighting](#error-highlighting)
   * [Always Compile Main](#always-compile-main)
   * [Set Main Paths](#set-main-paths)
+  * [Report Warnings](#report-warnings)
+  * [Show Inferred Type Annotations](#show-inferred-type-annotations)
   * [Quick Fixes](#quick-fixes)
 
 * [Autocomplete](#autocomplete)
@@ -109,6 +111,17 @@ Example:
 }
 ```
 The main paths are only relevant if `Always Compile Main` is enabled.  See [Always Compile Main](#always-compile-main).
+
+#### <a name="report-warnings"></a>Report Warnings
+
+* Also report warnings instead of just the errors.  Disabled by default (for now).
+* Since the latest compiler (0.19) does not output warnings anymore, hacks are currently used to determine missing type annotations.
+
+#### <a name="show-inferred-type-annotations"></a>Show Inferred Type Annotations
+
+* This will only work if `Report Warnings` is also checked.
+
+![show-inferred-type-annotations](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/show-inferred-type-annotations.gif?raw=true)
 
 #### <a name="quick-fixes"></a>Quick Fixes
 
