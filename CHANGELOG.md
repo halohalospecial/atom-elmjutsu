@@ -1,3 +1,6 @@
+## 9.4.0
+* Add `Elmjutsu: Quick Fix File` command.
+
 ## 9.3.2
 * Fix #142.  Thanks to @lucamug for reporting!
 

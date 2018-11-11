@@ -29,6 +29,7 @@ Note: Features marked with `*` are disabled by default.  You may enable them in 
   * [Report Warnings](#report-warnings)
   * [Show Inferred Type Annotations](#show-inferred-type-annotations)
   * [Quick Fixes](#quick-fixes)
+  * [Quick Fix File](#quick-fix-file)
 
 * [Autocomplete](#autocomplete)
   * [Global Autocomplete](#global-autocomplete) `*`
@@ -136,6 +137,10 @@ The main paths are only relevant if `Always Compile Main` is enabled.  See [Alwa
   * Define top-level
   * Install package
   * Add type annotation
+
+#### <a name="quick-fix-file"></a>`Elmjutsu: Quick Fix File`
+
+* Fixes all issues in the active text editor in one go. If there is more than one fix for an issue, it will choose the first from the list.
 
 ### <a name="autocomplete"></a>Autocomplete
 
