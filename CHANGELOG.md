@@ -1,5 +1,6 @@
 ## 9.4.1
 * Fix `Enhanced Elm Make Messages` issues.
+* Show the raw stderr when compile fails.  Thanks to @MethodGrab for the PR!
 
 ## 9.4.0
 * Add `Elmjutsu: Quick Fix File` command.
