@@ -1,3 +1,6 @@
+## 9.4.1
+* Fix `Enhanced Elm Make Messages` issues.
+
 ## 9.4.0
 * Add `Elmjutsu: Quick Fix File` command.
 
