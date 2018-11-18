@@ -14063,19 +14063,33 @@ var _user$project$Indexer$projectDependenciesChangedSub = _elm_lang$core$Native_
 		A2(_elm_lang$core$Json_Decode$index, 0, _elm_lang$core$Json_Decode$string)));
 var _user$project$Indexer$downloadMissingPackageDocsSub = _elm_lang$core$Native_Platform.incomingPort(
 	'downloadMissingPackageDocsSub',
-	_elm_lang$core$Json_Decode$list(
+	A2(
+		_elm_lang$core$Json_Decode$andThen,
+		function (x0) {
+			return A2(
+				_elm_lang$core$Json_Decode$andThen,
+				function (x1) {
+					return _elm_lang$core$Json_Decode$succeed(
+						{ctor: '_Tuple2', _0: x0, _1: x1});
+				},
+				A2(_elm_lang$core$Json_Decode$index, 1, _elm_lang$core$Json_Decode$string));
+		},
 		A2(
-			_elm_lang$core$Json_Decode$andThen,
-			function (x0) {
-				return A2(
+			_elm_lang$core$Json_Decode$index,
+			0,
+			_elm_lang$core$Json_Decode$list(
+				A2(
 					_elm_lang$core$Json_Decode$andThen,
-					function (x1) {
-						return _elm_lang$core$Json_Decode$succeed(
-							{ctor: '_Tuple2', _0: x0, _1: x1});
+					function (x0) {
+						return A2(
+							_elm_lang$core$Json_Decode$andThen,
+							function (x1) {
+								return _elm_lang$core$Json_Decode$succeed(
+									{ctor: '_Tuple2', _0: x0, _1: x1});
+							},
+							A2(_elm_lang$core$Json_Decode$index, 1, _elm_lang$core$Json_Decode$string));
 					},
-					A2(_elm_lang$core$Json_Decode$index, 1, _elm_lang$core$Json_Decode$string));
-			},
-			A2(_elm_lang$core$Json_Decode$index, 0, _elm_lang$core$Json_Decode$string))));
+					A2(_elm_lang$core$Json_Decode$index, 0, _elm_lang$core$Json_Decode$string))))));
 var _user$project$Indexer$docsReadSub = _elm_lang$core$Native_Platform.incomingPort(
 	'docsReadSub',
 	A2(
@@ -14666,13 +14680,16 @@ var _user$project$Indexer$docsReadCmd = _elm_lang$core$Native_Platform.outgoingP
 var _user$project$Indexer$docsDownloadedCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'docsDownloadedCmd',
 	function (v) {
-		return _elm_lang$core$Native_List.toArray(v).map(
+		return [
+			_elm_lang$core$Native_List.toArray(v._0).map(
 			function (v) {
 				return [
 					[v._0._0, v._0._1],
 					v._1
 				];
-			});
+			}),
+			v._1
+		];
 	});
 var _user$project$Indexer$downloadDocsFailedCmd = _elm_lang$core$Native_Platform.outgoingPort(
 	'downloadDocsFailedCmd',
@@ -15500,8 +15517,8 @@ var _user$project$Indexer$downloadPackageDocsList = function (dependencies) {
 	return _user$project$Indexer$optionalTaskSequence(
 		A2(_elm_lang$core$List$map, _user$project$Indexer$downloadPackageDocs, dependencies));
 };
-var _user$project$Indexer$doDownloadMissingPackageDocs = F2(
-	function (dependencies, model) {
+var _user$project$Indexer$doDownloadMissingPackageDocs = F3(
+	function (dependencies, elmVersion, model) {
 		return {
 			ctor: '_Tuple2',
 			_0: model,
@@ -15514,7 +15531,8 @@ var _user$project$Indexer$doDownloadMissingPackageDocs = F2(
 						ctor: '::',
 						_0: A2(
 							_elm_lang$core$Task$attempt,
-							_user$project$Indexer$MaybeDocsDownloaded(dependencies),
+							_user$project$Indexer$MaybeDocsDownloaded(
+								{ctor: '_Tuple2', _0: dependencies, _1: elmVersion}),
 							_user$project$Indexer$downloadPackageDocsList(dependencies)),
 						_1: {ctor: '[]'}
 					}
@@ -19482,7 +19500,7 @@ var _user$project$Indexer$update = F2(
 								function (v0, v1) {
 									return {ctor: '_Tuple2', _0: v0, _1: v1};
 								}),
-							_p372._0,
+							_p372._0._0,
 							_p372._1._0));
 					var successes = _p373._0;
 					var failures = _p373._1;
@@ -19496,7 +19514,8 @@ var _user$project$Indexer$update = F2(
 								_elm_lang$core$Basics_ops['++'],
 								{
 									ctor: '::',
-									_0: _user$project$Indexer$docsDownloadedCmd(loadedDependenciesAndJson),
+									_0: _user$project$Indexer$docsDownloadedCmd(
+										{ctor: '_Tuple2', _0: loadedDependenciesAndJson, _1: _p372._0._1}),
 									_1: {ctor: '[]'}
 								},
 								(_elm_lang$core$Native_Utils.cmp(
@@ -19575,7 +19594,7 @@ var _user$project$Indexer$update = F2(
 			case 'UpdateProjectDependencies':
 				return A4(_user$project$Indexer$doUpdateProjectDependencies, _p372._0._0, _p372._0._1, _p372._0._2, model);
 			case 'DownloadMissingPackageDocs':
-				return A2(_user$project$Indexer$doDownloadMissingPackageDocs, _p372._0, model);
+				return A3(_user$project$Indexer$doDownloadMissingPackageDocs, _p372._0._0, _p372._0._1, model);
 			case 'GoToDefinition':
 				return A4(_user$project$Indexer$doGoToDefinition, _p372._0._0, _p372._0._1, _p372._0._2, model);
 			case 'AskCanGoToDefinition':

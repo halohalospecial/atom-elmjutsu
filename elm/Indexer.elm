@@ -91,7 +91,7 @@ port fileContentsRemovedSub : (( FilePath, ProjectDirectory ) -> msg) -> Sub msg
 port projectDependenciesChangedSub : (( String, List Dependency, ElmVersion ) -> msg) -> Sub msg
 
 
-port downloadMissingPackageDocsSub : (List Dependency -> msg) -> Sub msg
+port downloadMissingPackageDocsSub : (( List Dependency, ElmVersion ) -> msg) -> Sub msg
 
 
 port docsReadSub : (( List ( Dependency, String ), ElmVersion ) -> msg) -> Sub msg
@@ -164,7 +164,7 @@ port getSignatureHelpSub : (( Maybe ActiveTopLevel, Token ) -> msg) -> Sub msg
 port docsReadCmd : () -> Cmd msg
 
 
-port docsDownloadedCmd : List ( Dependency, String ) -> Cmd msg
+port docsDownloadedCmd : ( List ( Dependency, String ), ElmVersion ) -> Cmd msg
 
 
 port downloadDocsFailedCmd : String -> Cmd msg
@@ -394,7 +394,7 @@ emptyFileContents =
 
 
 type Msg
-    = MaybeDocsDownloaded (List Dependency) (Result Http.Error (List (Result Http.Error ( String, List ModuleDocs ))))
+    = MaybeDocsDownloaded ( List Dependency, ElmVersion ) (Result Http.Error (List (Result Http.Error ( String, List ModuleDocs ))))
     | DocsRead ( List ( Dependency, String ), ElmVersion )
     | UpdateActiveTokenHints ( Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token )
     | UpdateActiveFile ( Maybe ActiveFile, Maybe ActiveTopLevel, Maybe ActiveRecordVariable, Maybe Token )
@@ -408,7 +408,7 @@ type Msg
     | GetFieldsForRecordVariable ( ActiveRecordVariable, String, Bool )
     | GetSuggestionsForImport ( String, Bool )
     | GetImporterSourcePathsForToken ( Maybe ProjectDirectory, Maybe Token, Maybe Bool )
-    | DownloadMissingPackageDocs (List Dependency)
+    | DownloadMissingPackageDocs ( List Dependency, ElmVersion )
     | ShowAddImportView ( FilePath, Maybe Token )
     | AddImport ( FilePath, ProjectDirectory, String, Maybe String )
     | ConstructFromTypeAnnotation String
@@ -427,12 +427,12 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        MaybeDocsDownloaded dependencies (Err result) ->
+        MaybeDocsDownloaded ( dependencies, elmVersion ) (Err result) ->
             ( model
             , downloadDocsFailedCmd (toString result)
             )
 
-        MaybeDocsDownloaded dependencies (Ok result) ->
+        MaybeDocsDownloaded ( dependencies, elmVersion ) (Ok result) ->
             let
                 ( successes, failures ) =
                     List.foldl
@@ -475,7 +475,7 @@ update msg model =
             in
             ( addLoadedPackageDocs loadedPackageDocs model
             , Cmd.batch
-                ([ docsDownloadedCmd loadedDependenciesAndJson ]
+                ([ docsDownloadedCmd ( loadedDependenciesAndJson, elmVersion ) ]
                     ++ (if List.length failures > 0 then
                             [ downloadDocsFailedCmd
                                 (failures
@@ -536,8 +536,8 @@ update msg model =
         UpdateProjectDependencies ( projectDirectory, dependencies, elmVersion ) ->
             doUpdateProjectDependencies projectDirectory dependencies elmVersion model
 
-        DownloadMissingPackageDocs dependencies ->
-            doDownloadMissingPackageDocs dependencies model
+        DownloadMissingPackageDocs ( dependencies, elmVersion ) ->
+            doDownloadMissingPackageDocs dependencies elmVersion model
 
         GoToDefinition ( maybeActiveTopLevel, maybeActiveRecordVariable, maybeToken ) ->
             doGoToDefinition maybeActiveTopLevel maybeActiveRecordVariable maybeToken model
@@ -882,12 +882,12 @@ doUpdateProjectDependencies projectDirectory dependencies elmVersion model =
     )
 
 
-doDownloadMissingPackageDocs : List Dependency -> Model -> ( Model, Cmd Msg )
-doDownloadMissingPackageDocs dependencies model =
+doDownloadMissingPackageDocs : List Dependency -> ElmVersion -> Model -> ( Model, Cmd Msg )
+doDownloadMissingPackageDocs dependencies elmVersion model =
     ( model
     , Cmd.batch
         [ downloadingPackageDocsCmd ()
-        , Task.attempt (MaybeDocsDownloaded dependencies) (downloadPackageDocsList dependencies)
+        , Task.attempt (MaybeDocsDownloaded ( dependencies, elmVersion )) (downloadPackageDocsList dependencies)
         ]
     )
 
