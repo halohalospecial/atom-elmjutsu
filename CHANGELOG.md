@@ -1,3 +1,6 @@
+## 9.6.0
+* Add `Add import as` quick fix (#134).  Thanks to @anagrius for the suggestion!
+
 ## 9.5.0
 * Add `Add Import As` (#134).  Thanks to @anagrius for the suggestion!
 * Update index after installing a package (Elm 0.19).

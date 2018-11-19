@@ -135,6 +135,7 @@ The main paths are only relevant if `Always Compile Main` is enabled.  See [Alwa
   * Replace with
   * Add missing patterns
   * Add import
+  * Add import as
   * Define top-level
   * Install package
   * Add type annotation
