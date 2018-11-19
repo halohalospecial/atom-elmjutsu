@@ -1,3 +1,6 @@
+## 9.7.0
+* Add `elmjutsu.addImportAs` to provided services.
+
 ## 9.6.0
 * Add `Add import as` quick fix (#134).  Thanks to @anagrius for the suggestion!
 

@@ -55,6 +55,11 @@
         "1.0.0": "provideAddImport"
       }
     },
+    "elmjutsu.addImportAs": {
+      "versions": {
+        "1.0.0": "provideAddImportAs"
+      }
+    },
     "autocomplete.provider": {
       "versions": {
         "4.0.0": "provideAutocomplete"
