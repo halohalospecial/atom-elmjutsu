@@ -1,6 +1,7 @@
 ## 9.5.0
 * Add `Add Import As` (#134).  Thanks to @anagrius for the suggestion!
 * Update index after installing a package (Elm 0.19).
+* Fix import autocompletion issue when fuzzy filtering is enabled.
 
 ## 9.4.1
 * Fix `Enhanced Elm Make Messages` issues.
