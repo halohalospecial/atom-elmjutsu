@@ -2,6 +2,7 @@
 * Add `Add Import As` (#134).  Thanks to @anagrius for the suggestion!
 * Update index after installing a package (Elm 0.19).
 * Fix import autocompletion issue when fuzzy filtering is enabled.
+* Add workaround for node-test-runner issue.  See https://github.com/halohalospecial/atom-elmjutsu/issues/131.  Thanks to @ymtszw for the PR!
 
 ## 9.4.1
 * Fix `Enhanced Elm Make Messages` issues.
