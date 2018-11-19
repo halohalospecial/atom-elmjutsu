@@ -61,6 +61,7 @@ Note: Features marked with `*` are disabled by default.  You may enable them in 
 
 * Imports Management
   * [Add Import](#add-import)
+  * [Add Import As](#add-import-as)
 
 * Package Management
   * [Install Package](#install-package)
@@ -344,6 +345,7 @@ Shows the type hints and documentation for the symbol at cursor position.  The s
 
 ![infer-hole-types-2](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/infer-hole-types-2.gif?raw=true)
 -->
+
 ### <a name="add-import"></a>`Elmjutsu: Add Import`
 
 Quickly adds an import without scrolling to the top of the file.  Also sorts the imports, removes duplicates, and removes [defaults](http://package.elm-lang.org/packages/elm-lang/core/latest/) automatically.
@@ -351,6 +353,10 @@ Quickly adds an import without scrolling to the top of the file.  Also sorts the
 * ProTip: There's no "Sort Imports" command, but you can achieve the same result by invoking `Add Import` and choosing an already imported symbol (like `+`, for example).
 
 ![add-import](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/add-import.gif?raw=true)
+
+### <a name="add-import-as"></a>`Elmjutsu: Add Import As`
+
+Adds an alias to the added import (see [Add Import](#elmjutsu-add-import)).
 
 ### Package Management
 

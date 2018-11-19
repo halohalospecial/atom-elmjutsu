@@ -1,3 +1,7 @@
+## 9.5.0
+* Add `Add Import As` (#134).  Thanks to @anagrius for the suggestion!
+* Update index after installing a package (Elm 0.19).
+
 ## 9.4.1
 * Fix `Enhanced Elm Make Messages` issues.
 * Show the raw stderr when compile fails.  Thanks to @MethodGrab for the PR!

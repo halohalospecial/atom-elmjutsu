@@ -118,10 +118,10 @@ port getSuggestionsForImportSub : (( String, Bool ) -> msg) -> Sub msg
 port getImportersForTokenSub : (( Maybe ProjectDirectory, Maybe Token, Maybe Bool ) -> msg) -> Sub msg
 
 
-port showAddImportViewSub : (( FilePath, Maybe Token ) -> msg) -> Sub msg
+port showAddImportViewSub : (( FilePath, Maybe Token, Bool ) -> msg) -> Sub msg
 
 
-port addImportSub : (( FilePath, ProjectDirectory, String, Maybe String ) -> msg) -> Sub msg
+port addImportSub : (( FilePath, ProjectDirectory, String, Maybe String, Maybe String ) -> msg) -> Sub msg
 
 
 port constructFromTypeAnnotationSub : (String -> msg) -> Sub msg
@@ -170,7 +170,7 @@ port docsDownloadedCmd : ( List ( Dependency, String ), ElmVersion ) -> Cmd msg
 port downloadDocsFailedCmd : String -> Cmd msg
 
 
-port dependenciesNotFoundCmd : ( List ProjectDirectory, List Dependency ) -> Cmd msg
+port dependenciesNotFoundCmd : ( List ProjectDirectory, List Dependency, ElmVersion ) -> Cmd msg
 
 
 port goToDefinitionCmd : ( Maybe ActiveFile, EncodedSymbol ) -> Cmd msg
@@ -209,7 +209,7 @@ port suggestionsForImportReceivedCmd : ( String, List ImportSuggestion ) -> Cmd 
 port importersForTokenReceivedCmd : ( ProjectDirectory, Token, Bool, Bool, List ( String, Bool, Bool, List String ) ) -> Cmd msg
 
 
-port showAddImportViewCmd : ( Maybe Token, Maybe ActiveFile, List ( String, Maybe String ) ) -> Cmd msg
+port showAddImportViewCmd : ( Maybe Token, Maybe String, Maybe ActiveFile, List ( String, Maybe String ) ) -> Cmd msg
 
 
 port updateImportsCmd : ( FilePath, String ) -> Cmd msg
@@ -409,8 +409,8 @@ type Msg
     | GetSuggestionsForImport ( String, Bool )
     | GetImporterSourcePathsForToken ( Maybe ProjectDirectory, Maybe Token, Maybe Bool )
     | DownloadMissingPackageDocs ( List Dependency, ElmVersion )
-    | ShowAddImportView ( FilePath, Maybe Token )
-    | AddImport ( FilePath, ProjectDirectory, String, Maybe String )
+    | ShowAddImportView ( FilePath, Maybe Token, Bool )
+    | AddImport ( FilePath, ProjectDirectory, String, Maybe String, Maybe String )
     | ConstructFromTypeAnnotation String
     | ConstructCaseOf Token
     | ConstructDefaultValueForType Token
@@ -499,7 +499,7 @@ update msg model =
                                             Dict.keys model.projectFileContentsDict
                                     in
                                     if List.length notFoundDependencies > 0 then
-                                        [ dependenciesNotFoundCmd ( projectDirectories, notFoundDependencies ) ]
+                                        [ dependenciesNotFoundCmd ( projectDirectories, notFoundDependencies, elmVersion ) ]
 
                                     else
                                         []
@@ -560,11 +560,15 @@ update msg model =
         GetImporterSourcePathsForToken ( maybeProjectDirectory, maybeToken, maybeIsCursorAtLastPartOfToken ) ->
             doGetImporterSourcePathsForToken maybeProjectDirectory maybeToken maybeIsCursorAtLastPartOfToken model
 
-        ShowAddImportView ( filePath, maybeToken ) ->
-            doShowAddImportView filePath maybeToken model
+        ShowAddImportView ( filePath, maybeToken, withAlias ) ->
+            if withAlias then
+                doShowAddImportAsView filePath maybeToken model
 
-        AddImport ( filePath, projectDirectory, moduleName, maybeSymbolName ) ->
-            doAddImport filePath projectDirectory moduleName maybeSymbolName model
+            else
+                doShowAddImportView filePath maybeToken model
+
+        AddImport ( filePath, projectDirectory, moduleName, maybeSymbolName, maybeAlias ) ->
+            doAddImport filePath projectDirectory moduleName maybeSymbolName maybeAlias model
 
         ConstructFromTypeAnnotation typeAnnotation ->
             doConstructFromTypeAnnotation typeAnnotation model
@@ -2468,7 +2472,7 @@ getImportersForToken token isCursorAtLastPartOfToken maybeActiveFile tokens acti
 doShowAddImportView : FilePath -> Maybe Token -> Model -> ( Model, Cmd Msg )
 doShowAddImportView filePath maybeToken model =
     let
-        moduleAndSymbols =
+        modulesAndSymbols =
             getProjectSymbols model.activeFile model.projectFileContentsDict model.projectDependencies model.packageDocs
                 |> -- Do not include symbols in active file and those not inside a module.
                    List.filter
@@ -2477,8 +2481,8 @@ doShowAddImportView filePath maybeToken model =
                     )
                 |> List.map getModuleAndSymbolName
 
-        modulesOnly =
-            moduleAndSymbols
+        modules =
+            modulesAndSymbols
                 |> List.filter
                     (\( _, symbolName ) ->
                         case symbolName of
@@ -2489,11 +2493,11 @@ doShowAddImportView filePath maybeToken model =
                                 True
                     )
 
-        moduleAndSymbolsAndAllExposed =
+        modulesAndSymbolsAndAllExposed =
             List.append
-                moduleAndSymbols
+                modulesAndSymbols
                 -- TODO: Add imports like `import Regex exposing (HowMany(..))`
-                (modulesOnly
+                (modules
                     |> List.map (\( moduleName, _ ) -> ( moduleName, Just ".." ))
                 )
                 |> List.sortWith
@@ -2526,13 +2530,57 @@ doShowAddImportView filePath maybeToken model =
                     Nothing
     in
     ( model
-    , ( defaultSymbolName, model.activeFile, moduleAndSymbolsAndAllExposed )
+    , ( defaultSymbolName, Nothing, model.activeFile, modulesAndSymbolsAndAllExposed )
         |> showAddImportViewCmd
     )
 
 
-doAddImport : FilePath -> ProjectDirectory -> String -> Maybe String -> Model -> ( Model, Cmd Msg )
-doAddImport filePath projectDirectory moduleName maybeSymbolName model =
+doShowAddImportAsView : FilePath -> Maybe Token -> Model -> ( Model, Cmd Msg )
+doShowAddImportAsView filePath maybeToken model =
+    let
+        modules =
+            getProjectSymbols model.activeFile model.projectFileContentsDict model.projectDependencies model.packageDocs
+                |> -- Do not include symbols in active file and those not inside a module.
+                   List.filter
+                    (\{ sourcePath, fullName, kind } ->
+                        kind == KindModule && sourcePath /= filePath && getLastName fullName /= ""
+                    )
+                |> List.map .fullName
+                |> List.sort
+                |> List.map
+                    (\fullName ->
+                        ( fullName, Nothing )
+                    )
+
+        defaultSymbolName =
+            case maybeToken of
+                Just token ->
+                    case getModuleName token of
+                        "" ->
+                            Just (getLastName token)
+
+                        moduleName ->
+                            Just (getModuleName token)
+
+                Nothing ->
+                    Nothing
+
+        maybeAlias =
+            case maybeToken of
+                Just token ->
+                    Just (getModuleName token)
+
+                Nothing ->
+                    Nothing
+    in
+    ( model
+    , ( defaultSymbolName, maybeAlias, model.activeFile, modules )
+        |> showAddImportViewCmd
+    )
+
+
+doAddImport : FilePath -> ProjectDirectory -> String -> Maybe String -> Maybe String -> Model -> ( Model, Cmd Msg )
+doAddImport filePath projectDirectory moduleName maybeSymbolName maybeAlias model =
     let
         fileContents =
             getFileContentsOfProject projectDirectory model.projectFileContentsDict
@@ -2549,13 +2597,13 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
 
                                 Some exposed ->
                                     if symbolName == ".." then
-                                        Dict.update moduleName (\_ -> Just { moduleImport | exposed = All }) fileContents.imports
+                                        Dict.update moduleName (\_ -> Just { moduleImport | exposed = All, alias = maybeAlias }) fileContents.imports
 
                                     else
-                                        Dict.update moduleName (\_ -> Just { moduleImport | exposed = Some (Set.insert symbolName exposed) }) fileContents.imports
+                                        Dict.update moduleName (\_ -> Just { moduleImport | exposed = Some (Set.insert symbolName exposed), alias = maybeAlias }) fileContents.imports
 
                                 None ->
-                                    Dict.update moduleName (\_ -> Just { moduleImport | exposed = Some (Set.singleton symbolName) }) fileContents.imports
+                                    Dict.update moduleName (\_ -> Just { moduleImport | exposed = Some (Set.singleton symbolName), alias = maybeAlias }) fileContents.imports
 
                         Nothing ->
                             fileContents.imports
@@ -2565,10 +2613,10 @@ doAddImport filePath projectDirectory moduleName maybeSymbolName model =
                         importToAdd =
                             case maybeSymbolName of
                                 Just symbolName ->
-                                    { alias = Nothing, exposed = Some (Set.singleton symbolName) }
+                                    { alias = maybeAlias, exposed = Some (Set.singleton symbolName) }
 
                                 Nothing ->
-                                    { alias = Nothing, exposed = None }
+                                    { alias = maybeAlias, exposed = None }
                     in
                     Dict.insert moduleName importToAdd fileContents.imports
             )
@@ -5284,10 +5332,17 @@ getLastName fullName =
 
 getModuleName : String -> String
 getModuleName fullName =
-    fullName
-        |> String.split "."
-        |> Helper.dropLast
-        |> String.join "."
+    let
+        parts =
+            String.split "." fullName
+    in
+    if parts == [ fullName ] && Helper.isCapitalized fullName then
+        fullName
+
+    else
+        parts
+            |> Helper.dropLast
+            |> String.join "."
 
 
 getModuleAndSymbolName : Symbol -> ( String, Maybe String )
