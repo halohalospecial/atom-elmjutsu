@@ -1,3 +1,7 @@
+## 9.7.1
+* Change the default error message colors.
+* Add `Convert using` quick fix.
+
 ## 9.7.0
 * Add `elmjutsu.addImportAs` to provided services.
 

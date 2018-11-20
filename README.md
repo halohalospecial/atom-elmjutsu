@@ -139,6 +139,7 @@ The main paths are only relevant if `Always Compile Main` is enabled.  See [Alwa
   * Define top-level
   * Install package
   * Add type annotation
+  * Convert using
 
 #### <a name="quick-fix-file"></a>`Elmjutsu: Quick Fix File`
 
