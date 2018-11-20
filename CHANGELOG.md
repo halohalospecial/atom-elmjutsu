@@ -1,7 +1,7 @@
-## 9.7.1
+## 9.8.0
 * Change the default error message colors.
 * Add `Convert using` quick fix.
-* Ignore main paths when `Always Compile Main` is enabled and the type of the project is "package" (#139).  Thanks to @ymtszw for reporting!
+* Ignore main paths when `Always Compile Main` is enabled and the type of the project is `"package"` (in `elm.json`) (#139).  Thanks to @ymtszw for reporting!
 
 ## 9.7.0
 * Add `elmjutsu.addImportAs` to provided services.
