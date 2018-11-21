@@ -249,7 +249,7 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
 
 #### <a name="autocomplete-performance-tuning"></a>Performance Tuning
 
-  * It's recommended to uncheck `Enable autocomplete` of the [language-elm](https://atom.io/packages/language-elm).  No need to install `elm-oracle`.
+  * It's recommended to uncheck `Enable autocomplete` of the [language-elm](https://atom.io/packages/language-elm) package.  No need to install `elm-oracle`.
 
   * If you are experiencing lag while typing, you can set the value of `Max Number of Autocomplete Suggestions` to a small number such as `50` so that Atom will have less items to render.
 
@@ -261,7 +261,7 @@ Press <kbd>tab</kbd> to go to the next tab stop (similar to how snippets work). 
 
     ![go-to-definition](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/go-to-definition.gif?raw=true)
 
-    - If the [hyperclick](https://atom.io/packages/hyperclick) package is installed, you can also check `Enable Hyperclick` to jump to definition using `Ctrl` + click / `Cmd` + click (Mac).
+    - If the [atom-ide-ui](https://atom.io/packages/atom-ide-ui) or [hyperclick](https://atom.io/packages/hyperclick) package is installed, you can also check `Enable Hyperclick` to jump to definition using `Ctrl` + click / `Cmd` + click (Mac).
 
   * #### <a name="go-to-symbol"></a>`Elmjutsu: Go To Symbol`
 

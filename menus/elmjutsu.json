@@ -1,9 +1,9 @@
 {
   "context-menu": {
     "atom-text-editor:not([mini])[data-grammar^=\"source elm\"": [
-        {
-          "label": "Elmjutsu",
-          "submenu": [
+      {
+        "label": "Elmjutsu",
+        "submenu": [
           {
             "label": "Go To Definition",
             "command": "elmjutsu:go-to-definition"
@@ -37,6 +37,14 @@
             "command": "elmjutsu:add-import"
           },
           {
+            "label": "Add Import As",
+            "command": "elmjutsu:add-import-as"
+          },
+          {
+            "label": "Infer Type",
+            "command": "elmjutsu:infer-type"
+          },
+          {
             "label": "Toggle Sidekick",
             "command": "elmjutsu:toggle-sidekick"
           },
@@ -47,6 +55,34 @@
           {
             "label": "Uninstall Package",
             "command": "elmjutsu:uninstall-package"
+          },
+          {
+            "label": "Set Main Paths",
+            "command": "elmjutsu:set-main-paths"
+          },
+          {
+            "label": "Set Compile Output Path",
+            "command": "elmjutsu:set-compile-output-path"
+          },
+          {
+            "label": "Toggle Always Compile Main",
+            "command": "elmjutsu:always-compile-main"
+          },
+          {
+            "label": "Toggle Report Warnings",
+            "command": "elmjutsu:report-warnings"
+          },
+          {
+            "label": "Toggle Compile With Debugger",
+            "command": "elmjutsu:compile-with-debugger"
+          },
+          {
+            "label": "Toggle Compile With Optimizations",
+            "command": "elmjutsu:compile-with-optimizations"
+          },
+          {
+            "label": "Quick Fix File",
+            "command": "elmjutsu:quick-fix-file"
           }
         ]
       }
@@ -92,6 +128,14 @@
               "command": "elmjutsu:add-import"
             },
             {
+              "label": "Add Import As",
+              "command": "elmjutsu:add-import-as"
+            },
+            {
+              "label": "Infer Type",
+              "command": "elmjutsu:infer-type"
+            },
+            {
               "label": "Toggle Sidekick",
               "command": "elmjutsu:toggle-sidekick"
             },
@@ -102,6 +146,34 @@
             {
               "label": "Uninstall Package",
               "command": "elmjutsu:uninstall-package"
+            },
+            {
+              "label": "Set Main Paths",
+              "command": "elmjutsu:set-main-paths"
+            },
+            {
+              "label": "Set Compile Output Path",
+              "command": "elmjutsu:set-compile-output-path"
+            },
+            {
+              "label": "Toggle Always Compile Main",
+              "command": "elmjutsu:always-compile-main"
+            },
+            {
+              "label": "Toggle Report Warnings",
+              "command": "elmjutsu:report-warnings"
+            },
+            {
+              "label": "Toggle Compile With Debugger",
+              "command": "elmjutsu:compile-with-debugger"
+            },
+            {
+              "label": "Toggle Compile With Optimizations",
+              "command": "elmjutsu:compile-with-optimizations"
+            },
+            {
+              "label": "Quick Fix File",
+              "command": "elmjutsu:quick-fix-file"
             }
           ]
         }

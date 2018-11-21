@@ -11,5 +11,9 @@
   "atom-text-editor.elmjutsu-set-main-paths": {
     "escape": "elmjutsu:cancel-set-main-paths",
     "enter": "elmjutsu:confirm-set-main-paths"
+  },
+  "atom-text-editor.elmjutsu-set-compile-output-path": {
+    "escape": "elmjutsu:cancel-set-compile-output-path",
+    "enter": "elmjutsu:confirm-set-compile-output-path"
   }
 }

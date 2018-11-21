@@ -1,3 +1,12 @@
+## 9.9.0
+* Add `Compile With Debugger` option.
+* Add `Compile With Optimizations` option.
+* Add `Set Compile Output Path` command.
+* Add `Toggle Always Compile Main` command.
+* Add `Toggle Report Warnings` command.
+* Add `Toggle Compile With Debugger` command.
+* Add `Toggle Compile With Optimizations` command.
+
 ## 9.8.0
 * Change the default error message colors.
 * Add `Convert using` quick fix.
