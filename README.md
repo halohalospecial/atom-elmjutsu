@@ -26,8 +26,11 @@ Note: Features marked with `*` are disabled by default.  You may enable them in 
 * [Error Highlighting](#error-highlighting)
   * [Always Compile Main](#always-compile-main)
   * [Set Main Paths](#set-main-paths)
+  * [Set Compile Output Path](#set-compile-output-path)
   * [Report Warnings](#report-warnings)
   * [Show Inferred Type Annotations](#show-inferred-type-annotations)
+  * [Compile With Debugger](#compile-with-debugger)
+  * [Compile With Optimizations](#compile-with-optimizations)
   * [Quick Fixes](#quick-fixes)
   * [Quick Fix File](#quick-fix-file)
 
@@ -119,6 +122,16 @@ Example:
 ```
 The main paths are only relevant if `Always Compile Main` is enabled.  See [Always Compile Main](#always-compile-main).
 
+#### <a name="set-compile-output-path"></a>`Elmjutsu: Set Compile Output Path`
+Sets the output path of the project and saves it to `elmjutsu-config.json`.  Defaults to "/dev/null" if not set.
+
+Example:
+```
+{
+  "outputPath": "main.js"
+}
+```
+
 #### <a name="report-warnings"></a>Report Warnings
 
 * Also report warnings instead of just the errors.  Disabled by default (for now).
@@ -129,6 +142,14 @@ The main paths are only relevant if `Always Compile Main` is enabled.  See [Alwa
 * This will only work if `Report Warnings` is also checked.
 
 ![show-inferred-type-annotations](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/show-inferred-type-annotations.gif?raw=true)
+
+#### <a name="compile-with-debugger"></a>Compile With Debugger
+* Adds the `--debug` flag to `elm make`.
+* Enabling this will automatically disable `Compile With Optimizations`.
+
+#### <a name="compile-with-optimizations"></a>Compile With Optimizations
+* Adds the `--optimize` flag to `elm make`.
+* Enabling this will automatically disable `Compile With Debugger`.
 
 #### <a name="quick-fixes"></a>Quick Fixes
 
