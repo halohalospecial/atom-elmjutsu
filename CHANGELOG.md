@@ -1,3 +1,6 @@
+## 9.9.1
+* Fix #146.  Thanks to @aaahrens for reporting!
+
 ## 9.9.0
 * Add `Compile With Debugger` option.
 * Add `Compile With Optimizations` option.
