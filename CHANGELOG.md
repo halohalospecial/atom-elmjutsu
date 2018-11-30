@@ -1,3 +1,6 @@
+## 9.9.2
+* Fix #147.  Thanks to @aaahrens and @johnmullany for reporting and debugging!
+
 ## 9.9.1
 * Fix #146.  Thanks to @aaahrens for reporting!
 
