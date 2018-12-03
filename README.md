@@ -70,6 +70,8 @@ Note: Features marked with `*` are disabled by default.  You may enable them in 
   * [Install Package](#install-package)
   * [Uninstall Package](#uninstall-package)
 
+* [Hot Reloading](#hot-reloading)
+
 * Refactoring
   * [Rename Symbol](#rename-symbol)
   * [Surround with `let`](#surround-with-let)
@@ -414,6 +416,20 @@ Adds an alias to the added import (see [Add Import](#elmjutsu-add-import)).
     - Elm 0.18
 
       - This removes the dependency from `elm-package.json`, then runs `elm-package install --yes` to clean up.
+
+### Hot Reloading
+
+  * `Enable Hot Reloading` should be checked in the Settings view to start a hot reloading server.
+
+  * You can then add something like the following to your HTML file to watch a specific JS file for changes:
+
+    ```<script src="http://localhost:3000/build?path=~/Desktop/project/Main.js"></script>```
+
+    Replace `~/Desktop/project/Main.js` with the output file path from `elm make` (`--output` flag).  You can also use the [Set Compile Output Path](#set-compile-output-path) command to set the output file path for your project.
+
+  * This uses [elm-hot](https://github.com/klazuka/elm-hot) to inject hot reloading code into the Elm app.  The modified code is then sent to the browser via a web socket connection.
+
+  ![hot-reloading](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/hot-reloading.gif?raw=true)
 
 ### Refactoring
 

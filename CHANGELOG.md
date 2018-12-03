@@ -1,3 +1,6 @@
+## 9.10.0
+* Add `Enable Hot Reloading` option.
+
 ## 9.9.3
 * Fix #141.  Thanks to @mrattner and @gampleman for the help!
 
