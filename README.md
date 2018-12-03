@@ -429,7 +429,7 @@ Adds an alias to the added import (see [Add Import](#elmjutsu-add-import)).
 
   * This uses [elm-hot](https://github.com/klazuka/elm-hot) to inject hot reloading code into the Elm app.  The modified code is then sent to the browser via a web socket connection.
 
-![hot-reloading](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/hot-reloading.gif?raw=true)
+  ![hot-reloading](https://github.com/halohalospecial/atom-elmjutsu/blob/master/images/hot-reloading.gif?raw=true)
 
 ### Refactoring
 
