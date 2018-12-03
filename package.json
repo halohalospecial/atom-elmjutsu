@@ -1,7 +1,7 @@
 {
   "name": "elmjutsu",
   "main": "./lib/main",
-  "version": "9.9.3",
+  "version": "9.10.0",
   "description": "A bag of tricks for developing with Elm. (Autocompletion, Go To Definition, Find Usages, Rename Symbol, etc.)",
   "keywords": [
     "elm",
