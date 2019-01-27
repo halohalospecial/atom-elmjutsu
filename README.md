@@ -9,7 +9,7 @@ https://atom.io/packages/elmjutsu
 * Install [Elm](http://elm-lang.org/install).
 * Install [language-elm](https://atom.io/packages/language-elm) (no need to install `elm-oracle` or `goto`).
 * For `Error Highlighting`:
-  * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) or [linter](https://atom.io/packages/linter) + [linter-ui-default](https://atom.io/packages/linter-ui-default).
+  * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) or [linter@1.11.23](https://atom.io/packages/linter) + [linter-ui-default](https://atom.io/packages/linter-ui-default).
 * For `Go to Definition`:
   * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) or [hyperclick](https://atom.io/packages/hyperclick) (both optional).
 * For `Autocomplete`:
