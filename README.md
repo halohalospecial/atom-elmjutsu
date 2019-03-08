@@ -11,6 +11,7 @@ https://atom.io/packages/elmjutsu
 * For `Error Highlighting`:
   * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) or [linter](https://atom.io/packages/linter) + [linter-ui-default](https://atom.io/packages/linter-ui-default).
   * With linter v2 API (linter 2.3.0 and above), tooltips are collapsed by default. You have to click expand buttons (">"), or bind `linter-ui-default:expand-tooltip` to some key and hold it to expand them.
+  * When moving from `atom-ide-ui` to `linter` (and vice versa), you need to reload Atom for now.
 * For `Go to Definition`:
   * Install [atom-ide-ui](https://atom.io/packages/atom-ide-ui) or [hyperclick](https://atom.io/packages/hyperclick) (both optional).
 * For `Autocomplete`:

@@ -1,3 +1,6 @@
+## 9.11.0
+* Enable Linter v1 and v2.  Thanks to @ymtszw for the PR (#158)!
+
 ## 9.10.1
 * Fix #150.  Thanks to @z5h for reporting!
 
