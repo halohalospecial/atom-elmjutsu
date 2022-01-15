@@ -24,7 +24,7 @@
     "express-ws": "4.0.0",
     "fs-extra": "5.0.0",
     "fuzzaldrin-plus": "0.6.0",
-    "marked": "0.3.19",
+    "marked": "4.0.10",
     "opn": "5.3.0",
     "react": "16.4.0",
     "react-dom": "16.4.0",
