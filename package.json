@@ -20,7 +20,7 @@
     "atom-space-pen-views": "2.2.0",
     "chokidar": "2.0.4",
     "elm-hot": "1.0.1",
-    "express": "4.16.4",
+    "express": "4.18.2",
     "express-ws": "4.0.0",
     "fs-extra": "5.0.0",
     "fuzzaldrin-plus": "0.6.0",
